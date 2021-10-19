@@ -19,11 +19,10 @@ const std::map<std::string, std::string> ESElement::mTypeAtt = {
 { "sampling",		"PropertyValue" },
 { "application",	"PropertyValue" }
 };
-//const std::string ESElement::metaTypeESElement	= "ESElement";
 const std::string ESElement::metaTypeESObject	= "ESObject";
 
 
-ESElement::ESElement() { mAtt["type"] = "null"; typeES = "null"; classES = "null"; pContenant.clear(); pComposant.clear();/*metaType = metaTypeESElement; mAtt["id"] = "null";*/ }
+ESElement::ESElement() { mAtt["type"] = "null"; typeES = "null"; classES = "null"; pContenant.clear(); pComposant.clear(); }
 void ESElement::setAtt(std::string key, std::string value)	{ mAtt[key] = value; }
 std::string ESElement::getAtt(std::string key) const		{ if (isAtt(key)) return  mAtt.at(key); return "null"; }
 std::string ESElement::getTypeES() const					{ return typeES; }
@@ -31,23 +30,23 @@ std::string ESElement::getClassES() const					{ return classES; }
 std::string ESElement::getMetaType() const					{ return metaType; }
 std::map<std::string, std::string> ESElement::getmAtt() const { return mAtt; }
 bool ESElement::isAtt(std::string key) const				{
-	for (std::map<string, string>::const_iterator it = mAtt.begin(); it != mAtt.end(); ++it) if (it->first == key) return true;
-	return false;
+	for (std::map<string, string>::const_iterator it = mAtt.begin(); it != mAtt.end(); ++it) if (it->first == key) return 1;
+	return 0;
 }
 bool ESElement::isESAtt(std::string esClass, std::string key) {
-	for (std::pair<string, string> couple : ESElement::mTypeAtt) if (couple.second == esClass and couple.first == key) return true;
-	return false;
+	for (std::pair<string, string> couple : ESElement::mTypeAtt) if (couple.second == esClass and couple.first == key) return 1;
+	return 0;
 }
 bool ESElement::isESObs(std::string esClass, JsonObject jObj) {
-	bool esObs = false;
+	bool esObs = 0;
 	JsonObject objAtt = jObj[esClass];
 	if (objAtt.isNull()) {
 		for (JsonPair p : jObj) {
-			if ((string)p.key().c_str() == esClass) esObs = true;
+			if ((string)p.key().c_str() == esClass) esObs = 1;
 			for (std::pair<string, string> couple : ESElement::mTypeAtt)
-				if ((string)p.key().c_str() == couple.first and esClass == couple.second) esObs = true;
+				if ((string)p.key().c_str() == couple.first and esClass == couple.second) esObs = 1;
 		}
-	} else esObs = true;
+	} else esObs = 1;
 	return esObs;
 }
 JsonObject ESElement::deserialize(std::string json) {
@@ -67,8 +66,11 @@ void ESElement::addComposant(ESElement* pCompos) {
 	pCompos->pContenant.push_back(this);
 }
 void ESElement::println(std::string nam, std::string pr) { 
-	//Serial.println((nam + " : " + pr).c_str());
-	cout << nam << " : " << pr << endl;
+#ifdef TEST_ES
+	cout << nam << " : " << pr << endl;					// standard
+#else
+	Serial.println((nam + " : " + pr).c_str());		// arduino
+#endif
 }
 ESElement* ESElement::element(std::string comp) const {
 	for (int i = 0; i < (int)pComposant.size(); i++) {
@@ -91,7 +93,6 @@ void ESElement::print() const {
 std::string ESElement::jsonAtt(bool complet) const {
 	std::string json(""), deb, fin, firs, val;
 	for (std::map<string, string>::const_iterator it = mAtt.begin(); it != mAtt.end(); ++it) {
-		//if (((complet and metaType == metaTypeESElement) or (it->first != "type" and it->first != "id")) and it->second != "null") {
 		val = it->second;
 		if ((complet or it->first[0] == '$') && (val != "null")) {
 			if (it->first == "type" or it->first == "nval") firs = it->first + classES;
@@ -112,6 +113,4 @@ ESObs::ESObs() : ESElement() { metaType = "ESObs"; nValue = 0; }
 ESObs::ESObs(Observation* pObs) : ESElement() { metaType = "ESObs"; nValue = 0; if (pObs != nullptr) pObs->addComposant(this); }
 int ESObs::getNvalue() const { return nValue; }
 void ESObs::setNvalue(int nval) { nValue = nval; stringstream nv; nv << nValue; mAtt["nval"] = nv.str(); }
-//std::string ESObs::getTypeValue() const { return typeValue; }
-//void ESObs::setTypeValue(std::string typeVal) { typeValue = typeVal; }
 

@@ -1,8 +1,9 @@
 #include "stdafx.h"    // à supprimer arduino
 #include <algorithm>
 #include "EScomponent.h"
-//#include <sstream>  // à ajouter arduino ??
-
+#ifndef TEST_ES
+	//#include <sstream>  // à ajouter arduino ??
+#endif
 using namespace std;
 
 const std::string LocationValue::valueType	= "Point";
@@ -50,13 +51,13 @@ bool IntValue::operator==(IntValue const&  r) { return (value == r.value); }
 std::string IntValue::json() const { stringstream ss; ss << value;	return ss.str(); }
 
 LocationValue::LocationValue(float coord[], bool geo, bool cart) { init(coord, geo, cart); }
-LocationValue::LocationValue(float coord[]) { init(coord, true, true); }
-LocationValue::LocationValue(float coor1, float coor2) { float coord[3] = { 0,0,0, }; coord[0] = coor1; coord[1] = coor2; init(coord, true, true); }
+LocationValue::LocationValue(float coord[]) { init(coord, 1, 1); }
+LocationValue::LocationValue(float coor1, float coor2) { float coord[3] = { 0,0,0, }; coord[0] = coor1; coord[1] = coor2; init(coord, 1, 1); }
 LocationValue::LocationValue(JsonVariant locv) {
 	JsonArray arr = locv.as<JsonArray>();
 	float loc[3] = { arr[0], arr[1], arr[2] };
-	init(loc, true, true); }
-LocationValue::LocationValue() { float loc[3] = { -1, -1, -1 }; init(loc, true, true); }
+	init(loc, 1, 1); }
+LocationValue::LocationValue() { float loc[3] = { -1, -1, -1 }; init(loc, 1, 1); }
 LocationValue::LocationValue(LocationValue const&  c)				{ coor[0] = c.coor[0]; coor[1] = c.coor[1]; coor[2] = c.coor[2]; geod = c.geod; carto = c.carto; }
 LocationValue& LocationValue::operator=(LocationValue const& c)	{ coor[0] = c.coor[0]; coor[1] = c.coor[1]; coor[2] = c.coor[2];  geod = c.geod; carto = c.carto; return *this; }
 bool LocationValue::operator==(LocationValue const&  c)			{return (coor[0] == c.coor[0] && coor[1] == c.coor[1] && coor[2] == c.coor[2] && geod == c.geod && carto == c.carto); }
@@ -170,7 +171,6 @@ PropertyValue::PropertyValue(JsonVariant jsonVarObsProp) {
 	for (JsonPair p : jsonObsProp) {
 		string att = (string)p.key().c_str();
 		string val = p.value();
-		//cout << "prop v " << att << " " << propTypeN;
 		if (att == propTypeN) propertyType = val;
 		else if (att == unitN) unit = val;
 		else if (att == samplingN) sampling = val;
@@ -185,7 +185,6 @@ void PropertyValue::linkContext(ObservingEMF* pObservingEMF) { pContexte = pObse
 void PropertyValue::setEMFId(std::string EMF) { EMFId = EMF; }
 std::string PropertyValue::json(bool unique, bool res_index) const {
 	std::string json = "";
-	//cout << " proptype : " << propertyType << endl;
 	json += "{";
 	if (propertyType != "null") json += "\"" + propTypeN + "\":\"" + propertyType + "\",";
 	if (unit != "null") json += "\"" + unitN + "\":\"" + unit + "\",";

@@ -1,4 +1,6 @@
-#include "stdafx.h"
+//#ifdef TEST_ES
+	#include "stdafx.h"				// à supprimer àrduino
+//#endif
 #include "ESBluetooth.h"
 
 using namespace std;
@@ -19,28 +21,23 @@ std::map<std::string, std::string> unitUUID = {
 { "2BD7", "µg/m37" }
 };
 std::map<std::string, int> codeSampling = {
-	{ "mean", 0 }
+	{ "mean", 2 }
+};
+std::map<int, std::string> samplingCode = {
+	{ 0, "mean" }
 };
 std::map<std::string, int> codeApplication = {
 	{ "air", 0 }
 };
-BLEservice* BLEserver::createService(std::string uuid) { cout << "creation sce" << endl; return nullptr;};
-BLECharacteristic* BLEservice::createCharacteristic(std::string uuid, int num) { cout << "  creation char " << uuid << endl; return nullptr; };
-BLEdescriptor* BLECharacteristic::addDescriptor(BLEdescriptor* pdesc) { cout << "    ajout desc " << endl; return nullptr; };
-
-BLEdescriptor::BLEdescriptor(std::string uuid) { cout << "    creation desc " << uuid << endl; };
-void BLEdescriptor::setValue(std::string val) { cout << "set value desc string : " << val << endl; };
-void BLEdescriptor::setValue(uint32_t* val, size_t len) { cout << "set value desc packed : " << val << "    " << len << endl; };
-void BLECharacteristic::setValue(uint32_t* val, size_t len) { cout << "set value packed charac : " << val << "    " << len << endl; };
-
-
-//ESBluetooth::ESBluetooth() { /*UUID = "test";*/ };
-ESBluetooth::ESBluetooth(std::string esUUID, BLEserver * pserver, bool measurement, bool charUser, bool validRange) {
-	UUID = esUUID;
-	unit = unitUUID[esUUID];
+std::map<int, std::string> applicationCode = {
+	{ 0, "air" }
+};
+ESBluetooth::ESBluetooth() {};
+ESBluetooth::ESBluetooth(std::string uuid) {
+		unit = unitUUID[uuid];
 	propertyId = "null";
 	sensorType = "null";
-	propertyType = propUUID[esUUID];
+	propertyType = propUUID[uuid];
 	lowerValue = 0 ;
 	upperValue = 0;
 	samplingFunction = "null";
@@ -49,47 +46,35 @@ ESBluetooth::ESBluetooth(std::string esUUID, BLEserver * pserver, bool measureme
 	uncertainty = 0;
 	application = "null";
 	value = 0;
-	meas = measurement;
-	user = charUser;
-	range = validRange;
-	pServer = pserver;
-	pServic = nullptr;
-	pCharac = nullptr;
-	pMeasurement = nullptr;
-	pCharUser = nullptr;
-	pValidRange = nullptr;
 };
-void ESBluetooth::serverBLEService() {
-	pServic = pServer->createService("181a"); 
-	pCharac = pServic->createCharacteristic(UUID, 0);
-	if (meas) pMeasurement = pCharac->addDescriptor(new BLEdescriptor("290C"));
-	if (user) pCharUser = pCharac->addDescriptor(new BLEdescriptor("2901"));
-	if (range) pValidRange = pCharac->addDescriptor(new BLEdescriptor("2906"));
-};
-void ESBluetooth::setPropValue() {
-	if (user) pCharUser->setValue(setValue2901());
+void		ESBluetooth::setPropValue(ESserverCharac *pcharac) {
+	if (pcharac->user) {
+		pcharac->pCharUser->setValue(setValue2901());
+		pcharac->pCharac->addDescriptor(pcharac->pCharUser);
+	}
 	value2906 validRange = setValue2906();
-	if (range) pValidRange->setValue((uint32_t*)&validRange, sizeof(validRange));
+	if (pcharac->range) {
+		pcharac->pValidRange->setValue((uint8_t*)&validRange, sizeof(validRange));
+		pcharac->pCharac->addDescriptor(pcharac->pValidRange);
+	}
 	value290C measurement = setValue290C();
-	if (meas) pMeasurement->setValue((uint32_t*)&measurement, sizeof(measurement));
+	if (pcharac->meas) {
+		pcharac->pMeasurement->setValue((uint8_t*)&measurement, sizeof(measurement));
+		pcharac->pCharac->addDescriptor(pcharac->pMeasurement);
+	}
 };
-void ESBluetooth::setResultValue() {
+void		ESBluetooth::setResultValue(ESserverCharac *pcharac) {
 	uint32_t valESS = setValueESS();
-	pCharac->setValue((uint32_t*)&valESS, sizeof(valESS));
+	pcharac->pCharac->setValue((uint8_t*)&valESS, sizeof(valESS));
 };
-void ESBluetooth::clientBLEService() {
-	BLERemoteService* pRemoteService = pClient->getService("181a");
-	BLERemoteCharacteristic* pRemoteCharacteristic = pRemoteService->getCharacteristic(UUID);
-	pRemoteMeasurement = pRemoteCharacteristic->getDescriptor("290C");
-	pRemoteValidRange = pRemoteCharacteristic->getDescriptor("2906");
-	pRemoteCharUser = pRemoteCharacteristic->getDescriptor("2901");
-
-};
-void ESBluetooth::getPropValue() {};		//client
-void ESBluetooth::getResultValue() {};		//client
-
+void		ESBluetooth::getPropValue(ESclientCharac *pcharac) {		//client
+	if (pcharac->user)  getValue2901(pcharac->pCharUser		->readValue());
+	if (pcharac->range) getValue2906(pcharac->pValidRange	->readValue());
+	if (pcharac->meas)  getValue290C(pcharac->pMeasurement	->readValue());
+};	
+void		ESBluetooth::getResultValue(ESclientCharac *pcharac) { getValueESS(pcharac->pRemoteCharac->readValue());};		//client
 uint32_t	ESBluetooth::setValueESS() { return (uint32_t)value; };
-void		ESBluetooth::getValueESS(float val) { value = val; };
+void		ESBluetooth::getValueESS(std::string val) { value = (float)(*(uint32_t*)val.substr(0, 4).data()); };
 value290C	ESBluetooth::setValue290C() {
 	value290C val = { 0,0,0,0,0,0 };
 	val.flags = 0;
@@ -99,41 +84,32 @@ value290C	ESBluetooth::setValue290C() {
 	val.application =	(uint8_t)	codeApplication[application];
 	val.uncertainty =	(uint8_t)	uncertainty;
 	return val;
-}
-;
-void		ESBluetooth::getValue290C(value290C val) {};
-
+};
+void		ESBluetooth::getValue290C(std::string val) {
+	int sampling	= (int)(*(uint8_t*) val.substr(2,  1).data());
+	int appli		= (int)(*(uint8_t*) val.substr(9,  1).data());
+	period			= (int)(*(uint32_t*)val.substr(3,  4).data()); // uint24_t
+	updateInterval	= (int)(*(uint16_t*)val.substr(7,  2).data());  // uint24_t
+	uncertainty		= (int)(*(uint8_t*) val.substr(10, 1).data());
+	samplingFunction= samplingCode[sampling];
+	application		= applicationCode[appli];
+};
 std::string	ESBluetooth::setValue2901() {	return	propertyId;	}
 void		ESBluetooth::getValue2901(std::string val) { propertyId = val; }
 value2906   ESBluetooth::setValue2906() {
 	int exponent = 0;
 	value2906 val = { 0,0 };
-	val.lowerValue = (uint16_t)lowerValue / pow(10, exponent);
-	val.upperValue = (uint16_t)upperValue / pow(10, exponent);
+	//val.lowerValue = (uint16_t)(lowerValue / pow(10, exponent));
+	//val.upperValue = (uint16_t)(upperValue / pow(10, exponent));
+	val.lowerValue = (uint16_t)lowerValue;
+	val.upperValue = (uint16_t)upperValue;
 	return val;
 }
-void		ESBluetooth::getValue2906(value2906 val) {
+void		ESBluetooth::getValue2906(std::string val) {
 	int exponent = 0;
-	lowerValue = (float)val.lowerValue * pow(10, exponent);
-	upperValue = (float)val.upperValue * pow(10, exponent);
+	//lowerValue = (float)(*(uint16_t*)val.substr(0, 2).data()) * pow(10, exponent);
+	//upperValue = (float)(*(uint16_t*)val.substr(2, 4).data()) * pow(10, exponent);
+	lowerValue = (float)(*(uint16_t*)val.substr(0, 2).data()) ;
+	upperValue = (float)(*(uint16_t*)val.substr(2, 4).data()) ;
 }
-
-
-
-/*void ESBluetooth::setPropValue(BLEpropertyValue prop) {
-	propertyId = prop.propertyId;
-	sensorType = prop.sensorType;
-	lowerValue = prop.lowerValue;
-	upperValue = prop.upperValue;
-	samplingFunction = prop.samplingFunction;
-	period = prop.period;
-	updateInterval = prop.updateInterval;
-	uncertainty = prop.uncertainty;
-	application = prop.application;
-};*/
-/*BLEpropertyValue ESBluetoot::getProperty() {
-};
-BLEresultValue ESBluetoot::getResult() {
-};*/
-//BLEservice::BLEservice() { truc = 0; };
 

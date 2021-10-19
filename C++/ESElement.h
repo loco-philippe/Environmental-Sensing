@@ -1,4 +1,4 @@
-#pragma once
+#pragma once		// à supprimer arduino
 #ifndef JSONES_
 #define JSONES_
 #include <iostream> // à supprimer arduino
@@ -33,7 +33,6 @@ public:
 	std::vector<ESElement*> pContenant;
 	std::vector<ESElement*> pComposant;
 
-	//static const std::string metaTypeESElement;
 	static const std::string metaTypeESObject;
 	static void println(std::string nam, std::string pr);
 	virtual std::string json(bool complet, bool value, bool detail) const = 0;
@@ -65,14 +64,11 @@ public:
 class ESObs : public ESElement {
 protected:
 	int nValue;
-	//std::string typeValue;  // à supprimer ?
 public:
 	ESObs();
 	ESObs(Observation* pObs);
 	int getNvalue() const;
 	void setNvalue(int nval);
-	//std::string getTypeValue() const;
-	//void setTypeValue(std::string typeVal);
 };
 
 #endif

@@ -1,8 +1,8 @@
 #include "stdafx.h"			// à supprimer arduino
+
 #include "ESObservation.h"
 #include <algorithm>
 #include <array>
-//#include "ESEMF.h"
 #include <sstream>
 
 #define ESSetDatation		ESSet<TimeValue, Datation>
@@ -83,8 +83,8 @@ std::map<int, std::string> Observation::obsCat = {
 Observation::Observation()							: ESObject() { init(); }
 Observation::Observation(JsonObject obj)			: ESObject() { init(obj); }
 Observation::Observation(std::string json)			: ESObject() { init(json); }
-Observation::Observation(Observation const&  obs)	: ESObject() { init("{" + obs.json(true, false, true) + "}"); }
-Observation& Observation::operator=(Observation const&  obs)	 { init("{" + obs.json(true, false, true) + "}"); return *this; }
+Observation::Observation(Observation const&  obs)	: ESObject() { init("{" + obs.json(1, 0, 1) + "}"); }
+Observation& Observation::operator=(Observation const&  obs)	 { init("{" + obs.json(1, 0, 1) + "}"); return *this; }
 void Observation::init(std::string json)  {
 	init();
 	const int capa(maxSizeJson);
@@ -93,17 +93,13 @@ void Observation::init(std::string json)  {
 	if (error) ESElement::println("deserializeJson() failed: ", error.c_str());
 	else {
 		JsonObject obj = doc.as<JsonObject>();
-		//for (JsonPair p : obj) cout << p.key().c_str() << " " << p.value() << endl;
 		if (obj.containsKey("type") && obj["type"] == Observation::ESclass) init(obj);
 	}
 }
 void Observation::init(JsonObject obj) {
 	init();
-	//cout << "iniit" << endl;
 	if (obj.containsKey("id"))   setAtt("id", obj["id"]);
 	JsonObject objAtt = obj["attributes"];
-	/*JsonObject objAtt = obj;
-	if (!objAt.isNull()) objAtt = objAt;*/
 	if (objAtt.isNull()) {
 		for (JsonPair p : obj) {
 			if (ESElement::isESAtt(Observation::ESclass, (string)p.key().c_str())) setAtt((string)p.key().c_str(), p.value());
@@ -120,12 +116,9 @@ void Observation::init(JsonObject obj) {
 		for (JsonPair p : objAtt) {
 			if (ESElement::isESAtt(Observation::ESclass, (string)p.key().c_str()))	setAtt((string)p.key().c_str(), p.value());
 			if (p.key().c_str()[0] == '$') setAtt((string)p.key().c_str(), p.value());
-			//else if (p.key().c_str() == PropertyValue::EStype)	ESSetProperty*	pMea = new ESSetProperty(this, p.value());
 			else if (p.key().c_str() == Property::ESclass)	ESSetProperty*	pMea = new ESSetProperty(this, p.value());
-			//else if (p.key().c_str() == LocationValue::EStype)	ESSetLocation*	pGeo = new ESSetLocation(this, p.value());
 			else if (p.key().c_str() == Location::ESclass)	ESSetLocation*	pGeo = new ESSetLocation(this, p.value());
-			//else if (p.key().c_str() == TimeValue::EStype)		ESSetDatation*	pTim = new ESSetDatation(this, p.value());
-			else if (p.key().c_str() == Datation::ESclass)		ESSetDatation*	pTim = new ESSetDatation(this, p.value());
+			else if (p.key().c_str() == Datation::ESclass)	ESSetDatation*	pTim = new ESSetDatation(this, p.value());
 		}
 		for (JsonPair p : objAtt) {
 			if (p.key().c_str() == Result::ESclass) {
@@ -141,7 +134,7 @@ void Observation::init(JsonObject obj) {
 	majType();
 }
 void Observation::init() {	mAtt["ResultTime"] = "null"; classES = Observation::ESclass; typeES = Observation::ESclass; mAtt["id"] = "null";
-tEch = -1;	tMeas = -1;	complet = false;	pComposant.clear();	pContenant.clear(); majType();
+tEch = -1;	tMeas = -1;	complet = 0;	pComposant.clear();	pContenant.clear(); majType();
 }
 void Observation::print() const {
 	ESElement::print();
@@ -162,7 +155,7 @@ std::string Observation::json(bool comp, bool value, bool detail) const {
 	if (mAtt.at("id") != "null") json += "\"_id\":\"" + mAtt.at("id") + "\",";
 	if (comp) json += "\"attributes\":{";
 	json += ESElement::jsonAtt(comp);
-	for (int i = 0; i < (int)pComposant.size(); i++) if (static_cast<ESObs *>(pComposant[i])->json(comp, true, det) != "") json += static_cast<ESObs *>(pComposant[i])->json(comp, true, det) + ",";
+	for (int i = 0; i < (int)pComposant.size(); i++) if (static_cast<ESObs *>(pComposant[i])->json(comp, 1, det) != "") json += static_cast<ESObs *>(pComposant[i])->json(comp, 1, det) + ",";
 	if (json.back() == ',') json.pop_back();
 	if (comp) json += "}";
 	if (value) json += "}";
@@ -195,7 +188,6 @@ void Observation::majTypeObs(int nRes, int nPrp, int nDat, int nLoc, int nEch, i
 	stringstream ss; ss << score;
 	mAtt["type"] = Observation::obsCat[score];
 	mAtt["score"] = ss.str();
-	//cout << " score : " << score << " " << endl;
 	if (nRes * nPrp * nDat * nLoc < 1) return;
 	if (score == 22 and dim == 1)	mAtt["type"] = "trackPath";
 	if (score == 22 and dim == 2)	mAtt["type"] = "timeZone";
@@ -204,14 +196,13 @@ void Observation::majTypeObs(int nRes, int nPrp, int nDat, int nLoc, int nEch, i
 	if (score == 222 and dim == 1)	mAtt["type"] = "obsPath";
 	if (score == 222 and dim == 2)	mAtt["type"] = "obsAreaSequence";
 	if (Result_() != nullptr)
-		//if (static_cast<Result *>(element("result"))->getMaxIndex() == -1 && 
 		if (Result_()->getMaxIndex() == -1 && \
 			((score == 202 or score == 212) && nRes != nDat) or ((score == 220 or score == 221) && nRes != nLoc) or (score == 222 && (nRes != nLoc or nLoc != nDat) && nRes != nLoc * nDat)) \
 		mAtt["type"] = "obserror";
 }
 void Observation::majType() {
 	int nPrp(0), nDat(0), nRes(0), nLoc(0), nEch(0), dim(0), nLocU(0), nDatU(0);
-	bool indexe(false);
+	bool indexe(0);
 	array<int, 4> indic;
 	for (int i = 0; i < (int)pComposant.size(); i++) {
 		if (pComposant[i]->getClassES() == Property::ESclass) {
@@ -220,16 +211,10 @@ void Observation::majType() {
 		else if (pComposant[i]->getClassES() == Datation::ESclass) {
 			nDat = static_cast<Result *>(pComposant[i])->getNvalue();
 			static_cast<ESSetDatation *>	(pComposant[i])->analyse();
-			//TimeValue	max = static_cast<ESSetDatation *>	(pComposant[i])->maxiBox();
-			//TimeValue	min = static_cast<ESSetDatation *>	(pComposant[i])->miniBox();
-			//static_cast<Datation *>(pComposant[i])->setBox(max, min);
 		}
 		else if (pComposant[i]->getClassES() == Location::ESclass) {
 			nLoc = static_cast<Result *>(pComposant[i])->getNvalue();
 			static_cast<ESSetLocation *>	(pComposant[i])->analyse();
-			//LocationValue max = static_cast<ESSetLocation *>(pComposant[i])->maxiBox();
-			//LocationValue min = static_cast<ESSetLocation *>(pComposant[i])->miniBox();
-			//static_cast<Location *>(pComposant[i])->setBox(max, min);
 		}
 		else if (pComposant[i]->getClassES() == Result::ESclass) {
 			nRes = static_cast<Result *>(pComposant[i])->getNvalue();
@@ -241,11 +226,9 @@ void Observation::majType() {
 			}
 		}
 	}
-	//std::cout << "majtype maxindex : test" << endl;
 	if (!indexe)
 	{
 		int sco = min(nRes, 2) * 100 + min(nLoc, 2) * 10 + min(nDat, 2);
-		//std::cout << "majtype maxindex : -1, sco : " << sco << endl;
 		dim = 1;
 		if (nRes < 2 && nLoc < 2 && nDat < 2) dim = 0;
 		if ((sco == 22 or sco == 122) && nLoc != nDat) dim = 2;
@@ -254,7 +237,7 @@ void Observation::majType() {
 			or (sco == 222 && ((nRes == nLoc && nLoc == nDat) or nRes == nLoc * nDat));
 		tMeas = 1; tEch = 1;
 		if (((sco == 202 or sco == 212) && nRes != nDat) or ((sco == 220 or sco == 221) && nRes != nLoc) or (sco == 222 && (nRes != nLoc or nLoc != nDat) && nRes != nLoc * nDat)) \
-			{ tMeas = 0, tEch = 0; dim = 0; complet = false; }
+			{ tMeas = 0, tEch = 0; dim = 0; complet = 0; }
 		majTypeObs(nRes, nPrp, nDat, nLoc, nRes, dim);
 	} else {
 		complet = (nRes == nPrp * nLoc * nDat and dim == 2 and nEch == nLoc * nDat) or \
@@ -268,22 +251,15 @@ void Observation::majType() {
 		majTypeObs(nRes, nPrp, min(nDatU, nDat), min(nLocU, nLoc), nEch, dim);
 		typeObs();
 	}
-	//std::cout << "dat loc res : " << nDat << nLoc << nRes << endl;
 	if (Result_() != nullptr) Result_()->majindexRes(nRes, nPrp, nDat, nLoc, nEch);
 	stringstream co; co << complet;	mAtt["complet"] = co.str();
 	stringstream tm; tm << tMeas;	mAtt["measureRate"] = tm.str();
 	stringstream te; te << tEch;	mAtt["samplingRate"] = te.str();
-	//stringstream sc; sc << score;	mAtt["score"] = sc.str();
 }
 
 Location::Location() : ESObs() { init(); }
 Location::Location(Observation* pObs) : ESObs(pObs) { init(); }
 void Location::init() { boxMin = LocationValue(); boxMax = LocationValue();  classES = ESclass; }
-/*void Location::setBox(LocationValue max, LocationValue min) {
-	boxMax = max; boxMin = min;
-	stringstream mi; mi << boxMin.json(true, true);	mAtt["boudingBoxMin"] = mi.str();
-	stringstream ma; ma << boxMax.json(true, true);	mAtt["boudingBoxMax"] = ma.str();
-}*/
 LocationValue Location::getboxMin() const { return boxMin; }
 LocationValue Location::getboxMax() const { return boxMax; }
 
@@ -306,7 +282,6 @@ int Result::getdim() const { return dim; }
 
 void Result::majindexRes(int nRes, int nPrp, int nDat, int nLoc, int nEch) {
 	int il(0), id(0), ip(0);
-	//cout << "maj indexRes : " << nLoc << " " << nDat << " " << nPrp << endl;
 	if (getMaxIndex() > -1) return;
 	if (nRes == nPrp * nDat * nLoc)
 		for (int i = 0; i < nRes; i++) {
@@ -335,15 +310,6 @@ void Result::majindexRes(int nRes, int nPrp, int nDat, int nLoc, int nEch) {
 Datation::Datation() : ESObs() { init(); }
 Datation::Datation(Observation* pObs) : ESObs(pObs) { init(); }
 void Datation::init() { boxMin = TimeValue(); boxMax = TimeValue();  classES = ESclass; }
-/*void Datation::analyse(ESSetDatation* pdat) {
-	boxMax = pdat->maxiBox();
-	boxMin = pdat->miniBox();
-}*/
-/*void Datation::setBox(TimeValue max, TimeValue min) { 
-	boxMax = max; boxMin = min;
-	mAtt["timeBoxMin"] = boxMin.json(true, true);
-	mAtt["timeBoxMax"] = boxMax.json(true, true);
-}*/
 TimeValue Datation::getboxMin() const { return boxMin; }
 TimeValue Datation::getboxMax() const { return boxMax; }
 

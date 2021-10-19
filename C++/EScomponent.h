@@ -20,8 +20,8 @@ public:
 class LocationValue : public ESValue {
 protected:
 	float coor[3];
-	bool geod; // true : WGS, false : projection
-	bool carto; // true : lon lat / X Y, false : lat lon / Y X
+	bool geod; // 1 : WGS, 0 : projection
+	bool carto; // 1 : lon lat / X Y, 0 : lat lon / Y X
 public:
 	//static const std::string EStype;
 	static const std::string valueType;
