@@ -88,10 +88,13 @@ struct ESclientCharac {
 	ESclientCharac(BLERemoteService* pRemoteServic, std::string charUUID) {
 		uuid = charUUID;
 		pRemoteCharac = pRemoteServic->getCharacteristic(charUUID);
+#ifndef TEST_ES
 		charac = pRemoteCharac != nullptr;
+#else
 		charac = 1;		//à enlever
+#endif
 		if (charac) {
-			pMeasurement= pRemoteCharac->getDescriptor(Umeas); meas  = pMeasurement!= nullptr;
+			pMeasurement= pRemoteCharac->getDescriptor(Umeas); meas  = pMeasurement	!= nullptr;
 			pCharUser	= pRemoteCharac->getDescriptor(Uuser); user  = pCharUser	!= nullptr;
 			pValidRange = pRemoteCharac->getDescriptor(Urange); range = pCharUser	!= nullptr;
 		};

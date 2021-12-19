@@ -7,8 +7,18 @@ Created on Tue Aug  3 23:40:06 2021
 
 from ESElement import ESObs
 from ESconstante import ES
-from ESComponent import LocationValue, TimeValue, ESSet, PropertyValue, ResultValue
+from ESComponent import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
 import numpy as np
+
+class Datation(ESObs):
+    """
+    Classe liée à la structure interne
+    """
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.boxMin = DatationValue()
+        self.boxMax = DatationValue()
+        self.classES = ES.dat_classES
 
 class Location(ESObs):
     """
@@ -36,24 +46,14 @@ class Result(ESObs):
         ESObs.__init__(self, pObs)
         self.classES = ES.res_classES
         self.error = True
-        self.nd = 0
-        self.nl = 0
-        self.np = 0
+        self.nInd = [0,0,0]
         self.measureRate = 0.0
-        self.samplingRate = 0.0
-        self.nEch = 0
-        self.dim = 0
-    
-class Datation(ESObs):
-    """
-    Classe liée à la structure interne
-    """
-    def __init__(self, pObs=None):
-        ESObs.__init__(self, pObs)
-        self.boxMin = TimeValue()
-        self.boxMax = TimeValue()
-        self.classES = ES.dat_classES
-        
+        #self.samplingRate = 0.0
+        #self.nEch = 0
+        self.dim = -1
+        self.axes = []
+        self.nMax = 1
+            
 class ESSetDatation(ESSet, Datation):
     """
     Classe liée à la structure interne
@@ -62,15 +62,21 @@ class ESSetDatation(ESSet, Datation):
         Datation.__init__(self, pObs)
         self.typeES = ES.set_typeES
         self.mAtt[ES.type] = ES.dat_valueType
-        self.initESSet(TimeValue, jObj)
+        self.initESSet(DatationValue, jObj)
         self.majMeta()
         pass
 
-    def __repr__(self):
-        return object.__repr__(self) + '\n' + self.json(True, True, True) + '\n'
+    @property
+    def vListInstant(self):
+        return [val.vInstant(self.observation.option) for val in self.valueList]
 
-    def json(self, obs_class, elt_type, res_index):
-        return self.jsonESSet(ES.dat_valueName, obs_class, elt_type, res_index)
+    def __repr__(self):
+        return object.__repr__(self) + '\n' + self.json(ES.mOption) + '\n'
+
+    def json(self, option):
+        if option["json_dat_instant"] : dat_valName = ES.dat_valName[0]
+        else : dat_valName = ES.dat_valName[1]
+        return self.jsonESSet(dat_valName, option)
 
     def analyse(self):
         '''
@@ -79,22 +85,6 @@ class ESSetDatation(ESSet, Datation):
         self.boxMax = self.maxiBox()
         self.boxMin = self.miniBox()
         
-class ESSetProperty(ESSet, Property):
-    """
-    Classe liée à la structure interne
-    """
-    def __init__(self, pObs = None, jObj = None):
-        Property.__init__(self, pObs)
-        self.typeES = ES.set_typeES
-        self.mAtt[ES.type] = ES.prp_valueType
-        self.initESSet(PropertyValue, jObj)
-        self.majMeta()
-
-    def __repr__(self): return self.json(True, True, True) + '\n'
-
-    def json(self, obs_class, elt_type, res_index):       
-        return self.jsonESSet(ES.prp_valueName, obs_class, elt_type, res_index)
-
 class ESSetLocation(ESSet, Location):
     """
     Classe liée à la structure interne
@@ -106,17 +96,41 @@ class ESSetLocation(ESSet, Location):
         self.initESSet(LocationValue, jObj)
         self.majMeta()
 
-    def __repr__(self): return object.__repr__(self) + '\n' + self.json(True, True, True) + '\n'
+    def __repr__(self): return object.__repr__(self) + '\n' + self.json(ES.mOption) + '\n'
 
-    def json(self, obs_class, elt_type, res_index, geojson = False):
-        return self.jsonESSet(ES.loc_valueName, obs_class, elt_type, False, geojson)
-
+    def json(self, option):       
+        if option["json_loc_point"] : loc_valName = ES.loc_valName[0]
+        else : loc_valName = ES.loc_valName[1]
+        return self.jsonESSet(loc_valName, option)
+    
+    @property
+    def vListPoint(self):
+        return [val.vPoint(self.observation.option) for val in self.valueList]
+    
     def analyse(self):
         '''
         calcul de bbox
         '''
         self.boxMax = self.maxiBox()
         self.boxMin = self.miniBox()
+
+class ESSetProperty(ESSet, Property):
+    """
+    Classe liée à la structure interne
+    """
+    def __init__(self, pObs = None, jObj = None):
+        Property.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.prp_valueType
+        self.initESSet(PropertyValue, jObj)
+        self.majMeta()
+
+    def __repr__(self): return self.json(ES.mOption) + '\n'
+
+    def json(self, option):       
+        if option["json_prp_type"] : prp_valName = ES.prp_valName[0]
+        else : prp_valName = ES.prp_valName[1]
+        return self.jsonESSet(prp_valName, option)
 
 class ESSetResult(ESSet, Result):
     """
@@ -130,10 +144,16 @@ class ESSetResult(ESSet, Result):
         self.majMeta()
 
     def __repr__(self):
-        return object.__repr__(self) + '\n' + self.json(True, True, True) + '\n'
+        #return object.__repr__(self) + '\n' + self.json(True, True, True) + '\n'
+        return object.__repr__(self) + '\n' + self.json(ES.mOption) + '\n'
 
-    def json(self, obs_class, elt_type, res_index):
-        return self.jsonESSet(ES.res_valueName, obs_class, elt_type, res_index)
+    @property
+    def vListIndex(self):
+        return [val.ind for val in self.valueList]
+    
+
+    def json(self, option):
+        return self.jsonESSet(ES.res_valName[0], option)
 
     def getMaxIndex(self):
         maxInd = -1
@@ -141,105 +161,80 @@ class ESSetResult(ESSet, Result):
         return maxInd
 
     def resetIndexRes(self):
-        for val in self.valueList : val.ind = [ -1, -1, -1]
+        for val in self.valueList : val.ind = ES.nullInd
 
-    def majIndex(self, nRes, nPrp, nDat, nLoc):
-        il = ida = ip = 0
+    def majIndex(self, nRes, nPrp, nDat, nLoc, order = 'dlp'):
         if self.getMaxIndex() > -1 : return
+        n = {'d' : nDat, 'l' : nLoc, 'p' : nPrp, 'x' : -1}
         if nRes == nPrp * nDat * nLoc :
-            for i in range(nRes) :
-                if nLoc * nPrp > 0 :
-                    ida = i // (nLoc * nPrp) 
-                    il = (i % (nLoc * nPrp)) // nPrp 
-                    if nPrp > 0: ip = (i % (nLoc * nPrp)) % nPrp 
-                self.valueList[i].ind = [ ida, il, ip ]
-        elif nRes == nPrp * nDat and nRes == nPrp * nLoc:
-            for i in range(nRes) :
-                if nPrp > 0 :
-                    idloc = i // nPrp
-                    ip = i % nPrp   
-                    if nRes == nPrp * nDat : ida = idloc
-                    if nRes == nPrp * nLoc : il = idloc            
-                self.valueList[i].ind = [ ida, il, ip ]
-                #print(nRes, i, [ ida, il, ip ], self.valueList[i])
-
+            if len(order) == 3:
+                ind = {order[0] : 0, order[1] : 1, order[2] : 2}
+                i = [0, 0, 0]
+                n12 = n[order[1]] * n[order[2]]
+                for ir in range(nRes) :
+                    i[0] = ir // n12 
+                    i[1] = (ir % n12) // n[order[2]] 
+                    i[2] = (ir % n12) %  n[order[2]] 
+                    self.valueList[ir].ind = [ i[ind['d']], i[ind['l']], i[ind['p']] ]
+        elif nRes == nPrp and nDat == nLoc and nRes == nLoc :
+            for ir in range(nRes) : self.valueList[ir].ind = [ir, ir, ir]
+        else :
+            if not 'x' in order : order = 'xp'
+            n0 = n[order[0]]
+            n1 = n[order[1]]
+            if n0 == -1 : n0 = (nPrp + nDat + nLoc - n1) // 2
+            else : n1 = (nPrp + nDat + nLoc - n0) // 2
+            if nRes == n0 * n1 :
+                ind = {order[0] : 0, order[1] : 1}
+                i = [0, 0]
+                if n1 > 0 :
+                    for ir in range(nRes) :
+                        i[0] = ir // n1
+                        i[1] = ir %  n1
+                        if not 'd' in ind.keys() : ind['d'] = ind['x']
+                        if not 'l' in ind.keys() : ind['l'] = ind['x']
+                        if not 'p' in ind.keys() : ind['p'] = ind['x']
+                        self.valueList[ir].ind = [ i[ind['d']], i[ind['l']], i[ind['p']] ]
+                
     def analyse(self):
         '''
         calcul de :
             nd, nl, np : max des indices loc, dat, prop
-            nech : nombre de de couple (dat, loc) documenté
-            dim : dimension 0, 1, 2
+            dim : dimension 0, 1, 2, 3
             error : indices incohérents
-            sampling rate : taux de couple (dat, loc) documenté
             measure rate : taux de triplet (dat, loc, prop) documenté
         '''
         idat = 0; iloc = 1; iprp = 2
-        if min(min(val.ind[idat], val.ind[iloc], val.ind[iprp]) for val in self.valueList) == -1 :
-            self.dim = min(self.nValue, 2) - 1
-            self.nEch = self.nValue
-        else :
-            self.dim = 2
-            self.nd = 1 + max(val.ind[idat] for val in self.valueList)
-            self.nl = 1 + max(val.ind[iloc] for val in self.valueList)
-            self.np = 1 + max(val.ind[iprp] for val in self.valueList)
-            nres = np.zeros((self.nd, self.nl, self.np), dtype=int)
-            for val in self.valueList:
-                nres[val.ind[0], val.ind[1], val.ind[2]] += 1
-            self.error = nres.max() > 1
-            nres2 = np.minimum(np.sum(nres, axis=2), 1)      
-            self.nEch = int(np.sum(nres2))
-            if np.sum(nres) < 2: self.dim = 0
-            elif max(np.sum(nres2, axis=0)) == 1 : self.dim = 1
-            elif max(np.sum(nres2, axis=1)) == 1 : self.dim = 1
-            self.measureRate = np.sum(nres) / self.np / (nres.size/self.np)**(self.dim/2)
-            self.samplingRate = self.nEch / nres2.size**(self.dim/2)
-
-            '''if self.dim == 2:
-                self.measureRate = np.sum(nres) / nres.size
-                self.samplingRate = self.nEch / nres2.size
-            elif self.dim == 1:
-                self.measureRate = np.sum(nres) / self.np / (nres.size/self.np)**0.5
-                self.samplingRate = self.nEch / nres2.size**0.5
-            else :
-                self.measureRate = 1.0
-                self.samplingRate = 1.0'''
-
-    '''def majIndic(self, ech, dimension, datU, locU):
-        self.nEch = ech
-        self.dim = dimension
-        self.nDatUse = datU
-        self.nLocUse = locU
-        #self.mAtt[ES.res_nEch] = self.nEch
-        #self.mAtt[ES.res_dim]  = self.dim'''
-
-    '''def majIndexRes(self, nRes, nMeas, nDat, nLoc, nEch, dim):
-        il = ida = ip = 0
-        if self.getMaxIndex() > -1 : return
-        if nRes == nMeas * nDat * nLoc and dim == 2:
-            for i in range(nRes) :
-                if nLoc * nMeas > 0 :
-                    ida = i // (nLoc * nMeas) 
-                    il = (i % (nLoc * nMeas)) // nMeas 
-                    if nMeas > 0: ip = (i % (nLoc * nMeas)) % nMeas 
-                self.valueList[i].ind = [ ida, il, ip ]
-        elif (nRes == nMeas * nDat or nRes == nMeas * nLoc) and dim == 1:
-            for i in range(nRes) :
-                if nMeas > 0 :
-                    idloc = i // nMeas
-                    ip = i % nMeas 
-                    if nRes == nMeas * nDat : ida = idloc
-                    if nRes == nMeas * nLoc : il = idloc            
-                self.valueList[i].ind = [ ida, il, ip ]'''
-
-    '''def setBox(self, maxi, mini):
-        self.boxMax = maxi
-        self.boxMin = mini;
-        #self.mAtt[ES.dat_boxMin]= self.boxMin.json(True)
-        #self.mAtt[ES.dat_boxMax]= self.boxMax.json(True)'''
-
-    '''def setBox(self, maxi, mini):
-        self.boxMax = maxi
-        self.boxMin = mini;
-        #self.mAtt[ES.loc_boxMin]= self.boxMin.json(True)
-        #self.mAtt[ES.loc_boxMax]= self.boxMax.json(True)'''
-
+        self.error = min(min(val.ind[idat], val.ind[iloc], val.ind[iprp]) for val in self.valueList) == -1
+        if self.error : return
+        self.dim = 3
+        self.axes = [0,1,2]
+        self.nInd = [0,0,0]
+        for i in range(3):
+            self.nInd[i] = 1 + max(val.ind[i] for val in self.valueList)
+            if self.nInd[i] == 1: 
+                self.dim -= 1
+                self.axes.remove(i)
+        nres = np.zeros(self.nInd, dtype=int)
+        for val in self.valueList: nres[val.ind[0], val.ind[1], val.ind[2]] += 1
+        self.error = nres.max() > 1
+        self.nMax = max(self.nInd)
+        if self.dim > 1 and not self.error :
+            ax = []
+            for i in range(3):
+                nres2 = np.minimum(np.sum(nres, axis=i), 1)      
+                if (np.sum(nres2, axis=0) <= 1).all() and (np.sum(nres2, axis=1) <= 1).all() : 
+                    ax.append(i)
+            #if len(ax) == 3 : print(self.nInd)
+            if len(ax) == 0 : self.nMax = self.nInd[0] * self.nInd[1] * self.nInd[2]
+            elif len(ax) == 1 :
+                self.axes.append(max (((ax[0]+1)%3) * 10 + ((ax[0]+2)%3), \
+                                      ((ax[0]+2)%3) * 10 + ((ax[0]+1)%3)))
+                if (ax[0]+1)%3 in self.axes : self.axes.remove((ax[0]+1)%3)
+                if (ax[0]+2)%3 in self.axes : self.axes.remove((ax[0]+2)%3)
+                self.nMax = self.nInd[ax[0]] * min (self.nInd[(ax[0]+1)%3], self.nInd[(ax[0]+2)%3])
+            else : self.axes = [120]
+        self.dim = len(self.axes)                
+        self.measureRate = self.nValue / self.nMax
+        if self.error : self.dim = -1
+            

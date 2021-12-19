@@ -9,18 +9,26 @@ from datetime import datetime
 from ESconstante import ES, mTypeAtt, mValObs
 
 def isESObs(esClass, jObj):
-    esObs = False
     for key, value in jObj.items():
-        if key == esClass: esObs = True
+        if key == esClass: return True
         for val, classES in mValObs.items():
-            if key == val and esClass == classES:  esObs = True
-    return esObs
+            if key == val and esClass == classES:  return True
+        for val, classES in mTypeAtt.items():
+            if key == val and esClass == classES:  return True
+    return False
 
 
 def isESAtt(esClass, key):
     for k,v in mTypeAtt.items():
         if v == esClass and k == key: return True
     return False
+
+def isUserAtt(key):
+    for k,v in mTypeAtt.items():
+        if k == key: return False
+    for k,v in mValObs.items():
+        if k == key: return False
+    return True
 
 '''def deserialize(jsonStr):
     return json.loads(jsonStr)
@@ -90,7 +98,8 @@ class ESElement:
                     elif elt_type_nb == 2 : att[k + self.classES] = ES.multi + v
                     elif elt_type_nb == -1 : att[k] = v
                     elif elt_type_nb == -2 : att[k] = ES.multi + v
-            if k[0] == '$' and v != "null": att[k] = v
+            elif v != "null": att[k] = v
+            #if k[0] == '$' and v != "null": att[k] = v
         if len(att) == 0 : return ""
         return json.dumps(att)[1:-1] + ","
 
@@ -113,3 +122,9 @@ class ESObs(ESElement):
         self.nValue = 0
         if (pObs != None): pObs.addComposant(self)
 
+    @property
+    def observation(self):
+        for cont in self.pContenant :
+            if cont.classES == ES.obs_classES : return cont
+        return None
+    
