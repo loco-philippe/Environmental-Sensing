@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>ES.ESObs API documentation</title>
+<meta name="description" content="Created on Tue Aug
+3 23:40:06 2021 …" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ES.ESObs</code></h1>
+</header>
+<section id="section-intro">
+<p>Created on Tue Aug
+3 23:40:06 2021</p>
+<p>@author: philippe@loco-labs.io</p>
+<p>An object of the <code><a title="ES.ESObs" href="#ES.ESObs">ES.ESObs</a></code> module is a component of an <code><a title="ES.ESObservation.Observation" href="ESObservation.html#ES.ESObservation.Observation">Observation</a></code> object</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+&#34;&#34;&#34;
+Created on Tue Aug  3 23:40:06 2021
+
+@author: philippe@loco-labs.io
+
+An object of the `ES.ESObs` module is a component of an `ES.ESObservation.Observation` object
+&#34;&#34;&#34;
+
+from ESElement import ESObs
+#from ESElement import Datation, Location, Property, Result
+from ESconstante import ES, identity
+from datetime import datetime
+from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
+import numpy as np
+import copy
+
+
+class Datation(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.boxMin = DatationValue()
+        self.boxMax = DatationValue()
+        self.classES = ES.dat_classES
+
+class Location(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.boxMin = LocationValue()
+        self.boxMax = LocationValue()
+        self.classES = ES.loc_classES
+
+class Property(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.classES = ES.prp_classES
+
+class Result(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.classES = ES.res_classES
+        self.error = True
+        self.nInd = [0,0,0]
+        self.measureRate = 0.0
+        #self.samplingRate = 0.0
+        #self.nEch = 0
+        self.dim = -1
+        self.axes = []
+        self.nMax = 1
+            
+class ESSetDatation(ESSet, Datation):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Datation.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.dat_valueType
+        self.initESSet(DatationValue, jObj)
+        self.majMeta()
+        pass
+
+    @property
+    def vListInstant(self):
+        return [val.vInstant(self.observation.option) for val in self.valueList]
+
+    def __repr__(self):
+        return object.__repr__(self) + &#39;\n&#39; + self.json(ES.mOption) + &#39;\n&#39;
+
+    def json(self, option = ES.mOption):
+        if option[&#34;json_dat_instant&#34;] : dat_valName = ES.dat_valName[0]
+        else : dat_valName = ES.dat_valName[1]
+        return self.jsonESSet(dat_valName, option)
+
+    def to_numpy(self, func=identity):
+        datList = self.vList(func)
+        if func != DatationValue.vName and (type(datList[0]) == str or
+                                            type(datList[0]) == datetime) :
+            return np.array(datList, dtype=np.datetime64)
+        else: return np.array(datList)
+
+    def analyse(self):
+        &#39;&#39;&#39;
+        calcul de bbox
+        &#39;&#39;&#39;
+        self.boxMax = self.maxiBox()
+        self.boxMin = self.miniBox()
+        
+class ESSetLocation(ESSet, Location):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Location.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.loc_valueType
+        self.initESSet(LocationValue, jObj)
+        self.majMeta()
+
+    def __repr__(self): return object.__repr__(self) + &#39;\n&#39; + self.json(ES.mOption) + &#39;\n&#39;
+
+    def json(self, option = ES.mOption):       
+        if option[&#34;json_loc_point&#34;] : loc_valName = ES.loc_valName[0]
+        else : loc_valName = ES.loc_valName[1]
+        return self.jsonESSet(loc_valName, option)
+    
+    @property
+    def vListPoint(self):
+        return [val.vPoint(self.observation.option) for val in self.valueList]
+
+    def to_numpy(self, func=identity):
+        return np.array(self.vList(func))
+    
+    def analyse(self):
+        &#39;&#39;&#39;
+        calcul de bbox
+        &#39;&#39;&#39;
+        self.boxMax = self.maxiBox()
+        self.boxMin = self.miniBox()
+
+class ESSetProperty(ESSet, Property):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Property.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.prp_valueType
+        self.initESSet(PropertyValue, jObj)
+        self.majMeta()
+
+    def __repr__(self): return self.json(ES.mOption) + &#39;\n&#39;
+
+    def json(self, option = ES.mOption):       
+        if option[&#34;json_prp_type&#34;] : prp_valName = ES.prp_valName[0]
+        else : prp_valName = ES.prp_valName[1]
+        return self.jsonESSet(prp_valName, option)
+
+    def to_numpy(self, func=identity):
+        return np.array(self.vList(func))
+    
+
+class ESSetResult(ESSet, Result):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Result.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.res_valueType
+        self.initESSet(ResultValue, jObj)
+        self.majMeta()
+
+    def __repr__(self):
+        #return object.__repr__(self) + &#39;\n&#39; + self.json(True, True, True) + &#39;\n&#39;
+        return object.__repr__(self) + &#39;\n&#39; + self.json(ES.mOption) + &#39;\n&#39;
+
+    @property
+    def vListIndex(self):
+        return [val.ind for val in self.valueList]
+
+    def full(self, maj=True):
+        [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+        resComp = np.ones((nDat, nLoc, nPrp))
+        for res in self.valueList: resComp[tuple(res.ind)] = 0
+        nz = np.nonzero(resComp)
+        full = copy.copy(self.valueList)
+        if maj :
+            for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : self.addValue(ResultValue, ResultValue(ind=list(t)))
+            self.observation.majType(order=&#39;dlp&#39;)
+            return []
+        else :
+            full = copy.copy(self.valueList)
+            for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : full.append(ResultValue(ind=list(t)))
+            return full
+            
+    def to_numpy(self, func=identity, ind=&#39;axe&#39;):
+        if type(ind) == str and ind == &#39;flat&#39; : return np.array(self.vList(func))
+        #elif type(ind) == str and (ind == &#39;obs&#39; or (ind == &#39;axe&#39; and len(self.axes) == 3 )) :
+        elif type(ind) == str and (ind == &#39;obs&#39; or (ind == &#39;axe&#39; and max(self.axes) &lt; 9 )) :
+            [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+            listFull = self.full(False)
+            listInd = sorted(list(zip(listFull, list(range(len(listFull))))))
+            fullTri, indTri = zip(*listInd)
+            #return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp)
+            return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp).squeeze()
+        elif type(ind) == str and ind == &#39;axe&#39; :
+            for ax in self.axes :
+                if ax &gt; 100 : return np.array(self.vList(func))
+                elif ax &gt; 9 :
+                    [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+                    order = [nDat, nLoc, nPrp]
+                    cop = copy.deepcopy(self.valueList)   
+                    #cop = self.vList()   
+                    for res in cop :
+                        res.ind[ax//10] = 0
+                    cop = [func(cop[i]) for i in range(len(cop))]
+                    if len(self.axes) == 2 :
+                        if (ax//10+2)%3 == self.axes[0] or (ax//10+1)%3 == self.axes[1] :
+                            return np.array(cop).reshape(order[(ax//10+2)%3], order[(ax//10+1)%3])
+                        else: return np.array(cop).reshape(order[(ax//10+1)%3], order[(ax//10+2)%3])
+                    return np.array(cop)
+            
+        return np.array(())
+    
+    def json(self, option = ES.mOption):
+        return self.jsonESSet(ES.res_valName[0], option)
+
+    def getMaxIndex(self):
+        maxInd = -1
+        for val in self.valueList: maxInd = max(maxInd, max(val.ind))
+        return maxInd
+
+    def isIndex(self):
+        for val in self.valueList: 
+            if min(val.ind) == -1 : return False
+        return True
+
+    def resetIndexRes(self):
+        for val in self.valueList : val.ind = ES.nullInd
+
+    def majIndex(self, nRes, nPrp, nDat, nLoc, order = &#39;dlp&#39;):
+        if self.getMaxIndex() &gt; -1 : return
+        n = {&#39;d&#39; : nDat, &#39;l&#39; : nLoc, &#39;p&#39; : nPrp, &#39;x&#39; : -1}
+        if nRes == nPrp * nDat * nLoc :
+            if len(order) == 3:
+                ind = {order[0] : 0, order[1] : 1, order[2] : 2}
+                i = [0, 0, 0]
+                n12 = n[order[1]] * n[order[2]]
+                for ir in range(nRes) :
+                    i[0] = ir // n12 
+                    i[1] = (ir % n12) // n[order[2]] 
+                    i[2] = (ir % n12) %  n[order[2]] 
+                    self.valueList[ir].ind = [ i[ind[&#39;d&#39;]], i[ind[&#39;l&#39;]], i[ind[&#39;p&#39;]] ]
+        elif nRes == nPrp and nDat == nLoc and nRes == nLoc :
+            for ir in range(nRes) : self.valueList[ir].ind = [ir, ir, ir]
+        else :
+            if not &#39;x&#39; in order : order = &#39;xp&#39;
+            n0 = n[order[0]]
+            n1 = n[order[1]]
+            if n0 == -1 : n0 = (nPrp + nDat + nLoc - n1) // 2
+            else : n1 = (nPrp + nDat + nLoc - n0) // 2
+            if nRes == n0 * n1 :
+                ind = {order[0] : 0, order[1] : 1}
+                i = [0, 0]
+                if n1 &gt; 0 :
+                    for ir in range(nRes) :
+                        i[0] = ir // n1
+                        i[1] = ir %  n1
+                        if not &#39;d&#39; in ind.keys() : ind[&#39;d&#39;] = ind[&#39;x&#39;]
+                        if not &#39;l&#39; in ind.keys() : ind[&#39;l&#39;] = ind[&#39;x&#39;]
+                        if not &#39;p&#39; in ind.keys() : ind[&#39;p&#39;] = ind[&#39;x&#39;]
+                        self.valueList[ir].ind = [ i[ind[&#39;d&#39;]], i[ind[&#39;l&#39;]], i[ind[&#39;p&#39;]] ]
+                
+    def triAxe(self):
+        self.axes.sort()
+        if len(self.axes) == 2 and self.axes[0] != 0 and self.axes[1] &gt; 9 : 
+            (self.axes[0], self.axes[1]) = (self.axes[1], self.axes[0])
+        
+    def analyse(self):
+        &#39;&#39;&#39;
+        calcul de :
+            nd, nl, np : max des indices loc, dat, prop
+            dim : dimension 0, 1, 2, 3
+            error : indices incohérents
+            measure rate : taux de triplet (dat, loc, prop) documenté
+        &#39;&#39;&#39;
+        idat = 0; iloc = 1; iprp = 2
+        self.error = min(min(val.ind[idat], val.ind[iloc], val.ind[iprp]) for val in self.valueList) == -1
+        if self.error : return
+        self.dim = 3
+        self.axes = [0,1,2]
+        self.nInd = [0,0,0]
+        for i in range(3):
+            self.nInd[i] = 1 + max(val.ind[i] for val in self.valueList)
+            if self.nInd[i] == 1: 
+                self.dim -= 1
+                self.axes.remove(i)
+        nres = np.zeros(self.nInd, dtype=int)
+        for val in self.valueList: nres[val.ind[0], val.ind[1], val.ind[2]] += 1
+        self.error = nres.max() &gt; 1
+        self.nMax = max(self.nInd)
+        if self.dim &gt; 1 and not self.error :
+            ax = []
+            for i in range(3):
+                nres2 = np.minimum(np.sum(nres, axis=i), 1)      
+                if (np.sum(nres2, axis=0) &lt;= 1).all() and (np.sum(nres2, axis=1) &lt;= 1).all() : 
+                    ax.append(i)
+            #if len(ax) == 3 : print(self.nInd)
+            if len(ax) == 0 : self.nMax = self.nInd[0] * self.nInd[1] * self.nInd[2]
+            elif len(ax) == 1 :
+                self.axes.append(max (((ax[0]+1)%3) * 10 + ((ax[0]+2)%3), \
+                                      ((ax[0]+2)%3) * 10 + ((ax[0]+1)%3)))
+                if (ax[0]+1)%3 in self.axes : self.axes.remove((ax[0]+1)%3)
+                if (ax[0]+2)%3 in self.axes : self.axes.remove((ax[0]+2)%3)
+                self.nMax = self.nInd[ax[0]] * min (self.nInd[(ax[0]+1)%3], self.nInd[(ax[0]+2)%3])
+            else : self.axes = [120]
+        self.triAxe()
+        self.dim = len(self.axes)                
+        self.measureRate = self.nValue / self.nMax
+        if self.error : self.dim = -1
+            </code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="ES.ESObs.Datation"><code class="flex name class">
+<span>class <span class="ident">Datation</span></span>
+<span>(</span><span>pObs=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Datation(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.boxMin = DatationValue()
+        self.boxMax = DatationValue()
+        self.classES = ES.dat_classES</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="ES.ESObs.ESSetDatation" href="#ES.ESObs.ESSetDatation">ESSetDatation</a></li>
+</ul>
+</dd>
+<dt id="ES.ESObs.ESSetDatation"><code class="flex name class">
+<span>class <span class="ident">ESSetDatation</span></span>
+<span>(</span><span>pObs=None, jObj=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ESSetDatation(ESSet, Datation):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Datation.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.dat_valueType
+        self.initESSet(DatationValue, jObj)
+        self.majMeta()
+        pass
+
+    @property
+    def vListInstant(self):
+        return [val.vInstant(self.observation.option) for val in self.valueList]
+
+    def __repr__(self):
+        return object.__repr__(self) + &#39;\n&#39; + self.json(ES.mOption) + &#39;\n&#39;
+
+    def json(self, option = ES.mOption):
+        if option[&#34;json_dat_instant&#34;] : dat_valName = ES.dat_valName[0]
+        else : dat_valName = ES.dat_valName[1]
+        return self.jsonESSet(dat_valName, option)
+
+    def to_numpy(self, func=identity):
+        datList = self.vList(func)
+        if func != DatationValue.vName and (type(datList[0]) == str or
+                                            type(datList[0]) == datetime) :
+            return np.array(datList, dtype=np.datetime64)
+        else: return np.array(datList)
+
+    def analyse(self):
+        &#39;&#39;&#39;
+        calcul de bbox
+        &#39;&#39;&#39;
+        self.boxMax = self.maxiBox()
+        self.boxMin = self.miniBox()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESValue.ESSet</li>
+<li><a title="ES.ESObs.Datation" href="#ES.ESObs.Datation">Datation</a></li>
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="ES.ESObs.ESSetDatation.vListInstant"><code class="name">var <span class="ident">vListInstant</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def vListInstant(self):
+    return [val.vInstant(self.observation.option) for val in self.valueList]</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="ES.ESObs.ESSetDatation.analyse"><code class="name flex">
+<span>def <span class="ident">analyse</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>calcul de bbox</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def analyse(self):
+    &#39;&#39;&#39;
+    calcul de bbox
+    &#39;&#39;&#39;
+    self.boxMax = self.maxiBox()
+    self.boxMin = self.miniBox()</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetDatation.json"><code class="name flex">
+<span>def <span class="ident">json</span></span>(<span>self, option={'json_res_index': False, 'json_prp_type': True, 'json_prp_name': False, 'json_dat_instant': True, 'json_dat_name': False, 'json_loc_point': True, 'json_loc_name': False, 'json_ESobs_class': False, 'json_elt_type': False, 'json_obs_val': True, 'json_obs_attrib': False, 'json_param': False, 'json_info_type': True, 'json_info_nval': True, 'json_info_box': True, 'json_info_autre': True, 'unic_index': True, 'bytes_res_format': 'null', 'maj_reset_index': False, 'sort_order': [0, 1, 2]})</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def json(self, option = ES.mOption):
+    if option[&#34;json_dat_instant&#34;] : dat_valName = ES.dat_valName[0]
+    else : dat_valName = ES.dat_valName[1]
+    return self.jsonESSet(dat_valName, option)</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetDatation.to_numpy"><code class="name flex">
+<span>def <span class="ident">to_numpy</span></span>(<span>self, func=&lt;function identity&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_numpy(self, func=identity):
+    datList = self.vList(func)
+    if func != DatationValue.vName and (type(datList[0]) == str or
+                                        type(datList[0]) == datetime) :
+        return np.array(datList, dtype=np.datetime64)
+    else: return np.array(datList)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ES.ESObs.ESSetLocation"><code class="flex name class">
+<span>class <span class="ident">ESSetLocation</span></span>
+<span>(</span><span>pObs=None, jObj=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ESSetLocation(ESSet, Location):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Location.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.loc_valueType
+        self.initESSet(LocationValue, jObj)
+        self.majMeta()
+
+    def __repr__(self): return object.__repr__(self) + &#39;\n&#39; + self.json(ES.mOption) + &#39;\n&#39;
+
+    def json(self, option = ES.mOption):       
+        if option[&#34;json_loc_point&#34;] : loc_valName = ES.loc_valName[0]
+        else : loc_valName = ES.loc_valName[1]
+        return self.jsonESSet(loc_valName, option)
+    
+    @property
+    def vListPoint(self):
+        return [val.vPoint(self.observation.option) for val in self.valueList]
+
+    def to_numpy(self, func=identity):
+        return np.array(self.vList(func))
+    
+    def analyse(self):
+        &#39;&#39;&#39;
+        calcul de bbox
+        &#39;&#39;&#39;
+        self.boxMax = self.maxiBox()
+        self.boxMin = self.miniBox()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESValue.ESSet</li>
+<li><a title="ES.ESObs.Location" href="#ES.ESObs.Location">Location</a></li>
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="ES.ESObs.ESSetLocation.vListPoint"><code class="name">var <span class="ident">vListPoint</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def vListPoint(self):
+    return [val.vPoint(self.observation.option) for val in self.valueList]</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="ES.ESObs.ESSetLocation.analyse"><code class="name flex">
+<span>def <span class="ident">analyse</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>calcul de bbox</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def analyse(self):
+    &#39;&#39;&#39;
+    calcul de bbox
+    &#39;&#39;&#39;
+    self.boxMax = self.maxiBox()
+    self.boxMin = self.miniBox()</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetLocation.json"><code class="name flex">
+<span>def <span class="ident">json</span></span>(<span>self, option={'json_res_index': False, 'json_prp_type': True, 'json_prp_name': False, 'json_dat_instant': True, 'json_dat_name': False, 'json_loc_point': True, 'json_loc_name': False, 'json_ESobs_class': False, 'json_elt_type': False, 'json_obs_val': True, 'json_obs_attrib': False, 'json_param': False, 'json_info_type': True, 'json_info_nval': True, 'json_info_box': True, 'json_info_autre': True, 'unic_index': True, 'bytes_res_format': 'null', 'maj_reset_index': False, 'sort_order': [0, 1, 2]})</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def json(self, option = ES.mOption):       
+    if option[&#34;json_loc_point&#34;] : loc_valName = ES.loc_valName[0]
+    else : loc_valName = ES.loc_valName[1]
+    return self.jsonESSet(loc_valName, option)</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetLocation.to_numpy"><code class="name flex">
+<span>def <span class="ident">to_numpy</span></span>(<span>self, func=&lt;function identity&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_numpy(self, func=identity):
+    return np.array(self.vList(func))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ES.ESObs.ESSetProperty"><code class="flex name class">
+<span>class <span class="ident">ESSetProperty</span></span>
+<span>(</span><span>pObs=None, jObj=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ESSetProperty(ESSet, Property):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Property.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.prp_valueType
+        self.initESSet(PropertyValue, jObj)
+        self.majMeta()
+
+    def __repr__(self): return self.json(ES.mOption) + &#39;\n&#39;
+
+    def json(self, option = ES.mOption):       
+        if option[&#34;json_prp_type&#34;] : prp_valName = ES.prp_valName[0]
+        else : prp_valName = ES.prp_valName[1]
+        return self.jsonESSet(prp_valName, option)
+
+    def to_numpy(self, func=identity):
+        return np.array(self.vList(func))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESValue.ESSet</li>
+<li><a title="ES.ESObs.Property" href="#ES.ESObs.Property">Property</a></li>
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="ES.ESObs.ESSetProperty.json"><code class="name flex">
+<span>def <span class="ident">json</span></span>(<span>self, option={'json_res_index': False, 'json_prp_type': True, 'json_prp_name': False, 'json_dat_instant': True, 'json_dat_name': False, 'json_loc_point': True, 'json_loc_name': False, 'json_ESobs_class': False, 'json_elt_type': False, 'json_obs_val': True, 'json_obs_attrib': False, 'json_param': False, 'json_info_type': True, 'json_info_nval': True, 'json_info_box': True, 'json_info_autre': True, 'unic_index': True, 'bytes_res_format': 'null', 'maj_reset_index': False, 'sort_order': [0, 1, 2]})</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def json(self, option = ES.mOption):       
+    if option[&#34;json_prp_type&#34;] : prp_valName = ES.prp_valName[0]
+    else : prp_valName = ES.prp_valName[1]
+    return self.jsonESSet(prp_valName, option)</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetProperty.to_numpy"><code class="name flex">
+<span>def <span class="ident">to_numpy</span></span>(<span>self, func=&lt;function identity&gt;)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_numpy(self, func=identity):
+    return np.array(self.vList(func))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ES.ESObs.ESSetResult"><code class="flex name class">
+<span>class <span class="ident">ESSetResult</span></span>
+<span>(</span><span>pObs=None, jObj=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ESSetResult(ESSet, Result):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs = None, jObj = None):
+        Result.__init__(self, pObs)
+        self.typeES = ES.set_typeES
+        self.mAtt[ES.type] = ES.res_valueType
+        self.initESSet(ResultValue, jObj)
+        self.majMeta()
+
+    def __repr__(self):
+        #return object.__repr__(self) + &#39;\n&#39; + self.json(True, True, True) + &#39;\n&#39;
+        return object.__repr__(self) + &#39;\n&#39; + self.json(ES.mOption) + &#39;\n&#39;
+
+    @property
+    def vListIndex(self):
+        return [val.ind for val in self.valueList]
+
+    def full(self, maj=True):
+        [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+        resComp = np.ones((nDat, nLoc, nPrp))
+        for res in self.valueList: resComp[tuple(res.ind)] = 0
+        nz = np.nonzero(resComp)
+        full = copy.copy(self.valueList)
+        if maj :
+            for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : self.addValue(ResultValue, ResultValue(ind=list(t)))
+            self.observation.majType(order=&#39;dlp&#39;)
+            return []
+        else :
+            full = copy.copy(self.valueList)
+            for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : full.append(ResultValue(ind=list(t)))
+            return full
+            
+    def to_numpy(self, func=identity, ind=&#39;axe&#39;):
+        if type(ind) == str and ind == &#39;flat&#39; : return np.array(self.vList(func))
+        #elif type(ind) == str and (ind == &#39;obs&#39; or (ind == &#39;axe&#39; and len(self.axes) == 3 )) :
+        elif type(ind) == str and (ind == &#39;obs&#39; or (ind == &#39;axe&#39; and max(self.axes) &lt; 9 )) :
+            [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+            listFull = self.full(False)
+            listInd = sorted(list(zip(listFull, list(range(len(listFull))))))
+            fullTri, indTri = zip(*listInd)
+            #return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp)
+            return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp).squeeze()
+        elif type(ind) == str and ind == &#39;axe&#39; :
+            for ax in self.axes :
+                if ax &gt; 100 : return np.array(self.vList(func))
+                elif ax &gt; 9 :
+                    [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+                    order = [nDat, nLoc, nPrp]
+                    cop = copy.deepcopy(self.valueList)   
+                    #cop = self.vList()   
+                    for res in cop :
+                        res.ind[ax//10] = 0
+                    cop = [func(cop[i]) for i in range(len(cop))]
+                    if len(self.axes) == 2 :
+                        if (ax//10+2)%3 == self.axes[0] or (ax//10+1)%3 == self.axes[1] :
+                            return np.array(cop).reshape(order[(ax//10+2)%3], order[(ax//10+1)%3])
+                        else: return np.array(cop).reshape(order[(ax//10+1)%3], order[(ax//10+2)%3])
+                    return np.array(cop)
+            
+        return np.array(())
+    
+    def json(self, option = ES.mOption):
+        return self.jsonESSet(ES.res_valName[0], option)
+
+    def getMaxIndex(self):
+        maxInd = -1
+        for val in self.valueList: maxInd = max(maxInd, max(val.ind))
+        return maxInd
+
+    def isIndex(self):
+        for val in self.valueList: 
+            if min(val.ind) == -1 : return False
+        return True
+
+    def resetIndexRes(self):
+        for val in self.valueList : val.ind = ES.nullInd
+
+    def majIndex(self, nRes, nPrp, nDat, nLoc, order = &#39;dlp&#39;):
+        if self.getMaxIndex() &gt; -1 : return
+        n = {&#39;d&#39; : nDat, &#39;l&#39; : nLoc, &#39;p&#39; : nPrp, &#39;x&#39; : -1}
+        if nRes == nPrp * nDat * nLoc :
+            if len(order) == 3:
+                ind = {order[0] : 0, order[1] : 1, order[2] : 2}
+                i = [0, 0, 0]
+                n12 = n[order[1]] * n[order[2]]
+                for ir in range(nRes) :
+                    i[0] = ir // n12 
+                    i[1] = (ir % n12) // n[order[2]] 
+                    i[2] = (ir % n12) %  n[order[2]] 
+                    self.valueList[ir].ind = [ i[ind[&#39;d&#39;]], i[ind[&#39;l&#39;]], i[ind[&#39;p&#39;]] ]
+        elif nRes == nPrp and nDat == nLoc and nRes == nLoc :
+            for ir in range(nRes) : self.valueList[ir].ind = [ir, ir, ir]
+        else :
+            if not &#39;x&#39; in order : order = &#39;xp&#39;
+            n0 = n[order[0]]
+            n1 = n[order[1]]
+            if n0 == -1 : n0 = (nPrp + nDat + nLoc - n1) // 2
+            else : n1 = (nPrp + nDat + nLoc - n0) // 2
+            if nRes == n0 * n1 :
+                ind = {order[0] : 0, order[1] : 1}
+                i = [0, 0]
+                if n1 &gt; 0 :
+                    for ir in range(nRes) :
+                        i[0] = ir // n1
+                        i[1] = ir %  n1
+                        if not &#39;d&#39; in ind.keys() : ind[&#39;d&#39;] = ind[&#39;x&#39;]
+                        if not &#39;l&#39; in ind.keys() : ind[&#39;l&#39;] = ind[&#39;x&#39;]
+                        if not &#39;p&#39; in ind.keys() : ind[&#39;p&#39;] = ind[&#39;x&#39;]
+                        self.valueList[ir].ind = [ i[ind[&#39;d&#39;]], i[ind[&#39;l&#39;]], i[ind[&#39;p&#39;]] ]
+                
+    def triAxe(self):
+        self.axes.sort()
+        if len(self.axes) == 2 and self.axes[0] != 0 and self.axes[1] &gt; 9 : 
+            (self.axes[0], self.axes[1]) = (self.axes[1], self.axes[0])
+        
+    def analyse(self):
+        &#39;&#39;&#39;
+        calcul de :
+            nd, nl, np : max des indices loc, dat, prop
+            dim : dimension 0, 1, 2, 3
+            error : indices incohérents
+            measure rate : taux de triplet (dat, loc, prop) documenté
+        &#39;&#39;&#39;
+        idat = 0; iloc = 1; iprp = 2
+        self.error = min(min(val.ind[idat], val.ind[iloc], val.ind[iprp]) for val in self.valueList) == -1
+        if self.error : return
+        self.dim = 3
+        self.axes = [0,1,2]
+        self.nInd = [0,0,0]
+        for i in range(3):
+            self.nInd[i] = 1 + max(val.ind[i] for val in self.valueList)
+            if self.nInd[i] == 1: 
+                self.dim -= 1
+                self.axes.remove(i)
+        nres = np.zeros(self.nInd, dtype=int)
+        for val in self.valueList: nres[val.ind[0], val.ind[1], val.ind[2]] += 1
+        self.error = nres.max() &gt; 1
+        self.nMax = max(self.nInd)
+        if self.dim &gt; 1 and not self.error :
+            ax = []
+            for i in range(3):
+                nres2 = np.minimum(np.sum(nres, axis=i), 1)      
+                if (np.sum(nres2, axis=0) &lt;= 1).all() and (np.sum(nres2, axis=1) &lt;= 1).all() : 
+                    ax.append(i)
+            #if len(ax) == 3 : print(self.nInd)
+            if len(ax) == 0 : self.nMax = self.nInd[0] * self.nInd[1] * self.nInd[2]
+            elif len(ax) == 1 :
+                self.axes.append(max (((ax[0]+1)%3) * 10 + ((ax[0]+2)%3), \
+                                      ((ax[0]+2)%3) * 10 + ((ax[0]+1)%3)))
+                if (ax[0]+1)%3 in self.axes : self.axes.remove((ax[0]+1)%3)
+                if (ax[0]+2)%3 in self.axes : self.axes.remove((ax[0]+2)%3)
+                self.nMax = self.nInd[ax[0]] * min (self.nInd[(ax[0]+1)%3], self.nInd[(ax[0]+2)%3])
+            else : self.axes = [120]
+        self.triAxe()
+        self.dim = len(self.axes)                
+        self.measureRate = self.nValue / self.nMax
+        if self.error : self.dim = -1</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESValue.ESSet</li>
+<li><a title="ES.ESObs.Result" href="#ES.ESObs.Result">Result</a></li>
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="ES.ESObs.ESSetResult.vListIndex"><code class="name">var <span class="ident">vListIndex</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def vListIndex(self):
+    return [val.ind for val in self.valueList]</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="ES.ESObs.ESSetResult.analyse"><code class="name flex">
+<span>def <span class="ident">analyse</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>calcul de :
+nd, nl, np : max des indices loc, dat, prop
+dim : dimension 0, 1, 2, 3
+error : indices incohérents
+measure rate : taux de triplet (dat, loc, prop) documenté</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def analyse(self):
+    &#39;&#39;&#39;
+    calcul de :
+        nd, nl, np : max des indices loc, dat, prop
+        dim : dimension 0, 1, 2, 3
+        error : indices incohérents
+        measure rate : taux de triplet (dat, loc, prop) documenté
+    &#39;&#39;&#39;
+    idat = 0; iloc = 1; iprp = 2
+    self.error = min(min(val.ind[idat], val.ind[iloc], val.ind[iprp]) for val in self.valueList) == -1
+    if self.error : return
+    self.dim = 3
+    self.axes = [0,1,2]
+    self.nInd = [0,0,0]
+    for i in range(3):
+        self.nInd[i] = 1 + max(val.ind[i] for val in self.valueList)
+        if self.nInd[i] == 1: 
+            self.dim -= 1
+            self.axes.remove(i)
+    nres = np.zeros(self.nInd, dtype=int)
+    for val in self.valueList: nres[val.ind[0], val.ind[1], val.ind[2]] += 1
+    self.error = nres.max() &gt; 1
+    self.nMax = max(self.nInd)
+    if self.dim &gt; 1 and not self.error :
+        ax = []
+        for i in range(3):
+            nres2 = np.minimum(np.sum(nres, axis=i), 1)      
+            if (np.sum(nres2, axis=0) &lt;= 1).all() and (np.sum(nres2, axis=1) &lt;= 1).all() : 
+                ax.append(i)
+        #if len(ax) == 3 : print(self.nInd)
+        if len(ax) == 0 : self.nMax = self.nInd[0] * self.nInd[1] * self.nInd[2]
+        elif len(ax) == 1 :
+            self.axes.append(max (((ax[0]+1)%3) * 10 + ((ax[0]+2)%3), \
+                                  ((ax[0]+2)%3) * 10 + ((ax[0]+1)%3)))
+            if (ax[0]+1)%3 in self.axes : self.axes.remove((ax[0]+1)%3)
+            if (ax[0]+2)%3 in self.axes : self.axes.remove((ax[0]+2)%3)
+            self.nMax = self.nInd[ax[0]] * min (self.nInd[(ax[0]+1)%3], self.nInd[(ax[0]+2)%3])
+        else : self.axes = [120]
+    self.triAxe()
+    self.dim = len(self.axes)                
+    self.measureRate = self.nValue / self.nMax
+    if self.error : self.dim = -1</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.full"><code class="name flex">
+<span>def <span class="ident">full</span></span>(<span>self, maj=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def full(self, maj=True):
+    [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+    resComp = np.ones((nDat, nLoc, nPrp))
+    for res in self.valueList: resComp[tuple(res.ind)] = 0
+    nz = np.nonzero(resComp)
+    full = copy.copy(self.valueList)
+    if maj :
+        for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : self.addValue(ResultValue, ResultValue(ind=list(t)))
+        self.observation.majType(order=&#39;dlp&#39;)
+        return []
+    else :
+        full = copy.copy(self.valueList)
+        for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : full.append(ResultValue(ind=list(t)))
+        return full</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.getMaxIndex"><code class="name flex">
+<span>def <span class="ident">getMaxIndex</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getMaxIndex(self):
+    maxInd = -1
+    for val in self.valueList: maxInd = max(maxInd, max(val.ind))
+    return maxInd</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.isIndex"><code class="name flex">
+<span>def <span class="ident">isIndex</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isIndex(self):
+    for val in self.valueList: 
+        if min(val.ind) == -1 : return False
+    return True</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.json"><code class="name flex">
+<span>def <span class="ident">json</span></span>(<span>self, option={'json_res_index': False, 'json_prp_type': True, 'json_prp_name': False, 'json_dat_instant': True, 'json_dat_name': False, 'json_loc_point': True, 'json_loc_name': False, 'json_ESobs_class': False, 'json_elt_type': False, 'json_obs_val': True, 'json_obs_attrib': False, 'json_param': False, 'json_info_type': True, 'json_info_nval': True, 'json_info_box': True, 'json_info_autre': True, 'unic_index': True, 'bytes_res_format': 'null', 'maj_reset_index': False, 'sort_order': [0, 1, 2]})</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def json(self, option = ES.mOption):
+    return self.jsonESSet(ES.res_valName[0], option)</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.majIndex"><code class="name flex">
+<span>def <span class="ident">majIndex</span></span>(<span>self, nRes, nPrp, nDat, nLoc, order='dlp')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def majIndex(self, nRes, nPrp, nDat, nLoc, order = &#39;dlp&#39;):
+    if self.getMaxIndex() &gt; -1 : return
+    n = {&#39;d&#39; : nDat, &#39;l&#39; : nLoc, &#39;p&#39; : nPrp, &#39;x&#39; : -1}
+    if nRes == nPrp * nDat * nLoc :
+        if len(order) == 3:
+            ind = {order[0] : 0, order[1] : 1, order[2] : 2}
+            i = [0, 0, 0]
+            n12 = n[order[1]] * n[order[2]]
+            for ir in range(nRes) :
+                i[0] = ir // n12 
+                i[1] = (ir % n12) // n[order[2]] 
+                i[2] = (ir % n12) %  n[order[2]] 
+                self.valueList[ir].ind = [ i[ind[&#39;d&#39;]], i[ind[&#39;l&#39;]], i[ind[&#39;p&#39;]] ]
+    elif nRes == nPrp and nDat == nLoc and nRes == nLoc :
+        for ir in range(nRes) : self.valueList[ir].ind = [ir, ir, ir]
+    else :
+        if not &#39;x&#39; in order : order = &#39;xp&#39;
+        n0 = n[order[0]]
+        n1 = n[order[1]]
+        if n0 == -1 : n0 = (nPrp + nDat + nLoc - n1) // 2
+        else : n1 = (nPrp + nDat + nLoc - n0) // 2
+        if nRes == n0 * n1 :
+            ind = {order[0] : 0, order[1] : 1}
+            i = [0, 0]
+            if n1 &gt; 0 :
+                for ir in range(nRes) :
+                    i[0] = ir // n1
+                    i[1] = ir %  n1
+                    if not &#39;d&#39; in ind.keys() : ind[&#39;d&#39;] = ind[&#39;x&#39;]
+                    if not &#39;l&#39; in ind.keys() : ind[&#39;l&#39;] = ind[&#39;x&#39;]
+                    if not &#39;p&#39; in ind.keys() : ind[&#39;p&#39;] = ind[&#39;x&#39;]
+                    self.valueList[ir].ind = [ i[ind[&#39;d&#39;]], i[ind[&#39;l&#39;]], i[ind[&#39;p&#39;]] ]</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.resetIndexRes"><code class="name flex">
+<span>def <span class="ident">resetIndexRes</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resetIndexRes(self):
+    for val in self.valueList : val.ind = ES.nullInd</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.to_numpy"><code class="name flex">
+<span>def <span class="ident">to_numpy</span></span>(<span>self, func=&lt;function identity&gt;, ind='axe')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_numpy(self, func=identity, ind=&#39;axe&#39;):
+    if type(ind) == str and ind == &#39;flat&#39; : return np.array(self.vList(func))
+    #elif type(ind) == str and (ind == &#39;obs&#39; or (ind == &#39;axe&#39; and len(self.axes) == 3 )) :
+    elif type(ind) == str and (ind == &#39;obs&#39; or (ind == &#39;axe&#39; and max(self.axes) &lt; 9 )) :
+        [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+        listFull = self.full(False)
+        listInd = sorted(list(zip(listFull, list(range(len(listFull))))))
+        fullTri, indTri = zip(*listInd)
+        #return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp)
+        return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp).squeeze()
+    elif type(ind) == str and ind == &#39;axe&#39; :
+        for ax in self.axes :
+            if ax &gt; 100 : return np.array(self.vList(func))
+            elif ax &gt; 9 :
+                [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+                order = [nDat, nLoc, nPrp]
+                cop = copy.deepcopy(self.valueList)   
+                #cop = self.vList()   
+                for res in cop :
+                    res.ind[ax//10] = 0
+                cop = [func(cop[i]) for i in range(len(cop))]
+                if len(self.axes) == 2 :
+                    if (ax//10+2)%3 == self.axes[0] or (ax//10+1)%3 == self.axes[1] :
+                        return np.array(cop).reshape(order[(ax//10+2)%3], order[(ax//10+1)%3])
+                    else: return np.array(cop).reshape(order[(ax//10+1)%3], order[(ax//10+2)%3])
+                return np.array(cop)
+        
+    return np.array(())</code></pre>
+</details>
+</dd>
+<dt id="ES.ESObs.ESSetResult.triAxe"><code class="name flex">
+<span>def <span class="ident">triAxe</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def triAxe(self):
+    self.axes.sort()
+    if len(self.axes) == 2 and self.axes[0] != 0 and self.axes[1] &gt; 9 : 
+        (self.axes[0], self.axes[1]) = (self.axes[1], self.axes[0])</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ES.ESObs.Location"><code class="flex name class">
+<span>class <span class="ident">Location</span></span>
+<span>(</span><span>pObs=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Location(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.boxMin = LocationValue()
+        self.boxMax = LocationValue()
+        self.classES = ES.loc_classES</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="ES.ESObs.ESSetLocation" href="#ES.ESObs.ESSetLocation">ESSetLocation</a></li>
+</ul>
+</dd>
+<dt id="ES.ESObs.Property"><code class="flex name class">
+<span>class <span class="ident">Property</span></span>
+<span>(</span><span>pObs=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Property(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.classES = ES.prp_classES</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="ES.ESObs.ESSetProperty" href="#ES.ESObs.ESSetProperty">ESSetProperty</a></li>
+</ul>
+</dd>
+<dt id="ES.ESObs.Result"><code class="flex name class">
+<span>class <span class="ident">Result</span></span>
+<span>(</span><span>pObs=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Classe liée à la structure interne</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Result(ESObs):
+    &#34;&#34;&#34;
+    Classe liée à la structure interne
+    &#34;&#34;&#34;
+    def __init__(self, pObs=None):
+        ESObs.__init__(self, pObs)
+        self.classES = ES.res_classES
+        self.error = True
+        self.nInd = [0,0,0]
+        self.measureRate = 0.0
+        #self.samplingRate = 0.0
+        #self.nEch = 0
+        self.dim = -1
+        self.axes = []
+        self.nMax = 1</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>ESElement.ESObs</li>
+<li>ESElement.ESElement</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="ES.ESObs.ESSetResult" href="#ES.ESObs.ESSetResult">ESSetResult</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="ES" href="index.html">ES</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="ES.ESObs.Datation" href="#ES.ESObs.Datation">Datation</a></code></h4>
+</li>
+<li>
+<h4><code><a title="ES.ESObs.ESSetDatation" href="#ES.ESObs.ESSetDatation">ESSetDatation</a></code></h4>
+<ul class="">
+<li><code><a title="ES.ESObs.ESSetDatation.analyse" href="#ES.ESObs.ESSetDatation.analyse">analyse</a></code></li>
+<li><code><a title="ES.ESObs.ESSetDatation.json" href="#ES.ESObs.ESSetDatation.json">json</a></code></li>
+<li><code><a title="ES.ESObs.ESSetDatation.to_numpy" href="#ES.ESObs.ESSetDatation.to_numpy">to_numpy</a></code></li>
+<li><code><a title="ES.ESObs.ESSetDatation.vListInstant" href="#ES.ESObs.ESSetDatation.vListInstant">vListInstant</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ES.ESObs.ESSetLocation" href="#ES.ESObs.ESSetLocation">ESSetLocation</a></code></h4>
+<ul class="">
+<li><code><a title="ES.ESObs.ESSetLocation.analyse" href="#ES.ESObs.ESSetLocation.analyse">analyse</a></code></li>
+<li><code><a title="ES.ESObs.ESSetLocation.json" href="#ES.ESObs.ESSetLocation.json">json</a></code></li>
+<li><code><a title="ES.ESObs.ESSetLocation.to_numpy" href="#ES.ESObs.ESSetLocation.to_numpy">to_numpy</a></code></li>
+<li><code><a title="ES.ESObs.ESSetLocation.vListPoint" href="#ES.ESObs.ESSetLocation.vListPoint">vListPoint</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ES.ESObs.ESSetProperty" href="#ES.ESObs.ESSetProperty">ESSetProperty</a></code></h4>
+<ul class="">
+<li><code><a title="ES.ESObs.ESSetProperty.json" href="#ES.ESObs.ESSetProperty.json">json</a></code></li>
+<li><code><a title="ES.ESObs.ESSetProperty.to_numpy" href="#ES.ESObs.ESSetProperty.to_numpy">to_numpy</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ES.ESObs.ESSetResult" href="#ES.ESObs.ESSetResult">ESSetResult</a></code></h4>
+<ul class="two-column">
+<li><code><a title="ES.ESObs.ESSetResult.analyse" href="#ES.ESObs.ESSetResult.analyse">analyse</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.full" href="#ES.ESObs.ESSetResult.full">full</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.getMaxIndex" href="#ES.ESObs.ESSetResult.getMaxIndex">getMaxIndex</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.isIndex" href="#ES.ESObs.ESSetResult.isIndex">isIndex</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.json" href="#ES.ESObs.ESSetResult.json">json</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.majIndex" href="#ES.ESObs.ESSetResult.majIndex">majIndex</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.resetIndexRes" href="#ES.ESObs.ESSetResult.resetIndexRes">resetIndexRes</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.to_numpy" href="#ES.ESObs.ESSetResult.to_numpy">to_numpy</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.triAxe" href="#ES.ESObs.ESSetResult.triAxe">triAxe</a></code></li>
+<li><code><a title="ES.ESObs.ESSetResult.vListIndex" href="#ES.ESObs.ESSetResult.vListIndex">vListIndex</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ES.ESObs.Location" href="#ES.ESObs.Location">Location</a></code></h4>
+</li>
+<li>
+<h4><code><a title="ES.ESObs.Property" href="#ES.ESObs.Property">Property</a></code></h4>
+</li>
+<li>
+<h4><code><a title="ES.ESObs.Result" href="#ES.ESObs.Result">Result</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
