@@ -2,11 +2,16 @@
 """
 Created on Sun Aug  1 13:24:02 2021
 
-@author: a179227
+@author: philippe@loco-labs.io
+
+This module contains the parent classes of the classes of the `ES.ESObs` and
+`ES.ESObservation` modules.
 """
 import json
 from datetime import datetime
 from ESconstante import ES, mTypeAtt, mValObs
+#from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
+#from ESObs import Datation, Location, Property, Result
 
 def isESObs(esClass, jObj):
     for key, value in jObj.items():
@@ -114,7 +119,7 @@ class ESObject(ESElement):
         
 class ESObs(ESElement):
     """
-    Classe liée à la structure interne
+    Classe mère des objets Datation, Location et Property.
     """
     def __init__(self, pObs=None):
         ESElement.__init__(self)

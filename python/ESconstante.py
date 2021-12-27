@@ -2,15 +2,19 @@
 """
 Created on Sun Aug  1 13:35:28 2021
 
-@author: a179227
+@author: philippe@loco-labs.io
+
+This module describes the constants and default values used in other modules.
 """
 from datetime import datetime
+
 
 class Es:
     pass
 
 def inv(mp)     : return dict(zip(mp.values(), mp.keys()))
 def invnum(mp)  : return dict(zip([k[0] for k in list(mp.values())], mp.keys()))
+def identity(x) : return x
 
 
 ES = Es()
@@ -251,7 +255,7 @@ ES.application = { 'null'                       : 0,
                'barometric elevation source'    : 7}
 ES.invApplication = inv(ES.application)
 
-ES.axes = { 0  :    'dat',   # axes : [0,1,2], [0,21], [2, 10], [1, 20]
+ES.axes = { 0  :  'dat',   # axes : [0,1,2], [0,21], [2, 10], [1, 20]
             1  :	'loc',   #        [0, 1],  [0, 2], [1, 2], [120]
             2  :	'prp',
             10 :	'datloc',
@@ -259,3 +263,16 @@ ES.axes = { 0  :    'dat',   # axes : [0,1,2], [0,21], [2, 10], [1, 20]
             21 :	'locprp',
             120:	'datlocprp'}
 
+ES.nax = {'dat' : 0, 'loc' : 1, 'prp' : 2}
+
+ES.attrs = { 'loc'      : 'loc',
+             'locstr'      : 'loc',
+             'loclon'      : 'loc',
+             'loclat'      : 'loc',
+             'loc'      : 'loc',}
+
+ES.xattrs = {'lon' : {"units":"degrees",   "standard_name":"longitude"},
+             'lat' : {"units":"degrees",   "standard_name":"latitude"},
+             'loc' : {"units":"lon, lat",  "standard_name":"longitude - latitude"},
+             'dat' : {                     "standard_name":"horodatage"},
+             'prp' : {                     "standard_name":"property"}}

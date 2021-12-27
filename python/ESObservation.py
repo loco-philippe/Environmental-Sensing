@@ -2,12 +2,18 @@
 """
 Created on Tue Aug  3 23:40:06 2021
 
-@author: a179227
+@author: Philippe@loco-labs.io
+
+
+
+The `ES.ESObservation` module contains the main class
+of Environmental Sensing : `ES.ESObservation.Observation` class.
+
 """
 from ESObs import ESSetDatation, ESSetLocation, ESSetProperty, ESSetResult
 from ESElement import ESObject, isESObs, isESAtt, isUserAtt
-from ESconstante import ES
-from ESComponent import LocationValue, DatationValue, PropertyValue, \
+from ESconstante import ES, identity
+from ESValue import LocationValue, DatationValue, PropertyValue, \
     ResultValue, gshape
 from shapely.geometry import shape
 import json, folium, struct
@@ -18,15 +24,19 @@ import matplotlib.pyplot as plt
 
 class Observation(ESObject):
     """
-    Classe liée à la structure interne
+    An `ES.ESObservation.Observation` is made up of objects from the `ES.ESObs` class
+     which each describe a dimension of this object.
     """
     def __init__(self, jso = {}, order = 'dlp'):
-        #print('coucou')
         ESObject.__init__(self)
         self.option = ES.mOption.copy()
         self.mAtt[ES.obs_reference] = 0
+        ''' Attribut décrivant une `Observation` de référence utilisée pour compléter l'Observation actuelle.'''
         self.score = -1
+        ''' Nature de l'assemblage des différents composants. Par exemple 122 
+        indique qu'il s'agit d'une mesure unique sur un trajet'''
         self.complet = False
+        ''' True si le nombre de résultats est cohérent avec le nombre d'objets de type Location, Datation et Property.'''
         self.mAtt[ES.obs_resultTime] = "null"
         self.classES = ES.obs_classES
         self.typeES = ES.obs_typeES
@@ -54,6 +64,7 @@ class Observation(ESObject):
         self.majType(order)
 
     def addAttributes(self, js):
+        '''Ajout d'attributs à une Observation'''
         if type(js) != dict: return
         for k, v in js.items():
             if isESAtt(ES.obs_classES, k) or isUserAtt(k): self.mAtt[k] = v
@@ -63,6 +74,7 @@ class Observation(ESObject):
 
     @property
     def bounds(self):
+        '''boîte englobante de l'Observation'''
         if self.setLocation : return shape(self).bounds
         else : return None
 
@@ -93,6 +105,7 @@ class Observation(ESObject):
             
     @property
     def setLocation(self):  return self.element(ES.loc_classES)
+    ''' Objet `setLocation`s'il existe, None sinon.'''
     @property
     def setDatation(self):  return self.element(ES.dat_classES)
     @property
@@ -187,22 +200,17 @@ class Observation(ESObject):
         return self.addValueObservation(val, self.addValue(tim), self.addValue(coor), nprp)
 
     def json(self): 
+        ''' Export de l'Observation sou s la forme dune chaîne de caractères au format JSON'''
         if self.option["json_elt_type"]: option_type = 1
         else: option_type = 0
         js =""
+        '''variable interne retournée'''
         if self.option["json_obs_val"]: js = "{"
         js += '"' + ES.type +'":"' + ES.obs_classES +'",'
         if self.mAtt[ES.obs_id] != "null": js += '"' + ES.obs_id + '":"' + self.mAtt[ES.obs_id] + '",'
         if self.option["json_obs_attrib"]: js += '"' + ES.obs_attributes + '":{'
         js += self.jsonAtt(option_type)
-        '''lInd = [[], [], [], []]
-        if self.setDatation != None : lInd[0] = self.setDatation.iSort
-        if self.setLocation != None : lInd[1] = self.setLocation.iSort
-        if self.setProperty != None : lInd[2] = self.setProperty.iSort
-        if self.setResult   != None : lInd[3] = self.setResult.iSort'''
         for cp in self.pComposant:
-            #js += cp.json(self.option["json_ESobs_class"], self.option["json_elt_type"], self.option["json_res_index"])
-            #js += cp.json(self.option, lInd)
             js += cp.json(self.option)
             if js[-1] != ',': js += ","
         if self.option["json_param"] and self.parameter != "null": 
@@ -285,14 +293,10 @@ class Observation(ESObject):
                 dcinf[ES.json_type_res] = self.setResult.mAtt[ES.type]
 
     def jsonInfoNval(self, dcinf):
-        if self.setLocation != None :
-            dcinf[ES.json_nval_loc] = self.setLocation.nValue
-        if self.setDatation != None :
-            dcinf[ES.json_nval_dat] = self.setDatation.nValue
-        if self.setProperty != None :
-            dcinf[ES.json_nval_prp] = self.setProperty.nValue
-        if self.setResult != None :
-            dcinf[ES.json_nval_res] = self.setResult.nValue
+        if self.setLocation != None : dcinf[ES.json_nval_loc] = self.setLocation.nValue
+        if self.setDatation != None : dcinf[ES.json_nval_dat] = self.setDatation.nValue
+        if self.setProperty != None : dcinf[ES.json_nval_prp] = self.setProperty.nValue
+        if self.setResult   != None : dcinf[ES.json_nval_res] = self.setResult.nValue
 
     def jsonInfoBox(self, dcinf):
         if self.setLocation != None :
@@ -312,17 +316,17 @@ class Observation(ESObject):
 
     def jsonInfo(self, types, nval, box, autre):
         dcinf = dict()
-        if types : self.jsonInfoTypes(dcinf)
-        if nval : self.jsonInfoNval(dcinf)
-        if box : self.jsonInfoBox(dcinf)
-        if autre: self.jsonInfoAutre(dcinf)
+        if types :  self.jsonInfoTypes(dcinf)
+        if nval :   self.jsonInfoNval(dcinf)
+        if box :    self.jsonInfoBox(dcinf)
+        if autre:   self.jsonInfoAutre(dcinf)
         ldel =[]
         for k,v in dcinf.items() :
-            if type(v) == str and (v == "null" or v ==''): ldel.append(k)
-            if type(v) == list and v == ES.nullCoor: ldel.append(k) 
-        for k in ldel : del dcinf[k]
-        if len(dcinf) == 0 : return ""
-        else : return '"' +ES.information + '":' + json.dumps(dcinf)
+            if type(v) == str and (v == "null" or v =='')   : ldel.append(k)
+            if type(v) == list and v == ES.nullCoor         : ldel.append(k) 
+        for k in ldel :         del dcinf[k]
+        if len(dcinf) == 0 :    return ""
+        else :                  return '"' +ES.information + '":' + json.dumps(dcinf)
 
     def nValueObs(self):
         nPrp = nDat = nLoc = nRes = 0
@@ -365,8 +369,13 @@ class Observation(ESObject):
         if self.score == 222 and self.setResult.dim == 2 and 1 in self.setResult.axes:	self.score = 226
         if self.score == 222 and self.setResult.dim == 2 and 0 in self.setResult.axes:	self.score = 227
         self.mAtt[ES.type] = ES.obsCat[self.score]
+
+    @staticmethod
+    def sortAlign(npInd, list1, ind1, ind2):
+        return [npInd[list(npInd[:,ind1]).index(i),:][ind2]  for i in list1]    
         
-    def sort(self, order = [0, 1, 2], cross = True, sort = [[], [], []]):        
+    def sort(self, order = [0, 1, 2], cross = True, sort = [[], [], []]):  
+        if self.setResult == None or not self.setResult.isIndex() : return
         tr = tri = [[], [], []]
         for i in range(3) : tri[i] = self.sortSet(i, sort[i], False)
         npInd = np.array(self.setResult.vListIndex)
@@ -385,16 +394,10 @@ class Observation(ESObject):
         resTri = self.setResult.sort()
     
     def sortSet(self, ax, tri = [], update = True):
-        '''if ax == 0 : tr = self.setDatation.sort(tri, update)
-        if ax == 1 : tr = self.setLocation.sort(tri, update)
-        if ax == 2 : tr = self.setProperty.sort(tri, update)
-        return tr'''
-        if ax == 0 : return self.setDatation.sort(tri, update)
-        if ax == 1 : return self.setLocation.sort(tri, update)
-        if ax == 2 : return self.setProperty.sort(tri, update)
-
-    def sortAlign(self, npInd, list1, ind1, ind2):
-        return [npInd[list(npInd[:,ind1]).index(i),:][ind2]  for i in list1]    
+        if ax == 0 and self.setDatation != None : return self.setDatation.sort(tri, update)
+        if ax == 1 and self.setLocation != None : return self.setLocation.sort(tri, update)
+        if ax == 2 and self.setProperty != None : return self.setProperty.sort(tri, update)
+        return [0]
     
     def majType(self, order = 'dlp'):
         [nprp, ndat, nloc, nRes] = self.nValueObs()
@@ -416,131 +419,108 @@ class Observation(ESObject):
             self.complet = nRes == nLoc == nDat == nPrp
         
         if self.complet: self.setResult.majIndex(nRes, nPrp, nDat, nLoc, order)
-        if self.setResult   != None: self.setResult.analyse()
+        if self.setResult   != None: self.setResult.  analyse()
         if self.setLocation != None: self.setLocation.analyse()
         if self.setDatation != None: self.setDatation.analyse()
         self.typeObs()
 
     def xlist(self):
-        [nPrp, nDat, nLoc, nRes] = self.nValueObs()
         xList = {}
-        xList['loc'] = xList['dat'] = xList['prp'] = xList['res'] = list()
-        xList['res']    = self.setResult.valueList
-        if self.setLocation != None: xList['loc'] = [val.shap for val in self.setLocation.valueList]
-        #if self.setLocation != None: xList['loc'] = self.setLocation.vListPoint
-        #if self.setDatation != None: xList['dat'] = [val.instant for val in self.setDatation.valueList]
-        if self.setDatation != None: xList['dat'] = self.setDatation.vListInstant
-        if self.setProperty != None: xList['prp'] = self.setProperty.valueList
-        xList['lon']    = [geo.centroid.x for geo in xList['loc']]
-        xList['lat']    = [geo.centroid.y for geo in xList['loc']]
-        #xList['lon']    = [geo[0] for geo in xList['loc']]
-        #xList['lat']    = [geo[1] for geo in xList['loc']]
-        xList['locstr'] = [json.dumps(geo.shap.__geo_interface__) for geo in self.setLocation.valueList]
-        #xList['datstr'] = [dat.isoformat() for dat in xList['dat']]
-        #if xList['datstr'] == []: xList['datlocstr'] = xList['locstr']
-        #elif xList['locstr'] == []: xList['datlocstr'] = xList['datstr']
-        #else : xList['datlocstr'] = [xList['datstr'][min(i, nDat-1)] + xList['locstr'][min(i, nLoc-1)] 
-                                     #for i in range(max(nDat, nLoc))]
-        xList['prpstr'] = [pr.json(ES.mOption) for pr in xList['prp']]
-        xList['resvalue'] = [res.value for res in xList['res']]
+        if self.setLocation != None: 
+            xList['loc']    = self.setLocation.to_numpy()
+            xList['locstr'] = self.setLocation.to_numpy(func = LocationValue.json)
+            xList['loclon'] = self.setLocation.to_numpy(func = LocationValue.vPointX)
+            xList['loclat'] = self.setLocation.to_numpy(func = LocationValue.vPointY)
+            xList['locnam'] = self.setLocation.to_numpy(func = LocationValue.vName)
+            xList['locran'] = np.arange(len(xList['loc']))
+        if self.setDatation != None: 
+            xList['dat']    = self.setDatation.to_numpy()
+            xList['datstr'] = self.setDatation.to_numpy(func = DatationValue.json)
+            xList['datnam'] = self.setDatation.to_numpy(func = DatationValue.vName)
+            xList['datran'] = np.arange(len(xList['dat']))
+        if self.setProperty != None: 
+            xList['prp']    = self.setProperty.to_numpy()
+            xList['prpstr'] = self.setProperty.to_numpy(func = PropertyValue.json)
+            xList['prpnam'] = self.setProperty.to_numpy(func = PropertyValue.vName)
+            xList['prpran'] = np.arange(len(xList['prp']))
+        if self.setResult  != None: 
+            xList['res']    = self.setResult.to_numpy()
+            xList['resval'] = self.setResult.to_numpy(func = ResultValue.to_float)
+            xList['resstr'] = self.setResult.to_numpy(func = ResultValue.json)
+            xList['resnam'] = self.setResult.to_numpy(func = ResultValue.vName)
+            xList['resran'] = np.arange(len(xList['res']))
         return xList
-    
+
     def xAttrs(self) :
-        attrs = {}
-        attrs['lon']    = {"units":"degrees",   "standard_name":"longitude"}
-        attrs['lat']    = {"units":"degrees",   "standard_name":"latitude"}
-        attrs['latlon'] = {"units":"lat, lon",  "standard_name":"latitude - longitude"}
-        attrs['dat']    = {                     "standard_name":"horodatage"}
-        attrs['prp']    = {                     "standard_name":"property"}
-        #attrs['datloc'] = {                     "standard_name":"Time - latitude - longitude"}
+        attrs = ES.xattrs
         attrs['info']   = json.loads("{" + self.jsonInfo(True, False, True, False) + "}")["information"]
         return attrs
 
-    def xCoord(self, xList, attrs, dataArray) :
-        [nPrp, nDat, nLoc, nRes] = self.nValueObs()
-        nDatLoc = max(nDat, nLoc)
+    def axeCoor(self, nValAxe) :
+        for ax in self.setResult.axes :
+            if ax > 100 : return ax
+            if ax < 9 and nValAxe == ax : return ax
+            elif ax > 9 and (nValAxe == ax//10 or nValAxe == ax%10) : return ax
+        return None
+    
+    def xCoord(self, xList, attrs, dataArray, complet, numeric) :
+        #nax = {'dat' : 0, 'loc' : 1, 'prp' : 2}
         coord = {}
-        coord["prp"]            = (["prp"], xList['prp']        , attrs['prp'])
-        coord["prpstr"]         = (["prp"], xList['prpstr']     , attrs['prp'])
-        if self.setResult.dim == 1: 
-            coord["datloc"]      = (["datloc"], np.arange(nDatLoc))
-            coord["point"]      = (["datloc"], np.arange(nDatLoc))
-            #coord["datloc"]     = (["datloc"], xList['datlocstr'], attrs['datloc'])
-            if nLoc == nDatLoc:
-                coord["lon"]    = (["datloc"], xList['lon']     , attrs['lon'])
-                coord["lat"]    = (["datloc"], xList['lat']     , attrs['lat'])
-                coord["geometry"] = (["datloc"], xList['loc']   , attrs['latlon'])
-                coord["locstr"] = (["datloc"], xList['locstr']  , attrs['latlon'])
-            if nDat == nDatLoc:
-                coord["dat"]    = (["datloc"], xList['dat']     , attrs['dat'])
-                #coord["datstr"] = (["datloc"], xList['datstr']  , attrs['dat'])
-            if dataArray:
-                ranking = np.arange(nDatLoc * nPrp).reshape(nDatLoc, nPrp)
-                coord["ranking"] = (["datloc", "prp"]           , ranking)
-            else :
-                ranking = np.arange(nDatLoc)
-                coord["ranking"] = (["datloc"], ranking)
-                coord.pop('prp')
-                coord.pop('prpstr')
-        else : 
-            coord["geometry"]   = (["loc"], xList['loc']    , attrs['latlon'])
-            coord["loc"]        = (["loc"], np.arange(nLoc))
-            coord["lon"]        = (["loc"], xList['lon']    , attrs['lon'])
-            coord["lat"]        = (["loc"], xList['lat']    , attrs['lat'])
-            coord["locstr"]     = (["loc"], xList['locstr'] , attrs['latlon'])
-            coord["dat"]        = (["dat"], xList['dat']    , attrs['dat'])
-            coord["datstr"]     = (["dat"], xList['datstr'] , attrs['dat'])
-            if dataArray :
-                ranking = np.arange(nDat * nLoc * nPrp).reshape(nDat, nLoc, nPrp)
-                coord["ranking"] = (["dat", "loc", "prp"]   , ranking)
-            else :
-                ranking = np.arange(nDat * nLoc).reshape(nDat, nLoc)
-                coord["ranking"] = (["dat", "loc"], ranking)
-                coord.pop('prp')
-                coord.pop('prpstr')
+        for key, val in xList.items() :
+            if key[:3] != 'res' and self.axeCoor(ES.nax[key[:3]]) != None \
+                and (complet or (not complet and len(key) == 3)):
+                coord[key] = ([ES.axes[self.axeCoor(ES.nax[key[:3]])]], val, attrs[key[:3]])
+                if key == 'loclon' : coord[key] = (coord[key][0], val, attrs['lon'])
+                if key == 'loclat' : coord[key] = (coord[key][0], val, attrs['lat'])
+        for ax in self.setResult.axes :
+            if ax > 9 :
+                le = len(xList[ES.axes[ax%10]])
+                coord[ES.axes[ax]] = ([ES.axes[ax]], np.arange(le))
+                if ax > 100 : lis = [str(xList['datstr'][i]) + xList['locstr'][i] + 
+                                     xList['prpstr'][i] for i in range(le)]
+                else : lis = [str(xList[ES.axes[ax%10]+'str'][i]) + 
+                              str(xList[ES.axes[ax//10]+'str'][i]) for i in range(le)]
+                coord[ES.axes[ax]+'str'] = ([ES.axes[ax]], lis)
+        if numeric :
+            if 'loc' in coord.keys() : coord['loc'] = (coord['loc'][0], xList['locran'], coord['loc'][2])
+            if 'dat' in coord.keys() : coord['dat'] = (coord['dat'][0], xList['datstr'], coord['dat'][2])
+            if 'prp' in coord.keys() : coord['prp'] = (coord['prp'][0], xList['prpran'], coord['prp'][2])
         return coord
     
-    def to_xarray(self, dataArray = True):
-        if self.setResult == None: return None
+
+    def to_xarray(self, dataArray = True, complet = False, info = False, numeric = False):
+        if self.setResult.getMaxIndex() == -1 : return None
+        self.sort()
         xList = self.xlist()
-        [nPrp, nDat, nLoc, nRes] = self.nValueObs()
-        nDatLoc = max(nDat, nLoc)
         attrs = self.xAttrs()
-        coord = self.xCoord(xList, attrs, dataArray)
-        
-        if self.setResult.dim == 1 :
-            value = np.array(xList['resvalue']).reshape(nDatLoc, nPrp)
-            if dataArray :
-                return xr.DataArray(data=value, dims=["datloc", "prp"],
-                                    coords=coord, attrs=attrs['info'])
-            else :
-                datas ={}
-                for i in range(nPrp):
-                    prp = json.loads(xList['prp'][i].json(ES.mOption))
-                    datas[prp[ES.prp_propType]] = (["datloc"], value[:,i])
-                return xr.Dataset(data_vars=datas, coords=coord, attrs=attrs['info'])
-        elif self.setResult.dim == 2 :
-            value = np.array(xList['resvalue']).reshape(nDat, nLoc, nPrp)
-            if dataArray :
-                return xr.DataArray(data=value, dims=["dat", "loc", "prp"],
-                                    coords=coord, attrs=attrs['info'])    
-            else :
-                datas ={}
-                for i in range(nPrp):
-                    prp = json.loads(xList['prp'][i].json(ES.mOption))
-                    datas[prp[ES.prp_propType]] = (["dat","loc"], value[:,:,i], 
-                                                  {"units": prp["unit"]})
-                return xr.Dataset(data_vars = datas, coords =  coord, attrs =  attrs['info'])
-        else : return None
+        coord = self.xCoord(xList, attrs, dataArray, complet, numeric = False)
+        self.setResult.triAxe()
+        dims = [ES.axes[ax] for ax in self.setResult.axes]
+        if numeric  : xres = xList['resval']
+        else        : xres = xList['res']
+        if dataArray and info :
+            return xr.DataArray(xres, coord, dims, attrs=attrs['info'])
+        elif dataArray and not info :
+            return xr.DataArray(xres, coord, dims)
+        return None
     
-    def plot(self):    
-        if self.setResult.dim == 1 :
-            obx = self.to_xarray().set_index(timeloc="point", prop = "prpstr")
-            if 'dat' in obx.coords: obx.sortby(['dat']).plot.line(x = 'dat')
-            else : obx.plot.line(x='point')
-            obg = self.to_geoDataFrame()
-            for i in range(len(self.setProperty)): obg.plot(obg.columns.array[i], legend=True)
-        elif self.setResult.dim == 2:
+    def plot(self, switch = False, method = 'line'):    
+        if self.setResult.getMaxIndex() == -1 : return
+        obx = self.to_xarray(numeric = True, complet=True)
+        if len(obx.dims) == 2:
+            order = (0,1)
+            if switch : (order[0], order[1]) = (order[1], order[0])
+            if method == 'line' :
+                obx.plot.line(x=obx.dims[order[0]]+'str', hue=obx.dims[order[1]]+'str')
+            elif method == 'pcolormesh' : 
+                ext = ['', '']
+                for i in (0,1):
+                    if obx.dims[i] == 'dat' : ext[i] = 'str'
+                    elif str(obx.coords[obx.dims[i]].dtype)[0] != 'i': ext[i] = 'ran'
+                obx.plot(x=obx.dims[order[0]]+ext[order[0]], y=obx.dims[order[1]]+ext[order[1]])
+            #τobg = self.to_geoDataFrame()
+            #for i in range(len(self.setProperty)): obg.plot(obg.columns.array[i], legend=True)
+        elif self.setResult.dim == 3:
             obx = self.to_xarray().set_index(prop = "prpstr")
             obx.sortby(["dat", "loc", "prp"]).plot(x="dat", y="loc", col="prp", col_wrap=2, size=5)
             obx.sortby(["dat", "loc", "prp"]).plot.line(    x="dat", col="prp", col_wrap=2, size=5)
@@ -630,3 +610,150 @@ class Observation(ESObject):
         if self.setProperty != None: nPrp = self.setProperty.nValue
         return [nPrp, nDat, nLoc, nEch, nRes]'''
     
+    '''for ax in self.axes :
+            coord[ES.axes[ax]]=([ES.axes[ax]], )
+        
+        
+        [nPrp, nDat, nLoc, nRes] = self.nValueObs()
+        nDatLoc = max(nDat, nLoc)
+        coord = {}
+        coord["prp"]            = (["prp"], xList['prp']        , attrs['prp'])
+        coord["prpstr"]         = (["prp"], xList['prpstr']     , attrs['prp'])
+        if self.setResult.dim == 1: 
+            coord["datloc"]      = (["datloc"], np.arange(nDatLoc))
+            coord["point"]      = (["datloc"], np.arange(nDatLoc))
+            #coord["datloc"]     = (["datloc"], xList['datlocstr'], attrs['datloc'])
+            if nLoc == nDatLoc:
+                coord["lon"]    = (["datloc"], xList['lon']     , attrs['lon'])
+                coord["lat"]    = (["datloc"], xList['lat']     , attrs['lat'])
+                coord["geometry"] = (["datloc"], xList['loc']   , attrs['loc'])
+                coord["locstr"] = (["datloc"], xList['locstr']  , attrs['loc'])
+            if nDat == nDatLoc:
+                coord["dat"]    = (["datloc"], xList['dat']     , attrs['dat'])
+                #coord["datstr"] = (["datloc"], xList['datstr']  , attrs['dat'])
+            if dataArray:
+                ranking = np.arange(nDatLoc * nPrp).reshape(nDatLoc, nPrp)
+                coord["ranking"] = (["datloc", "prp"]           , ranking)
+            else :
+                ranking = np.arange(nDatLoc)
+                coord["ranking"] = (["datloc"], ranking)
+                coord.pop('prp')
+                coord.pop('prpstr')
+        else : 
+            coord["geometry"]   = (["loc"], xList['loc']    , attrs['loc'])
+            coord["loc"]        = (["loc"], np.arange(nLoc))
+            coord["lon"]        = (["loc"], xList['lon']    , attrs['lon'])
+            coord["lat"]        = (["loc"], xList['lat']    , attrs['lat'])
+            coord["locstr"]     = (["loc"], xList['locstr'] , attrs['loc'])
+            coord["dat"]        = (["dat"], xList['dat']    , attrs['dat'])
+            coord["datstr"]     = (["dat"], xList['datstr'] , attrs['dat'])
+            if dataArray :
+                ranking = np.arange(nDat * nLoc * nPrp).reshape(nDat, nLoc, nPrp)
+                coord["ranking"] = (["dat", "loc", "prp"]   , ranking)
+            else :
+                ranking = np.arange(nDat * nLoc).reshape(nDat, nLoc)
+                coord["ranking"] = (["dat", "loc"], ranking)
+                coord.pop('prp')
+                coord.pop('prpstr')
+        return coord'''
+
+    '''
+        [nPrp, nDat, nLoc, nRes] = self.nValueObs()
+        xList['loc'] = xList['dat'] = xList['prp'] = xList['res'] = list()
+        xList['res']    = self.setResult.valueList
+        if self.setLocation != None: xList['loc'] = [val.shap for val in self.setLocation.valueList]
+        #if self.setLocation != None: xList['loc'] = self.setLocation.vListPoint
+        #if self.setDatation != None: xList['dat'] = [val.instant for val in self.setDatation.valueList]
+        if self.setDatation != None: xList['dat'] = self.setDatation.vListInstant
+        if self.setProperty != None: xList['prp'] = self.setProperty.valueList
+        xList['lon']    = [geo.centroid.x for geo in xList['loc']]
+        xList['lat']    = [geo.centroid.y for geo in xList['loc']]
+        #xList['lon']    = [geo[0] for geo in xList['loc']]
+        #xList['lat']    = [geo[1] for geo in xList['loc']]
+        xList['locstr'] = [json.dumps(geo.shap.__geo_interface__) for geo in self.setLocation.valueList]
+        #xList['datstr'] = [dat.isoformat() for dat in xList['dat']]
+        #if xList['datstr'] == []: xList['datlocstr'] = xList['locstr']
+        #elif xList['locstr'] == []: xList['datlocstr'] = xList['datstr']
+        #else : xList['datlocstr'] = [xList['datstr'][min(i, nDat-1)] + xList['locstr'][min(i, nLoc-1)] 
+                                     #for i in range(max(nDat, nLoc))]
+        xList['prpstr'] = [pr.json(ES.mOption) for pr in xList['prp']]
+        xList['resvalue'] = [res.value for res in xList['res']]
+        '''    
+
+    '''def xCoord2(self, xList, attrs, dataArray) :
+        [nPrp, nDat, nLoc, nRes] = self.nValueObs()
+        nDatLoc = max(nDat, nLoc)
+        coord = {}
+        coord["prp"]            = (["prp"], xList['prp']        , attrs['prp'])
+        coord["prpstr"]         = (["prp"], xList['prpstr']     , attrs['prp'])
+        if self.setResult.dim == 1: 
+            coord["datloc"]      = (["datloc"], np.arange(nDatLoc))
+            coord["point"]      = (["datloc"], np.arange(nDatLoc))
+            #coord["datloc"]     = (["datloc"], xList['datlocstr'], attrs['datloc'])
+            if nLoc == nDatLoc:
+                coord["lon"]    = (["datloc"], xList['lon']     , attrs['lon'])
+                coord["lat"]    = (["datloc"], xList['lat']     , attrs['lat'])
+                coord["geometry"] = (["datloc"], xList['loc']   , attrs['loc'])
+                coord["locstr"] = (["datloc"], xList['locstr']  , attrs['loc'])
+            if nDat == nDatLoc:
+                coord["dat"]    = (["datloc"], xList['dat']     , attrs['dat'])
+                #coord["datstr"] = (["datloc"], xList['datstr']  , attrs['dat'])
+            if dataArray:
+                ranking = np.arange(nDatLoc * nPrp).reshape(nDatLoc, nPrp)
+                coord["ranking"] = (["datloc", "prp"]           , ranking)
+            else :
+                ranking = np.arange(nDatLoc)
+                coord["ranking"] = (["datloc"], ranking)
+                coord.pop('prp')
+                coord.pop('prpstr')
+        else : 
+            coord["geometry"]   = (["loc"], xList['loc']    , attrs['loc'])
+            coord["loc"]        = (["loc"], np.arange(nLoc))
+            coord["lon"]        = (["loc"], xList['lon']    , attrs['lon'])
+            coord["lat"]        = (["loc"], xList['lat']    , attrs['lat'])
+            coord["locstr"]     = (["loc"], xList['locstr'] , attrs['loc'])
+            coord["dat"]        = (["dat"], xList['dat']    , attrs['dat'])
+            coord["datstr"]     = (["dat"], xList['datstr'] , attrs['dat'])
+            if dataArray :
+                ranking = np.arange(nDat * nLoc * nPrp).reshape(nDat, nLoc, nPrp)
+                coord["ranking"] = (["dat", "loc", "prp"]   , ranking)
+            else :
+                ranking = np.arange(nDat * nLoc).reshape(nDat, nLoc)
+                coord["ranking"] = (["dat", "loc"], ranking)
+                coord.pop('prp')
+                coord.pop('prpstr')
+        return coord'''
+    
+        
+        
+    '''if self.setResult == None: return None
+        xList = self.xlist()
+        [nPrp, nDat, nLoc, nRes] = self.nValueObs()
+        nDatLoc = max(nDat, nLoc)
+        attrs = self.xAttrs()
+        coord = self.xCoord(xList, attrs, dataArray)
+        
+        if self.setResult.dim == 1 :
+            value = np.array(xList['resvalue']).reshape(nDatLoc, nPrp)
+            if dataArray :
+                return xr.DataArray(data=value, dims=["datloc", "prp"],
+                                    coords=coord, attrs=attrs['info'])
+            else :
+                datas ={}
+                for i in range(nPrp):
+                    prp = json.loads(xList['prp'][i].json(ES.mOption))
+                    datas[prp[ES.prp_propType]] = (["datloc"], value[:,i])
+                return xr.Dataset(data_vars=datas, coords=coord, attrs=attrs['info'])
+        elif self.setResult.dim == 2 :
+            value = np.array(xList['resvalue']).reshape(nDat, nLoc, nPrp)
+            if dataArray :
+                return xr.DataArray(data=value, dims=["dat", "loc", "prp"],
+                                    coords=coord, attrs=attrs['info'])    
+            else :
+                datas ={}
+                for i in range(nPrp):
+                    prp = json.loads(xList['prp'][i].json(ES.mOption))
+                    datas[prp[ES.prp_propType]] = (["dat","loc"], value[:,:,i], 
+                                                  {"units": prp["unit"]})
+                return xr.Dataset(data_vars = datas, coords =  coord, attrs =  attrs['info'])
+        else : return None'''

@@ -7,27 +7,21 @@ Created on Sun Aug  1 22:05:08 2021
 import unittest
 
 from ESElement import ESElement
-from ESComponent import ResultValue, LocationValue, DatationValue, PropertyValue, ESValue, gshape
+from ESValue import ResultValue, LocationValue, DatationValue, \
+    PropertyValue, ESValue, gshape, ESSet
 from ESObservation import Observation
-from ESObs import ESSet, ESSetDatation, ESSetProperty, ESSetResult, ESSetLocation
+from ESObs import ESSetDatation, ESSetProperty, ESSetResult, ESSetLocation
 from copy import copy
 from ESconstante import ES
 import json
 import requests as rq
 from datetime import datetime
 
-#import cartopy.crs as ccrs
-#import matplotlib.pyplot as plt
-#import folium
-#import geojson
-#import numpy as np
-#from shapely.geometry import Point, Polygon, MultiPoint, MultiPolygon, \
-#    asPoint, asPolygon, asMultiPoint, asMultiPolygon, shape
 
 # datas-----------------------------------------------------------------------
 def val_(n): return list(i for i in range(n))
 def res_(n): return (ES.res_valName[0], val_(n))
-with open('../json/france-geojson/departements-version-simplifiee.geojson') as f: 
+with open('C:\\Users\\a179227\\OneDrive - Alliance\\perso Wx\\ES standard\\python ESstandard\\departements-version-simplifiee.geojson') as f: 
     dp = f.read()
 dpt = json.loads(dp)
 pol13 = dpt['features'][12]['geometry']['coordinates']
@@ -320,7 +314,7 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob1.setDatation.vListName[0], 'date1')
         self.assertEqual(ob1.setDatation.vListName[1], 'dat1')
         self.assertEqual(ob1.setLocation.vListPoint, [paris, lyon, marseille])
-        self.assertEqual(ob1.setDatation.vListInstant, [t1.isoformat(), t2.isoformat(), t3.isoformat()])
+        self.assertEqual(ob1.setDatation.vListInstant, [t1, t2, t3])
         ob1 = Observation(dict((obs_1, truc_mach, dat3, dpt2)))
         self.assertEqual(ob1.setLocation.vListPoint[0], pol1centre)
 
@@ -481,7 +475,7 @@ class TestObservation(unittest.TestCase):
             self.assertTrue(ob.score == 222 and not ob.complet and ob.setResult.axes == [])
             ob = Observation(json.dumps(dict((obs_1, dat3, loc3, prop2, res_(6)))))
             majType_avec_option(ob, maj_index)
-            self.assertTrue(ob.score == 225 and ob.complet and ob.setResult.axes == [2, 10])
+            self.assertTrue(ob.score == 225 and ob.complet and ob.setResult.axes == [10, 2])
             #envoi_mongo(ob)
             #ob.option["json_res_index"] = True
             #print(ob.json(), '\n')
@@ -490,7 +484,7 @@ class TestObservation(unittest.TestCase):
         ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat2, loc3, prop3, res_(6)))),'xd')
         self.assertTrue(ob1.score == 227 and ob1.complet and ob1.setResult.axes == [0, 21])
         ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc2, prop3, res_(6)))),'lx')
-        self.assertTrue(ob1.score == 226 and ob1.complet and ob1.setResult.axes == [1, 20])
+        self.assertTrue(ob1.score == 226 and ob1.complet and ob1.setResult.axes == [20, 1])
         ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop3, res_(3)))),'x')
         self.assertTrue(ob1.score == 222 and ob1.complet and ob1.setResult.axes == [120])
 
@@ -639,12 +633,24 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(json.dumps(ob.__geo_interface__), 
                          json.dumps({"type": "MultiPolygon", "coordinates": dpt2[1]}))
         
+    def test_xarray(self):
+        ob = Observation(dict((obs_1, dat3, loc3, prop2, res_(6))), 'xp')
+        self.assertTrue(ob.to_xarray()[2,1].item() == ResultValue(2))
+        ob = Observation(dict((obs_1, dat3, loc3, prop1, res_(3))), 'xp')
+        self.assertTrue(ob.to_xarray()[1].item() == ResultValue(2))
+        ob = Observation(dict((obs_1, dat3, loc3, prop3, res_(3))), 'dlp')
+        self.assertTrue(ob.to_xarray()[1].item() == ResultValue(2))
+        ob = Observation(dict((obs_1, dat3, loc3, prop2, res_(18))), 'dlp')
+        self.assertTrue(ob.to_xarray()[2,1,0].item() == ResultValue(9))
+        ob = Observation(dict((obs_1, dat3, loc2, prop1, res_(6))), 'dlp')
+        self.assertTrue(ob.to_xarray()[2,0].item() == ResultValue(2))
+        
     def test_exports(self):
         ob = Observation(json.dumps(dict((obs_1, dat3, dpt3, prop1, res_(3)))), 'px')
         #ob.majType()
-        self.assertTrue(type(ob.to_xarray()) != type(None))
-        self.assertTrue(type(ob.to_dataFrame()) != type(None))
-        self.assertTrue(ob.choropleth() != None)
+        #self.assertTrue(type(ob.to_xarray()) != type(None))
+        #self.assertTrue(type(ob.to_dataFrame()) != type(None))
+        #self.assertTrue(ob.choropleth() != None)
         #self.assertTrue(type(ob.to_geoDataFrame()) != type(None))
         self.assertTrue(ob.jsonFeature != '')
 
