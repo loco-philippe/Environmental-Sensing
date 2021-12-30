@@ -9,7 +9,7 @@ An object of the `ES.ESObs` module is a component of an `ES.ESObservation.Observ
 
 from ESElement import ESObs
 #from ESElement import Datation, Location, Property, Result
-from ESconstante import ES, identity
+from ESconstante import ES #, identity
 from datetime import datetime
 from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
 import numpy as np
@@ -64,13 +64,17 @@ class ESSetDatation(ESSet, Datation):
     """
     Classe liée à la structure interne
     """
-    def __init__(self, pObs = None, jObj = None):
+    def __init__(self, jObj = None, pObs = None):
         Datation.__init__(self, pObs)
         self.typeES = ES.set_typeES
         self.mAtt[ES.type] = ES.dat_valueType
         self.initESSet(DatationValue, jObj)
         self.majMeta()
         pass
+
+    @property
+    def vListSlot(self):
+        return [val.vSlot() for val in self.valueList]
 
     @property
     def vListInstant(self):
@@ -84,7 +88,7 @@ class ESSetDatation(ESSet, Datation):
         else : dat_valName = ES.dat_valName[1]
         return self.jsonESSet(dat_valName, option)
 
-    def to_numpy(self, func=identity):
+    def to_numpy(self, func=ES._identity):
         datList = self.vList(func)
         if func != DatationValue.vName and (type(datList[0]) == str or
                                             type(datList[0]) == datetime) :
@@ -102,7 +106,11 @@ class ESSetLocation(ESSet, Location):
     """
     Classe liée à la structure interne
     """
-    def __init__(self, pObs = None, jObj = None):
+    def __init__(self, jObj = None, pObs = None):
+        '''if type(jObj) == ESSetLocation : 
+            self = jObj
+            Location.__init__(self, pObs)
+            return'''
         Location.__init__(self, pObs)
         self.typeES = ES.set_typeES
         self.mAtt[ES.type] = ES.loc_valueType
@@ -120,7 +128,11 @@ class ESSetLocation(ESSet, Location):
     def vListPoint(self):
         return [val.vPoint(self.observation.option) for val in self.valueList]
 
-    def to_numpy(self, func=identity):
+    @property
+    def vListShap(self):
+        return [val.vShap() for val in self.valueList]
+
+    def to_numpy(self, func=ES._identity):
         return np.array(self.vList(func))
     
     def analyse(self):
@@ -134,7 +146,7 @@ class ESSetProperty(ESSet, Property):
     """
     Classe liée à la structure interne
     """
-    def __init__(self, pObs = None, jObj = None):
+    def __init__(self, jObj = None, pObs = None):
         Property.__init__(self, pObs)
         self.typeES = ES.set_typeES
         self.mAtt[ES.type] = ES.prp_valueType
@@ -148,7 +160,7 @@ class ESSetProperty(ESSet, Property):
         else : prp_valName = ES.prp_valName[1]
         return self.jsonESSet(prp_valName, option)
 
-    def to_numpy(self, func=identity):
+    def to_numpy(self, func=ES._identity):
         return np.array(self.vList(func))
     
 
@@ -156,7 +168,7 @@ class ESSetResult(ESSet, Result):
     """
     Classe liée à la structure interne
     """
-    def __init__(self, pObs = None, jObj = None):
+    def __init__(self, jObj = None, pObs = None):
         Result.__init__(self, pObs)
         self.typeES = ES.set_typeES
         self.mAtt[ES.type] = ES.res_valueType
@@ -172,13 +184,15 @@ class ESSetResult(ESSet, Result):
         return [val.ind for val in self.valueList]
 
     def full(self, maj=True):
-        [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+        [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
         resComp = np.ones((nDat, nLoc, nPrp))
         for res in self.valueList: resComp[tuple(res.ind)] = 0
         nz = np.nonzero(resComp)
         full = copy.copy(self.valueList)
         if maj :
-            for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : self.addValue(ResultValue, ResultValue(ind=list(t)))
+            #for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : self.addValue(ResultValue, ResultValue(ind=list(t)))
+            for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : 
+                self.addValue(ResultValue, ResultValue(ind=[int(t[0]),int(t[1]),int(t[2])]))
             self.observation.majType(order='dlp')
             return []
         else :
@@ -186,11 +200,11 @@ class ESSetResult(ESSet, Result):
             for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : full.append(ResultValue(ind=list(t)))
             return full
             
-    def to_numpy(self, func=identity, ind='axe'):
+    def to_numpy(self, func=ES._identity, ind='axe'):
         if type(ind) == str and ind == 'flat' : return np.array(self.vList(func))
         #elif type(ind) == str and (ind == 'obs' or (ind == 'axe' and len(self.axes) == 3 )) :
         elif type(ind) == str and (ind == 'obs' or (ind == 'axe' and max(self.axes) < 9 )) :
-            [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+            [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
             listFull = self.full(False)
             listInd = sorted(list(zip(listFull, list(range(len(listFull))))))
             fullTri, indTri = zip(*listInd)
@@ -200,7 +214,7 @@ class ESSetResult(ESSet, Result):
             for ax in self.axes :
                 if ax > 100 : return np.array(self.vList(func))
                 elif ax > 9 :
-                    [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs()
+                    [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
                     order = [nDat, nLoc, nPrp]
                     cop = copy.deepcopy(self.valueList)   
                     #cop = self.vList()   

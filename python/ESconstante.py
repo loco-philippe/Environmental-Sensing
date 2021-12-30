@@ -7,272 +7,295 @@ Created on Sun Aug  1 13:35:28 2021
 This module describes the constants and default values used in other modules.
 """
 from datetime import datetime
+from typing import Dict 
 
 
 class Es:
-    pass
+    ''' initialization of constant data. '''
 
-def inv(mp)     : return dict(zip(mp.values(), mp.keys()))
-def invnum(mp)  : return dict(zip([k[0] for k in list(mp.values())], mp.keys()))
-def identity(x) : return x
+    def _identity(self, x) : return x
+    def _inv(self, mp)     : return dict(zip(mp.values(), mp.keys()))
+    def _invnum(self, mp)  : return dict(zip([k[0] for k in list(mp.values())], mp.keys()))
 
+    def __init__(self):
+        self._initName()
+        self._initReferenceValue()
+
+        #'''Application initialization (boolean)'''
+        self.debug = False
+                
+        #'''Observation initialization (dict) '''
+        self.mOption : Dict = {
+                      "json_res_index"      : False, # affiche index
+                      "json_prp_type"       : True, # affiche name ou property
+                      "json_prp_name"       : False, # affiche name ou property
+                      "json_dat_instant"    : True, # affiche instant (ou mean de slot)
+                      "json_dat_name"       : False, # affiche name ou instant/slot
+                      "json_loc_point"      : True, # affiche point (ou shape.centroid)
+                      "json_loc_name"       : False, # affiche name ou instant/slot
+                      "json_ESobs_class"    : False, # json des ESobs
+                      "json_elt_type"       : False, # jsonAtt avec type xxxx
+                      "json_obs_val"        : True, #key:val ou val
+                      "json_obs_attrib"     : False, # avec key = attributes
+                      "json_param"          : False, # ok
+                      "json_info_type"      : True,
+                      "json_info_nval"      : True,
+                      "json_info_box"       : True,
+                      "json_info_autre"     : True,
+                      "unic_index"          : True, # dans ESSet
+                      "bytes_res_format"    : "null", # calculé à partir de propperty si "null"
+                      "maj_reset_index"     : False, # dans majtype
+                      "sort_order"          : 'dlp'
+                      #"sort_order"          : [0,1,2]
+                      }
+        ''' Default options for `ES.ESObservation.Observation`'''
+        
+        self.vName: Dict = {  self.obs_classES  :   self.obs ,
+                        self.dat_classES  :   self.dat ,
+                        self.loc_classES  :   self.loc ,
+                        self.res_classES  :   self.res ,
+                        self.prp_classES  :   self.prp }
+        '''name for json classES identification '''
+        
+        self.mValObs: Dict = {self.loc_valName[0]  : self.loc_classES  ,
+                        self.loc_valName[1]  : self.loc_classES  ,
+                        self.dat_valName[0]  : self.dat_classES  ,
+                        self.dat_valName[1]  : self.dat_classES  ,
+                        self.prp_valName[0]  : self.prp_classES  ,
+                        self.prp_valName[1]  : self.prp_classES  ,
+                        self.res_valName[0]  : self.res_classES  }
+        '''assignment of ESValue name to ESObs objects '''
+        
+        self.mTypeAtt: Dict ={self.type            : self.obs_classES  ,
+                        self.information     : self.nul_classES  ,
+                        self.obs_resultTime  : self.obs_classES  ,
+                        self.obs_reference   : self.obs_classES  ,
+                        "ResultQuality"      : self.res_classES  ,            
+                        self.prp_propType	    : self.prp_classES  ,
+                        self.prp_unit		    : self.prp_classES  ,
+                        self.prp_sampling	    : self.prp_classES  ,
+                        self.prp_appli       : self.prp_classES  ,
+                        self.prp_EMFId		    : self.prp_classES  ,
+                        self.prp_sensorType	: self.prp_classES  ,
+                        self.prp_upperValue	: self.prp_classES  ,
+                        self.prp_lowerValue	: self.prp_classES  ,
+                        self.prp_period	    : self.prp_classES  ,
+                        self.prp_interval	    : self.prp_classES  ,
+                        self.prp_uncertain   : self.prp_classES  ,
+                        "EMFType "          : "ObservingEMF"  ,
+                        "ResultNature "     : "ObservingEMF"  }        
+        ''' Assignment of attributes to ESObs objects '''
+
+
+                                
+        
+        self.obsCat: Dict = {
+                            -1 :"obserror" ,
+                            0 : 'config'  ,
+                            1 : 'top'  ,
+                            2 : 'sequence'  ,
+                            10 : 'point'  ,
+                            11 : 'track'  ,
+                            12 : 'datTrack'  ,
+                            20 : 'zoning'  ,
+                            21 : 'datZoning'  ,
+                            22 : 'path'  ,
+                            23 : 'areaSequence'  ,
+                            100 : 'property'  ,
+                            101 : 'record'  ,
+                            102 : 'DatRecord'  ,
+                            110 : 'feature'  ,
+                            111 : 'obs'  ,
+                            112 : 'obsDat'  ,
+                            120 : 'areaFeature'  ,
+                            121 : 'obsLoc'  ,
+                            122 : 'obsPath'  ,
+                            123 : 'obsAreaSequence'  ,
+                            200 : 'multiFeature'  ,
+                            201 : 'datMultiFeature'  ,
+                            202 : 'multiRecord'  ,
+                            203 : 'multiFeatureSequence'  ,
+                            210 : 'multiFeatureVariation'  ,
+                            211 : 'obsFeature'  ,
+                            212 : 'obsRecord'  ,
+                            213 : 'obsGridRecord'  ,
+                            220 : 'areaFeature'  ,
+                            223 : 'multiAreaFeature'  ,
+                            221 : 'obsAreaFeature'  ,
+                            224 : 'multiObsAreaFeature'  ,
+                            222 : 'obsPathFeature'  ,
+                            225 : 'FeatureobsAreaSequence'  ,
+                            226 : 'areaObsrecord'  ,
+                            227 : 'histoObsareaFeature'  ,
+                            228 : 'obsGrid'  ,
+                            }
+        ''' Default name for `ES.ESObservation.Observation.score` '''
+
+        #'''Bytes initialization (dict) '''
+        self.codeb: Dict = {  self.obs_classES  :   5 ,
+                        self.dat_classES  :   2 ,
+                        self.loc_classES  :   1 ,
+                        self.res_classES  :   4 ,
+                        self.prp_classES  :   3 ,
+                        self.loc_valueType:   1 ,
+                        self.dat_valueType:   2 ,
+                        self.prp_valueType:   3 }
+        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
+        `ES.ESObservation.Observation.to_bytes` '''
+
+        #'''Property initialization (dict)
+        #  format : (code_ES, python format, lenght, dexp, bexp, unit) 
+        self.prop: Dict ={'null'    : (0 , 'e', 2,  0, 0, '-'   ),
+                          'utf-8'   : (2 ,  '', 0,  0, 0, '-'   ),
+                          'sfloat'  : (15, 'e', 2,  0, 0, '-'   ),
+                          'uint16'  : (3 , 'H', 2,  0, 0, '-'   ),
+                          'uint8'   : (7 , 'B', 1,  0, 0, '-'   ),
+                          'sint24'  : (13, 'l', 3,  0, 0, '-'   ),
+                          'uint24'  : (14, 'L', 3,  0, 0, '-'   ),
+                          'sint8'   : (6 , 'b', 1,  0, 0, '-'   ),
+                          'sint16'  : (8 , 'h', 4,  0, 0, '-'   ),
+                          'uint32'  : (4 , 'L', 4,  0, 0, '-'   ),
+                          'PM25'    : (21, 'e', 2,  1, 2, 'kg/m3'),
+                          'PM10'    : (22, 'e', 2,  0, 0, 'kg/m3'),
+                          'CO2'     : (23, 'H', 2,  0, 0, 'ppm' ),
+                          'temp'    : (24, 'h', 2, -2, 0, '°C'  )
+                          }
+        '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
+        self.invProp: Dict = self._invnum(self.prop)
+        '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
+        
+        self.sampling: Dict = {'null'              : 0,
+                               'instantaneous'      : 1,
+                               'arithmetic mean'    : 2,
+                               'RMS'                : 3,
+                               'maximum'            : 4,
+                               'minimum'            : 5,
+                               'accumulated'        : 6,
+                               'count'              : 7}
+        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
+        self.invSampling: Dict = self._inv(self.sampling)
+        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
+
+        self.application: Dict = { 'null'                       : 0,
+                       'air'                            : 1,
+                       'water'                          : 2,
+                       'barometric'                     : 3,
+                       'soil'                           : 4,
+                       'infrared'                       : 5,
+                       'map database'                   : 6,
+                       'barometric elevation source'    : 7}
+        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
+        self.invApplication = self._inv(self.application)
+        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
+        
+        # Xarray initialization (dict) 
+        self.nax: Dict = {'dat' : 0, 'loc' : 1, 'prp' : 2,
+                          'd'   : 0, 'l'   : 1, 'p'   : 2}
+        '''Dictionnary for axis Number '''
+        
+        self.axes: Dict = { 0  :  'dat',   # axes : [0,1,2], [0,21], [2, 10], [1, 20]
+                    1  :	'loc',   #        [0, 1],  [0, 2], [1, 2], [120]
+                    2  :	'prp',
+                    10 :	'datloc',
+                    20 :	'datprp',
+                    21 :	'locprp',
+                    120:	'datlocprp'}
+        '''Dictionnary for Xarray axis name '''
+        
+        self.xattrs: Dict = {'lon' : {"units":"degrees",   "standard_name":"longitude"},
+                     'lat' : {"units":"degrees",   "standard_name":"latitude"},
+                     'loc' : {"units":"lon, lat",  "standard_name":"longitude - latitude"},
+                     'dat' : {                     "standard_name":"horodatage"},
+                     'prp' : {                     "standard_name":"property"}}
+        '''Dictionnary for Xarray attrs informations '''
+
+    def _initName(self) :    
+        ''' Name initialization (string) '''        
+        self.json_nval_loc    = "nvalloc" 
+        self.json_nval_dat    = "nvaldat"
+        self.json_nval_res    = "nvalres"
+        self.json_nval_prp    = "nvalprop"
+        self.json_type_loc    = "typeloc"
+        self.json_type_obs    = "typeobs"
+        self.json_type_dat    = "typedat"
+        self.json_type_res    = "typeres"
+        self.json_type_prp    = "typeprop"
+        
+        self.parameter        = "parameter"
+        self.information      = "information"
+        self.type             = "type"
+        self.multi            = "Multi"
+        self.obs              = "obs"
+        self.dat              = "dat"
+        self.loc              = "loc"
+        self.prp              = "prp"
+        self.res              = "res"
+        self.coordinates      = "coordinates"
+        
+        self.obj_metaType     = "ESObject"
+        self.obs_metaType     = "ESObs"
+        
+        self.nul_classES      = "nullClass"
+        self.obs_classES      = "observation"
+        self.dat_classES      = "datation"
+        self.loc_classES      = "location"
+        self.prp_classES      = "property"
+        self.res_classES      = "result"
+        
+        self.obs_attributes   = "attributes"
+        self.obs_id           = "id"
+        self.obs_resultTime   = "ResultTime"
+        self.obs_complet      = "complet"
+        self.obs_reference    = "reference"
+        self.obs_score        = "score"
+        
+        self.res_mRate        = "measureRate"
+        self.res_sRate        = "samplingRate"
+        self.res_nEch         = "nEch"
+        self.res_dim          = "dim"
+        self.res_axes         = "axes"
+        self.set_nValue       = "nval"
+        
+        self.obs_typeES       = "observation"
+        self.set_typeES       = "set"
+        
+        self.dat_boxMin       = "timeBoxMin"
+        self.dat_boxMax       = "timeBoxMax"
+        
+        self.loc_boxMin       = "boudingBoxMin"
+        self.loc_boxMax       = "boudingBoxMax"
+        
+        self.prp_propType	    = "prp";
+        self.prp_unit		    = "unit";
+        self.prp_sampling	    = "samplingFunction";
+        self.prp_appli		    = "application";
+        self.prp_EMFId		    = "EMFId";
+        self.prp_sensorType	 = "sensorType";
+        self.prp_upperValue	 = "upperValue";
+        self.prp_lowerValue	 = "lowerValue";
+        self.prp_period	    = "period";
+        self.prp_interval	    = "updateInterval";
+        self.prp_uncertain    = "uncertainty";
+        self.prp_name         = "name";
+        
+        self.dat_valName      = ["instant", "slot"]
+        self.dat_valueType    = "datationValue"
+        self.loc_valName      = ["point", "shape"]
+        self.loc_valueType    = "locationValue"
+        self.prp_valName      = ["prpType", "characteristic"]
+        self.prp_valueType    = "propertyValue"
+        self.res_valName      = ["value"]
+        self.res_valueType    = "resultValue"
+        self.real_valueType   = "real"
+        self.int_valueType    = "int"
+        self.str_valueType    = "string"
+    
+    def _initReferenceValue(self):        
+        ''' Reference value initialization '''
+        self.distRef          = [48.87, 2.35] # coordonnées Paris lat/lon
+        self.nullDate         = datetime(1970, 1, 1)
+        self.nullCoor         = [-1, -1]
+        self.nullInd          = [-1, -1, -1]
+        self.nullName         = ""
 
 ES = Es()
-
-ES.debug            = False
-
-ES.json_nval_loc    = "nvalloc"
-ES.json_nval_dat    = "nvaldat"
-ES.json_nval_res    = "nvalres"
-ES.json_nval_prp    = "nvalprop"
-ES.json_type_loc    = "typeloc"
-ES.json_type_obs    = "typeobs"
-ES.json_type_dat    = "typedat"
-ES.json_type_res    = "typeres"
-ES.json_type_prp    = "typeprop"
-
-ES.parameter        = "parameter"
-ES.information      = "information"
-ES.type             = "type"
-ES.multi            = "Multi"
-ES.obs              = "obs"
-ES.dat              = "dat"
-ES.loc              = "loc"
-ES.prp              = "prp"
-ES.res              = "res"
-ES.coordinates      = "coordinates"
-
-ES.nullDate         = datetime(1970, 1, 1)
-ES.nullCoor         = [-1, -1]
-ES.nullInd          = [-1, -1, -1]
-ES.nullName         = ""
-
-ES.obj_metaType     = "ESObject"
-ES.obs_metaType     = "ESObs"
-
-ES.nul_classES      = "nullClass"
-ES.obs_classES      = "observation"
-ES.dat_classES      = "datation"
-ES.loc_classES      = "location"
-ES.prp_classES      = "property"
-ES.res_classES      = "result"
-
-ES.obs_attributes   = "attributes"
-ES.obs_id           = "id"
-ES.obs_resultTime   = "ResultTime"
-ES.obs_complet      = "complet"
-ES.obs_reference    = "reference"
-ES.obs_score        = "score"
-
-ES.res_mRate        = "measureRate"
-ES.res_sRate        = "samplingRate"
-ES.res_nEch         = "nEch"
-ES.res_dim          = "dim"
-ES.res_axes         = "axes"
-ES.set_nValue       = "nval"
-
-ES.obs_typeES       = "observation"
-ES.set_typeES       = "set"
-
-ES.dat_boxMin       = "timeBoxMin"
-ES.dat_boxMax       = "timeBoxMax"
-
-ES.loc_boxMin       = "boudingBoxMin"
-ES.loc_boxMax       = "boudingBoxMax"
-
-ES.prp_propType	    = "prp";
-ES.prp_unit		    = "unit";
-ES.prp_sampling	    = "samplingFunction";
-ES.prp_appli		= "application";
-ES.prp_EMFId		= "EMFId";
-ES.prp_sensorType	= "sensorType";
-ES.prp_upperValue	= "upperValue";
-ES.prp_lowerValue	= "lowerValue";
-ES.prp_period	    = "period";
-ES.prp_interval	    = "updateInterval";
-ES.prp_uncertain    = "uncertainty";
-ES.prp_name         = "name";
-
-#ES.dat_nullName     = ""
-#ES.dat_valName      = ["instant", "slot", "datName"]
-ES.dat_valName      = ["instant", "slot"]
-ES.dat_valueType    = "datationValue"
-#ES.loc_nullName     = ""
-#ES.loc_valName      = ["point", "shape", "locName"]
-ES.loc_valName      = ["point", "shape"]
-ES.loc_valueType    = "locationValue"
-#ES.prp_nullName     = ""
-ES.prp_valName      = ["prpType", "characteristic"]
-ES.prp_valueType    = "propertyValue"
-#ES.res_nullName     = ""
-ES.res_valName      = ["value"]
-ES.res_valueType    = "resultValue"
-ES.real_valueType   = "real"
-ES.int_valueType    = "int"
-ES.str_valueType    = "string"
-
-ES.mOption = {"json_res_index" : False, # affiche index
-              "json_prp_type" : True, # affiche name ou property
-              "json_prp_name" : False, # affiche name ou property
-              "json_dat_instant" : True, # affiche instant (ou mean de slot)
-              "json_dat_name" : False, # affiche name ou instant/slot
-              "json_loc_point" : True, # affiche point (ou shape.centroid)
-              "json_loc_name" : False, # affiche name ou instant/slot
-              "json_ESobs_class" : False, # json des ESobs
-              "json_elt_type" : False, # jsonAtt avec type xxxx
-              "json_obs_val" : True, #key:val ou val
-              "json_obs_attrib" : False, # avec key = attributes
-              "json_param" : False, # ok
-              "json_info_type" : True,
-              "json_info_nval" : True,
-              "json_info_box" : True,
-              "json_info_autre" : True,
-              "unic_index" : True, # dans ESSet
-              "bytes_res_format" : "null", # calculé à partir de propperty si "null"
-              "maj_reset_index" : False, # dans majtype
-              "sort_order" : [0,1,2]
-              }
-mValObs  = { ES.loc_valName[0]  : ES.loc_classES  ,
-             ES.loc_valName[1]  : ES.loc_classES  ,
-             #ES.loc_valName[2]  : ES.loc_classES  ,
-             ES.dat_valName[0]  : ES.dat_classES  ,
-             ES.dat_valName[1]  : ES.dat_classES  ,
-             #ES.dat_valName[2]  : ES.dat_classES  ,
-             ES.prp_valName[0]  : ES.prp_classES  ,
-             ES.prp_valName[1]  : ES.prp_classES  ,
-             ES.res_valName[0]  : ES.res_classES  }
-
-mTypeAtt = {ES.type             : ES.obs_classES  ,
-            ES.information      : ES.nul_classES  ,
-            ES.obs_resultTime   : ES.obs_classES  ,
-            ES.obs_reference    : ES.obs_classES  ,
-            "ResultQuality"     : ES.res_classES  ,            
-            ES.prp_propType	    : ES.prp_classES  ,
-            ES.prp_unit		    : ES.prp_classES  ,
-            ES.prp_sampling	    : ES.prp_classES  ,
-            ES.prp_appli        : ES.prp_classES  ,
-            ES.prp_EMFId		: ES.prp_classES  ,
-            ES.prp_sensorType	: ES.prp_classES  ,
-            ES.prp_upperValue	: ES.prp_classES  ,
-            ES.prp_lowerValue	: ES.prp_classES  ,
-            ES.prp_period	    : ES.prp_classES  ,
-            ES.prp_interval	    : ES.prp_classES  ,
-            ES.prp_uncertain    : ES.prp_classES  ,
-            "EMFType "          : "ObservingEMF"  ,
-            "ResultNature "     : "ObservingEMF"  }
-
-mDistRef = [48.87, 2.35] # coordonnées Paris lat/lon
-
-ES.codeb = {ES.obs_classES  :   5 ,
-            ES.dat_classES  :   2 ,
-            ES.loc_classES  :   1 ,
-            ES.res_classES  :   4 ,
-            ES.prp_classES  :   3 ,
-            ES.loc_valueType:   1 ,
-            ES.dat_valueType:   2 ,
-            ES.prp_valueType:   3 }
-
-ES.vName = {ES.obs_classES  :   ES.obs ,
-            ES.dat_classES  :   ES.dat ,
-            ES.loc_classES  :   ES.loc ,
-            ES.res_classES  :   ES.res ,
-            ES.prp_classES  :   ES.prp }
-
-ES.obsCat = {
-	 -1 :"obserror" ,
-	 0  :"config" ,
-	 1  :"top" ,
-	 2  :"multiTop" ,
-	 10 :"point" ,
-	 11 :"track" ,
-	 12 :"fixedTrack" ,
-	 20 :"zoning" ,
-	 21 :"multiTrack" ,
-	 22 :"datloc" ,
-	 23 :"datloc" ,
-	 100 :"measure" ,
-	 101 :"record" ,
-	 102 :"meanRecord" ,
-	 110 :"feature" ,
-	 111 :"obsUnique" ,
-	 112 :"obsMeanFixed" ,
-	 120 :"areaFeature" ,
-	 121 :"obsMeanArea" ,
-	 122 :"meanTimeLoc" ,
-	 123 :"meanTimeLoc" ,
-	 200 :"multiMeasure" ,
-	 201 :"multiRecord" ,
-	 202 :"measureHistory" ,
-	 201 :"multiRecord" ,
-	 203 :"featureVariation" ,
-	 211 :"obsSampled" ,
-	 212 :"obsSequence" ,
-	 213 :"obsSequence" ,
-	 220 :"measureLoc" ,
-	 221 :"obsLoc" ,
-	 222 :"obsTimeLoc", 
-	 223 :"obsTimeLoc", 
-	 224 :"obsTimeLoc", 
-	 225 :"obsTimeLoc", 
-	 226 :"obsTimeLoc", 
-	 227 :"obsTimeLoc", 
-	 228 :"obsTimeLoc", 
-	 229 :"obserror" 
-}
-ES.prop ={'null'    : (0 , 'e', 2,  0, 0, '-'   ),
-          'utf-8'   : (2 ,  '', 0,  0, 0, '-'   ),
-          'sfloat'  : (15, 'e', 2,  0, 0, '-'   ),
-          'uint16'  : (3 , 'H', 2,  0, 0, '-'   ),
-          'uint8'   : (7 , 'B', 1,  0, 0, '-'   ),
-          'sint24'  : (13, 'l', 3,  0, 0, '-'   ),
-          'uint24'  : (14, 'L', 3,  0, 0, '-'   ),
-          'sint8'   : (6 , 'b', 1,  0, 0, '-'   ),
-          'sint16'  : (8 , 'h', 4,  0, 0, '-'   ),
-          'uint32'  : (4 , 'L', 4,  0, 0, '-'   ),
-          'PM25'    : (21, 'e', 2,  1, 2, 'kg/m3'),
-          'PM10'    : (22, 'e', 2,  0, 0, 'kg/m3'),
-          'CO2'     : (23, 'H', 2,  0, 0, 'ppm' ),
-          'temp'    : (24, 'h', 2, -2, 0, '°C'  )
-          }
-ES.cnum = invnum(ES.prop)
-
-ES.sampling = { 'null'              : 0,
-               'instantaneous'      : 1,
-               'arithmetic mean'    : 2,
-               'RMS'                : 3,
-               'maximum'            : 4,
-               'minimum'            : 5,
-               'accumulated'        : 6,
-               'count'              : 7}
-ES.invSampling = inv(ES.sampling)
-ES.application = { 'null'                       : 0,
-               'air'                            : 1,
-               'water'                          : 2,
-               'barometric'                     : 3,
-               'soil'                           : 4,
-               'infrared'                       : 5,
-               'map database'                   : 6,
-               'barometric elevation source'    : 7}
-ES.invApplication = inv(ES.application)
-
-ES.axes = { 0  :  'dat',   # axes : [0,1,2], [0,21], [2, 10], [1, 20]
-            1  :	'loc',   #        [0, 1],  [0, 2], [1, 2], [120]
-            2  :	'prp',
-            10 :	'datloc',
-            20 :	'datprp',
-            21 :	'locprp',
-            120:	'datlocprp'}
-
-ES.nax = {'dat' : 0, 'loc' : 1, 'prp' : 2}
-
-ES.attrs = { 'loc'      : 'loc',
-             'locstr'      : 'loc',
-             'loclon'      : 'loc',
-             'loclat'      : 'loc',
-             'loc'      : 'loc',}
-
-ES.xattrs = {'lon' : {"units":"degrees",   "standard_name":"longitude"},
-             'lat' : {"units":"degrees",   "standard_name":"latitude"},
-             'loc' : {"units":"lon, lat",  "standard_name":"longitude - latitude"},
-             'dat' : {                     "standard_name":"horodatage"},
-             'prp' : {                     "standard_name":"property"}}

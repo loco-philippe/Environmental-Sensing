@@ -4,16 +4,31 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-This module groups together the classes of the objects used in the `ES.ESObs` module.
+This module groups together the classes of the objects used in the `ES.ESObs` module :
+    
+- `ES.ESValue.DatationValue`,
+- `ES.ESValue.LocationValue`,
+- `ES.ESValue.PropertyValue`,
+- `ES.ESValue.ResultValue`
+
+the parent classes :
+    
+- `ES.ESValue.ESValue`, 
+- `ES.ESValue.ESIndexValue`.
+
+and the `ES.ESValue.ESSet` class.   
 """
+
 import json, geojson, struct, numpy, pandas, shapely
 from datetime import datetime
-from ESconstante import ES, mDistRef, identity
+from ESconstante import ES #, _identity
 #from shapely.geometry import shape #, mapping
 from ESElement import isESAtt, isUserAtt
 from geopy import distance
+#from ESObservation import Observation
+#import ESObservation
 
-def gshape(coord):
+def _gshape(coord):
     if type(coord) == list:  coor = json.dumps(coord)
     elif type(coord) == str: coor = coord
     else: coor = coord.copy()
@@ -29,7 +44,7 @@ class ESValue:
     """
     This class is the parent class for each kind of values 
      (`ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, `ES.ESValue.PropertyValue`,
-      `ES.ESValue.ResultValue`,
+      `ES.ESValue.ResultValue`)
     """
     def mini(x, y):
         if type(x) == LocationValue: mm = LocationValue([min(x.point[0], y.point[0]), min(x.point[1], y.point[1])])
@@ -58,7 +73,7 @@ class ESValue:
 
     def majValue(self, val, simple = True):
         if type(val) == LocationValue :
-            if not simple and val.shap != None and val.shap != gshape(ES.nullCoor) : 
+            if not simple and val.shap != None and val.shap != _gshape(ES.nullCoor) : 
                 self.shap = val.shap
                 self.point = [self.shap.centroid.x, self.shap.centroid.y]
             if simple and val.point != ES.nullCoor : self.point = val.point
@@ -161,6 +176,10 @@ class DatationValue(ESValue):
     
     def getSlot(self) : return self.slot
 
+    def vSlot(self):
+        if self.slot != [ES.nullDate, ES.nullDate] : return self.slot
+        else : return self.initSlot(self.instant)
+            
     def vInstant(self, option = ES.mOption, string = False) : #string=False):  
         if self.slot != [ES.nullDate, ES.nullDate] : val = [self.slot[0], self.slot[1]]
         else: val =  self.instant
@@ -217,7 +236,7 @@ class LocationValue(ESValue):
             return
         elif type(val) == dict :
             self.name, val = list(val.items())[0]   
-        shap = gshape(val)
+        shap = _gshape(val)
         if shap == None :
             if type(val) == str and self.name == ES.nullName : self.name = val
         elif type(shap) == shapely.geometry.point.Point : self.point = [shap.x, shap.y]
@@ -235,7 +254,7 @@ class LocationValue(ESValue):
     def __repr__(self): return self.json()
 
     def __lt__(self, other): 
-        return distance.distance(self.coorInv, mDistRef) <  distance.distance(other.coorInv, mDistRef)
+        return distance.distance(self.coorInv, ES.distRef) <  distance.distance(other.coorInv, ES.distRef)
     
     @property
     def coorInv(self):  return [self.vPoint()[1], self.vPoint()[0]]
@@ -244,6 +263,10 @@ class LocationValue(ESValue):
     
     def getPoint(self) : return self.point
     
+    def vShap(self):  
+        if self.shap != None : return self.shap
+        else : return _gshape(self.point)
+
     def vPoint(self, option = ES.mOption):  
         val = ES.nullCoor
         if self.shap != None :              val =  self.shap.__geo_interface__[ES.coordinates]
@@ -348,8 +371,8 @@ class PropertyValue(ESValue):
     def from_bytes(self, byt):
         bytl = byt[0:6] + b'\x00' +byt[6:9] + b'\x00' + byt[9:10]
         prp = struct.unpack('<BBBLLB', bytl)
-        self.pType      = ES.cnum[prp[0]]
-        self.unit       = ES.prop[ES.cnum[prp[0]]][5]
+        self.pType      = ES.invProp[prp[0]]
+        self.unit       = ES.prop[ES.invProp[prp[0]]][5]
         self.sampling   = ES.invSampling[prp[1]]
         self.application = ES.invApplication[prp[2]]
         self.period     = prp[3]
@@ -388,13 +411,18 @@ class ResultValue (ESIndexValue):
             self.value = val.value
             self.ind = val.ind
         elif (type(val) == float or type(val) == int): self.setValue(val)
-        else : self.setValue(json.dumps(val))
+        else : 
+            from ESObservation import Observation
+            if type(val) == Observation : self.setValue(val.name)
+            else : self.setValue(json.dumps(val))
         if type(ind) == list and ind != ES.nullInd and self.ind == ES.nullInd : self.ind = ind
 
     def __eq__(self, other): return self.value == other.value
 
-    def __lt__(self, other):         
-        o = ES.mOption["sort_order"]
+    def __lt__(self, other):  
+        order = ES.mOption["sort_order"]
+        o = [ES.nax[order[0]], ES.nax[order[1]], ES.nax[order[2]]]
+        #o = ES.mOption["sort_order"]
         return self.ind[o[0]] < other.ind[o[0]] or \
               (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] <  other.ind[o[1]]) or \
               (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] == other.ind[o[1]] and self.ind[o[2]] < other.ind[o[2]])
@@ -462,8 +490,10 @@ class ESSet:
     def __init__(self, ValueClass = None, jObj = None):
         if ValueClass == None: return
         self.valueList = list()
-        self.iSort = list()
+        ''' list : list of `ES.ESValue` '''
+        #self.iSort = list()
         self.nValue = 0
+        ''' int : lenght of `ES.ESValue.ESSet.valueList` '''
         if  type(jObj) == list :
             try :
                 for val in jObj : self.addValue(ValueClass, val)
@@ -490,7 +520,7 @@ class ESSet:
     def vListName(self):
         return [self.valueList[i].vName(ES.vName[self.classES] + str(i)) for i in range(self.nValue)]
 
-    def vList(self, func=identity):
+    def vList(self, func=ES._identity):
         return [func(self.valueList[i]) for i in range(self.nValue)]
         
     def majListName(self, listName):
@@ -522,7 +552,7 @@ class ESSet:
         if option["json_elt_type"] : elt_type_nb = min(2, self.nValue)
         js = ""
         if option["json_ESobs_class"]: js = '"' + self.classES + '":{'
-        js += self.jsonAtt(elt_type_nb) 
+        js += self._jsonAtt(elt_type_nb) 
         js += '"' + ES_valName + '":' + self.jsonSet(option) + ","
         if js[-1] == ',': js = js[:-1]
         if option["json_ESobs_class"]: js += '}' 
@@ -566,7 +596,7 @@ class ESSet:
         code_el = (byt[0] & 0b11100000) >> 5
         nameES = not(code_ES // 3)
         forma = 'null'
-        if code_el > 3 : forma = ES.cnum[code_ES]
+        if code_el > 3 : forma = ES.invProp[code_ES]
         resIndex = code_el == 5
         nVal = 1
         idx = 1
@@ -601,7 +631,7 @@ class ESSet:
     
     def __getitem__(self, key): return self.valueList[key]
     
-    def	__setitem__(self, key, value): self.valueList[key] = value
+    def __setitem__(self, key, value): self.valueList[key] = value
 
     def __repr__(self): return object.__repr__(self) + '\n' + self.jsonSet(ES.mOption) + '\n'
 
@@ -619,7 +649,8 @@ class ESSet:
 
     def sort(self, order = [], update = True):
         if order == [] :
-            listInd = sorted(list(zip(self.valueList, list(range(self.nValue)))))
+            #listInd = sorted(list(zip(self.valueList, list(range(self.nValue)))))
+            listInd = sorted(list(zip(self.valueList, list(range(self.nValue)))), key= lambda z : z[0])
             valueTri, indTri = zip(*listInd)
             if update : self.valueList = list(valueTri)
         else :

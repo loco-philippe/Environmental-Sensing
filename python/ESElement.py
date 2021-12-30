@@ -9,29 +9,31 @@ This module contains the parent classes of the classes of the `ES.ESObs` and
 """
 import json
 from datetime import datetime
-from ESconstante import ES, mTypeAtt, mValObs
+from ESconstante import ES
 #from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
 #from ESObs import Datation, Location, Property, Result
 
 def isESObs(esClass, jObj):
+    if type(jObj) == esClass : return True
+    if type(jObj) != dict : return False
     for key, value in jObj.items():
         if key == esClass: return True
-        for val, classES in mValObs.items():
+        for val, classES in ES.mValObs.items():
             if key == val and esClass == classES:  return True
-        for val, classES in mTypeAtt.items():
+        for val, classES in ES.mTypeAtt.items():
             if key == val and esClass == classES:  return True
     return False
 
 
 def isESAtt(esClass, key):
-    for k,v in mTypeAtt.items():
+    for k,v in ES.mTypeAtt.items():
         if v == esClass and k == key: return True
     return False
 
 def isUserAtt(key):
-    for k,v in mTypeAtt.items():
+    for k,v in ES.mTypeAtt.items():
         if k == key: return False
-    for k,v in mValObs.items():
+    for k,v in ES.mValObs.items():
         if k == key: return False
     return True
 
@@ -93,10 +95,10 @@ class ESElement:
             #if (ct.typeES == ES.obs_typeES): ct.majType()
         pass
 
-    def jsonAtt(self, elt_type_nb):
+    def _jsonAtt(self, elt_type_nb):
         att = dict()
         for k,v in self.mAtt.items():
-            if k in list(mTypeAtt.keys()) and v != "null":
+            if k in list(ES.mTypeAtt.keys()) and v != "null":
                 if k != ES.type and elt_type_nb > 0 : att[k] = v
                 elif k == ES.type :
                     if elt_type_nb == 1 : att[k + self.classES] = v
