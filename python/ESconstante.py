@@ -44,7 +44,7 @@ class Es:
                       "json_info_autre"     : True,
                       "unic_index"          : True, # dans ESSet
                       "bytes_res_format"    : "null", # calculé à partir de propperty si "null"
-                      "maj_reset_index"     : False, # dans majtype
+                      #"maj_reset_index"     : False, # dans majtype
                       "sort_order"          : 'dlp'
                       #"sort_order"          : [0,1,2]
                       }
@@ -57,14 +57,17 @@ class Es:
                         self.prp_classES  :   self.prp }
         '''name for json classES identification '''
         
-        self.mValObs: Dict = {self.loc_valName[0]  : self.loc_classES  ,
-                        self.loc_valName[1]  : self.loc_classES  ,
-                        self.dat_valName[0]  : self.dat_classES  ,
-                        self.dat_valName[1]  : self.dat_classES  ,
-                        self.prp_valName[0]  : self.prp_classES  ,
-                        self.prp_valName[1]  : self.prp_classES  ,
-                        self.res_valName[0]  : self.res_classES  }
+        self.mValObs: Dict = {self.loc_valName  : self.loc_classES  ,
+                        #self.loc_valName[1]  : self.loc_classES  ,
+                        self.dat_valName  : self.dat_classES  ,
+                        #self.dat_valName  : self.dat_classES  ,
+                        self.prp_valName  : self.prp_classES  ,
+                        #self.prp_valName[1]  : self.prp_classES  ,
+                        self.res_valName  : self.res_classES  }
         '''assignment of ESValue name to ESObs objects '''
+        
+        self.esObsClass: list = [self.dat_classES, self.loc_classES, self.prp_classES, self.res_classES]
+        '''ordered list for classES '''  
         
         self.mTypeAtt: Dict ={self.type            : self.obs_classES  ,
                         self.information     : self.nul_classES  ,
@@ -86,9 +89,6 @@ class Es:
                         "ResultNature "     : "ObservingEMF"  }        
         ''' Assignment of attributes to ESObs objects '''
 
-
-                                
-        
         self.obsCat: Dict = {
                             -1 :"obserror" ,
                             0 : 'config'  ,
@@ -259,11 +259,11 @@ class Es:
         self.obs_typeES       = "observation"
         self.set_typeES       = "set"
         
-        self.dat_boxMin       = "timeBoxMin"
-        self.dat_boxMax       = "timeBoxMax"
+        self.dat_box            = "timeBox"
+        #self.dat_boxMax       = "timeBoxMax"
         
-        self.loc_boxMin       = "boudingBoxMin"
-        self.loc_boxMax       = "boudingBoxMax"
+        self.loc_box            = "boudingBox"
+        #self.loc_boxMax       = "boudingBoxMax"
         
         self.prp_propType	    = "prp";
         self.prp_unit		    = "unit";
@@ -278,13 +278,15 @@ class Es:
         self.prp_uncertain    = "uncertainty";
         self.prp_name         = "name";
         
-        self.dat_valName      = ["instant", "slot"]
+        #self.dat_valName      = ["instant", "slot"]
+        self.dat_valName      = "datvalue"
         self.dat_valueType    = "datationValue"
-        self.loc_valName      = ["point", "shape"]
+        #self.loc_valName      = ["point", "shape"]
+        self.loc_valName      = "locvalue"
         self.loc_valueType    = "locationValue"
-        self.prp_valName      = ["prpType", "characteristic"]
+        self.prp_valName      = "prpvalue"
         self.prp_valueType    = "propertyValue"
-        self.res_valName      = ["value"]
+        self.res_valName      = "resvalue"
         self.res_valueType    = "resultValue"
         self.real_valueType   = "real"
         self.int_valueType    = "int"

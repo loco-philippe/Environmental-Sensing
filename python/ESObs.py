@@ -15,15 +15,14 @@ from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultVa
 import numpy as np
 import copy
 
-
 class Datation(ESObs):
     """
     Classe liée à la structure interne
     """
     def __init__(self, pObs=None):
         ESObs.__init__(self, pObs)
-        self.boxMin = DatationValue()
-        self.boxMax = DatationValue()
+        #self.boxMin = DatationValue()
+        #self.boxMax = DatationValue()
         self.classES = ES.dat_classES
 
 class Location(ESObs):
@@ -32,8 +31,8 @@ class Location(ESObs):
     """
     def __init__(self, pObs=None):
         ESObs.__init__(self, pObs)
-        self.boxMin = LocationValue()
-        self.boxMax = LocationValue()
+        #self.boxMin = LocationValue()
+        #self.boxMax = LocationValue()
         self.classES = ES.loc_classES
 
 class Property(ESObs):
@@ -60,7 +59,7 @@ class Result(ESObs):
         self.axes = []
         self.nMax = 1
             
-class ESSetDatation(ESSet, Datation):
+class ESSetDatation(ESSet, Datation):   # !!! début ESSet
     """
     Classe liée à la structure interne
     """
@@ -77,30 +76,40 @@ class ESSetDatation(ESSet, Datation):
         return [val.vSlot() for val in self.valueList]
 
     @property
-    def vListInstant(self):
-        return [val.vInstant(self.observation.option) for val in self.valueList]
+    def vListInstant(self, string=False):
+        #return [val.vInstant(self.observation.option) for val in self.valueList]
+        return [val.vInstant(string=string) for val in self.valueList]
 
     def __repr__(self):
-        return object.__repr__(self) + '\n' + self.json(ES.mOption) + '\n'
+        return '\n' + self.json(ES.mOption) + '\n'
 
     def json(self, option = ES.mOption):
-        if option["json_dat_instant"] : dat_valName = ES.dat_valName[0]
-        else : dat_valName = ES.dat_valName[1]
-        return self.jsonESSet(dat_valName, option)
+        return self.jsonESSet(ES.dat_valName, option)
+        #if option["json_dat_instant"] : dat_valName = ES.dat_valName
+        #else : dat_valName = ES.dat_valName
+        #return self.jsonESSet(dat_valName, option)
 
     def to_numpy(self, func=ES._identity):
         datList = self.vList(func)
-        if func != DatationValue.vName and (type(datList[0]) == str or
-                                            type(datList[0]) == datetime) :
+        #isdate = False
+        if type(datList[0]) == str :
+            try : 
+                datetime.fromisoformat(datList[0])
+                #isdate = True
+            except : return np.array(datList)
             return np.array(datList, dtype=np.datetime64)
+        #if func != DatationValue.vName and (type(datList[0]) == str or
+        #                                    type(datList[0]) == datetime) :
+        elif type(datList[0]) == datetime : return np.array(datList, dtype=np.datetime64)
         else: return np.array(datList)
 
     def analyse(self):
         '''
         calcul de bbox
         '''
-        self.boxMax = self.maxiBox()
-        self.boxMin = self.miniBox()
+        pass
+        '''self.boxMax = self.maxiBox()
+        self.boxMin = self.miniBox()'''
         
 class ESSetLocation(ESSet, Location):
     """
@@ -117,16 +126,21 @@ class ESSetLocation(ESSet, Location):
         self.initESSet(LocationValue, jObj)
         self.majMeta()
 
-    def __repr__(self): return object.__repr__(self) + '\n' + self.json(ES.mOption) + '\n'
+    def __repr__(self): return '\n' + self.json(ES.mOption) + '\n'
 
     def json(self, option = ES.mOption):       
-        if option["json_loc_point"] : loc_valName = ES.loc_valName[0]
-        else : loc_valName = ES.loc_valName[1]
-        return self.jsonESSet(loc_valName, option)
+        return self.jsonESSet(ES.loc_valName, option)
+        #if option["json_loc_point"] : loc_valName = ES.loc_valName
+        #else : loc_valName = ES.loc_valName
+        #return self.jsonESSet(loc_valName, option)
     
     @property
     def vListPoint(self):
-        return [val.vPoint(self.observation.option) for val in self.valueList]
+        return [val.vPoint() for val in self.valueList]
+
+    @property
+    def vListCodePlus(self):
+        return [val.vCodePlus(self.observation.option) for val in self.valueList]
 
     @property
     def vListShap(self):
@@ -139,8 +153,9 @@ class ESSetLocation(ESSet, Location):
         '''
         calcul de bbox
         '''
-        self.boxMax = self.maxiBox()
-        self.boxMin = self.miniBox()
+        pass
+        '''self.boxMax = self.maxiBox()
+        self.boxMin = self.miniBox()'''
 
 class ESSetProperty(ESSet, Property):
     """
@@ -153,12 +168,17 @@ class ESSetProperty(ESSet, Property):
         self.initESSet(PropertyValue, jObj)
         self.majMeta()
 
-    def __repr__(self): return self.json(ES.mOption) + '\n'
+    def __repr__(self): return '\n' + self.json(ES.mOption) + '\n'
+
+    @property
+    def vListType(self):
+        return [val.vType() for val in self.valueList]
 
     def json(self, option = ES.mOption):       
-        if option["json_prp_type"] : prp_valName = ES.prp_valName[0]
-        else : prp_valName = ES.prp_valName[1]
-        return self.jsonESSet(prp_valName, option)
+        return self.jsonESSet(ES.prp_valName, option)
+        #if option["json_prp_type"] : prp_valName = ES.prp_valName
+        #else : prp_valName = ES.prp_valName
+        #return self.jsonESSet(prp_valName, option)
 
     def to_numpy(self, func=ES._identity):
         return np.array(self.vList(func))
@@ -177,7 +197,7 @@ class ESSetResult(ESSet, Result):
 
     def __repr__(self):
         #return object.__repr__(self) + '\n' + self.json(True, True, True) + '\n'
-        return object.__repr__(self) + '\n' + self.json(ES.mOption) + '\n'
+        return '\n' + self.json(ES.mOption) + '\n'
 
     @property
     def vListIndex(self):
@@ -190,47 +210,60 @@ class ESSetResult(ESSet, Result):
         nz = np.nonzero(resComp)
         full = copy.copy(self.valueList)
         if maj :
-            #for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : self.addValue(ResultValue, ResultValue(ind=list(t)))
             for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : 
-                self.addValue(ResultValue, ResultValue(ind=[int(t[0]),int(t[1]),int(t[2])]))
+                self.valueList.append(ResultValue(ind=list(t)))
             self.observation.majType(order='dlp')
             return []
         else :
             full = copy.copy(self.valueList)
             for t in zip(list(nz[0]), list(nz[1]), list(nz[2])) : full.append(ResultValue(ind=list(t)))
             return full
-            
-    def to_numpy(self, func=ES._identity, ind='axe'):
+    
+    def _fullAxe(self, axe):
+        if not self.observation.complet :               
+            ob = copy.deepcopy(self.observation)
+            nr = np.array(ob.setResult.vListIndex)
+            ob.full()
+            lis = ob.setResult.valueList
+            dellis = []
+            for i in range(len(lis)):
+                if (lis[i].ind[axe//10], lis[i].ind[axe%10]) not in list(zip(list(nr[:,axe//10]), list(nr[:,axe%10]))) : dellis.append(i)
+            dellis.sort(reverse=True)
+            for i in dellis : lis.pop(i)
+        else :
+            lis = copy.deepcopy(self.valueList)
+        lis.sort()
+        return lis
+        
+    def to_numpy(self, func=ES._identity, ind='axe', squeeze=True):
         if type(ind) == str and ind == 'flat' : return np.array(self.vList(func))
-        #elif type(ind) == str and (ind == 'obs' or (ind == 'axe' and len(self.axes) == 3 )) :
         elif type(ind) == str and (ind == 'obs' or (ind == 'axe' and max(self.axes) < 9 )) :
             [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
             listFull = self.full(False)
-            listInd = sorted(list(zip(listFull, list(range(len(listFull))))))
+            listInd = sorted(list(zip(listFull, list(range(len(listFull))))), key= lambda z : z[0])
             fullTri, indTri = zip(*listInd)
-            #return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp)
-            return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp).squeeze()
+            if squeeze : return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp).squeeze()
+            else : return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp)
         elif type(ind) == str and ind == 'axe' :
             for ax in self.axes :
                 if ax > 100 : return np.array(self.vList(func))
                 elif ax > 9 :
+                    lis = self._fullAxe(ax)
+                    #self.observation.majType()
                     [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
                     order = [nDat, nLoc, nPrp]
-                    cop = copy.deepcopy(self.valueList)   
-                    #cop = self.vList()   
-                    for res in cop :
+                    for res in lis :
                         res.ind[ax//10] = 0
-                    cop = [func(cop[i]) for i in range(len(cop))]
+                    lis = [func(lis[i]) for i in range(len(lis))]
                     if len(self.axes) == 2 :
                         if (ax//10+2)%3 == self.axes[0] or (ax//10+1)%3 == self.axes[1] :
-                            return np.array(cop).reshape(order[(ax//10+2)%3], order[(ax//10+1)%3])
-                        else: return np.array(cop).reshape(order[(ax//10+1)%3], order[(ax//10+2)%3])
-                    return np.array(cop)
-            
+                            return np.array(lis).reshape(order[(ax//10+2)%3], order[(ax//10+1)%3])
+                        else: return np.array(lis).reshape(order[(ax//10+1)%3], order[(ax//10+2)%3])
+                    return np.array(lis)           
         return np.array(())
     
     def json(self, option = ES.mOption):
-        return self.jsonESSet(ES.res_valName[0], option)
+        return self.jsonESSet(ES.res_valName, option)
 
     def getMaxIndex(self):
         maxInd = -1
@@ -278,10 +311,21 @@ class ESSetResult(ESSet, Result):
                         if not 'p' in ind.keys() : ind['p'] = ind['x']
                         self.valueList[ir].ind = [ i[ind['d']], i[ind['l']], i[ind['p']] ]
                 
-    def triAxe(self):
-        self.axes.sort()
-        if len(self.axes) == 2 and self.axes[0] != 0 and self.axes[1] > 9 : 
-            (self.axes[0], self.axes[1]) = (self.axes[1], self.axes[0])
+    def _axeCoor(self, nValAxe) :
+        for ax in self.axes :
+            if ax > 100 : return ax
+            if ax < 9 and nValAxe == ax : return ax
+            elif ax > 9 and (nValAxe == ax//10 or nValAxe == ax%10) : return ax
+        return None
+    
+    def triAxe(self, maj=True, fullAxes=False):
+        if maj : axes = self.axes
+        else : axes = copy.deepcopy(self.axes)
+        axes.sort()
+        if fullAxes: axes=[0,1,2]
+        elif len(axes) == 2 and axes[0] != 0 and axes[1] > 9 : 
+            (axes[0], axes[1]) = (axes[1], axes[0])
+        return axes
         
     def analyse(self):
         '''

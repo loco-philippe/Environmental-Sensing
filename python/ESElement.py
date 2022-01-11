@@ -126,7 +126,7 @@ class ESObs(ESElement):
     def __init__(self, pObs=None):
         ESElement.__init__(self)
         self.metaType = ES.obs_metaType
-        self.nValue = 0
+        #self.nValue = 0
         if (pObs != None): pObs.addComposant(self)
 
     @property
