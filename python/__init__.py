@@ -89,42 +89,108 @@ with each Observation. They allow processing to be performed on Observations
 without having to know their composition (eg bounding boxes, type of observation,
 volume, etc.).   
 
-*Note: This “domain range” indexed representation is preferred to an “interleaved”
-tabular representation which associates temporal, spatial and physical values  
-​​with each value of the result.*
-
 ## Index
+
+<img src="./ES/index.png" width="800">
+
+In a Observation, the Result is associated with a Datation, a Location and a Property.
+In the usual tabular representations (like Excel or csv) there is one row for each Result
+and a lot of columns for Datation, Location and Property.
+This representation is simple and readable but it duplicates the information and
+ is not suitable for updates. 
+ 
+In the ES project, we chose the indexed representation suitable for computer 
+processing. Thus, the Result object is made up of its own attributes as well as
+ an index to the Datation, Location and Property objects. 
 
 ## Dimension
 
+<img src="./ES/dimension.png" width="800">
+
+A result is associated with a property, a location and a date. The Result Object 
+is therefore indexed with three axis (dimension = 3). But there are two cases 
+where the dimension is reduced :
+    
+- if an axis has only one value
+- if two axis are coupled
+
+For example, if on a path we measure a property, the dimension is 1 (Location 
+and Datation are coupled, Property has one value).
+
+This notion is important because it conditions the modes of representation
+ (e.g., plot).
+
 ## Json interface
+
+The JSON format is used for Observation interchange. The ObsJSON format support
+ the Observation data model. This means that an Observation generated from a 
+ JSON format from another Observation is identical to this one.
+
+This format is defined in the 
+<a href="https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf" 
+target="_blank">ObsJSON document</a>.
 
 ## Binary interface
 
+The binary payload is necessary for exchanges with LPWAN networks (e.g. SigFox, 
+LoRaWAN). The payload should be as compact as possible to minimise the Time-on-Air 
+and reduce power consumption (for battery operated) devices. For example, the maximum
+lenght of the payload is 12 bytes for SigFox and between 51 bytes and 222 bytes for LoRaWAN.
+
+To obtain this maximum lenght, limitations are imposed.
+
+<img src="./ES/binary.png" width="800">
+
+The diagram above shows the structure of the payload.
+
+*Note : The right side of the diagram explains the coding of the values. This coding 
+is the same as that used by Bluetooth in the <a href=
+"https://www.bluetooth.com/specifications/specs/environmental-sensing-service-1-0/" 
+target="_blank">Environnemental Sensing Service</a>.*
+
+To obtain low payload, a specific process can be used (see below). It allows data
+ to be sent in two stages : first send metadata, second (in operation use) send data.
+ 
+<img src="./ES/sensor.png" width="800">
+
+ 
 ## Bluetooth mapping
+
+The Environnemental Sensing Service is a Bluetooth protocol for sensors. The data 
+exposed in this protocol are compatible and consistent with the Observation data model. 
+Thus, Bluetooth data is automatically converted into Observation data.
+ 
+The diagram below shows the mapping of the two structures.
+
+<img src="./ES/bluetooth.png" width="800">
 
 ## Xarray mapping
 
 # Getting Started
 
+the code used, the results and the explanations are provided through "Jupyter 
+Notebook" indicated in link in each chapter.
+The Notebook files are 
+<a href="https://github.com/loco-philippe/loco-philippe.github.io/tree/main/Example" target="_blank">
+stored in Github</a> and can be replayed.
+
 ## First Observation
 
-<img src="./ES/first observation.png" width="800">
-<img src="./ES/first observation2.png" width="800">
-<img src="./ES/first observation carto.png" width="800">
-<img src="./ES/first observation carto2.png" width="800">
+This chapter explain you 
+<a href="./Example/first observation.html" target="_blank">(see the page here)</a> :
+    
+- how to create a simple and more complex Observation Object
+- the different view of the data
+- how the ObsJSON is structured 
 
-## More complex Observation
+## Observation for sensor
 
-<img src="./ES/complex observation.png" width="800">
-<img src="./ES/complex observation2.png" width="800">
-<img src="./ES/complex observation3.png" width="800">
-
-## Synthesis
-
-<img src="./ES/synthesis.png" width="800">
-<img src="./ES/synthesis2.png" width="800">
-
+The sensors how use TCP/IP send the data with ObsJSON format (see above).
+This chapter is dedicated to binary interface and explain you :
+<a href="./Example/first observation.html" target="_blank">(see the page here)</a> :
+    
+- how to encode and decode binary data
+- the processus to obtain low data
 
 # Quick overview
 
@@ -158,6 +224,8 @@ tabular representation which associates temporal, spatial and physical values
 
 ### Xarray export
 
+### Storage
+
 # Developpers documentation
 
 ## Data model
@@ -184,5 +252,32 @@ Modules contain the following classes :
 `ES.ESObs.Result`, `ES.ESObs.ESSetLocation`, `ES.ESObs.ESSetDatation`,
 `ES.ESObs.ESSetProperty`, `ES.ESObs.ESSetResult`, 
 - ESconstante : `ES.ESconstante.Es`.
+
+"""
+
+
+"""
+<img src="./Example/first observation.png" width="800">
+<img src="./Example/first observation2.png" width="800">
+<img src="./Example/first observation carto.png" width="800">
+<img src="./Example/first observation carto2.png" width="800">
+
+## More complex Observation
+
+<img src="./Example/complex observation.png" width="800">
+<img src="./Example/complex observation2.png" width="800">
+<img src="./Example/complex observation3.png" width="800">
+
+## Synthesis
+
+<img src="./Example/synthesis.png" width="800">
+<img src="./Example/synthesis2.png" width="800">
+
+*Note: This “domain range” indexed representation is preferred to an “interleaved”
+tabular representation which associates temporal, spatial and physical values  
+​​with each value of the result.*
+
+[ObsJSON ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
+document.
 
 """

@@ -942,19 +942,27 @@ class Observation(ESObject):
             #plt.legend(obx.coords['locstr'].to_index().to_list())
         plt.show()
         
-    def view(self, name=True, dat=True, loc=True, prp=True, lenres=0) :
+    def view(self, name=True, dat=True, loc=True, prp=True, lenres=0, width=15, sep = '_') :
         tab = self._to_tab(name, dat, loc, prp, lenres)
-        separator = [ '____________________' for val in tab[0]] 
+        septab = ''
+        for i in range(width-2) : septab += sep
+        #separator = [ '____________________' for val in tab[0]] 
+        separator = [ septab for val in tab[0]] 
         first=True
-        print()
+        #form = '{:<'+str(width)+'}'
+        forms = '{:<'+str(width)+'.'+str(width-1)+'}'
+        formf = '{!s:<'+str(width)+'.'+str(width-1)+'}'
         for lign in tab :
             for val in lign :
-                if type(val)==str : print(val.ljust(20), end=' ')
-                else : print('{:<20}'.format(val), end=' ')
+                #print(form.format(val), end='')
+                #if type(val)==str : print(val[0:width].ljust(width), end=' ')
+                #else : print('{:<20}'.format(val), end=' ')
+                if type(val)==str : print(forms.format(val), end='')
+                else : print(formf.format(val), end='')
             print('')
             if first : 
                 for val in separator :
-                    print(val.ljust(20), end=' ')
+                    print(val.ljust(width), end='')
                 print('')
                 first = False
 

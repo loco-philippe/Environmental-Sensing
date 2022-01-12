@@ -37,9 +37,9 @@ dpt = json.loads(dp)['features']
 #pol75 = dpt['features'][75]['geometry']['coordinates']
 pol13 = {dpt[12]['properties']['code'] + ' ' + dpt[12]['properties']['nom'] : 
          dpt[12]['geometry']['coordinates']}
-pol69 = {dpt[69]['properties']['code'] + ' ' + dpt[12]['properties']['nom'] : 
+pol69 = {dpt[69]['properties']['code'] + ' ' + dpt[69]['properties']['nom'] : 
          dpt[69]['geometry']['coordinates']}
-pol75 = {dpt[75]['properties']['code'] + ' ' + dpt[12]['properties']['nom'] : 
+pol75 = {dpt[75]['properties']['code'] + ' ' + dpt[75]['properties']['nom'] : 
          dpt[75]['geometry']['coordinates']}
 pol1 = [[[0.0,1.0], [1.0,2.0], [1.0,1.0], [0.0,1.0]]]
 pol1centre = [0.6666666666666666, 1.3333333333333333]
@@ -735,6 +735,7 @@ class TestObservation(unittest.TestCase):
         obs.majType()
         obs.option["json_ESobs_class"] = True
         obs.option["json_elt_type"] = True
+        obs.option["json_info_type"] = True
         self.assertEqual(json.loads(obs.json())[ES.information]["typeobs"], ES.obsCat[122])
         
 class TestExports(unittest.TestCase):

@@ -38,10 +38,10 @@ class Es:
                       "json_obs_val"        : True, #key:val ou val
                       "json_obs_attrib"     : False, # avec key = attributes
                       "json_param"          : False, # ok
-                      "json_info_type"      : True,
-                      "json_info_nval"      : True,
-                      "json_info_box"       : True,
-                      "json_info_autre"     : True,
+                      "json_info_type"      : False,
+                      "json_info_nval"      : False,
+                      "json_info_box"       : False,
+                      "json_info_autre"     : False,
                       "unic_index"          : True, # dans ESSet
                       "bytes_res_format"    : "null", # calculé à partir de propperty si "null"
                       #"maj_reset_index"     : False, # dans majtype
