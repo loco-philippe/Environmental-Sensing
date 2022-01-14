@@ -42,7 +42,8 @@ class Es:
                       "json_info_nval"      : False,
                       "json_info_box"       : False,
                       "json_info_autre"     : False,
-                      "unic_index"          : True, # dans ESSet
+                      "unic_index"          : True,  # dans ESSet
+                      "add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : "null", # calculé à partir de propperty si "null"
                       #"maj_reset_index"     : False, # dans majtype
                       "sort_order"          : 'dlp'

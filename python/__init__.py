@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-## ***Environnemantal Sensing Package***
+## ***Environmental Sensing Package***
 
 Created on Fri Dec 24 15:21:14 2021
 
 @author: philippe@loco-labs.io
 
 
-# Why a project for Environnemental Data ?
+# Why a project for Environmental Data ?
 
 The project was born from the following observations:
     
@@ -17,7 +17,7 @@ used by the sensors to transmit the information (binary and textual),
 spatial and physical component (apart from file formats),
 - we spend a lot of energy converting this type of data to make it usable.
 
-# The Environnemental Sensing project
+# The Environmental Sensing project
 
 The ES project is made of :
     
@@ -44,7 +44,7 @@ all situations (platform)
 
 ## Standards
 
-The main standard about Environnemental Data is the ISO-19156 "observation and 
+The main standard about Environmental Data is the ISO-19156 "observation and 
 measurement" standard :    
 
 *"This International Standard defines a conceptual schema for observations, and 
@@ -86,7 +86,7 @@ temporal, spatial and physical values.
 
 Common properties (indicators) are associated 
 with each Observation. They allow processing to be performed on Observations 
-without having to know their composition (eg bounding boxes, type of observation,
+without having to know their composition (e.g. bounding boxes, type of observation,
 volume, etc.).   
 
 ## Index
@@ -96,7 +96,7 @@ volume, etc.).
 In a Observation, the Result is associated with a Datation, a Location and a Property.
 In the usual tabular representations (like Excel or csv) there is one row for each Result
 and a lot of columns for Datation, Location and Property.
-This representation is simple and readable but it duplicates the information and
+This representation is simple and readable, but it duplicates the information and
  is not suitable for updates. 
  
 In the ES project, we chose the indexed representation suitable for computer 
@@ -108,11 +108,11 @@ processing. Thus, the Result object is made up of its own attributes as well as
 <img src="./ES/dimension.png" width="800">
 
 A result is associated with a property, a location and a date. The Result Object 
-is therefore indexed with three axis (dimension = 3). But there are two cases 
-where the dimension is reduced :
+is therefore indexed with three axes (dimension = 3). But there are two cases 
+where the dimension is reduced:
     
 - if an axis has only one value
-- if two axis are coupled
+- if two axes are coupled
 
 For example, if on a path we measure a property, the dimension is 1 (Location 
 and Datation are coupled, Property has one value).
@@ -133,11 +133,11 @@ target="_blank">ObsJSON document</a>.
 ## Binary interface
 
 The binary payload is necessary for exchanges with LPWAN networks (e.g. SigFox, 
-LoRaWAN). The payload should be as compact as possible to minimise the Time-on-Air 
+LoRaWAN). The payload should be as compact as possible to minimize the Time-on-Air 
 and reduce power consumption (for battery operated) devices. For example, the maximum
 lenght of the payload is 12 bytes for SigFox and between 51 bytes and 222 bytes for LoRaWAN.
 
-To obtain this maximum lenght, limitations are imposed.
+To obtain this maximum length, limitations are imposed.
 
 <img src="./ES/binary.png" width="800">
 
@@ -146,17 +146,17 @@ The diagram above shows the structure of the payload.
 *Note : The right side of the diagram explains the coding of the values. This coding 
 is the same as that used by Bluetooth in the <a href=
 "https://www.bluetooth.com/specifications/specs/environmental-sensing-service-1-0/" 
-target="_blank">Environnemental Sensing Service</a>.*
+target="_blank">Environmental Sensing Service</a>.*
 
 To obtain low payload, a specific process can be used (see below). It allows data
- to be sent in two stages : first send metadata, second (in operation use) send data.
+ to be sent in two stages: first send metadata, second (in operation use) send data.
  
 <img src="./ES/sensor.png" width="800">
 
  
 ## Bluetooth mapping
 
-The Environnemental Sensing Service is a Bluetooth protocol for sensors. The data 
+The Environmental Sensing Service is a Bluetooth protocol for sensors. The data 
 exposed in this protocol are compatible and consistent with the Observation data model. 
 Thus, Bluetooth data is automatically converted into Observation data.
  
@@ -165,6 +165,19 @@ The diagram below shows the mapping of the two structures.
 <img src="./ES/bluetooth.png" width="800">
 
 ## Xarray mapping
+
+Xarray is very powerful to analyze and process multi-dimensional data. Xarray 
+share the same principle as Observation: indexed multi-dimensional data. Thus, 
+it's natural du use Xarray if you want to analyze Observation data.
+
+The difference between Observation and Xarray is that Xarray uses matrix data and 
+Observation uses only indexed data. Therefore, to transfer Observation data to Xarray 
+we must complete data with 'nan' value to obtain a complete matrix with the right 
+dimension (1, 2 or 3).
+
+The diagram below shows the mapping of the two structures.
+
+<img src="./ES/xarray.png" width="800">
 
 # Getting Started
 
@@ -186,11 +199,13 @@ This chapter explain you
 ## Observation for sensor
 
 The sensors how use TCP/IP send the data with ObsJSON format (see above).
-This chapter is dedicated to binary interface and explain you :
+This chapter is dedicated to binary interface and explain you:
 <a href="./Example/first observation.html" target="_blank">(see the page here)</a> :
     
 - how to encode and decode binary data
-- the processus to obtain low data
+- the processes to obtain low data
+
+## Observation management
 
 # Quick overview
 
@@ -226,7 +241,7 @@ This chapter is dedicated to binary interface and explain you :
 
 ### Storage
 
-# Developpers documentation
+# Developers documentation
 
 ## Data model
 
@@ -237,11 +252,11 @@ spatial and temporal characteristics associated with measurable or observable
 
 ## What are the ES classes ?
 
-The ES functions are divided according to the class hierarchy below :
+The ES functions are divided according to the class hierarchy below:
  
 <img src="./ES/EShierarchie.png" width="800">
 
-Modules contain the following classes :
+Modules contain the following classes:
     
 - ESObservation : `ES.ESObservation.Observation`, 
 - ESValue : `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, 

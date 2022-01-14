@@ -75,8 +75,27 @@ class ESValue:
         #if name != '' : self.name = name
         if nam != '' : self.name = nam
 
-    def isEqual(self, val):
-        equal = self.name != ES.nullName and self.name == val.name
+    def isEqual(self, val, name=True, value=True):
+        equalName = self.name == val.name
+        nullName  = self.name == ES.nullName
+        if   type(self) == LocationValue : 
+            nullValue  = self.shap  == _gshape(ES.nullCoor)
+            equalValue = self.shap  == val.shap
+        elif type(self) == DatationValue : 
+            equalValue = self.slot  == val.slot
+            nullValue  = self.slot  == TimeSlot()
+        elif type(self) == PropertyValue : 
+            equalValue = self == val
+            nullValue = self == PropertyValue()
+        elif type(self) == ResultValue :
+            equalValue = self.value == val.value
+            nullValue  = self.value != 'null' 
+        else : equalValue = False
+        return  (name and value and equalName and equalValue) or \
+                (name and not value and equalName and not nullName) or \
+                (not name and value and equalValue and not nullValue)
+                #(not name or (name and equalName)) and (not value or (value and equalValue))
+        '''equal = self.name != ES.nullName and self.name == val.name
         if not equal :
             if   type(self) == LocationValue and self.shap != _gshape(ES.nullCoor) :
                 equal = self.shap  == val.shap
@@ -86,9 +105,9 @@ class ESValue:
                 equal = self == val
             elif type(self) == ResultValue   and self.value != 'null' :
                 equal = self.value == val.value
-        return equal
+        return equal'''
     
-    def majValue(self, val, simple = True):
+    def majValue(self, val):
         if   type(self) == LocationValue : self.shap  = LocationValue(val).shap
         elif type(self) == DatationValue : self.slot  = DatationValue(val).slot
         elif type(self) == ResultValue   : self.value = ResultValue  (val).value
@@ -370,6 +389,18 @@ class PropertyValue(ESValue):
                 elif ES.prp_EMFId    == k : self.EMFId       = v
                 else : self.detail[k] = v
         elif type(val) == str : self.name = val
+        elif type(val) == PropertyValue :
+            self.name           = val.name
+            self.pType          = val.pType
+            self.unit           = val.unit
+            self.sampling       = val.sampling
+            self.application    = val.application
+            self.period         = val.period
+            self.interval       = val.interval
+            self.uncertain      = val.uncertain
+            self.EMFId          = val.EMFId
+            self.detail         = val.detail
+        
 
     def __eq__(self, other): return self.pType == other.pType and \
         self.unit == other.unit and self.sampling == other.sampling and \
@@ -472,6 +503,7 @@ class ResultValue (ESIndexValue):
             else : self.setValue(json.dumps(js))
         elif type(val) == list : self.setIndValue(val)
         elif type(val) == ResultValue : 
+            self.name = val.name
             self.value = val.value
             self.ind = val.ind
         elif (type(val) == float or type(val) == int): self.setValue(val)
@@ -610,7 +642,7 @@ class ESSet:        # !!! ESSet
         if len(listVal) != self.nValue : return
         for i in range(self.nValue) : self.valueList[i].majValue(self.ValueClass(listVal[i]))
         
-    def addValue(self, value):
+    def addValue(self, value, equal = 'full'):
     #def addValue(self, ValueClass, value):
         '''if type(value) == ValueClass : val = value
         else: val = ValueClass(value)
@@ -618,20 +650,44 @@ class ESSet:        # !!! ESSet
         if type(value) == self.ValueClass : val = value
         else: val = self.ValueClass(value)
         if self.ValueClass == ResultValue :
+            ind = self.indexResLoc(val)
+            if ind != None : return 
+            '''if val.ind != ES.nullInd :
+                for i in range(len(self.valueList)):
+                    if self.valueList[i].ind == val.ind : return i'''      
+            #self.valueList.append(val)
+        else :
+            ind = self.indexLoc(val)[equal]
+            if ES.mOption["unic_index"] and ind != -1 : return ind
+            '''for i in range(len(self.valueList)):
+                #if self.valueList[i] == val and ES.mOption["unic_index"]: return i
+                if self.valueList[i].isEqual(val) and ES.mOption["unic_index"]: return i'''
+        self.valueList.append(val)
+        return len(self.valueList) - 1
+
+    def indexResLoc(self, val):
+        if self.ValueClass == ResultValue :
             if val.ind != ES.nullInd :
                 for i in range(len(self.valueList)):
-                    if self.valueList[i].ind == val.ind : return i                
-            self.valueList.append(val)
-        else :
-            for i in range(len(self.valueList)):
-                #if self.valueList[i] == val and ES.mOption["unic_index"]: return i
-                if self.valueList[i].isEqual(val) and ES.mOption["unic_index"]: return i
-            self.valueList.append(val)
-        #self.nValue = len(self.valueList)
-        return len(self.valueList) - 1
+                    if self.valueList[i].ind == val.ind : return i     
+                    
+    def indexLoc(self, val):
+        ind = {'full' : -1, 'name' : -1, 'value' : -1}
+        for i in range(len(self.valueList)):
+            if self.valueList[i].isEqual(self.ValueClass(val), name=True, value=True): 
+                ind['full'] = ind['name'] = ind['value'] = i
+                return ind
+            if self.valueList[i].isEqual(self.ValueClass(val), name=True, value=False) \
+                and ind['name'] == -1: 
+                    ind['name'] = i
+            if self.valueList[i].isEqual(self.ValueClass(val), name=False, value=True) \
+                and ind['value'] == -1: 
+                    ind['value'] = i
+        return ind
+            #if self.valueList[i].isEqual(self.ValueClass(val)): return i
+        
     @property
     def nValue(self): return len(self.valueList)
-
         
     def jsonESSet(self, ES_valName, option):
         try:
