@@ -7,65 +7,6 @@ Created on Tue Aug  3 23:40:06 2021
 The `ES.ESObservation` module contains the main class
 of Environmental Sensing : `Observation` class.
 
-The methods defined in this class are : 
-
-*add value*
-
-- `Observation.append`
-- `Observation.appendList`
-- `Observation.addESObs`
-- `Observation.addAttributes`
-- `Observation.addResultValue`
-- `Observation.addListResultValue`
-- `Observation.addValue`
-- `Observation.addListValue`
-
-*majValue*
-
-- `Observation.majList`
-- `Observation.majType`
-- `Observation.majValue`
-
-*property (getters)*
-
-- `Observation.setLocation`
-- `Observation.setDatation`
-- `Observation.setProperty`
-- `Observation.setResult`
-- `Observation.bounds`
-- `Observation.jsonFeature`
-- `Observation.typeObs`
-- `Observation.nValueObs`
-- `Observation.json`
-
-*selecting*
-
-- `Observation.indexLoc`
-- `Observation.iLoc`
-- `Observation.loc`
-
-*management*
-
-- `Observation.extend`
-- `Observation.full`
-- `Observation.sort`
-
-*visualization*
-
-- `Observation.voxel`
-- `Observation.plot`
-- `Observation.view`
-- `Observation.choropleth`
-
-*exports - imports*
-
-- `Observation.to_csv`
-- `Observation.to_dataFrame`
-- `Observation.to_xarray`
-- `Observation.to_json`
-- `Observation.to_bytes`
-- `Observation.from_bytes`
-
 """
 from ESObs import ESSetDatation, ESSetLocation, ESSetProperty, ESSetResult
 from ESElement import ESObject, isESObs, isESAtt, isUserAtt
@@ -109,6 +50,67 @@ class Observation(ESObject):
     - **userAtt** : namedValue dictionnary (inherited from ESElement)
     - **parameter** : namedValue dictionnary (inherited from ESElement)
     - **mAtt[reference]** : number of the reference Observation used to complete the actual Observation
+
+    The methods defined in this class are : 
+    
+    *property (getters)*
+    
+    - `Observation.setLocation`
+    - `Observation.setDatation`
+    - `Observation.setProperty`
+    - `Observation.setResult`
+    - `Observation.bounds`
+    - `Observation.jsonFeature`
+    - `Observation.typeObs`
+    - `Observation.nValueObs`
+    - `Observation.json`
+    
+    *add value*
+    
+    - `Observation.append`
+    - `Observation.appendList`
+    - `Observation.addESObs`
+    - `Observation.addAttributes`
+    - `Observation.addResultValue`
+    - `Observation.addListResultValue`
+    - `Observation.addValue`
+    - `Observation.addListValue`
+    
+    *majValue*
+    
+    - `Observation.majList`
+    - `Observation.majType`
+    - `Observation.majValue`
+    
+    *selecting*
+    
+    - `Observation.indexLoc`
+    - `Observation.iLoc`
+    - `Observation.loc`
+    
+    *management*
+    
+    - `Observation.extend`
+    - `Observation.full`
+    - `Observation.sort`
+    
+    *visualization*
+    
+    - `Observation.voxel`
+    - `Observation.plot`
+    - `Observation.view`
+    - `Observation.choropleth`
+    
+    *exports - imports*
+    
+    - `Observation.to_csv`
+    - `Observation.to_dataFrame`
+    - `Observation.to_xarray`
+    - `Observation.to_json`
+    - `Observation.from_json`
+    - `Observation.to_bytes`
+    - `Observation.from_bytes`
+
     """
     def __init__(self, *args, order = 'dlp', **kwargs):
         '''
@@ -205,7 +207,7 @@ class Observation(ESObject):
 
     def addESObs(self, js, classES = None) :
         '''
-        Add a new `ES.ESObs` attached to `Observation`. 
+        Add one or more new `ES.ESObs` attached to `Observation`. 
         The ES.ESObs child class is defined by classES or if None by the js structure.
 
         *Parameters*
@@ -319,7 +321,7 @@ class Observation(ESObject):
         for i in range(3) :
             if type(arg[i]) == int : ind[i] = arg[i]
             else : ind[i] = self.addValue(_EsValue[i](arg[i]), equal)
-        self._addValueObservation(res, ind[0], ind[1], ind[2])
+        self._addValueObservation(ind[0], ind[1], ind[2], res)
         self.majType()
         
     def appendList(self, listDat, listLoc, listPrp, listVal, equal="full"):
@@ -433,15 +435,31 @@ class Observation(ESObject):
             else :
                 idx += es.from_bytes(byt[idx:], propList)
     
+    def from_json(self, js):
+        '''
+        Complete an `Observation` with json data. 
+        
+        *Parameters*
+        
+        - **js** : string - ObsJSON data
+        
+        *Returns*
+        
+        - **None**
+        '''
+        try: dic=json.loads(js)
+        except: return
+        self._initDict(dic)
+                
     def full(self, maj=True, allAxes=True) : 
         '''
         Add empty `ES.ESValue.ResultValue` to have a 'complete' `Observation`
 
         *Parameters*
         
-        - **maj** : boolean, optional (default True) - If True, add value to 
+        - **maj** : boolean (default True) - If True, add value to 
         Observation, else return valueList. The default is True.
-        - **allAxes** : boolean, optionnal (default True) - If True, axes are 
+        - **allAxes** : boolean (default True) - If True, axes are 
         completed with empty ES.ESObs 
         
         *Returns*
@@ -497,10 +515,9 @@ class Observation(ESObject):
         *Returns*
 
         - **dict or string** : {'full' : indFull, 'name' : indName, 'value' : indValue }
-        
-            indFull : integer for the first index value with name and value equality
-            indName : integer for the first index value with name equality
-            indFull : integer for the first index value with value equality
+            - indFull : integer for the first index value with name and value equality
+            - indName : integer for the first index value with name equality
+            - indFull : integer for the first index value with value equality
         '''        
         if type(esValue)== PropertyValue and self.setProperty != None:
             ind = self.setProperty.indexLoc(esValue)
@@ -556,9 +573,7 @@ class Observation(ESObject):
         
         - **ValueClass** : class ES.ESValue 
         - **listVal** : list of values
-        - **name** : boolean (True for 'name' and False for 'value'), optional, 
-            
-            Attribute. The default is True. 
+        - **name** : boolean (default True) - True for 'name' and False for 'value'
         
         *Returns*
         
@@ -627,16 +642,16 @@ class Observation(ESObject):
         index = None
         if   type(esValue)== PropertyValue and self.setProperty != None : 
             index = self.setProperty.indexLoc(esValue)[equal]
-            if index != None: self.setProperty[index].majValue(newEsValue)
+            if index != None: self.setProperty[index].setValue(newEsValue)
         elif type(esValue)== LocationValue and self.setLocation != None : 
             index = self.setLocation.indexLoc(esValue)[equal]
-            if index != None: self.setLocation[index].majValue(newEsValue)
+            if index != None: self.setLocation[index].setValue(newEsValue)
         elif type(esValue)== DatationValue and self.setDatation != None : 
             index = self.setDatation.indexLoc(esValue)[equal]
-            if index != None: self.setDatation[index].majValue(newEsValue)
+            if index != None: self.setDatation[index].setValue(newEsValue)
         elif type(esValue)== ResultValue and self.setResult != None : 
             index = self.setResult.indexLoc(esValue)[equal]
-            if index != None: self.setResult[index].majValue(newEsValue)
+            if index != None: self.setResult[index].setValue(newEsValue)
         return index
         
     @property 
@@ -1006,11 +1021,12 @@ class Observation(ESObject):
             elif type(arg) == dict :    # creation à partir d'un dict "key : [liste]"
                 js = arg.copy()
                 self._initDict(js)
-            elif type(arg) == list :    # création à partir d'un jeu de valeur [dat, loc, prp, res]
+            elif type(arg) == list :    # création à partir d'un jeu de valeur [[dat], [loc], [prp], [res]]
                 if len(arg) == 4 : 
                     for i in range(4) :
                         if self.element(ES.esObsClass[i]) == None : _EsObs[i](arg[i], self)
-            elif type(arg) == tuple : self.append(arg[0], arg[1], arg[2], arg[3])
+            elif type(arg) == tuple :   # creation uniquement d'un jeu de données dat, loc, prp, res
+                self.append(arg[0], arg[1], arg[2], arg[3])
         for k in kwargs :
             if k in ES.esObsClass and self.element(k) == None and type(kwargs[k]) in _EsObs: 
                 self.addComposant(kwargs[k])
@@ -1026,11 +1042,11 @@ class Observation(ESObject):
         self.addAttributes(js)
         self.addESObs(js)
     
-    def _addValueObservation(self, val, idat, iloc, iprp):
+    def _addValueObservation(self, idat, iloc, iprp, val):
         '''
         Add a new `ES.ESValue.ResultValue` 
-        **val** : ES.ESValue.ResultValue compatible type
         **idat, iloc, iprp** : integer, ES.ESValue.ESIndexValue
+        **val** : ES.ESValue.ResultValue compatible type
         **return** int : last index in the `ES.ESValue.ESSet` valueList.
         '''
         if self.setResult == None: ESSetResult(pObs=self)

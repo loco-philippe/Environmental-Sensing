@@ -8,10 +8,10 @@ An object of the `ES.ESObs` module is a component of an `ES.ESObservation.Observ
 """
 
 from ESElement import ESObs
-#from ESElement import Datation, Location, Property, Result
 from ESconstante import ES #, identity
 from datetime import datetime
-from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
+from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue   #, ESSet
+from ESSet import ESSet
 import numpy as np
 import copy
 
@@ -85,9 +85,6 @@ class ESSetDatation(ESSet, Datation):   # !!! début ESSet
 
     def json(self, option = ES.mOption):
         return self.jsonESSet(ES.dat_valName, option)
-        #if option["json_dat_instant"] : dat_valName = ES.dat_valName
-        #else : dat_valName = ES.dat_valName
-        #return self.jsonESSet(dat_valName, option)
 
     def to_numpy(self, func=ES._identity):
         datList = self.vList(func)

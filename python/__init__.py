@@ -54,7 +54,7 @@ both within and between different scientific and technical communities."*
 
 But this standard specifies that: 
     
-*"ISO 19156 concerns only concerns only interfaces visible from the outside and
+*"ISO 19156 concerns only interfaces visible from the outside and
  does not impose any restrictions on the underlying implementations"*
 
 The other standards concern more restricted areas and are sometimes incompatible. 
@@ -261,7 +261,8 @@ Modules contain the following classes:
 - ESObservation : `ES.ESObservation.Observation`, 
 - ESValue : `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, 
 `ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`, 
-`ES.ESValue.ESIndexValue`, `ES.ESValue.ESSet`
+`ES.ESValue.ESIndexValue`
+- ESSet : `ES.ESValue.ESSet`
 - ESElement : `ES.ESElement.ESElement`, `ES.ESElement.ESObs`, `ES.ESElement.ESObject`.
 - ESObs : `ES.ESObs.Location`, `ES.ESObs.Datation`, `ES.ESObs.Property`,
 `ES.ESObs.Result`, `ES.ESObs.ESSetLocation`, `ES.ESObs.ESSetDatation`,

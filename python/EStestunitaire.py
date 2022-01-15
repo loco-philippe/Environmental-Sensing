@@ -11,7 +11,8 @@ import unittest
 
 from ESElement import ESElement
 from ESValue import ResultValue, LocationValue, DatationValue, \
-    PropertyValue, ESValue, _gshape, ESSet
+    PropertyValue, _gshape #, ESSet
+from ESSet import ESSet
 from ESObservation import Observation
 from ESObs import ESSetDatation, ESSetProperty, ESSetResult, ESSetLocation
 from ESSlot import TimeSlot
@@ -262,20 +263,20 @@ class TestObsUnitaire(unittest.TestCase):
         #ob1.option["json_loc_name"] = True
         #self.assertEqual(['loc0', 'loc1', 'loc2'], json.loads(ob1.to_json())[ES.loc_valName[2]])
         
-    def test_majValue_majName(self):
+    def test_setValue_setName(self):
         val = LocationValue(lyon)
-        val.majValue(LocationValue([4,5]))
+        val.setValue(LocationValue([4,5]))
         self.assertEqual(val.vPoint(), [4,5])
-        val.majValue(LocationValue([[6,7], [7,8], [8,6]]))
+        val.setValue(LocationValue([[6,7], [7,8], [8,6]]))
         self.assertEqual(val.shap, _gshape([[6,7], [7,8], [8,6]]))
-        val.majName('truc')
+        val.setName('truc')
         self.assertEqual(val.name, 'truc')     
         val = DatationValue(t1)
-        val.majValue(t2)
+        val.setValue(t2)
         self.assertEqual(val.instant, t2)
-        val.majValue(DatationValue(s1))
-        self.assertEqual(val.vInterval, s1)
-        val.majName('truc')
+        val.setValue(DatationValue(s1))
+        self.assertEqual(val.vInterval(), s1)
+        val.setName('truc')
         self.assertEqual(val.name, 'truc')
     
     def test_ESSet_box(self):
@@ -299,7 +300,7 @@ class TestObsUnitaire(unittest.TestCase):
         da1 = ESSetDatation(pObs=Observation(), jObj={ES.dat_valName:[t1, t2, t3]})
         self.assertEqual(ESSetDatation([t1])[0].instant, t1)
         self.assertEqual(ESSetDatation([t1, t2])[1].instant, t2)
-        self.assertEqual(ESSetDatation([[t1, t2]])[0].vInterval[1], t2)
+        self.assertEqual(ESSetDatation([[t1, t2]])[0].vInterval()[1], t2)
         self.assertEqual(ESSetDatation([[t1, t2]])[0].slot.slot[0][1], t2)
 
     def test_ESSetResult(self):
