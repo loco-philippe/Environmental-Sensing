@@ -11,13 +11,14 @@ import unittest
 
 from ESElement import ESElement
 from ESValue import ResultValue, LocationValue, DatationValue, \
-    PropertyValue, _gshape #, ESSet
+    PropertyValue #, _gshape #, ESSet
 from ESSet import ESSet
 from ESObservation import Observation
 from ESObs import ESSetDatation, ESSetProperty, ESSetResult, ESSetLocation
 from ESSlot import TimeSlot
 from ESconstante import ES
-import json, copy, shapely
+from pprint import pprint
+import json, copy #, shapely
 import requests as rq
 from datetime import datetime
 
@@ -130,7 +131,7 @@ def _envoi_mongo(ob):
     return r.status_code
 
 class TestExemples(unittest.TestCase):      # !!! exemples
-    def test_creation_observation(self) :
+    def test_first_observation(self) :
         # cas simple + présentation
         ob=Observation(('morning', 'paris', ' Temp', 'high'))
         ob.append('morning', 'lyon', ' Temp', 'low')
@@ -155,23 +156,19 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         ob.append('morning', 'marseille', 'Humidity', '60', equal='name')
         ob.view(True, False, False, False)
         ob.voxel()
-        print(ob._info())
         ob.plot()
         # ajout dimension 3 + export dataarray, dataframe
         ob.append('afternoon', 'paris', ' Temp', 28, equal='name')
         ob.append('afternoon', 'lyon', ' Temp', 15, equal='name')
+        ob.majList(LocationValue, [lyon, marseille, paris])   # i.e. paris = [2.35, 48.87]
         print(ob.setDatation)
         ob.majList(DatationValue, ["2021-05-05T10", "2021-05-05T16"])
-        ob.view(True, True, False, False)
+        ob.view(prp=False, width=15)
         ob.voxel()
-        print(ob._info())
         ob.plot()       
         print(ob.to_xarray(numeric=True))
-        '''ob.majList(LocationValue, [paris, lyon, marseille])
-        ob.view(True, False, True, False)
-        ob.majList(ResultValue, [27, 10, 50])  
-        ob.view(True, False, True, False)
-        ob.plot()'''
+        pprint(json.loads(ob.json), indent=2)
+        ob._info(string=False)
 
 @unittest.skipIf(simple, "test unitaire")
 class TestObsUnitaire(unittest.TestCase):
@@ -224,8 +221,13 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertTrue(LocationValue(lyon) > LocationValue(paris))
         self.assertEqual(LocationValue(pol1).json(self.opt), json.dumps(pol1centre)) 
         self.opt["json_loc_point"]=False 
+        self.assertTrue(LocationValue(paris).shap == LocationValue({'paris':paris}).shap ==
+                        LocationValue(name='paris', shape=LocationValue._gshape(paris)).shap)
+        self.assertTrue(LocationValue('paris').name == LocationValue({'paris':paris}).name ==
+                        LocationValue(name='paris', shape=LocationValue._gshape(paris)).name)
         #self.assertEqual(LocationValue(pol1).json(self.opt), json.dumps(pol1)) # !!! à traiter point / polygon
-        
+        self.assertEqual(LocationValue.Cuboid(*LocationValue(paris).bounds).bounds, 
+                         LocationValue({'box':paris}).bounds)
     def test_DatationValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(DatationValue(t1), DatationValue(DatationValue(t1)))
@@ -235,12 +237,17 @@ class TestObsUnitaire(unittest.TestCase):
         self.opt["json_dat_name"] = True
         self.opt["json_dat_instant"] = True
         self.assertEqual(DatationValue(json.loads(t1n)).json(self.opt), t1n) 
+        self.assertTrue(DatationValue(t1).slot == DatationValue({'t1':t1}).slot ==
+                        DatationValue(name='t1', slot=t1).slot)
+        self.assertTrue(DatationValue('t1').name == DatationValue({'t1':t1}).name ==
+                        DatationValue(name='t1', slot=t1).name)
         
     def test_propertyValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(PropertyValue().json(self.opt), '{}') 
         self.opt["json_prp_type"] = False
-        self.assertEqual(PropertyValue({ES.prp_propType : "PM25"}).json(self.opt), '{"'+ES.prp_propType+'": "PM25"}')
+        self.assertEqual(PropertyValue({ES.prp_propType : "PM25"}).json(self.opt), 
+                         '{"'+ES.prp_propType+'": "PM25", "unit": "kg/m3"}')
         self.assertEqual(PropertyValue(pprop_pm10).json(self.opt), json.dumps(pprop_pm10))
         #self.opt["json_prp_type"] = True
         #self.assertEqual(PropertyValue(pprop_pm10).json(self.opt), 
@@ -268,14 +275,14 @@ class TestObsUnitaire(unittest.TestCase):
         val.setValue(LocationValue([4,5]))
         self.assertEqual(val.vPoint(), [4,5])
         val.setValue(LocationValue([[6,7], [7,8], [8,6]]))
-        self.assertEqual(val.shap, _gshape([[6,7], [7,8], [8,6]]))
+        self.assertEqual(val.shap, LocationValue._gshape([[6,7], [7,8], [8,6]]))
         val.setName('truc')
         self.assertEqual(val.name, 'truc')     
         val = DatationValue(t1)
         val.setValue(t2)
         self.assertEqual(val.instant, t2)
         val.setValue(DatationValue(s1))
-        self.assertEqual(val.vInterval(), s1)
+        self.assertEqual(val.vInterval(False), s1)
         val.setName('truc')
         self.assertEqual(val.name, 'truc')
     
@@ -297,10 +304,10 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ESSetLocation([[[paris, lyon, marseille, paris]]])[0].shap.type, 'Polygon')
     
     def test_ESSetDatation(self):
-        da1 = ESSetDatation(pObs=Observation(), jObj={ES.dat_valName:[t1, t2, t3]})
+        #da1 = ESSetDatation(pObs=Observation(), jObj={ES.dat_valName:[t1, t2, t3]})
         self.assertEqual(ESSetDatation([t1])[0].instant, t1)
         self.assertEqual(ESSetDatation([t1, t2])[1].instant, t2)
-        self.assertEqual(ESSetDatation([[t1, t2]])[0].vInterval()[1], t2)
+        self.assertEqual(ESSetDatation([[t1, t2]])[0].vInterval(False)[1], t2)
         self.assertEqual(ESSetDatation([[t1, t2]])[0].slot.slot[0][1], t2)
 
     def test_ESSetResult(self):
@@ -369,13 +376,13 @@ class TestBytes(unittest.TestCase):
         self.assertEqual(da2.valueList[1].ind, r7.ind)
         #ob2.option["json_res_index"]=True
         da2 = ESSetResult(pObs=Observation())
-        da2.from_bytes(da3.to_bytes(False, True, 'null', ['CO2', 'CO2']), ['CO2', 'CO2'])
+        da2.from_bytes(da3.to_bytes(False, True, ES.nullDict, ['CO2', 'CO2']), ['CO2', 'CO2'])
         self.assertEqual(da2.valueList[1].value, r7.value)
         da2 = ESSetResult(pObs=Observation())
-        da2.from_bytes(da3.to_bytes(False, True, 'null', ['CO2','PM25']), ['CO2','PM25'])
+        da2.from_bytes(da3.to_bytes(False, True, ES.nullDict, ['CO2','PM25']), ['CO2','PM25'])
         self.assertEqual(round(da2.valueList[1].value, 1), round(r7.value, 1))
         da2 = ESSetResult(pObs=Observation())
-        da2.from_bytes(da3.to_bytes(False, False, 'null', ['CO2','PM25']), ['CO2','PM25'])
+        da2.from_bytes(da3.to_bytes(False, False, ES.nullDict, ['CO2','PM25']), ['CO2','PM25'])
         self.assertEqual(round(da2.valueList[1].value, 1), round(r7.value, 1))
         
     def test_observation_bytes(self):
@@ -407,6 +414,16 @@ class TestObservation(unittest.TestCase):           # !!! test observation
     '''Unit tests for `ES.ESObservation.Observation` '''
 
     def test_obs_creation(self):
+        obs1 = Observation()
+        self.assertEqual(obs1.classES,                   ES.obs_classES)
+        self.assertEqual(ESSetDatation(pObs=obs1).classES,    ES.dat_classES)
+        self.assertEqual(ESSetResult(pObs=obs1).classES,      ES.res_classES)
+        self.assertEqual(ESSetProperty(pObs=obs1).classES,    ES.prp_classES)
+        self.assertEqual(ESSetLocation(pObs=obs1).classES,    ES.loc_classES)
+      
+        ob = Observation(json.dumps(dict([obs_1, _res(9)])))
+        self.assertEqual(json.loads(ob.to_json())[ES.res_valName], _val(9))
+
         ob  = Observation(dict((obs_1, dat1, loc1, prop3, _res(3))), order='ldp')        
         ob1 = Observation(dict((dat1, loc1, prop3, _res(3))), order='ldp')    
         ob2 = Observation({dat1[0] : dat1[1]}, {loc1[0]:loc1[1]}, {prop3[0]:prop3[1]}, 
@@ -424,9 +441,8 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob7 = Observation([[dat1[1]], [loc1[1]], prop3[1], _res(3)[1]], order='ldp', datation=[dat1[1]])
         ob8 = Observation({dat1[0] : dat1[1]}, {loc1[0]:loc1[1]}, {prop3[0]:prop3[1]}, 
                           {_res(3)[0]:_res(3)[1]}, location=loc2[1], order='ldp')   
-        self.assertTrue(ob.to_json()==ob1.to_json()==ob2.to_json()==ob3.json()==
-                        ob4.json()==ob5.json()==ob6.json()==ob7.json()==
-                        ob8.json())
+        self.assertTrue(ob.json  == ob1.json == ob2.json == ob3.json == ob4.json ==
+                        ob5.json == ob6.json == ob7.json == ob8.json)
         ob  = Observation()
         ob1 = Observation({})
         ob2 = Observation([])
@@ -663,17 +679,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob.sort(order = 'ldp')
         self.assertEqual(ob.iLoc(1,1,1), test)
         
-    def test_obs_creation(self):
-        obs1 = Observation()
-        self.assertEqual(obs1.classES,                   ES.obs_classES)
-        self.assertEqual(ESSetDatation(pObs=obs1).classES,    ES.dat_classES)
-        self.assertEqual(ESSetResult(pObs=obs1).classES,      ES.res_classES)
-        self.assertEqual(ESSetProperty(pObs=obs1).classES,    ES.prp_classES)
-        self.assertEqual(ESSetLocation(pObs=obs1).classES,    ES.loc_classES)
-      
-        ob = Observation(json.dumps(dict([obs_1, _res(9)])))
-        self.assertEqual(json.loads(ob.to_json())[ES.res_valName], _val(9))
-
     def test_obs_add(self):
         ob = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18)))))
         ob.option["json_prp_type"] = False
@@ -772,8 +777,8 @@ class TestExports(unittest.TestCase):
           (1.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)}
         self.assertEqual(ob.__geo_interface__, dpt2pt)
         ob.option["json_loc_point"] = False
-        dpt2pol = {'type': 'MultiPolygon', 'coordinates': [(((0.0, 1.0), (1.0, 2.0), (1.0, 1.0), (0.0, 1.0)),),
-                                                           (((0.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 2.0)),)]}
+        #dpt2pol = {'type': 'MultiPolygon', 'coordinates': [(((0.0, 1.0), (1.0, 2.0), (1.0, 1.0), (0.0, 1.0)),),
+        #                                                   (((0.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 2.0)),)]}
         #self.assertEqual(ob.__geo_interface__, dpt2pol)  # !!! multiponints pas multipolygon
 
     def test_obs_polygon(self):

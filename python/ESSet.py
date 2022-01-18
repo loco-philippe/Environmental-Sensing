@@ -36,20 +36,12 @@ class ESSet:        # !!! ESSet
         if ValueClass == None: return
         self.ValueClass = ValueClass
         self.valueList = list()
-        ''' list : list of `ES.ESValue` '''
-        #self.iSort = list()
-        #self.nValue = 0
-        #''' int : lenght of `ES.ESValue.ESSet.valueList` '''
         if  type(jObj) == list :
             try :
                 for val in jObj : self.addValue(val)
             except : self.addValue(jObj)
         elif jObj == None : return 
         else : self.addValue(jObj)
-        '''for val in jObj : self.addValue(ValueClass, val)
-            except : self.addValue(ValueClass, jObj)
-        elif jObj == None : return 
-        else : self.addValue(ValueClass, jObj)'''
 
     def initESSet(self, ValueClass, jObj):
         if type(jObj) == dict:
@@ -62,10 +54,9 @@ class ESSet:        # !!! ESSet
             for k, v in jDat.items(): # attributs
                 if isESAtt(self.classES, k) or (userAtt and isUserAtt(k)): self.mAtt[k] = v
             if ValueClass.valName in list(jDat):    # si valeurs simple ou detaillee précisée
-                ESSet.__init__(self, ValueClass, jDat[ValueClass.valName]) 
-
-        else :
-            ESSet.__init__(self, ValueClass, jObj)
+                    ESSet.__init__(self, ValueClass, jDat[ValueClass.valName]) 
+            else :  ESSet.__init__(self, ValueClass, jObj)
+        else :      ESSet.__init__(self, ValueClass, jObj)
     
     @property
     def vListName(self):
@@ -87,10 +78,6 @@ class ESSet:        # !!! ESSet
         for i in range(self.nValue) : self.valueList[i].setValue(self.ValueClass(listVal[i]))
         
     def addValue(self, value, equal = 'full'):
-    #def addValue(self, ValueClass, value):
-        '''if type(value) == ValueClass : val = value
-        else: val = ValueClass(value)
-        if ValueClass == ResultValue :'''
         if type(value) == self.ValueClass : val = value
         else: val = self.ValueClass(value)
         if self.ValueClass == ResultValue :
@@ -167,7 +154,7 @@ class ESSet:        # !!! ESSet
                 #except: li.append(self.valueList[i].json())    
             return json.dumps(li)
 
-    def to_bytes(self, nameES = False, resIndex = False, forma = 'null', prpList = []):
+    def to_bytes(self, nameES = False, resIndex = False, forma = ES.nullDict, prpList = []):
         byt = bytes()
         offset = 3 * (not nameES)
         code_el = ES.codeb[self.classES] # type de ESobs
@@ -180,13 +167,13 @@ class ESSet:        # !!! ESSet
         if not unique : byt += struct.pack('<H', self.nValue)
         for i in range(self.nValue) :
             prp = forma
-            if forma == 'null' and prpList == [] : prp = "null"
+            if forma == ES.nullDict and prpList == [] : prp = ES.nullDict
             if (nameES and code_el < 4) or (code_el > 3 and forma == "UTF-8") : 
                 byt += self.valueList[i]._to_strBytes()
             elif not nameES and code_el < 4 : byt += self.valueList[i].to_bytes()
             elif code_el < 6 : 
                 #if forma == 'null' and prpList != [] : prp = prpList[i]
-                if forma == 'null' and prpList != [] : prp = prpList[self.valueList[i].ind[2]]
+                if forma == ES.nullDict and prpList != [] : prp = prpList[self.valueList[i].ind[2]]
                 byt += self.valueList[i].to_bytes(resIndex, prp)
         return byt
     
@@ -195,7 +182,7 @@ class ESSet:        # !!! ESSet
         unique  = (byt[0] & 0b00010000) >> 4
         code_el = (byt[0] & 0b11100000) >> 5
         nameES = not(code_ES // 3)
-        forma = 'null'
+        forma = ES.nullDict
         if code_el > 3 : forma = ES.invProp[code_ES]
         resIndex = code_el == 5
         nVal = 1
@@ -209,17 +196,17 @@ class ESSet:        # !!! ESSet
             elif code_el < 6 : esValue = ResultValue
             esVal = esValue()
             prp = forma
-            if forma == 'null' and prpList == [] : prp = "null"
+            if forma == ES.nullDict and prpList == [] : prp = ES.nullDict
             #if prpList == [] : prp = "null"
             if (nameES and code_el < 4) or (code_el > 3 and forma == "utf-8") : 
                 n = esVal._from_strBytes(byt[idx:])
             elif not nameES and code_el < 4 : n = esVal.from_bytes(byt[idx:])
             elif code_el < 6 and not resIndex: 
-                if forma == 'null' and prpList != [] : prp = prpList[i]
+                if forma == ES.nullDict and prpList != [] : prp = prpList[i]
                 n = esVal.from_bytes(byt[idx:], resIndex, prp)
             elif code_el < 6 and resIndex : 
                 nPrp = struct.unpack('<BBB',byt[idx:idx+3])[2]
-                if forma == 'null' and prpList != [] : prp = prpList[nPrp]
+                if forma == ES.nullDict and prpList != [] : prp = prpList[nPrp]
                 n = esVal.from_bytes(byt[idx:], resIndex, prp)
             #self.addValue(esValue, esVal)
             self.addValue(esVal)

@@ -44,7 +44,7 @@ class Es:
                       "json_info_autre"     : False,
                       "unic_index"          : True,  # dans ESSet
                       "add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
-                      "bytes_res_format"    : "null", # calculé à partir de propperty si "null"
+                      "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
                       #"maj_reset_index"     : False, # dans majtype
                       "sort_order"          : 'dlp'
                       #"sort_order"          : [0,1,2]
@@ -146,26 +146,26 @@ class Es:
 
         #'''Property initialization (dict)
         #  format : (code_ES, python format, lenght, dexp, bexp, unit) 
-        self.prop: Dict ={'null'    : (0 , 'e', 2,  0, 0, '-'   ),
-                          'utf-8'   : (2 ,  '', 0,  0, 0, '-'   ),
-                          'sfloat'  : (15, 'e', 2,  0, 0, '-'   ),
-                          'uint16'  : (3 , 'H', 2,  0, 0, '-'   ),
-                          'uint8'   : (7 , 'B', 1,  0, 0, '-'   ),
-                          'sint24'  : (13, 'l', 3,  0, 0, '-'   ),
-                          'uint24'  : (14, 'L', 3,  0, 0, '-'   ),
-                          'sint8'   : (6 , 'b', 1,  0, 0, '-'   ),
-                          'sint16'  : (8 , 'h', 4,  0, 0, '-'   ),
-                          'uint32'  : (4 , 'L', 4,  0, 0, '-'   ),
-                          'PM25'    : (21, 'e', 2,  1, 2, 'kg/m3'),
-                          'PM10'    : (22, 'e', 2,  0, 0, 'kg/m3'),
-                          'CO2'     : (23, 'H', 2,  0, 0, 'ppm' ),
-                          'temp'    : (24, 'h', 2, -2, 0, '°C'  )
-                          }
+        self.prop: Dict ={'utf-8'       : (2 ,  '', 0,  0, 0, self.nullDict),
+                          'sfloat'      : (15, 'e', 2,  0, 0, self.nullDict),
+                          'uint16'      : (3 , 'H', 2,  0, 0, self.nullDict),
+                          'uint8'       : (7 , 'B', 1,  0, 0, self.nullDict),
+                          'sint24'      : (13, 'l', 3,  0, 0, self.nullDict),
+                          'uint24'      : (14, 'L', 3,  0, 0, self.nullDict),
+                          'sint8'       : (6 , 'b', 1,  0, 0, self.nullDict),
+                          'sint16'      : (8 , 'h', 4,  0, 0, self.nullDict),
+                          'uint32'      : (4 , 'L', 4,  0, 0, self.nullDict),
+                          'PM25'        : (21, 'e', 2,  1, 2, 'kg/m3'      ),
+                          'PM10'        : (22, 'e', 2,  0, 0, 'kg/m3'      ),
+                          'CO2'         : (23, 'H', 2,  0, 0, 'ppm'        ),
+                          'temp'        : (24, 'h', 2, -2, 0, '°C'         ),
+                          'Temp'        : (24, 'e', 2,  0, 0, '°C'         ),
+                          self.nullDict : (0 , 'e', 2,  0, 0, self.nullDict)}
         '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
         self.invProp: Dict = self._invnum(self.prop)
         '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
         
-        self.sampling: Dict = {'null'              : 0,
+        self.sampling: Dict = { self.nullDict       : 0,
                                'instantaneous'      : 1,
                                'arithmetic mean'    : 2,
                                'RMS'                : 3,
@@ -177,7 +177,7 @@ class Es:
         self.invSampling: Dict = self._inv(self.sampling)
         '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
 
-        self.application: Dict = { 'null'                       : 0,
+        self.application: Dict = { self.nullDict        : 0,
                        'air'                            : 1,
                        'water'                          : 2,
                        'barometric'                     : 3,
@@ -300,5 +300,8 @@ class Es:
         self.nullCoor         = [-1, -1]
         self.nullInd          = [-1, -1, -1]
         self.nullName         = ""
+        self.nullDict         = "-"
+        self.nullName         = ""
+        self.nullVal          = 0
 
 ES = Es()

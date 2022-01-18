@@ -190,7 +190,7 @@ stored in Github</a> and can be replayed.
 ## First Observation
 
 This chapter explain you 
-<a href="./Example/first observation.html" target="_blank">(see the page here)</a> :
+<a href="./Example/first_observation.html" target="_blank">(see the page here)</a> :
     
 - how to create a simple and more complex Observation Object
 - the different view of the data
@@ -198,9 +198,10 @@ This chapter explain you
 
 ## Observation for sensor
 
-The sensors how use TCP/IP send the data with ObsJSON format (see above).
-This chapter is dedicated to binary interface and explain you:
-<a href="./Example/first observation.html" target="_blank">(see the page here)</a> :
+A sensor sends data to a server with a specific protocol. The server stores and processes the data.
+The sensor how use TCP/IP sends the data with ObsJSON format (see above).
+This chapter introduces you to the to binary interface and explain you:
+<a href="./Example/sensor_observation.html" target="_blank">(see the page here)</a> :
     
 - how to encode and decode binary data
 - the processes to obtain low data
@@ -258,15 +259,14 @@ The ES functions are divided according to the class hierarchy below:
 
 Modules contain the following classes:
     
-- ESObservation : `ES.ESObservation.Observation`, 
+- ESObservation : `ES.ESObservation.Observation`
 - ESValue : `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, 
-`ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`, 
-`ES.ESValue.ESIndexValue`
+`ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`
 - ESSet : `ES.ESValue.ESSet`
-- ESElement : `ES.ESElement.ESElement`, `ES.ESElement.ESObs`, `ES.ESElement.ESObject`.
+- ESElement : `ES.ESElement.ESElement`, `ES.ESElement.ESObs`, `ES.ESElement.ESObject`
 - ESObs : `ES.ESObs.Location`, `ES.ESObs.Datation`, `ES.ESObs.Property`,
 `ES.ESObs.Result`, `ES.ESObs.ESSetLocation`, `ES.ESObs.ESSetDatation`,
-`ES.ESObs.ESSetProperty`, `ES.ESObs.ESSetResult`, 
+`ES.ESObs.ESSetProperty`, `ES.ESObs.ESSetResult`
 - ESconstante : `ES.ESconstante.Es`.
 
 """

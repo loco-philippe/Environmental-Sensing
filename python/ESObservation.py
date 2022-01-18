@@ -124,7 +124,8 @@ class Observation(ESObject):
         - Observation(datation=ESSetDatation, location=ESSetLocation,
                       property=ESSetProperty, result=ESSetResult)
         
-        *Note : the parameter 'order' is used only when an ESSetResult without IndexValue is in arguments.*
+        *Note : the parameter 'order' is used only when an ESSetResult without Index is in arguments. 
+        It indicates the order for the Index creation ('d' for Datation, 'l' for Location, 'p' for Property).*
         '''
         ESObject.__init__(self)
         self.option = ES.mOption.copy()
@@ -395,13 +396,15 @@ class Observation(ESObject):
             if self.element(p.classES) == None : self.addComposant(p)
         self.majType()    
         
-    def from_bytes(self, byt):
+    def from_bytes(self, byt, order='dlp'):
         '''
         Complete an empty `Observation` with binary data. 
         
         *Parameters*
         
         - **byt** : binary representation of an Observation
+        - **order** : string - indicates the order for the Index creation 
+        ('d' for Datation, 'l' for Location, 'p' for Property).*
         
         *Returns*
         
@@ -420,28 +423,41 @@ class Observation(ESObject):
             elif code_el < 6:
                 es = ESSetResult(pObs=self)
                 if code_el == 5: 
-                    propList = [self.setProperty.valueList[i].pType 
-                            for i in range(self.setProperty.nValue)]
+                    if self.setProperty != None :
+                        propList = [self.setProperty.valueList[i].pType 
+                                    for i in range(self.setProperty.nValue)]
+                    else : propList = []
+                    #propList = [self.setProperty.valueList[i].pType 
+                    #        for i in range(self.setProperty.nValue)]
                 else :
+                    [nPrp, nDat, nLoc, nRes] = self.nValueObs
                     es.from_bytes(byt[idx:], [])
-                    es.majIndex(es.nValue, self.setProperty.nValue, 
-                            self.setDatation.nValue, self.setLocation.nValue)
-                    propList = [self.setProperty.valueList[es.valueList[i].ind[2]].pType
-                            for i in range(es.nValue)]
+                    es.majIndex(es.nValue, nPrp, nDat, nLoc)
+                    #es.majIndex(es.nValue, self.setProperty.nValue, 
+                    #        self.setDatation.nValue, self.setLocation.nValue)
+                    if self.setProperty != None :
+                        propList = [self.setProperty.valueList[es.valueList[i].ind[2]].pType 
+                                    for i in range(self.setProperty.nValue)]
+                    else : propList = []
+                    #propList = [self.setProperty.valueList[es.valueList[i].ind[2]].pType
+                    #        for i in range(es.nValue)]
                     es.__init__()
             else: return
             if code_el < 4 : 
                 idx += es.from_bytes(byt[idx:])
             else :
                 idx += es.from_bytes(byt[idx:], propList)
+        self.majType(order)
     
-    def from_json(self, js):
+    def from_json(self, js, order='dlp'):
         '''
         Complete an `Observation` with json data. 
         
         *Parameters*
         
         - **js** : string - ObsJSON data
+        - **order** : string - indicates the order for the Index creation 
+        ('d' for Datation, 'l' for Location, 'p' for Property).*
         
         *Returns*
         
@@ -450,6 +466,7 @@ class Observation(ESObject):
         try: dic=json.loads(js)
         except: return
         self._initDict(dic)
+        self.majType(order)
                 
     def full(self, maj=True, allAxes=True) : 
         '''
@@ -788,15 +805,17 @@ class Observation(ESObject):
         byt = bytes()
         code_el = ES.codeb[self.classES] 
         byt += struct.pack('<B', (code_el << 5) | self.mAtt[ES.obs_reference])
-        if self.setProperty != None: 
-            byt += self.setProperty.to_bytes(self.option["json_prp_name"])
-        if self.setLocation != None: 
-            byt += self.setLocation.to_bytes(self.option["json_loc_name"])
         if self.setDatation != None: 
             byt += self.setDatation.to_bytes(self.option["json_dat_name"])
+        if self.setLocation != None: 
+            byt += self.setLocation.to_bytes(self.option["json_loc_name"])
+        if self.setProperty != None: 
+            byt += self.setProperty.to_bytes(self.option["json_prp_name"])
         if self.setResult != None: 
-            propList = [self.setProperty.valueList[i].pType 
-                        for i in range(self.setProperty.nValue)]
+            if self.setProperty != None :
+                propList = [self.setProperty.valueList[i].pType 
+                            for i in range(self.setProperty.nValue)]
+            else : propList = []
             byt += self.setResult.to_bytes(False, self.option["json_res_index"], 
                                            self.option["bytes_res_format"], propList)
         return byt
@@ -853,7 +872,7 @@ class Observation(ESObject):
                                   ).to_dataframe(name=arrayname)
         else : return None
 
-    def to_json(self): 
+    def to_json(self, **kwargs): 
         '''
         Export in Json format. 
         
@@ -861,6 +880,8 @@ class Observation(ESObject):
         
         - **string** : Json string 
         '''
+        info = 'storage' in kwargs.keys() and kwargs['storage'] == True
+            
         if self.option["json_elt_type"]: option_type = 1
         else: option_type = 0
         js =""
@@ -874,8 +895,10 @@ class Observation(ESObject):
             if js[-1] != ',': js += ","
         if self.option["json_param"] and self.parameter != "null": 
             js += '"' + ES.parameter +'":' + self.parameter + ','
-        jsInfo = self._info(True, self.option["json_info_type"], self.option["json_info_nval"],
-                            self.option["json_info_box"], self.option["json_info_autre"])
+        jsInfo = self._info(True, info or self.option["json_info_type"], 
+                            info or self.option["json_info_nval"],
+                            info or self.option["json_info_box"], 
+                            info or self.option["json_info_autre"])
         if jsInfo != "" : js +=  jsInfo + ','
         if js[-1] == ',': js = js[:-1]
         if self.option["json_obs_attrib"]: js += "}"
@@ -1007,8 +1030,6 @@ class Observation(ESObject):
         ax.set_zticks(np.arange(self.setProperty.nValue))
         ax.set(xlabel='dat (index)', ylabel='loc (index)', zlabel='prp (index)')
         plt.show()
-
-
 
     def _initESObs(self, *args, **kwargs) :     # !!! methodes internes
         ''' ESObs creation '''

@@ -24,18 +24,6 @@ from geopy import distance
 from openlocationcode import encode
 from ESSlot import TimeSlot
 
-def _gshape(coord):
-    ''' transform a GeoJSON coordinates (list) into a shapely geometry'''
-    if type(coord) == list:  coor = json.dumps(coord)
-    elif type(coord) == str: coor = coord
-    else: coor = coord.copy()
-    for tpe in ["Point", "MultiPoint", "Polygon", "MultiPolygon"]:
-        try:
-            s = shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))
-            return s
-        except: s = None
-    return s
-
 class ESValue:
     """
     This class is the parent class for each kind of values 
@@ -50,6 +38,7 @@ class ESValue:
 
     """
     def __init__(self):
+        '''This is a virtual method  how initialize the 'name' and the 'ValueClass' attribute'''
         self.name = ES.nullName
         self.ValueClass = type(self)
 
@@ -70,7 +59,7 @@ class ESValue:
         equalName = self.name == other.name
         nullName  = self.name == ES.nullName
         if   type(self) == LocationValue : 
-            nullValue  = self.shap  == _gshape(ES.nullCoor)
+            nullValue  = self.shap  == LocationValue._gshape(ES.nullCoor)
             equalValue = self.shap  == other.shap
         elif type(self) == DatationValue : 
             equalValue = self.slot  == other.slot
@@ -163,7 +152,7 @@ class DatationValue(ESValue):   # !!! début ESValue
     - `instant`
     - `value`
 
-    *property (getters)*
+    *getters*
 
     - `getInstant`
     - `getInterval`
@@ -192,6 +181,10 @@ class DatationValue(ESValue):   # !!! début ESValue
         - DatationValue({name : timeSlot}) where timeSlot is a compatible TimeSlot Object
         - DatationValue(timeSlot) where timeSlot is a compatible TimeSlot Object
         - DatationValue(name) where name is a string
+        - DatationValue(datval) where datval is a DatationValue object (copy)
+        - DatationValue(slot=slot, name=name) where slot is a TimeSlot object 
+        and name is a string
+        
         '''
         ESValue.__init__(self)
         self.slot = TimeSlot()
@@ -219,11 +212,11 @@ class DatationValue(ESValue):   # !!! début ESValue
         
         *Parameters*
         
-        - **byt** : binary representation of a DatationValue
+        - **byt** : binary representation of a DatationValue (datetime)
         
         *Returns*
         
-        - **None**
+        - **int** : number of bytes used to decode a dateTime = 7
         '''
         dt = struct.unpack('<HBBBBB', byt[0:7])
         self._init(datetime(dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]))
@@ -250,9 +243,9 @@ class DatationValue(ESValue):   # !!! début ESValue
         return DatationValue(slot=[arg, arg], name='instant')
 
     @staticmethod
-    def Interval(*args):
+    def Interval(arg1, arg2):
         '''DatationValue built with a compatible TimeSlot [arg1, arg2] (static method)'''
-        return DatationValue(slot=TimeSlot([args[0], args[1]]), name='interval')
+        return DatationValue(slot=TimeSlot([arg1, arg2]), name='interval')
 
     def json(self, string=True): 
         '''
@@ -278,7 +271,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         
         *Returns*
         
-        - **bytes** : binary representation of the `DatationValue`
+        - **bytes** : binary representation of the `DatationValue` (datetime)
         '''
         return struct.pack('<HBBBBB', self.instant.year, self.instant.month,
                            self.instant.day, self.instant.hour,
@@ -289,13 +282,22 @@ class DatationValue(ESValue):   # !!! début ESValue
         '''TimeSlot (@property) : DatationValue slot'''
         return self.slot
 
-    def vInterval(self): 
-        '''List : [t1, t2] with t1, t2 datetime - Mini, maxi of the DateSlot'''
-        return self.slot.interval
+    def vInterval(self, string=True): 
+        '''[t1, t2] with t1, t2 - Mini, maxi of the DateSlot (timestamp or datetime). 
+        
+        *Parameters*
+        
+        - **string** : boolean (default True) - choice for return format (timestamp if True, datetime else)
+                
+        *Returns*
+        
+        - **JSON with timestamp or list with datetime**
+        '''
+        if string : return json.dumps([self.slot.interval[0].isoformat(), self.slot.interval[0].isoformat()])
+        else : return self.slot.interval
             
     def vInstant(self, string=True) :
-        '''
-        Middle of the DatationValue slot (timestamp or dattime). 
+        '''Middle of the DatationValue slot (timestamp or datetime). 
         
         *Parameters*
         
@@ -322,46 +324,68 @@ class DatationValue(ESValue):   # !!! début ESValue
 
     def _Box(*args): return DatationValue.Interval(*args)
     
-class LocationValue(ESValue):              # !!! début ESValue
+class LocationValue(ESValue):              # !!! début LocationValue
     """
-    Classe liée à la structure interne
+    This class represent the Location of an Observation (point, polygon).
+    
+    *Attributes (for @property see methods)* :
+    
+    - **shap** : Shapely object (instant, interval or list of interval)
+    - **name** : String
+     
+    The methods defined in this class are : 
+
+    *property (getters)*
+
+    - `bounds`
+    - `point`
+    - `value`
+    - `coorInv`
+
+    *getters*
+
+    - `getPoint`
+    - `getShap`
+    - `vPoint`
+    - `vPointInv`
+    - `vPointX`
+    - `vPointY`
+    - `vShap`
+    - `vCodePlus`
+    
+    *conversion (static method)*
+
+    - `Point`
+    - `Cuboid`
+
+    *exports - imports*
+
+    - `json`
+    - `from_bytes`
+    - `to_bytes`
+
     """
     valName     = ES.loc_valName
     valueType   = ES.loc_valueType
 
-    def __init__(self, val=ES.nullCoor, shape=None, name=ES.nullName, geo=True, cart=True):
+    def __init__(self, val=ES.nullCoor, shape=None, name=ES.nullName):
+        '''Several LocationValue creation modes :
+        
+        - LocationValue({name : coord}) where coord is a GeoJSON or list coordinates format
+        - LocationValue(coord) where coord is a is a GeoJSON or list coordinates format
+        - LocationValue(name) where name is a string
+        - LocationValue(locval) where locval is a LocationValue object (copy) 
+        - LocationValue(shape=shape, name=name) where shape is a shapely.geometry.Point 
+        (or Polygon) and name is a string
+        '''
         ESValue.__init__(self)
-        self.shap = _gshape(ES.nullCoor)
-        self.geod = geo
-        self.carto = cart
+        self.shap = self._gshape(ES.nullCoor)
         self._init(val, shape, name)
     
-    def _init(self, val=ES.nullCoor, shape=None, name=ES.nullName):
-        if type(val) == LocationValue :
-            self.shap = val.shap
-            self.name = val.name
-            self.geod = val.geod
-            self.carto = val.carto
-            return
-        elif type(val) == dict :
-            self.name, val = list(val.items())[0]   
-        shap = _gshape(val)
-        if shap == None :
-            if type(val) == str and self.name == ES.nullName : self.name = val
-        else : self.shap = shap
-        if self.shap == _gshape(ES.nullCoor) and shape != None : self.shap = shape
-        if self.name == ES.nullName and name != ES.nullName : self.name = name
-
     def __eq__(self, other): 
-        return self.geod == other.geod and self.carto == other.carto \
-           and self.shap == other.shap and self.name  == other.name
+        return self.shap == other.shap and self.name  == other.name
     
-    def getShap(self) : return self.shap
-    
-    def getPoint(self) : 
-        if type(self.shap) == shapely.geometry.point.Point : return [self.shap.x, self.shap.y]
-        
-    def __repr__(self): return self.json()
+    def __repr__(self): return self.json(string=True)
 
     def __lt__(self, other): 
         if self.coorInv==ES.nullCoor : return self.name <  other.name
@@ -369,50 +393,139 @@ class LocationValue(ESValue):              # !!! début ESValue
                       distance.distance(other.coorInv, ES.distRef)
     
     @property
-    def coorInv(self):  return [self.vPoint()[1], self.vPoint()[0]]
-    
-    def vPointInv(self):  return [self.vPoint()[1], self.vPoint()[0]]
-
-    def vCodePlus(self,  option = ES.mOption) : 
-        return encode(self.vPoint(option)[1], self.vPoint(option)[0]) 
-    
-    @property
     def bounds(self):
+        '''tuple (@property) : boundingBox (minx, miny, maxx, maxy)'''
         return self.shap.bounds
 
-    def Cuboid(*args):
-        return LocationValue(shape=shapely.geometry.box(*args), name='box')
-
-    def _Box(*args): return LocationValue.Cuboid(*args)
-
-    def Point(*args):
-        return LocationValue(shape=shapely.geometry.Point(*args), name='point')
-
     @property
-    def value(self): return self.shap
- 
-    def vShap(self): return self.shap
+    def coorInv(self):  
+        '''list (@property) : vPoint inverse coordinates [vPoint[1], vPoint[0]]'''
+        return [self.vPoint()[1], self.vPoint()[0]]
     
-    def vPoint(self): return [self.shap.centroid.x, self.shap.centroid.y]
+    @staticmethod
+    def Cuboid(minx, miny, maxx, maxy, ccw=True):
+        '''LocationValue built with shapely.geometry.box parameters (static method)'''
+        return LocationValue(shape=shapely.geometry.box(minx, miny, maxx, maxy, ccw), name='box')
 
-    def vPointX(self) : return self.vPoint()[0]
+    def from_bytes(self, byt):
+        '''
+        Complete an empty `LocationValue` with binary data (point)
+        
+        *Parameters*
+        
+        - **byt** : binary representation of a DatationValue (point)
+        
+        *Returns*
+        
+        - **int** : number of bytes used to decode a point = 8
+        '''
+        pt = list(struct.unpack('<ll', byt[0:8]))
+        self._init(list((pt[0] *10**-7, pt[1] *10**-7)))
+        return 8
+
+    def getShap(self) : 
+        ''' return self.shap object (shapely.geometry) ''' 
+        return self.shap
     
-    def vPointY(self) : return self.vPoint()[1]
-
+    def getPoint(self) : 
+        ''' return a list with point coordinates [x, y] if the shape is a point ''' 
+        if type(self.shap) == shapely.geometry.point.Point : return [self.shap.x, self.shap.y]
+        
     def json(self, option=ES.mOption, string=True): 
+        ''' Export in Json format (string or dict). 
+        
+        *Parameters*
+        
+        - **string** : boolean (default True) - choice for return formet (string if True, dict else)
+                
+        *Returns*
+        
+        - **string** : Json string 
+        '''
         if self.name == ES.nullName : js = self.vPoint()
         elif self.vPoint() == ES.nullCoor : js = self.name
         else : js = {self.name : self.vPoint()}
         if string : return json.dumps(js)
         else : return js
 
+    @property
+    def point(self): 
+        '''list (@property) : centroid coordinates for the shape : [x, y]'''
+        return [self.shap.centroid.x, self.shap.centroid.y]
+
+    @staticmethod
+    def Point(x, y):
+        '''LocationValue built with a compatible TimeSlot arg (static method)'''
+        return LocationValue(shape=shapely.geometry.Point(x, y), name='point')
+
     def to_bytes(self):
+        '''Export in binary format. 
+        
+        *Returns*
+        
+        - **bytes** : binary representation of the `LocationValue` (point coordinates)
+        '''
         return struct.pack('<ll',round(self.vPoint()[0]*10**7), round(self.vPoint()[1]*10**7))
         
-    def from_bytes(self, byt):
-        pt = list(struct.unpack('<ll', byt[0:8]))
-        self._init(list((pt[0] *10**-7, pt[1] *10**-7)))
-        return 8
+    @property
+    def value(self): 
+        ''' return self.shap attribute''' 
+        return self.shap
+ 
+    def vCodePlus(self) : 
+        ''' return CodePlus value (string) of the point property value''' 
+        return encode(self.vPoint(False)[1], self.vPoint(False)[0]) 
+    
+    def vPoint(self, string=False): 
+        ''' return point (property) coordinates in a string format or in a list format [x, y]''' 
+        if string : return json.dumps(self.point)
+        else : return self.point
+
+    def vPointInv(self, string=False):  
+        ''' return point (property) inversed coordinates in a string format or
+        in a list format [y, x]''' 
+        return [self.vPoint()[1], self.vPoint()[0]]
+
+    def vPointX(self) : 
+        ''' return point (property) coordinates x ''' 
+        return self.vPoint()[0]
+    
+    def vPointY(self) : 
+        ''' return point (property) coordinates y ''' 
+        return self.vPoint()[1]
+
+    def vShap(self): 
+        ''' return self.shap object (shapely.geometry) ''' 
+        return self.shap
+    
+    @staticmethod
+    def _Box(*args): return LocationValue.Cuboid(*args)
+
+    @staticmethod
+    def _gshape(coord):
+        ''' transform a GeoJSON coordinates (list) into a shapely geometry'''
+        if type(coord) == list:  coor = json.dumps(coord)
+        elif type(coord) == str: coor = coord
+        else: coor = coord.copy()
+        for tpe in ["Point", "MultiPoint", "Polygon", "MultiPolygon"]:
+            try:
+                return shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))
+            except: pass
+    
+    def _init(self, val=ES.nullCoor, shape=None, name=ES.nullName):
+        ''' LocationValue creation '''
+        if type(val) == LocationValue :
+            self.shap = val.shap
+            self.name = val.name
+            return
+        elif type(val) == dict :
+            self.name, val = list(val.items())[0]   
+        shap = self._gshape(val)
+        if shap == None :
+            if type(val) == str and self.name == ES.nullName : self.name = val
+        else : self.shap = shap
+        if self.shap == self._gshape(ES.nullCoor) and shape != None : self.shap = shape
+        if self.name == ES.nullName and name != ES.nullName : self.name = name
 
 class PropertyValue(ESValue):              # !!! début ESValue
     """
@@ -424,14 +537,14 @@ class PropertyValue(ESValue):              # !!! début ESValue
     def __init__(self, val={}):
         ESValue.__init__(self)
         self.name           = ES.nullName
-        self.pType          = "null"
-        self.unit           = "null"
-        self.sampling       = "null"
-        self.application    = "null"
-        self.period         = 0
-        self.interval       = 0
-        self.uncertain      = 0
-        self.EMFId          = "null"
+        self.pType          = ES.nullDict
+        self.unit           = ES.nullDict
+        self.sampling       = ES.nullDict
+        self.application    = ES.nullDict
+        self.period         = ES.nullVal
+        self.interval       = ES.nullVal
+        self.uncertain      = ES.nullVal
+        self.EMFId          = ES.nullDict
         self.detail         = dict()
         self.init(val)
     
@@ -459,10 +572,11 @@ class PropertyValue(ESValue):              # !!! début ESValue
             self.uncertain      = val.uncertain
             self.EMFId          = val.EMFId
             self.detail         = val.detail
-        
+        if self.unit == ES.nullDict : self.unit = ES.prop[self.pType][5]
 
-    def __eq__(self, other): return self.pType == other.pType and \
-        self.unit == other.unit and self.sampling == other.sampling and \
+
+    def __eq__(self, other): return self.pType == other.pType  and \
+        self.sampling == other.sampling and \
         self.application == other.application and self.EMFId == other.EMFId and \
         self.detail == other.detail and self.name == other.name
 
@@ -472,14 +586,14 @@ class PropertyValue(ESValue):              # !!! début ESValue
 
     def _jsonDict(self, string=True): 
         li = dict()
-        if (self.pType != "null"):   li[ES.prp_propType] = self.pType
-        if (self.unit != "null"):           li[ES.prp_unit]     = self.unit
-        if (self.sampling != "null"):       li[ES.prp_sampling] = self.sampling
-        if (self.application != "null"):    li[ES.prp_appli]    = self.application
-        if (self.period != 0):              li[ES.prp_period]   = self.period
-        if (self.interval != 0):            li[ES.prp_interval] = self.interval
-        if (self.uncertain != 0):           li[ES.prp_uncertain]= self.uncertain
-        if (self.EMFId != "null"):          li[ES.prp_EMFId]    = self.EMFId
+        if self.pType       != ES.nullDict:   li[ES.prp_propType] = self.pType
+        if self.unit        != ES.nullDict:   li[ES.prp_unit]     = self.unit
+        if self.sampling    != ES.nullDict:   li[ES.prp_sampling] = self.sampling
+        if self.application != ES.nullDict:   li[ES.prp_appli]    = self.application
+        if self.period      != ES.nullVal:    li[ES.prp_period]   = self.period
+        if self.interval    != ES.nullVal:    li[ES.prp_interval] = self.interval
+        if self.uncertain   != ES.nullVal:    li[ES.prp_uncertain]= self.uncertain
+        if self.EMFId       != ES.nullDict:   li[ES.prp_EMFId]    = self.EMFId
         li |= self.detail
         if string : return json.dumps(li, ensure_ascii=False)
         else : return li
@@ -581,7 +695,7 @@ class ResultValue (ESValue):               # !!! début ESValue
             if option["json_res_index"] : return json.dumps([self.value, self.ind])
             else: return json.dumps(self.value)
     
-    def to_bytes(self, resIndex = False, prp = "null"):
+    def to_bytes(self, resIndex = False, prp = ES.nullDict):
         formaPrp = ES.prop[prp][1]
         dexp = ES.prop[prp][3]
         bexp = ES.prop[prp][4]
@@ -590,7 +704,7 @@ class ResultValue (ESValue):               # !!! début ESValue
                                          self.ind[1], self.ind[2], val)
         else : return struct.pack('<' + formaPrp, val)
         
-    def from_bytes(self, byt, resInd = False, prp = "null"):
+    def from_bytes(self, byt, resInd = False, prp = ES.nullDict):
         formaPrp = ES.prop[prp][1]
         leng = ES.prop[prp][2]
         dexp = ES.prop[prp][3]
