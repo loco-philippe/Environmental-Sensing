@@ -38,7 +38,7 @@ class ESValue:
 
     """
     def __init__(self):
-        '''This is a virtual method  how initialize the 'name' and the 'ValueClass' attribute'''
+        '''This method initialize the 'name' and the 'ValueClass' attribute'''
         self.name = ES.nullName
         self.ValueClass = type(self)
 
@@ -169,7 +169,6 @@ class DatationValue(ESValue):   # !!! début ESValue
     - `json`
     - `from_bytes`
     - `to_bytes`
-
     """
     valName     = ES.dat_valName
     valueType   = ES.dat_valueType

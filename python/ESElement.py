@@ -10,6 +10,7 @@ This module contains the parent classes of the classes of the `ES.ESObs` and
 import json
 from datetime import datetime
 from ESconstante import ES
+#from ESSet import ESSet
 #from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
 #from ESObs import Datation, Location, Property, Result
 
@@ -49,14 +50,15 @@ class ESElement:
         self.mAtt[ES.type] = "null"
         self.typeES = "null"
         self.classES = "null"
-        self.metaType = "null"
+        #self.metaType = "null"
         self.parameter = "null"
         self.pComposant = list()
         self.pContenant = list()
 
     def __repr__(self):
         txt = object.__repr__(self) + '\n'
-        txt += f"metatype, classES, typeES : {self.metaType} {self.classES} {self.typeES} \n"
+        #txt += f"metatype, classES, typeES : {self.metaType} {self.classES} {self.typeES} \n"
+        txt += f"classES, typeES : {self.classES} {self.typeES} \n"
         for k, v in self.mAtt.items(): txt += f"{k} : {v} \n"
         if (len(self.pComposant) > 0): txt += f"nombre de composants {len(self.pComposant)} \n"
         if (len(self.pContenant) > 0): txt += f"nombre de contenants {len(self.pContenant)} \n"
@@ -85,7 +87,8 @@ class ESElement:
 
     def element(self, comp) :
         for cp in self.pComposant:
-            if (cp.typeES == comp or cp.classES == comp or cp.metaType == comp or cp.mAtt[ES.type] == comp):
+            #if (cp.typeES == comp or cp.classES == comp or cp.metaType == comp or cp.mAtt[ES.type] == comp):
+            if (cp.typeES == comp or cp.classES == comp or cp.mAtt[ES.type] == comp):
                 return cp
             elif (cp.element(comp) != None): return cp.element(comp)
         return None
@@ -109,29 +112,3 @@ class ESElement:
             #if k[0] == '$' and v != "null": att[k] = v
         if len(att) == 0 : return ""
         return json.dumps(att)[1:-1] + ","
-
-class ESObject(ESElement):
-    """
-    Classe liée à la structure interne
-    """
-    def __init__(self):
-        ESElement.__init__(self)
-        self.metaType = ES.obj_metaType
-        self.name = "observtion du " + datetime.now().isoformat()
-        
-class ESObs(ESElement):
-    """
-    Classe mère des objets Datation, Location et Property.
-    """
-    def __init__(self, pObs=None):
-        ESElement.__init__(self)
-        self.metaType = ES.obs_metaType
-        #self.nValue = 0
-        if (pObs != None): pObs.addComposant(self)
-
-    @property
-    def observation(self):
-        for cont in self.pContenant :
-            if cont.classES == ES.obs_classES : return cont
-        return None
-    

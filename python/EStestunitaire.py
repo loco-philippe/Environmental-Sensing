@@ -338,12 +338,12 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(val.name, 'truc')
     
     def test_ESSet_box(self):
-        self.assertEqual(ESSet(PropertyValue, [prop_pm10, prop_pm25]).jsonSet(self.opt), json.dumps([prop_pm10, prop_pm25])) 
-        self.assertEqual(ESSetLocation(paris).boundingBox().bounds, (paris[0], paris[1], paris[0], paris[1]))
-        self.assertEqual(ESSetLocation([paris, lyon, marseille]).boundingBox().bounds,
+        self.assertEqual(ESSet(PropertyValue, [prop_pm10, prop_pm25])._jsonSet(self.opt), json.dumps([prop_pm10, prop_pm25])) 
+        self.assertEqual(ESSetLocation(paris).boundingBox.bounds, (paris[0], paris[1], paris[0], paris[1]))
+        self.assertEqual(ESSetLocation([paris, lyon, marseille]).boundingBox.bounds,
                          (paris[0], marseille[1], marseille[0], paris[1]))
-        self.assertEqual(ESSetDatation([t1, t2, t3]).boundingBox().bounds, (t1.isoformat(), t2.isoformat()))
-        self.assertEqual(ESSetDatation(t1).boundingBox().bounds, (t1.isoformat(), t1.isoformat()))
+        self.assertEqual(ESSetDatation([t1, t2, t3]).boundingBox.bounds, (t1.isoformat(), t2.isoformat()))
+        self.assertEqual(ESSetDatation(t1).boundingBox.bounds, (t1.isoformat(), t1.isoformat()))
         
     def test_ESSetLocation(self):
         da = ESSetLocation(pObs=Observation(), jObj={ES.loc_valName:[paris, lyon, marseille]})

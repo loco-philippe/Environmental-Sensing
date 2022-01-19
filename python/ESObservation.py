@@ -9,11 +9,12 @@ of Environmental Sensing : `Observation` class.
 
 """
 from ESObs import ESSetDatation, ESSetLocation, ESSetProperty, ESSetResult
-from ESElement import ESObject, isESObs, isESAtt, isUserAtt
+from ESElement import ESElement, isESObs, isESAtt, isUserAtt
 from ESconstante import ES
 from ESValue import LocationValue, DatationValue, PropertyValue, \
     ResultValue
 from shapely.geometry import shape
+from datetime import datetime
 import json, folium, struct, copy, csv
 import numpy as np
 import xarray as xr
@@ -32,7 +33,7 @@ _EsObsDict: dict = {ES.dat_classES : ESSetDatation,
                    ES.res_classES : ESSetResult}
 '''dict classES : ESObs '''  
         
-class Observation(ESObject):
+class Observation(ESElement):
     """
     An `Observation` is made up of objects from the `ES.ESObs` class
      which each describe a dimension of this object.
@@ -76,7 +77,7 @@ class Observation(ESObject):
     - `Observation.addValue`
     - `Observation.addListValue`
     
-    *majValue*
+    *update value*
     
     - `Observation.majList`
     - `Observation.majType`
@@ -128,7 +129,9 @@ class Observation(ESObject):
         *Note : the parameter 'order' is used only when an ESSetResult without Index is in arguments. 
         It indicates the order for the Index creation ('d' for Datation, 'l' for Location, 'p' for Property).*
         '''
-        ESObject.__init__(self)
+        ESElement.__init__(self)
+        #self.metaType = ES.obj_metaType
+        self.name = "observtion du " + datetime.now().isoformat()
         self.option = ES.mOption.copy()
         self.mAtt[ES.obs_reference] = 0
         self.score = -1
@@ -168,7 +171,8 @@ class Observation(ESObject):
         self.option["maj_index"] = True
         self.majType()
         equal = self.option["add_equal"]
-        if other.setResult != None and other.setResult.getMaxIndex() > -1:
+        #if other.setResult != None and other.setResult.getMaxIndex() > -1:
+        if other.setResult != None and other.setResult.maxIndex > -1:
             for resVal in other.setResult.valueList:
                 ndat = self.addValue(other.setDatation.valueList[resVal.ind[idat]], equal)
                 nloc = self.addValue(other.setLocation.valueList[resVal.ind[iloc]], equal)
@@ -715,7 +719,8 @@ class Observation(ESObject):
         
         - **None**
         '''
-        if self.setResult.getMaxIndex() == -1 : return
+        #if self.setResult.getMaxIndex() == -1 : return
+        if self.setResult.maxIndex == -1 : return
         obx = self.to_xarray(numeric = True, complet=True, sort=sort, maxname=maxname)
         if len(obx.dims) == 1:
                 obx.plot.line(x=obx.dims[0]+'str', size=size, marker=marker)
@@ -791,7 +796,7 @@ class Observation(ESObject):
         
         - **None**
         '''
-        if self.setResult == None or not self.setResult.isIndex() : return
+        if self.setResult == None or not self.setResult.isIndex : return
         tr = tri = [[], [], []]
         orde = [ES.nax[order[0]], ES.nax[order[1]], ES.nax[order[2]]]
         # ordre de tri de chacun des axes
@@ -950,13 +955,14 @@ class Observation(ESObject):
         
         - **xarray.DataArray or xarray.DataSet**
         '''
-        if self.setResult.getMaxIndex() == -1 : return None
+        #if self.setResult.getMaxIndex() == -1 : return None
+        if self.setResult.maxIndex == -1 : return None
         if sort : self.sort()
         xList = self._xlist(squeeze= not fullAxes, fullAxes=fullAxes, func=func,
                             maxname=maxname)
         attrs = self._xAttrs()
         coord = self._xCoord(xList, attrs, dataArray, complet, name, numeric, fullAxes)
-        axes=self.setResult.triAxe(maj=False, fullAxes=fullAxes)
+        axes=self.setResult._triAxe(maj=False, fullAxes=fullAxes)
         dims = [ES.axes[ax] for ax in axes]
         if numeric  : xres = xList['resval']
         else        : xres = xList['res']
@@ -974,7 +980,8 @@ class Observation(ESObject):
         '''
         [nPrp, nDat, nLoc, nRes] = self.nValueObs
         self.score = min(max(min(nPrp, 2) * 100 + min(nLoc,2) * 10 + min(nDat, 2), -1), 229);
-        if self.setResult == None or (self.setResult.error or self.setResult.getMaxIndex() == -1 or \
+        #if self.setResult == None or (self.setResult.error or self.setResult.getMaxIndex() == -1 or \
+        if self.setResult == None or (self.setResult.error or self.setResult.maxIndex == -1 or \
            self.setResult.nInd[0] > nDat or self.setResult.nInd[1] > nLoc or self.setResult.nInd[2] > nPrp):
                return ES.obsCat[-1]
         if self.score == 22  and self.setResult.dim == 2:	self.score = 23
@@ -1037,7 +1044,8 @@ class Observation(ESObject):
         
         - **None**
         '''
-        if self.setResult.getMaxIndex() == -1 : return        
+        #if self.setResult.getMaxIndex() == -1 : return        
+        if self.setResult.maxIndex == -1 : return        
         obc = copy.deepcopy(self)
         if sort : obc.sort()
         obc.full()
@@ -1133,9 +1141,9 @@ class Observation(ESObject):
         ''' Add box informations's key-value to dict dcinf'''
         dcinf = dict()
         if self.setLocation != None and self.setLocation.nValue > 0:
-            dcinf[ES.loc_box] = list(self.setLocation.boundingBox().bounds)
+            dcinf[ES.loc_box] = list(self.setLocation.boundingBox.bounds)
         if self.setDatation != None and self.setDatation.nValue > 0:
-            dcinf[ES.dat_box] = list(self.setDatation.boundingBox().bounds)
+            dcinf[ES.dat_box] = list(self.setDatation.boundingBox.bounds)
         return dcinf
     
     def _infoAutre(self):

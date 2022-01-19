@@ -129,15 +129,15 @@ Parameters and additional information may be added at different levels:
     
 - global : At the Observation level, we may add specific informations with specific 
 key / value e.g.:
-    - *{ 'type' : 'observation' , 'test campaign' : 'first' , 
+    - ***{ 'type' : 'observation' , 'test campaign' : 'first' , 
        'datvalue' : 'morning' , 'locvalue' : 'paris' , 'prpvalue' : ' Temp' , 
-       'resvalue' : 'high' }*
+       'resvalue' : 'high' }***
 - local : We may customize the 'name' attribute e.g.:
-    - *'datvalue' : [ { 'first campaign' : '2021-01-01' } , { 'second campaign' : ''2021-03-01' } ]
-    - 'prpvalue' : [ { 'inside' : 'Temp' } , { 'outside' : 'Temp' } ]*
+    - ***'datvalue' : [ { 'first campaign' : '2021-01-01' } , { 'second campaign' : ''2021-03-01' } ]
+    - 'prpvalue' : [ { 'inside' : 'Temp' } , { 'outside' : 'Temp' } ]***
 - individual : Each ResultValue may be annotate e.g.:
-    - *'resvalue' : { 'first result' : 'high' }*
-    - *'resvalue' : { 'https://loco-philippe.github.io/ES.html' : 'high' }*
+    - ***'resvalue' : { 'first result' : 'high' }
+    - 'resvalue' : { 'https://loco-philippe.github.io/ES.html' : 'high' }***
 
 The PropertyValues are defined in a catalogue which may be specific. 
 
@@ -323,7 +323,7 @@ Modules contain the following classes:
 - ESValue : `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, 
 `ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`
 - ESSet : `ES.ESValue.ESSet`
-- ESElement : `ES.ESElement.ESElement`, `ES.ESElement.ESObs`, `ES.ESElement.ESObject`
+- ESElement : `ES.ESElement.ESElement`, `ES.ESElement.ESObs`
 - ESObs : `ES.ESObs.Location`, `ES.ESObs.Datation`, `ES.ESObs.Property`,
 `ES.ESObs.Result`, `ES.ESObs.ESSetLocation`, `ES.ESObs.ESSetDatation`,
 `ES.ESObs.ESSetProperty`, `ES.ESObs.ESSetResult`

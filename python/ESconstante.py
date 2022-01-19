@@ -233,8 +233,8 @@ class Es:
         self.res              = "res"
         self.coordinates      = "coordinates"
         
-        self.obj_metaType     = "ESObject"
-        self.obs_metaType     = "ESObs"
+        #self.obj_metaType     = "ESObject"
+        #self.obs_metaType     = "ESObs"
         
         self.nul_classES      = "nullClass"
         self.obs_classES      = "observation"
