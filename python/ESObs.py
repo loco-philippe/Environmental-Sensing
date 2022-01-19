@@ -202,6 +202,9 @@ class ESSetResult(ESSet, Result):
 
     def full(self, maj=True):
         [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
+        nPrp = max(1, nPrp)
+        nDat = max(1, nDat)
+        nLoc = max(1, nLoc)
         resComp = np.ones((nDat, nLoc, nPrp))
         for res in self.valueList: resComp[tuple(res.ind)] = 0
         nz = np.nonzero(resComp)
@@ -236,11 +239,18 @@ class ESSetResult(ESSet, Result):
         if type(ind) == str and ind == 'flat' : return np.array(self.vList(func))
         elif type(ind) == str and (ind == 'obs' or (ind == 'axe' and max(self.axes) < 9 )) :
             [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
+            nPrp = max(1, nPrp)
+            nDat = max(1, nDat)
+            nLoc = max(1, nLoc)
             listFull = self.full(False)
             listInd = sorted(list(zip(listFull, list(range(len(listFull))))), key= lambda z : z[0])
             fullTri, indTri = zip(*listInd)
-            if squeeze : return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp).squeeze()
-            else : return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp)
+            if func == 'index': lis = [i for i in range(len(fullTri))]
+            else :              lis = [func(fullTri[i]) for i in range(len(fullTri))]
+            if squeeze :    return np.array(lis).reshape(nDat, nLoc, nPrp).squeeze()
+            else :          return np.array(lis).reshape(nDat, nLoc, nPrp)
+            #if squeeze : return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp).squeeze()
+            #else : return np.array([func(fullTri[i]) for i in range(len(fullTri))]).reshape(nDat, nLoc, nPrp)
         elif type(ind) == str and ind == 'axe' :
             for ax in self.axes :
                 if ax > 100 : return np.array(self.vList(func))
@@ -248,14 +258,18 @@ class ESSetResult(ESSet, Result):
                     lis = self._fullAxe(ax)
                     #self.observation.majType()
                     [nPrp, nDat, nLoc, nRes] = self.observation.nValueObs
+                    nPrp = max(1, nPrp)
+                    nDat = max(1, nDat)
+                    nLoc = max(1, nLoc)
                     order = [nDat, nLoc, nPrp]
                     for res in lis :
                         res.ind[ax//10] = 0
-                    lis = [func(lis[i]) for i in range(len(lis))]
+                    if func == 'index': lis = [i for i in range(len(lis))]
+                    else :              lis = [func(lis[i]) for i in range(len(lis))]
                     if len(self.axes) == 2 :
                         if (ax//10+2)%3 == self.axes[0] or (ax//10+1)%3 == self.axes[1] :
-                            return np.array(lis).reshape(order[(ax//10+2)%3], order[(ax//10+1)%3])
-                        else: return np.array(lis).reshape(order[(ax//10+1)%3], order[(ax//10+2)%3])
+                                return np.array(lis).reshape(order[(ax//10+2)%3], order[(ax//10+1)%3])
+                        else:   return np.array(lis).reshape(order[(ax//10+1)%3], order[(ax//10+2)%3])
                     return np.array(lis)           
         return np.array(())
     

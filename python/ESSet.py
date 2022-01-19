@@ -63,7 +63,8 @@ class ESSet:        # !!! ESSet
         return [self.valueList[i].vName(ES.vName[self.classES] + str(i)) for i in range(self.nValue)]
 
     def vList(self, func=ES._identity):
-        return [func(self.valueList[i]) for i in range(self.nValue)]
+        if func == 'index': return [i for i in range(self.nValue)]
+        else :              return [func(self.valueList[i]) for i in range(self.nValue)]
         
     def majListName(self, listVal):
         if len(listVal) != self.nValue : return

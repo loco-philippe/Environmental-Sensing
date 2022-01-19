@@ -66,7 +66,7 @@ by ensuring convergence:
 
 ## Data structure
 
-An Observation is characterized by:
+In the ISO-19156 standard, an Observation is characterized by:
 
 - "observed property": the observed property,
 - "feature of interest": the object (most often a location) of the observation,
@@ -79,6 +79,9 @@ The result is a set of values or objects ​​referenced according to the 3 dim
 - spatial,
 - physical (observed property)
 
+In the ES project, the three dimensions are respected. An Observation object consists
+of five components : a Datation Object, a Location Object, a Property Object, a Result Object
+and a Parameter object.
 It can be converted into a 3-dimensional matrix, each result being indexed by 
 temporal, spatial and physical values.
 
@@ -119,6 +122,47 @@ and Datation are coupled, Property has one value).
 
 This notion is important because it conditions the modes of representation
  (e.g., plot).
+
+## Configuration and customization
+
+Parameters and additional information may be added at different levels:
+    
+- global : At the Observation level, we may add specific informations with specific 
+key / value e.g.:
+    - *{ 'type' : 'observation' , 'test campaign' : 'first' , 
+       'datvalue' : 'morning' , 'locvalue' : 'paris' , 'prpvalue' : ' Temp' , 
+       'resvalue' : 'high' }*
+- local : We may customize the 'name' attribute e.g.:
+    - *'datvalue' : [ { 'first campaign' : '2021-01-01' } , { 'second campaign' : ''2021-03-01' } ]
+    - 'prpvalue' : [ { 'inside' : 'Temp' } , { 'outside' : 'Temp' } ]*
+- individual : Each ResultValue may be annotate e.g.:
+    - *'resvalue' : { 'first result' : 'high' }*
+    - *'resvalue' : { 'https://loco-philippe.github.io/ES.html' : 'high' }*
+
+The PropertyValues are defined in a catalogue which may be specific. 
+
+## Observation management
+
+Some operations are available for Observation objects
+
+- between two Observation :
+    
+    - Addition function : The ResultValues are added
+    - Extend function : The ESObs are added (e.g. template Observation)
+    - Append function : An Observation is included as a ResultValue (e.g. tree structure)
+
+<img src="./ES/extension.png" width="800">
+
+- for one Observation :
+    
+    - Sort function : changing the order of data according to the ESObs order
+    - Find function : selecting some data 
+    - Full function : add empty ResultValue to complete an Observation
+
+<img src="./ES/extraction.png" width="800">
+
+These operations make it possible to cut, group, restructure and classify the 
+Observations.
 
 ## Json interface
 
@@ -204,9 +248,21 @@ This chapter introduces you to the to binary interface and explain you:
 <a href="./Example/sensor_observation.html" target="_blank">(see the page here)</a> :
     
 - how to encode and decode binary data
-- the processes to obtain low data
+- the processes to obtain low data as explain in the "Binary interface" chapter
 
+## Dimension concept
+
+The dimension is an important concept to understand (see chapter above). 
+
+In this example, we show you Observations with differents dimensions (1 to 3).
+
+We also present how ResultValue without index can be loaded with the 'order'parameter.
+
+<a href="./Example/dimension.html" target="_blank">(see the page here)</a> :
+    
 ## Observation management
+
+
 
 # Quick overview
 
@@ -232,9 +288,13 @@ This chapter introduces you to the to binary interface and explain you:
 
 ## Managing Observations
 
+### Add
+
 ### Sort
 
 ### Aggregation
+
+## Interface
 
 ### Numpy export
 

@@ -93,6 +93,7 @@ class Observation(ESObject):
     - `Observation.extend`
     - `Observation.full`
     - `Observation.sort`
+    - `Observation.find`
     
     *visualization*
     
@@ -309,7 +310,7 @@ class Observation(ESObject):
         - **dat, loc, prp** :
         
             integer for the index of an existant `ES.ESValue.ESIndexValue`  
-            compatible Value for an existing or a new `ES.ESValue`
+            or compatible Value for an existing or a new `ES.ESValue`
             
         - **res** : new `ES.ESValue.ResultValue`
         
@@ -396,6 +397,20 @@ class Observation(ESObject):
             if self.element(p.classES) == None : self.addComposant(p)
         self.majType()    
         
+    def find(self, crit = None): 
+        '''
+        Finds `ES.ESValue` that meets a given criteria.
+
+        *Parameters*
+        
+        - **crit** : to be define.
+         
+        *Returns*
+        
+        - **Observation** : New Observation
+        '''
+        return None
+    
     def from_bytes(self, byt, order='dlp'):
         '''
         Complete an empty `Observation` with binary data. 
@@ -682,7 +697,8 @@ class Observation(ESObject):
         if self.setProperty != None: nPrp = self.setProperty.nValue
         return [nPrp, nDat, nLoc, nRes]
 
-    def plot(self, switch = False, line = True, sort = True, size = 5, marker='o'):
+    def plot(self, switch = False, line = True, sort = True, size = 5, 
+             marker='o', maxname=20):
         '''
         This function visualize an `Observation` with line or colormesh.
         
@@ -693,13 +709,14 @@ class Observation(ESObject):
         - **sort** : Boolean (defaut True) - Sort along an axis or not.
         - **size** : Int (default 5) - Size of the figure to plot.
         - **marker** : Char (default 'o') - Symbol for each point.
+        - **maxname** : String (default 20) - maximum length for string
         
         *Returns*
         
         - **None**
         '''
         if self.setResult.getMaxIndex() == -1 : return
-        obx = self.to_xarray(numeric = True, complet=True, sort=sort)
+        obx = self.to_xarray(numeric = True, complet=True, sort=sort, maxname=maxname)
         if len(obx.dims) == 1:
                 obx.plot.line(x=obx.dims[0]+'str', size=size, marker=marker)
         elif len(obx.dims) == 2:
@@ -714,10 +731,14 @@ class Observation(ESObject):
                               xticks=list(obx.coords[obx.dims[0]+'str'].values), 
                               hue=obx.dims[order[1]]+'str', size=size, marker=marker)
             else: 
-                obx.plot(x=obx.dims[order[0]]+ext[order[0]], y=obx.dims[order[1]]+ext[order[1]], 
+                try : 
+                    obx.plot(x=obx.dims[order[0]]+ext[order[0]], y=obx.dims[order[1]]+ext[order[1]], 
                          xticks=list(obx.coords[obx.dims[order[0]]+ext[order[0]]].values), 
                          yticks=list(obx.coords[obx.dims[order[1]]+ext[order[1]]].values), 
                          size = size)
+                except :
+                    obx.plot(size=size)
+                    
         elif len(obx.dims) == 3:       
             if line :
                 obx = obx.set_index(prp = "prpstr", loc="locstr")
@@ -1111,9 +1132,9 @@ class Observation(ESObject):
     def _infoBox(self):
         ''' Add box informations's key-value to dict dcinf'''
         dcinf = dict()
-        if self.setLocation != None:
+        if self.setLocation != None and self.setLocation.nValue > 0:
             dcinf[ES.loc_box] = list(self.setLocation.boundingBox().bounds)
-        if self.setDatation != None:
+        if self.setDatation != None and self.setDatation.nValue > 0:
             dcinf[ES.dat_box] = list(self.setDatation.boundingBox().bounds)
         return dcinf
     
@@ -1185,7 +1206,8 @@ class Observation(ESObject):
             xList['resval'] = self.setResult.to_numpy(squeeze=squeeze, ind=ind, func = ResultValue.to_float)
             xList['resstr'] = self.setResult.to_numpy(squeeze=squeeze, ind=ind, func = ResultValue.json)
             xList['resnam'] = self.setResult.to_numpy(squeeze=squeeze, ind=ind, func = ResultValue.vName)
-            xList['resran'] = np.arange(len(xList['res']))
+            xList['resran'] = self.setResult.to_numpy(squeeze=squeeze, ind=ind, func = 'index')
+            #xList['resran'] = np.arange(len(xList['res']))
         if maxname > 0 :
             for key,lis in xList.items() :
                 if key[3:6] in ['str', 'nam', 'typ']:

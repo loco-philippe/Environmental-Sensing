@@ -136,39 +136,90 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         ob=Observation(('morning', 'paris', ' Temp', 'high'))
         ob.append('morning', 'lyon', ' Temp', 'low')
         ob.append('morning', 'marseille', ' Temp', 'very high')
-        ob.view(True, False, False, False)
-        ob.voxel()
+        #ob.view(True, False, False, False)
+        #ob.voxel()
         ob.majList(ResultValue, [25, 10, 35]) 
-        ob.plot()
+        #ob.plot()
         # valeur numériques + choropleth
-        print(ob.setLocation)
+        #print(ob.setLocation)
         ob.majList(LocationValue, [lyon, marseille, paris])
-        ob.view(True, False, True, False)
+        #ob.view(True, False, True, False)
         choro = ob.choropleth()
-        choro.save("test.html")
-        print(ob.setLocation)
+        #choro.save("test.html")
+        #print(ob.setLocation)
         ob.majList(LocationValue, [pol75, pol69, pol13])
-        ob.view(True, False, True, False)
+        #ob.view(True, False, True, False)
         choro = ob.choropleth()
-        choro.save("test.html")
+        #choro.save("test.html")
         # ajout dimension 2, infos globales
         ob.append('morning', 'paris', 'Humidity', 30, equal='name')
         ob.append('morning', 'marseille', 'Humidity', '60', equal='name')
-        ob.view(True, False, False, False)
-        ob.voxel()
-        ob.plot()
+        #ob.view(True, False, False, False)
+        #ob.voxel()
+        #ob.plot()
         # ajout dimension 3 + export dataarray, dataframe
         ob.append('afternoon', 'paris', ' Temp', 28, equal='name')
         ob.append('afternoon', 'lyon', ' Temp', 15, equal='name')
         ob.majList(LocationValue, [lyon, marseille, paris])   # i.e. paris = [2.35, 48.87]
-        print(ob.setDatation)
+        #print(ob.setDatation)
         ob.majList(DatationValue, ["2021-05-05T10", "2021-05-05T16"])
         ob.view(prp=False, width=15)
         ob.voxel()
         ob.plot()       
         print(ob.to_xarray(numeric=True))
-        pprint(json.loads(ob.json), indent=2)
-        ob._info(string=False)
+        #pprint(json.loads(ob.json), indent=2)
+        #ob._info(string=False)
+
+    def test_observation_for_sensor(self) :
+         
+        #Case 1: Simple sensor
+        time = "2021-05-05T10:08"
+        coord = [2.35, 48.87]
+        prop = {"prp":"Temp"}
+        res = 25.0
+        # Observation creation and encoding to Json or to binary data in the sensor
+        ob_sensor = Observation((time, coord, prop, res))
+        payload1 = ob_sensor.json           # if the payload is character payload
+        #print(len(payload1), payload1)
+        payload2 = ob_sensor.to_bytes()     # if the payload is binary payload
+        #print(len(payload2), payload2)
+        # data decoding in the server
+        ob_receive1 = Observation()
+        ob_receive1.from_json(payload1)
+        ob_receive2 = Observation()
+        ob_receive2.from_bytes(payload2)
+        print(ob_receive2.json == ob_receive1.json == ob_sensor.json)   # it's True !!
+        # and store it in the database (example with NoSQL DataBase)
+        jsonStore = ob_receive1.to_json(storage=True)    # add 'information' in the json to facilitate the research in the database
+        #pprint(json.loads(jsonStore))
+        #url = "https://webhooks.mongodb-realm.com/api/client/v2.0/app/observation_app-wsjge/service/postObs/incoming_webhook/api?secret=10minutes"
+        #r = rq.post(url, data=jsonStore)  
+        #print("réponse : ", r.status_code, "\n")
+        
+        #case 2 : minimize data in operation
+        # initialization phase (sensor or server) -> once
+        coord = [2.35, 48.87]
+        prop = {"prp":"Temp"}
+        ob_init = Observation(location=coord, property=prop)
+        #print(ob_init.json)
+        # operation phase (sensor) -> regularly
+        res = 25.0
+        ob_operat = Observation(result=res)
+        payload1 = ob_operat.json           # if the payload is character payload
+        #print(len(payload1), payload1)
+        payload2 = ob_operat.to_bytes()     # if the payload is binary payload
+        #print(len(payload2), payload2)      # the payload is only 4 bytes long !!
+        # data decoding in the server
+        ob_receive1 = Observation()
+        ob_receive1.from_json(payload1)
+        ob_receive2 = Observation()
+        ob_receive2.from_bytes(payload2)
+        print(ob_receive1.json == ob_receive2.json == ob_operat.json)   # it's True !!
+        # complete observation
+        ob_receive2.addValue(DatationValue(datetime.now()))
+        ob_receive2.extend(ob_init)
+        #print(ob_receive2.json)
+
 
 @unittest.skipIf(simple, "test unitaire")
 class TestObsUnitaire(unittest.TestCase):
