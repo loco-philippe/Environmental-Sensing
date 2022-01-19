@@ -16,10 +16,10 @@ This module include the parent classes :
 
 and the child classes :
     
-- `ESSEtDatation`,
-- `ESSEtLocation`,
-- `ESSEtProperty`,
-- `ESSEtResult`  
+- `ESSetDatation`,
+- `ESSetLocation`,
+- `ESSetProperty`,
+- `ESSetResult`  
 
 """
 
@@ -42,7 +42,7 @@ class ESObs(ESElement):
      
     The methods defined in this class are : 
 
-    - `observation` (@property) Observation linked to `ESObs`
+    - `observation`(@property) : Observation linked to `ESObs`
     """
     def __init__(self, pObs=None):
         ''' This method initialize the link with the `ES.ESObservation.Observation` '''
@@ -117,9 +117,9 @@ class Result(ESObs):
             
 class ESSetDatation(ESSet, Datation):   # !!! début ESSet
     """
-    This class represent the list of DatationValues.
+    This class represent the list of `ES.ESValue.DatationValue`
     
-    *Attributes * : None (inherited from parent classes)
+    *Attributes* : None (inherited from parent classes)
      
     The methods defined in this class are : 
 
@@ -144,11 +144,11 @@ class ESSetDatation(ESSet, Datation):   # !!! début ESSet
         return '\n' + self.json(ES.mOption) + '\n'
 
     def analyse(self):
-        ''' not implemnted'''
+        ''' not implemented'''
         pass
 
     def json(self, option = ES.mOption):
-        '''call `ESSet.ESSet.jsonESSet` '''
+        '''call `ES.ESSet.ESSet.jsonESSet` '''
         return self.jsonESSet(ES.dat_valName, option)
 
     def to_numpy(self, func=ES._identity):
@@ -171,9 +171,9 @@ class ESSetDatation(ESSet, Datation):   # !!! début ESSet
         
 class ESSetLocation(ESSet, Location):
     """
-    This class represent the list of LocationValues.
+    This class represent the list of `ES.ESValue.LocationValue`
     
-    *Attributes * : None (inherited from parent classes)
+    *Attributes* : None (inherited from parent classes)
      
     The methods defined in this class are : 
 
@@ -198,7 +198,7 @@ class ESSetLocation(ESSet, Location):
     def __repr__(self): return '\n' + self.json(ES.mOption) + '\n'
 
     def analyse(self):
-        ''' not implemnted'''
+        ''' not implemented'''
         pass
 
     def json(self, option = ES.mOption):       
@@ -222,9 +222,9 @@ class ESSetLocation(ESSet, Location):
 
 class ESSetProperty(ESSet, Property):
     """
-    This class represent the list of PropertyValues.
+    This class represent the list of `ES.ESValue.PropertyValue`
     
-    *Attributes * : None (inherited from parent classes)
+    *Attributes* : None (inherited from parent classes)
      
     The methods defined in this class are : 
 
@@ -258,22 +258,21 @@ class ESSetProperty(ESSet, Property):
 
 class ESSetResult(ESSet, Result):
     """
-    This class represent the list of PropertyValues.
+    This class represent the list of `ES.ESValue.ResultValue`.
     
-    *Attributes * : None (inherited from parent classes)
+    *Attributes* : None (inherited from parent classes)
      
     The methods defined in this class are : 
 
     *property (getters)*
 
-    - `vListType`
-    - `vListIndex`
-    - `maxIndex`
-    - `isIndex`
-    - `measureRate`
-    - `nMax`
     - `dim`
+    - `isIndex`
+    - `maxIndex`
+    - `measureRate`
     - `nInd`
+    - `nMax`
+    - `vListIndex`
 
     *add update manage*
 
