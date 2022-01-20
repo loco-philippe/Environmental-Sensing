@@ -19,7 +19,10 @@ from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue
 
 ValueCod = [ None, LocationValue, DatationValue, PropertyValue, 
             LocationValue, DatationValue, PropertyValue]
-
+'''ValueDict = { ES.dat_valName : DatationValue,
+              ES.loc_valName : LocationValue,
+              ES.prp_valName : PropertyValue,
+              ES.res_valName : ResultValue}'''
 class ESSet:
     """
     This class represent a set of `ESValue.ESValue`.
@@ -33,7 +36,7 @@ class ESSet:
 
     *property (getters)*
 
-    - `bounds`
+    - `boundingBox`
     - `nValue`
     - `vListName`
 
@@ -75,7 +78,7 @@ class ESSet:
     
     def __setitem__(self, key, value): self.valueList[key] = value
 
-    def __repr__(self): return object.__repr__(self) + '\n' + self._jsonSet(ES.mOption) + '\n'
+    def __repr__(self): return object.__repr__(self) + '\n' + self._jsonSet(**ES.mOption) + '\n'
 
     def addValue(self, value, equal = 'full'):          # !!! fonctions externes
         if type(value) == self.ValueClass : val = value
@@ -143,7 +146,7 @@ class ESSet:
                     ind['value'] = i
         return ind
 
-    def jsonESSet(self, ES_valName, option):
+    def jsonESSet(self, ES_valName, **option):
         try:
             if len(self.valueList) == 0: return ""
         except: return""
@@ -152,7 +155,7 @@ class ESSet:
         js = ""
         if option["json_ESobs_class"]: js = '"' + self.classES + '":{'
         js += self._jsonAtt(elt_type_nb) 
-        js += '"' + ES_valName + '":' + self._jsonSet(option) + ","
+        js += '"' + ES_valName + '":' + self._jsonSet(**option) + ","
         if js[-1] == ',': js = js[:-1]
         if option["json_ESobs_class"]: js += '}' 
         return js
@@ -218,20 +221,20 @@ class ESSet:
                 for i in range(len(self.valueList)):
                     if self.valueList[i].ind == val.ind : return i     
                     
-    def _jsonSet(self, option) :
+    def _jsonSet(self, **option) :
         if self.ValueClass in [DatationValue, LocationValue] :
             if len(self.valueList) == 0 : return ""
-            if len(self.valueList) == 1 : return self.valueList[0].json(string=True) 
+            if len(self.valueList) == 1 : return self.valueList[0].json(json_string=True) 
             li = list()
             for i in range(self.nValue): 
-                li.append(self.valueList[i].json(string=False))
+                li.append(self.valueList[i].json(json_string=False))
             return json.dumps(li)
         else :
             if len(self.valueList) == 0 : return ""
             if len(self.valueList) == 1 : return self.valueList[0].json() 
             li = list()
             for i in range(self.nValue): 
-                try: li.append(json.loads(self.valueList[i].json(option)))
-                except: li.append(self.valueList[i].json(option))
+                try: li.append(json.loads(self.valueList[i].json(**option)))
+                except: li.append(self.valueList[i].json(**option))
             return json.dumps(li)
 

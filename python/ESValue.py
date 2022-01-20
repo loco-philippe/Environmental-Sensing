@@ -14,9 +14,7 @@ This module groups the classes of the objects used in the `ES.ESObs` module :
 the parent class :
     
 - `ESValue`
-
 """
-
 import json, geojson, struct, shapely
 from datetime import datetime
 from ESconstante import ES
@@ -35,7 +33,6 @@ class ESValue:
     - `setName`
     - `setValue`
     - `vName`
-
     """
     def __init__(self):
         '''This method initialize the 'name' and the 'ValueClass' attribute'''
@@ -171,7 +168,6 @@ class DatationValue(ESValue):   # !!! début ESValue
     - `to_bytes`
     """
     valName     = ES.dat_valName
-    valueType   = ES.dat_valueType
     
     def __init__(self, val=ES.nullDate, slot=TimeSlot(), name=ES.nullName):
         '''
@@ -246,22 +242,23 @@ class DatationValue(ESValue):   # !!! début ESValue
         '''DatationValue built with a compatible TimeSlot [arg1, arg2] (static method)'''
         return DatationValue(slot=TimeSlot([arg1, arg2]), name='interval')
 
-    def json(self, string=True): 
+    def json(self, **kwargs): 
         '''
         Export in Json format (string or dict). 
         
         *Parameters*
         
-        - **string** : boolean (default True) - choice for return formet (string if True, dict else)
+        - **json_string** : boolean (default True) - choice for return formet (string if True, dict else)
                 
         *Returns*
         
-        - **string** : Json string 
+        - **string or dict**
         '''
+        option = ES.mOption | kwargs
         if self.name == ES.nullName : js = self.slot.json(string=False)
         elif self.slot == TimeSlot() : js = self.name
         else : js = {self.name : self.slot.json(string=False)}
-        if string : return json.dumps(js)
+        if option['json_string'] : return json.dumps(js)
         else : return js
                     
     def to_bytes(self):
@@ -365,7 +362,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     """
     valName     = ES.loc_valName
-    valueType   = ES.loc_valueType
 
     def __init__(self, val=ES.nullCoor, shape=None, name=ES.nullName):
         '''Several LocationValue creation modes :
@@ -430,21 +426,22 @@ class LocationValue(ESValue):              # !!! début LocationValue
         ''' return a list with point coordinates [x, y] if the shape is a point ''' 
         if type(self.shap) == shapely.geometry.point.Point : return [self.shap.x, self.shap.y]
         
-    def json(self, option=ES.mOption, string=True): 
+    def json(self, **kwargs): 
         ''' Export in Json format (string or dict). 
         
         *Parameters*
         
-        - **string** : boolean (default True) - choice for return formet (string if True, dict else)
+        - **json_string** : boolean (default True) - choice for return formet (string if True, dict else)
                 
         *Returns*
         
-        - **string** : Json string 
+        - **string or dict**
         '''
+        option = ES.mOption | kwargs
         if self.name == ES.nullName : js = self.vPoint()
         elif self.vPoint() == ES.nullCoor : js = self.name
         else : js = {self.name : self.vPoint()}
-        if string : return json.dumps(js)
+        if option['json_string'] : return json.dumps(js)
         else : return js
 
     @property
@@ -528,10 +525,27 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
 class PropertyValue(ESValue):              # !!! début ESValue
     """
-    Classe liée à la structure interne
+    This class represent the Property of an Observation.
+    
+    *Attributes (for @property see methods)* :
+    
+    - **pType** : string, property type
+    - **name** : String
+     
+    The methods defined in this class are : 
+
+    *getters*
+
+    - `vType`
+    
+    *exports - imports*
+
+    - `json`
+    - `from_bytes`
+    - `to_bytes`
+
     """
     valName     = ES.prp_valName
-    valueType   = ES.prp_valueType
     
     def __init__(self, val={}):
         ESValue.__init__(self)
@@ -545,9 +559,51 @@ class PropertyValue(ESValue):              # !!! début ESValue
         self.uncertain      = ES.nullVal
         self.EMFId          = ES.nullDict
         self.detail         = dict()
-        self.init(val)
+        self._init(val)
     
-    def init(self, val={}):
+
+    def __eq__(self, other): return self.pType == other.pType  and \
+        self.sampling == other.sampling and \
+        self.application == other.application and self.EMFId == other.EMFId and \
+        self.detail == other.detail and self.name == other.name
+
+    def __repr__(self): return self.json(ES.mOption)
+
+    def __lt__(self, other): return self.pType + self.name < other.pType + other.name
+
+    def from_bytes(self, byt):
+        bytl = byt[0:6] + b'\x00' +byt[6:9] + b'\x00' + byt[9:10]
+        prp = struct.unpack('<BBBLLB', bytl)
+        self.pType      = ES.invProp[prp[0]]
+        self.unit       = ES.prop[ES.invProp[prp[0]]][5]
+        self.sampling   = ES.invSampling[prp[1]]
+        self.application = ES.invApplication[prp[2]]
+        self.period     = prp[3]
+        self.interval   = prp[4]
+        self.uncertain  = prp[5] // 2
+        return 10
+
+    def json(self, **kwargs): 
+        option = ES.mOption | kwargs
+        if self.name == ES.nullName : js = self._jsonDict(False)
+        elif self._jsonDict(False) == {} : js = self.name
+        else : js = {self.name : self._jsonDict(False)}
+        if option['json_string'] : return json.dumps(js,  ensure_ascii=False)
+        else : return js
+
+    def to_bytes(self):
+        byt = struct.pack('<BBBLLB', ES.prop[self.pType][0], 
+                           ES.sampling[self.sampling],
+                           ES.application[self.application],
+                           self.period,
+                           self.interval,
+                           self.uncertain * 2
+                           )
+        return byt[0:6] +byt[7:10] + byt[11:12]
+        
+    def vType(self): return self.name + self.pType
+    
+    def _init(self, val={}):
         if type(val) == dict :
             for k, v in val.items():
                 if   ES.prp_propType == k : self.pType       = v
@@ -573,16 +629,6 @@ class PropertyValue(ESValue):              # !!! début ESValue
             self.detail         = val.detail
         if self.unit == ES.nullDict : self.unit = ES.prop[self.pType][5]
 
-
-    def __eq__(self, other): return self.pType == other.pType  and \
-        self.sampling == other.sampling and \
-        self.application == other.application and self.EMFId == other.EMFId and \
-        self.detail == other.detail and self.name == other.name
-
-    def __repr__(self): return self.json(ES.mOption)
-
-    def __lt__(self, other): return self.pType + self.name < other.pType + other.name
-
     def _jsonDict(self, string=True): 
         li = dict()
         if self.pType       != ES.nullDict:   li[ES.prp_propType] = self.pType
@@ -597,50 +643,104 @@ class PropertyValue(ESValue):              # !!! début ESValue
         if string : return json.dumps(li, ensure_ascii=False)
         else : return li
 
-    def json(self, option=ES.mOption, string=True): 
-        if self.name == ES.nullName : js = self._jsonDict(False)
-        elif self._jsonDict(False) == {} : js = self.name
-        else : js = {self.name : self._jsonDict(False)}
-        if string : return json.dumps(js,  ensure_ascii=False)
-        else : return js
-
-    def vType(self): return self.name + self.pType
-    
-    def to_bytes(self):
-        byt = struct.pack('<BBBLLB', ES.prop[self.pType][0], 
-                           ES.sampling[self.sampling],
-                           ES.application[self.application],
-                           self.period,
-                           self.interval,
-                           self.uncertain * 2
-                           )
-        return byt[0:6] +byt[7:10] + byt[11:12]
-        
-    def from_bytes(self, byt):
-        bytl = byt[0:6] + b'\x00' +byt[6:9] + b'\x00' + byt[9:10]
-        prp = struct.unpack('<BBBLLB', bytl)
-        self.pType      = ES.invProp[prp[0]]
-        self.unit       = ES.prop[ES.invProp[prp[0]]][5]
-        self.sampling   = ES.invSampling[prp[1]]
-        self.application = ES.invApplication[prp[2]]
-        self.period     = prp[3]
-        self.interval   = prp[4]
-        self.uncertain  = prp[5] // 2
-        return 10
 
 class ResultValue (ESValue):               # !!! début ESValue
     """
-    Classe liée à la structure interne
+    This class represent the Result of an Observation.
+    
+    *Attributes (for @property see methods)* :
+    
+    - **value** : any kind of object
+    - **ind** : list, index [location, datation, property]
+    - **name** : String
+     
+    The methods defined in this class are : 
+
+    *getters - setters*
+
+    - `isNotNull`
+    - `to_float`
+    - `setIndValue`
+    
+    *exports - imports*
+
+    - `json`
+    - `from_bytes`
+    - `to_bytes`
+
     """
     valName     = ES.res_valName
-    valueType   = ES.res_valueType
 
-    def __init__(self, val = None, ind = ES.nullInd):
+    def __init__(self, val = None, ind = ES.nullInd, name=ES.nullName):
+        '''
+        Several ResultValue creation modes :
+        
+        
+        '''
         self.ind = ind
         ESValue.__init__(self)
         self._init(val, ind)
         
         
+    def __eq__(self, other): return self.value == other.value
+
+    def __lt__(self, other):  
+        order = ES.mOption["sort_order"]
+        o = [ES.nax[order[0]], ES.nax[order[1]], ES.nax[order[2]]]
+        return self.ind[o[0]] < other.ind[o[0]] or \
+              (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] <  other.ind[o[1]]) or \
+              (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] == other.ind[o[1]] and self.ind[o[2]] < other.ind[o[2]])
+
+    def __repr__(self): return  self.json(ES.mOption)
+
+    def from_bytes(self, byt, resInd = False, prp = ES.nullDict):
+        formaPrp = ES.prop[prp][1]
+        leng = ES.prop[prp][2]
+        dexp = ES.prop[prp][3]
+        bexp = ES.prop[prp][4]        
+        if resInd :
+            dt = struct.unpack('<BBB'+ formaPrp, byt[0:leng + 3])
+            self._init(dt[3] * 10**dexp * 2**bexp, [dt[0], dt[1], dt[2]])
+            return 3 + leng
+        else :
+            self._init(struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
+            return leng
+
+    def isNotNull(self): return self!=ResultValue()
+
+    def json(self, **kwargs): 
+        option = ES.mOption | kwargs
+        if (type(self.value) == str and json.dumps(self.value)[1:-1]!=self.value):
+            if option["json_res_index"]: return '[' + self.value + ', ' + json.dumps(self.ind) + ']'
+            else: return self.value
+        else:
+            if option["json_res_index"] : return json.dumps([self.value, self.ind])
+            else: return json.dumps(self.value)
+    
+    def setIndValue(self, val):
+        if (type(val) == list) : 
+            self._setValue(val[0])
+            self.ind = val[1]
+        else : self.value = None
+
+    def to_bytes(self, resIndex = False, prp = ES.nullDict):
+        formaPrp = ES.prop[prp][1]
+        dexp = ES.prop[prp][3]
+        bexp = ES.prop[prp][4]
+        val = self.value * 10**-dexp * 2**-bexp
+        if resIndex : return struct.pack('<BBB' + formaPrp,  self.ind[0],
+                                         self.ind[1], self.ind[2], val)
+        else : return struct.pack('<' + formaPrp, val)
+        
+    def to_float(self):
+        if self.value == None :         return float('nan')
+        elif type(self.value)==str:
+            if self.value == 'null':    return float('nan')
+            else : 
+                try:                    return float(self.value)
+                except:                 return float('nan')
+        else :                          return float(self.value)           
+
     def _init(self, val = None, ind = ES.nullInd):
         if type(val) == str : 
             try: js=json.loads(val)
@@ -665,64 +765,7 @@ class ResultValue (ESValue):               # !!! début ESValue
             else : self._setValue(json.dumps(val))
         if type(ind) == list and ind != ES.nullInd and self.ind == ES.nullInd : self.ind = ind
 
-    def __eq__(self, other): return self.value == other.value
-
-    def __lt__(self, other):  
-        order = ES.mOption["sort_order"]
-        o = [ES.nax[order[0]], ES.nax[order[1]], ES.nax[order[2]]]
-        return self.ind[o[0]] < other.ind[o[0]] or \
-              (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] <  other.ind[o[1]]) or \
-              (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] == other.ind[o[1]] and self.ind[o[2]] < other.ind[o[2]])
-
-    def __repr__(self): return  self.json(ES.mOption)
-
-    def setIndValue(self, val):
-        if (type(val) == list) : 
-            self._setValue(val[0])
-            self.ind = val[1]
-        else : self.value = None
-
     def _setValue(self, val):
         if (type(val) in [str, int, float]) : self.value = val
         else : self.value = json.dumps(val)
 
-    def json(self, option = ES.mOption): 
-        if (type(self.value) == str and json.dumps(self.value)[1:-1]!=self.value):
-            if option["json_res_index"]: return '[' + self.value + ', ' + json.dumps(self.ind) + ']'
-            else: return self.value
-        else:
-            if option["json_res_index"] : return json.dumps([self.value, self.ind])
-            else: return json.dumps(self.value)
-    
-    def to_bytes(self, resIndex = False, prp = ES.nullDict):
-        formaPrp = ES.prop[prp][1]
-        dexp = ES.prop[prp][3]
-        bexp = ES.prop[prp][4]
-        val = self.value * 10**-dexp * 2**-bexp
-        if resIndex : return struct.pack('<BBB' + formaPrp,  self.ind[0],
-                                         self.ind[1], self.ind[2], val)
-        else : return struct.pack('<' + formaPrp, val)
-        
-    def from_bytes(self, byt, resInd = False, prp = ES.nullDict):
-        formaPrp = ES.prop[prp][1]
-        leng = ES.prop[prp][2]
-        dexp = ES.prop[prp][3]
-        bexp = ES.prop[prp][4]        
-        if resInd :
-            dt = struct.unpack('<BBB'+ formaPrp, byt[0:leng + 3])
-            self._init(dt[3] * 10**dexp * 2**bexp, [dt[0], dt[1], dt[2]])
-            return 3 + leng
-        else :
-            self._init(struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
-            return leng
-
-    def isNotNull(self): return self!=ResultValue()
-
-    def to_float(self):
-        if self.value == None :         return float('nan')
-        elif type(self.value)==str:
-            if self.value == 'null':    return float('nan')
-            else : 
-                try:                    return float(self.value)
-                except:                 return float('nan')
-        else :                          return float(self.value)           

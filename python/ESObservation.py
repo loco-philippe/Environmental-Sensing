@@ -9,7 +9,7 @@ of Environmental Sensing : `Observation` class.
 
 """
 from ESObs import ESSetDatation, ESSetLocation, ESSetProperty, ESSetResult
-from ESElement import ESElement, isESObs, isESAtt, isUserAtt
+from ESElement import ESElement
 from ESconstante import ES
 from ESValue import LocationValue, DatationValue, PropertyValue, \
     ResultValue
@@ -46,9 +46,9 @@ class Observation(ESElement):
     For example, 122 means one PropertyValue (1), several LocationValue (2), 
     several DatationValue (2)
     - **option** : Dictionnary with options
-    - **name** : textual description (inherited from ESObject)
+    - **userAtt** : namedValue dictionnary
+    - **name** : textual description
     - **mAtt** : namedValue dictionnary (inherited from ESElement)
-    - **userAtt** : namedValue dictionnary (inherited from ESElement)
     - **parameter** : namedValue dictionnary (inherited from ESElement)
     - **mAtt[reference]** : number of the reference Observation used to complete the actual Observation
 
@@ -130,7 +130,6 @@ class Observation(ESElement):
         It indicates the order for the Index creation ('d' for Datation, 'l' for Location, 'p' for Property).*
         '''
         ESElement.__init__(self)
-        #self.metaType = ES.obj_metaType
         self.name = "observtion du " + datetime.now().isoformat()
         self.option = ES.mOption.copy()
         self.mAtt[ES.obs_reference] = 0
@@ -206,7 +205,7 @@ class Observation(ESElement):
         '''
         if type(js) != dict: return
         for k, v in js.items():
-            if isESAtt(ES.obs_classES, k) or isUserAtt(k): self.mAtt[k] = v
+            if ESElement.isESAtt(ES.obs_classES, k) or ESElement.isUserAtt(k): self.mAtt[k] = v
             if k == ES.parameter: 
                 try:  self.parameter = json.dumps(v)
                 except:  self.parameter = "null"
@@ -225,13 +224,13 @@ class Observation(ESElement):
         
         - **None**
         '''
-        if classES in (None, ES.dat_classES) and isESObs(ES.dat_classES, js) \
+        if classES in (None, ES.dat_classES) and ESElement.isESObs(ES.dat_classES, js) \
             and self.setDatation == None: ESSetDatation(pObs=self, jObj=js)
-        if classES in (None, ES.loc_classES) and isESObs(ES.loc_classES, js) \
+        if classES in (None, ES.loc_classES) and ESElement.isESObs(ES.loc_classES, js) \
             and self.setLocation == None: ESSetLocation(pObs=self, jObj=js)
-        if classES in (None, ES.prp_classES) and isESObs(ES.prp_classES, js) \
+        if classES in (None, ES.prp_classES) and ESElement.isESObs(ES.prp_classES, js) \
             and self.setProperty == None: ESSetProperty(pObs=self, jObj=js)
-        if classES in (None, ES.res_classES) and isESObs(ES.res_classES, js) \
+        if classES in (None, ES.res_classES) and ESElement.isESObs(ES.res_classES, js) \
             and self.setResult   == None: ESSetResult  (pObs=self, jObj=js)
 
     def addListResultValue(self, listEsValue):
@@ -524,18 +523,18 @@ class Observation(ESElement):
         if not self.complet or type(idat) != int or type(iloc) != int or type(iprp) != int: return dict()
         dic = dict()
         if self.setDatation != None and idat < self.setDatation.nValue: 
-            if json : dic[ES.dat_classES] = self.setDatation.valueList[idat].json(self.option)
+            if json : dic[ES.dat_classES] = self.setDatation.valueList[idat].json(**self.option)
             else : dic[ES.dat_classES] = self.setDatation.valueList[idat]
         if self.setLocation != None and iloc < self.setLocation.nValue: 
-            if json : dic[ES.loc_classES] = self.setLocation.valueList[iloc].json(self.option)
+            if json : dic[ES.loc_classES] = self.setLocation.valueList[iloc].json(**self.option)
             else: dic[ES.loc_classES] = self.setLocation.valueList[iloc]
         if self.setProperty != None and iprp < self.setProperty.nValue: 
-            if json : dic[ES.prp_classES] = self.setProperty.valueList[iprp].json(self.option)
+            if json : dic[ES.prp_classES] = self.setProperty.valueList[iprp].json(**self.option)
             else : dic[ES.prp_classES] = self.setProperty.valueList[iprp]
         if self.setResult != None : 
             for i in range(self.setResult.nValue) : 
                 if self.setResult.valueList[i].ind == [idat, iloc, iprp] : 
-                    if json : dic[ES.res_classES] = self.setResult.valueList[i].json(self.option)
+                    if json : dic[ES.res_classES] = self.setResult.valueList[i].json(**self.option)
                     else : dic[ES.res_classES] = self.setResult.valueList[i]
         return dic
     
@@ -906,25 +905,26 @@ class Observation(ESElement):
         
         - **string** : Json string 
         '''
-        info = 'storage' in kwargs.keys() and kwargs['storage'] == True
-            
-        if self.option["json_elt_type"]: option_type = 1
+        #info = 'storage' in kwargs.keys() and kwargs['storage'] == True
+        option = self.option | kwargs
+    
+        if option["json_elt_type"]: option_type = 1
         else: option_type = 0
         js =""
-        if self.option["json_obs_val"]: js = "{"
+        if option["json_obs_val"]: js = "{"
         js += '"' + ES.type +'":"' + ES.obs_classES +'",'
         if self.mAtt[ES.obs_id] != "null": js += '"' + ES.obs_id + '":"' + self.mAtt[ES.obs_id] + '",'
-        if self.option["json_obs_attrib"]: js += '"' + ES.obs_attributes + '":{'
+        if option["json_obs_attrib"]: js += '"' + ES.obs_attributes + '":{'
         js += self._jsonAtt(option_type)
         for cp in self.pComposant:
-            js += cp.json(self.option)
+            js += cp.json(**option)
             if js[-1] != ',': js += ","
-        if self.option["json_param"] and self.parameter != "null": 
+        if option["json_param"] and self.parameter != "null": 
             js += '"' + ES.parameter +'":' + self.parameter + ','
-        jsInfo = self._info(True, info or self.option["json_info_type"], 
-                            info or self.option["json_info_nval"],
-                            info or self.option["json_info_box"], 
-                            info or self.option["json_info_autre"])
+        jsInfo = self._info(True, option["json_info"] or option["json_info_type"], 
+                                  option["json_info"] or option["json_info_nval"],
+                                  option["json_info"] or option["json_info_box"], 
+                                  option["json_info"] or option["json_info_autre"])
         if jsInfo != "" : js +=  jsInfo + ','
         if js[-1] == ',': js = js[:-1]
         if self.option["json_obs_attrib"]: js += "}"

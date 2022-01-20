@@ -4,101 +4,158 @@ Created on Sun Aug  1 13:24:02 2021
 
 @author: philippe@loco-labs.io
 
-This module contains the parent classes of the classes of the `ES.ESObs` and
-`ES.ESObservation` modules.
+This module contains the `ESElement` parent class of the `ES.ESObs.ESObs` and
+`ES.ESObservation.Observation` classes. 
 """
 import json
-from datetime import datetime
 from ESconstante import ES
-#from ESSet import ESSet
-#from ESValue import LocationValue, DatationValue, ESSet, PropertyValue, ResultValue #, gshape
-#from ESObs import Datation, Location, Property, Result
 
-def isESObs(esClass, jObj):
-    if type(jObj) == esClass : return True
-    if type(jObj) != dict : return False
-    for key, value in jObj.items():
-        if key == esClass: return True
-        for val, classES in ES.mValObs.items():
-            if key == val and esClass == classES:  return True
-        for val, classES in ES.mTypeAtt.items():
-            if key == val and esClass == classES:  return True
-    return False
-
-
-def isESAtt(esClass, key):
-    for k,v in ES.mTypeAtt.items():
-        if v == esClass and k == key: return True
-    return False
-
-def isUserAtt(key):
-    for k,v in ES.mTypeAtt.items():
-        if k == key: return False
-    for k,v in ES.mValObs.items():
-        if k == key: return False
-    return True
-
-'''def deserialize(jsonStr):
-    return json.loads(jsonStr)
-'''
 class ESElement:
     """
-    Classe liée à la structure interne
+    
+    *Attributes* :
+    
+    - **mAtt** : dict with properties of an instance
+    - **typeES** : String, define the nature of an `ESElement`
+    - **classES** : String, define the level of class
+    - **pComposant** : list of `ESElement` included in the `ESElement`
+    - **pContenant** : list of `ESElement` containing the `ESElement`
+    
+    The methods defined in this class are : 
+
+    - `addComposant`
+    - `element`
+    - `getAttAll`
+    
+    
+    - `isESAtt`(@staticmethod)
+    - `isESObs`(@staticmethod)
+    - `isUserAtt`(@staticmethod)
+    
+    
     """
     def __init__(self):
         self.mAtt = dict()
         self.mAtt[ES.type] = "null"
         self.typeES = "null"
         self.classES = "null"
-        #self.metaType = "null"
         self.parameter = "null"
         self.pComposant = list()
         self.pContenant = list()
 
     def __repr__(self):
         txt = object.__repr__(self) + '\n'
-        #txt += f"metatype, classES, typeES : {self.metaType} {self.classES} {self.typeES} \n"
         txt += f"classES, typeES : {self.classES} {self.typeES} \n"
         for k, v in self.mAtt.items(): txt += f"{k} : {v} \n"
         if (len(self.pComposant) > 0): txt += f"nombre de composants {len(self.pComposant)} \n"
         if (len(self.pContenant) > 0): txt += f"nombre de contenants {len(self.pContenant)} \n"
         return txt
     
-    def setAtt(self, key, value):
-        self.mAtt[key] = value
-    
-    '''        
-    def getAtt(self, key):
-        if self.isAtt(key): return  self.mAtt[key]
-        else: return "null"
-    
-    def isAtt(self, key):
-        return key in self.mAtt
-    '''
-    def getAttAll(self, key):
-        if self.isAtt(key): return self.mAtt[key];
-        for compo in self.pComposant:
-            if (compo.getAttAll(key) != "null"): return compo.getAttAll(key)
-        return "null";
-
     def addComposant(self, pCompos):
+        '''Link two `ESElement` 
+        
+        *Parameters*
+        
+        - **pCompos** : `ESElement` to include
+        
+        *Returns*
+        
+        - **None**
+        '''
         self.pComposant.append(pCompos)
         pCompos.pContenant.append(self)
 
     def element(self, comp) :
+        """Return `ESElement` included with a specific 'classES' or 'typeES'
+        
+        *Parameters*
+        
+        - **comp** : string to search
+        
+        *Returns*
+        
+        - **ESElement found**
+        """
         for cp in self.pComposant:
-            #if (cp.typeES == comp or cp.classES == comp or cp.metaType == comp or cp.mAtt[ES.type] == comp):
             if (cp.typeES == comp or cp.classES == comp or cp.mAtt[ES.type] == comp):
                 return cp
             elif (cp.element(comp) != None): return cp.element(comp)
         return None
 
-    def majMeta(self):
-        #for ct in self.pContenant:
-            #if (ct.typeES == ES.obs_typeES): ct.majType()
-        pass
+    def getAttAll(self, key):
+        """Return mAtt value in a global hierachy
+        
+        *Parameters*
+        
+        - **key** : string to search
+        
+        *Returns*
+        
+        - **value found**
+        """
+        if self.isAtt(key): return self.mAtt[key];
+        for compo in self.pComposant:
+            if (compo.getAttAll(key) != "null"): return compo.getAttAll(key)
+        return "null";
 
-    def _jsonAtt(self, elt_type_nb):
+    @staticmethod
+    def isESObs(esClass, jObj):
+        """Identify if 'jObj' include 'esClass' keys
+        
+        *Parameters*
+        
+        - **jObj** : dict to be evaluated
+        
+        *Returns*
+        
+        - **Boolean**
+        """        
+        if type(jObj) == esClass : return True
+        if type(jObj) != dict : return False
+        for key, value in jObj.items():
+            if key == esClass: return True
+            for val, classES in ES.mValObs.items():
+                if key == val and esClass == classES:  return True
+            for val, classES in ES.mTypeAtt.items():
+                if key == val and esClass == classES:  return True
+        return False
+
+    @staticmethod
+    def isESAtt(esClass, key):
+        """identify if 'key' is included in 'esClass'
+        
+        *Parameters*
+        
+        - **esClass** : string for an ESClass attribute
+        - **key** : string to search
+        
+        *Returns*
+        
+        - **Boolean**
+        """        
+        for k,v in ES.mTypeAtt.items():
+            if v == esClass and k == key: return True
+        return False
+
+    @staticmethod
+    def isUserAtt(key):
+        """identify if 'key' is included in any `ESElement` attribute
+        
+        *Parameters*
+        
+        - **key** : string to search
+        
+        *Returns*
+        
+        - **Boolean**
+        """                
+        for k,v in ES.mTypeAtt.items():
+            if k == key: return False
+        for k,v in ES.mValObs.items():
+            if k == key: return False
+        return True
+
+    def _jsonAtt(self, elt_type_nb):    # !!!
         att = dict()
         for k,v in self.mAtt.items():
             if k in list(ES.mTypeAtt.keys()) and v != "null":
@@ -109,6 +166,5 @@ class ESElement:
                     elif elt_type_nb == -1 : att[k] = v
                     elif elt_type_nb == -2 : att[k] = ES.multi + v
             elif v != "null": att[k] = v
-            #if k[0] == '$' and v != "null": att[k] = v
         if len(att) == 0 : return ""
         return json.dumps(att)[1:-1] + ","

@@ -26,6 +26,7 @@ class Es:
                 
         #'''Observation initialization (dict) '''
         self.mOption : Dict = {
+                      "json_string"         : True, # sortie string ou dict
                       "json_res_index"      : False, # affiche index
                       "json_prp_type"       : True, # affiche name ou property
                       "json_prp_name"       : False, # affiche name ou property
@@ -38,6 +39,7 @@ class Es:
                       "json_obs_val"        : True, #key:val ou val
                       "json_obs_attrib"     : False, # avec key = attributes
                       "json_param"          : False, # ok
+                      "json_info"           : False, # si True, ok pour tous les info_
                       "json_info_type"      : False,
                       "json_info_nval"      : False,
                       "json_info_box"       : False,
@@ -133,14 +135,14 @@ class Es:
         ''' Default name for `ES.ESObservation.Observation.score` '''
 
         #'''Bytes initialization (dict) '''
-        self.codeb: Dict = {  self.obs_classES  :   5 ,
-                        self.dat_classES  :   2 ,
-                        self.loc_classES  :   1 ,
-                        self.res_classES  :   4 ,
-                        self.prp_classES  :   3 ,
-                        self.loc_valueType:   1 ,
-                        self.dat_valueType:   2 ,
-                        self.prp_valueType:   3 }
+        self.codeb: Dict = {self.obs_classES  :   5 ,
+                            self.dat_classES  :   2 ,
+                            self.loc_classES  :   1 ,
+                            self.res_classES  :   4 ,
+                            self.prp_classES  :   3 ,
+                            self.loc_valName  :   1 ,
+                            self.dat_valName  :   2 ,
+                            self.prp_valName  :   3 }
         ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
         `ES.ESObservation.Observation.to_bytes` '''
 
@@ -233,9 +235,6 @@ class Es:
         self.res              = "res"
         self.coordinates      = "coordinates"
         
-        #self.obj_metaType     = "ESObject"
-        #self.obs_metaType     = "ESObs"
-        
         self.nul_classES      = "nullClass"
         self.obs_classES      = "observation"
         self.dat_classES      = "datation"
@@ -261,37 +260,25 @@ class Es:
         self.set_typeES       = "set"
         
         self.dat_box            = "timeBox"
-        #self.dat_boxMax       = "timeBoxMax"
-        
         self.loc_box            = "boudingBox"
-        #self.loc_boxMax       = "boudingBoxMax"
         
         self.prp_propType	    = "prp";
         self.prp_unit		    = "unit";
         self.prp_sampling	    = "samplingFunction";
         self.prp_appli		    = "application";
         self.prp_EMFId		    = "EMFId";
-        self.prp_sensorType	 = "sensorType";
-        self.prp_upperValue	 = "upperValue";
-        self.prp_lowerValue	 = "lowerValue";
-        self.prp_period	    = "period";
+        self.prp_sensorType	    = "sensorType";
+        self.prp_upperValue	    = "upperValue";
+        self.prp_lowerValue	    = "lowerValue";
+        self.prp_period	        = "period";
         self.prp_interval	    = "updateInterval";
-        self.prp_uncertain    = "uncertainty";
-        self.prp_name         = "name";
+        self.prp_uncertain      = "uncertainty";
+        self.prp_name           = "name";
         
-        #self.dat_valName      = ["instant", "slot"]
         self.dat_valName      = "datvalue"
-        self.dat_valueType    = "datationValue"
-        #self.loc_valName      = ["point", "shape"]
         self.loc_valName      = "locvalue"
-        self.loc_valueType    = "locationValue"
         self.prp_valName      = "prpvalue"
-        self.prp_valueType    = "propertyValue"
         self.res_valName      = "resvalue"
-        self.res_valueType    = "resultValue"
-        self.real_valueType   = "real"
-        self.int_valueType    = "int"
-        self.str_valueType    = "string"
     
     def _initReferenceValue(self):        
         ''' Reference value initialization '''
