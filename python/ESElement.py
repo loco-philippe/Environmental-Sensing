@@ -36,10 +36,8 @@ class ESElement:
     """
     def __init__(self):
         self.mAtt = dict()
-        self.mAtt[ES.type] = "null"
         self.typeES = "null"
         self.classES = "null"
-        self.parameter = "null"
         self.pComposant = list()
         self.pContenant = list()
 
@@ -77,8 +75,7 @@ class ESElement:
         - **ESElement found**
         """
         for cp in self.pComposant:
-            if (cp.typeES == comp or cp.classES == comp or cp.mAtt[ES.type] == comp):
-                return cp
+            if (cp.typeES == comp or cp.classES == comp): return cp
             elif (cp.element(comp) != None): return cp.element(comp)
         return None
 
@@ -95,8 +92,8 @@ class ESElement:
         """
         if self.isAtt(key): return self.mAtt[key];
         for compo in self.pComposant:
-            if (compo.getAttAll(key) != "null"): return compo.getAttAll(key)
-        return "null";
+            if (compo.getAttAll(key) != ES.nullAtt): return compo.getAttAll(key)
+        return ES.nullAtt
 
     @staticmethod
     def isESObs(esClass, jObj):
@@ -155,16 +152,11 @@ class ESElement:
             if k == key: return False
         return True
 
-    def _jsonAtt(self, elt_type_nb):    # !!!
+    
+    def _jsonAtt(self, **option):
         att = dict()
-        for k,v in self.mAtt.items():
-            if k in list(ES.mTypeAtt.keys()) and v != "null":
-                if k != ES.type and elt_type_nb > 0 : att[k] = v
-                elif k == ES.type :
-                    if elt_type_nb == 1 : att[k + self.classES] = v
-                    elif elt_type_nb == 2 : att[k + self.classES] = ES.multi + v
-                    elif elt_type_nb == -1 : att[k] = v
-                    elif elt_type_nb == -2 : att[k] = ES.multi + v
-            elif v != "null": att[k] = v
-        if len(att) == 0 : return ""
-        return json.dumps(att)[1:-1] + ","
+        for k, v in self.mAtt.items():
+            if k in list(ES.mTypeAtt.keys()) : 
+                if v not in ES.nullValues : att[k] = v
+            else: att[k] = v
+        return att

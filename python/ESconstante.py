@@ -28,28 +28,19 @@ class Es:
         self.mOption : Dict = {
                       "json_string"         : True, # sortie string ou dict
                       "json_res_index"      : False, # affiche index
-                      "json_prp_type"       : True, # affiche name ou property
                       "json_prp_name"       : False, # affiche name ou property
-                      "json_dat_instant"    : True, # affiche instant (ou mean de slot)
                       "json_dat_name"       : False, # affiche name ou instant/slot
-                      "json_loc_point"      : True, # affiche point (ou shape.centroid)
                       "json_loc_name"       : False, # affiche name ou instant/slot
-                      "json_ESobs_class"    : False, # json des ESobs
-                      "json_elt_type"       : False, # jsonAtt avec type xxxx
-                      "json_obs_val"        : True, #key:val ou val
-                      "json_obs_attrib"     : False, # avec key = attributes
                       "json_param"          : False, # ok
                       "json_info"           : False, # si True, ok pour tous les info_
                       "json_info_type"      : False,
                       "json_info_nval"      : False,
                       "json_info_box"       : False,
-                      "json_info_autre"     : False,
+                      "json_info_other"     : False,
                       "unic_index"          : True,  # dans ESSet
                       "add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
-                      #"maj_reset_index"     : False, # dans majtype
                       "sort_order"          : 'dlp'
-                      #"sort_order"          : [0,1,2]
                       }
         ''' Default options for `ES.ESObservation.Observation`'''
         
@@ -61,11 +52,8 @@ class Es:
         '''name for json classES identification '''
         
         self.mValObs: Dict = {self.loc_valName  : self.loc_classES  ,
-                        #self.loc_valName[1]  : self.loc_classES  ,
                         self.dat_valName  : self.dat_classES  ,
-                        #self.dat_valName  : self.dat_classES  ,
                         self.prp_valName  : self.prp_classES  ,
-                        #self.prp_valName[1]  : self.prp_classES  ,
                         self.res_valName  : self.res_classES  }
         '''assignment of ESValue name to ESObs objects '''
         
@@ -76,6 +64,7 @@ class Es:
                         self.information     : self.nul_classES  ,
                         self.obs_resultTime  : self.obs_classES  ,
                         self.obs_reference   : self.obs_classES  ,
+                        self.obs_id          : self.obs_classES  ,
                         "ResultQuality"      : self.res_classES  ,            
                         self.prp_propType	    : self.prp_classES  ,
                         self.prp_unit		    : self.prp_classES  ,
@@ -164,6 +153,7 @@ class Es:
                           'Temp'        : (24, 'e', 2,  0, 0, '°C'         ),
                           self.nullDict : (0 , 'e', 2,  0, 0, self.nullDict)}
         '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
+        
         self.invProp: Dict = self._invnum(self.prop)
         '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
         
@@ -176,6 +166,7 @@ class Es:
                                'accumulated'        : 6,
                                'count'              : 7}
         '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
+        
         self.invSampling: Dict = self._inv(self.sampling)
         '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
 
@@ -188,6 +179,7 @@ class Es:
                        'map database'                   : 6,
                        'barometric elevation source'    : 7}
         '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
+        
         self.invApplication = self._inv(self.application)
         '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
         
@@ -286,9 +278,12 @@ class Es:
         self.nullDate         = datetime(1970, 1, 1)
         self.nullCoor         = [-1, -1]
         self.nullInd          = [-1, -1, -1]
+        self.nullAtt          = "null"
         self.nullName         = ""
         self.nullDict         = "-"
         self.nullName         = ""
         self.nullVal          = 0
+        self.nullValues = (self.nullDate, self.nullCoor, self.nullInd, self.nullName,
+                           self.nullAtt, self.nullDict, self.nullName, self.nullVal)
 
 ES = Es()

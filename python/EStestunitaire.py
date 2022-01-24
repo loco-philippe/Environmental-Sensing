@@ -34,9 +34,6 @@ with open('C:\\Users\\a179227\\OneDrive - Alliance\\perso Wx\\ES standard\\pytho
     dp = f.read()
 dpt = json.loads(dp)['features']
 #https://github.com/gregoiredavid/france-geojson
-#pol13 = dpt['features'][12]['geometry']['coordinates']
-#pol69 = dpt['features'][69]['geometry']['coordinates']
-#pol75 = dpt['features'][75]['geometry']['coordinates']
 pol13 = {dpt[12]['properties']['code'] + ' ' + dpt[12]['properties']['nom'] : 
          dpt[12]['geometry']['coordinates']}
 pol69 = {dpt[69]['properties']['code'] + ' ' + dpt[69]['properties']['nom'] : 
@@ -85,9 +82,6 @@ r5 = ResultValue(18)
 r6 = ResultValue([41, [2, 2, 0]])
 r7 = ResultValue([18, [1, 2, 1]])
 s1 = [t1, t2]
-#ndat1 = (ES.dat_valName[2], "date1")
-#ndat2 = (ES.dat_valName[2], ["1date1", "2date2"])
-#ndat3 = (ES.dat_valName[2], ["1date1", "2date2", "3date3"])
 dat1 = (ES.dat_valName, {'date1' : t1.isoformat()})
 dat2 = (ES.dat_valName, [t1.isoformat(), t2.isoformat()])
 dat3 = (ES.dat_valName, [{'date1' : t1.isoformat()}, t2.isoformat(), t3.isoformat()])
@@ -108,12 +102,7 @@ ploc3 = (ES.loc_valName, [pparis, plyon, pmarseille])
 res2 = (ES.res_valName, [[41, [2, 2, 0]], [18, [1, 2, 1]]])
 
 def _option_simple(ob1):
-    ob1.option["json_ESobs_class"] = False
-    ob1.option["json_prp_type"] = False
     ob1.option["json_param"] = True
-    ob1.option["json_elt_type"] = False
-    ob1.option["json_obs_val"] = True
-    ob1.option["json_obs_attrib"] = False
     ob1.option["json_res_index"] = False
     ob1.option["json_info_type"] = False
     ob1.option["json_info_nval"] = False
@@ -179,7 +168,7 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         res = 25.0
         # Observation creation and encoding to Json or to binary data in the sensor
         ob_sensor = Observation((time, coord, prop, res))
-        payload1 = ob_sensor.json           # if the payload is character payload
+        payload1 = ob_sensor.to_json()           # if the payload is character payload
         #print(len(payload1), payload1)
         payload2 = ob_sensor.to_bytes()     # if the payload is binary payload
         #print(len(payload2), payload2)
@@ -205,7 +194,7 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         # operation phase (sensor) -> regularly
         res = 25.0
         ob_operat = Observation(result=res)
-        payload1 = ob_operat.json           # if the payload is character payload
+        payload1 = ob_operat.to_json()           # if the payload is character payload
         #print(len(payload1), payload1)
         payload2 = ob_operat.to_bytes()     # if the payload is binary payload
         #print(len(payload2), payload2)      # the payload is only 4 bytes long !!
@@ -244,11 +233,9 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ResultValue("coucou").json(**self.opt), '["coucou", [-1, -1, -1]]')
         self.assertEqual(ResultValue(["coucou", [1, 2, -1]]).json(**self.opt), '["coucou", [1, 2, -1]]')
         self.assertEqual(ResultValue("coucou", [1, 2, -1]).json(**self.opt), '["coucou", [1, 2, -1]]')
-        self.assertEqual(ResultValue('{"er":2}', [1, 2, -1]).json(**self.opt), '[{"er": 2}, [1, 2, -1]]')
-        #self.assertEqual(ResultValue('{"er":2}', [1, 2, -1]), ResultValue(ResultValue('{"er":2}', [1, 2, -1])))
-        self.assertEqual(ResultValue('{"er":2}').json(**self.opt), '[{"er": 2}, [-1, -1, -1]]')
-        self.assertEqual(ResultValue('[3,2]', [1, 2, -1]).json(**self.opt), '["[3, 2]", [1, 2, -1]]') 
-        self.assertEqual(ResultValue('[3,2]').json(**self.opt), '["[3, 2]", [-1, -1, -1]]')
+        self.assertEqual(ResultValue('{"er":2}', [1, 2, -1]).json(**self.opt), '{"er": [2, [1, 2, -1]]}')
+        self.assertEqual(ResultValue('{"er":2}', [1, 2, -1]), ResultValue(ResultValue('{"er":2}', [1, 2, -1])))
+        self.assertEqual(ResultValue('{"er":2}').json(**self.opt), '{"er": [2, [-1, -1, -1]]}')
         self.assertEqual(ResultValue(21).json(**self.opt), '[21, [-1, -1, -1]]')
         self.assertEqual(ResultValue([23, [1, 2, -1]]).json(**self.opt), '[23, [1, 2, -1]]')
         self.assertEqual(ResultValue(23, [1, 2, -1]).json(**self.opt), '[23, [1, 2, -1]]')
@@ -258,7 +245,6 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ResultValue("coucou").json(**self.opt), '"coucou"')
         self.assertEqual(ResultValue(["coucou", [1, 2, -1]]).json(**self.opt), '"coucou"')
         self.assertEqual(ResultValue('{"er":2}').json(**self.opt), '{"er": 2}')
-        self.assertEqual(ResultValue('[{"er":2}, [1, 2, -1]]').json(**self.opt), '{"er": 2}')
         self.assertEqual(ResultValue(22).json(**self.opt), '22')
         self.assertEqual(ResultValue([23, [1, 2, -1]]).json(**self.opt), '23')
         self.assertEqual(ResultValue(2.2).json(**self.opt), '2.2')
@@ -271,7 +257,6 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(LocationValue(lyon), LocationValue(LocationValue(lyon)))
         self.assertTrue(LocationValue(lyon) > LocationValue(paris))
         self.assertEqual(LocationValue(pol1).json(**self.opt), json.dumps(pol1centre)) 
-        self.opt["json_loc_point"]=False 
         self.assertTrue(LocationValue(paris).shap == LocationValue({'paris':paris}).shap ==
                         LocationValue(name='paris', shape=LocationValue._gshape(paris)).shap)
         self.assertTrue(LocationValue('paris').name == LocationValue({'paris':paris}).name ==
@@ -286,7 +271,6 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertTrue(DatationValue(t1) < DatationValue(t2))
         self.assertEqual(DatationValue(json.loads(t1n)).json(), t1n)
         self.opt["json_dat_name"] = True
-        self.opt["json_dat_instant"] = True
         self.assertEqual(DatationValue(json.loads(t1n)).json(**self.opt), t1n) 
         self.assertTrue(DatationValue(t1).slot == DatationValue({'t1':t1}).slot ==
                         DatationValue(name='t1', slot=t1).slot)
@@ -296,20 +280,15 @@ class TestObsUnitaire(unittest.TestCase):
     def test_propertyValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(PropertyValue().json(**self.opt), '{}') 
-        self.opt["json_prp_type"] = False
         self.assertEqual(PropertyValue({ES.prp_propType : "PM25"}).json(**self.opt), 
                          '{"'+ES.prp_propType+'": "PM25", "unit": "kg/m3"}')
         self.assertEqual(PropertyValue(pprop_pm10).json(**self.opt), json.dumps(pprop_pm10))
-        #self.opt["json_prp_type"] = True
         #self.assertEqual(PropertyValue(pprop_pm10).json(self.opt), 
         #                 json.dumps({list(pprop_pm10.keys())[0]: list(pprop_pm10.values())[0]}))
         
     def test_nameValue(self):
         self.assertEqual(DatationValue('recre').json(json_string=False), 'recre') 
-        #self.opt["json_dat_instant"] = False
-        #self.opt["json_dat_name"] = False
         #self.assertEqual(DatationValue('recre').json(self.opt), tnull.isoformat())
-        self.opt["json_prp_type"] = False
         self.opt["json_prp_name"] = True
         self.assertEqual(PropertyValue(pprop_pm25).json(**self.opt), json.dumps(pprop_pm25))
         self.assertEqual(PropertyValue('test').json(**self.opt), '"test"')
@@ -338,7 +317,7 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(val.name, 'truc')
     
     def test_ESSet_box(self):
-        self.assertEqual(ESSet(PropertyValue, [prop_pm10, prop_pm25])._jsonSet(**self.opt), json.dumps([prop_pm10, prop_pm25])) 
+        self.assertEqual(ESSet(PropertyValue, [prop_pm10, prop_pm25])._jsonSet(json_string = False), [prop_pm10, prop_pm25]) 
         self.assertEqual(ESSetLocation(paris).boundingBox.bounds, (paris[0], paris[1], paris[0], paris[1]))
         self.assertEqual(ESSetLocation([paris, lyon, marseille]).boundingBox.bounds,
                          (paris[0], marseille[1], marseille[0], paris[1]))
@@ -363,16 +342,16 @@ class TestObsUnitaire(unittest.TestCase):
 
     def test_ESSetResult(self):
         da3 = ESSetResult(pObs=Observation(), jObj={ES.res_valName:[r2, r2]})
-        self.assertEqual(json.loads('{'+da3.json(**self.opt)+'}')[ES.res_valName], r2.value)
+        self.assertEqual(da3.json()[ES.res_valName], r2.json())
         self.assertEqual(ESSetResult([r2])[0].value, r2.value)
         self.assertEqual(ESSetResult([r2, 25])[1].value, 25)
         self.assertEqual(ESSetResult(['name', 25])[0].value, 'name')
 
-    def test_ESObs(self):
-        da2 = ESSetProperty(pObs=Observation(), jObj={ES.prp_valName:[prop_pm10, prop_pm25], ES.prp_upperValue :'254'})
-        self.opt["json_prp_type"] = False
-        self.assertEqual(json.loads('{'+da2.json(**self.opt)+'}')[ES.prp_valName], [prop_pm10, prop_pm25]) 
-        self.assertEqual(da2.mAtt[ES.prp_upperValue], '254') 
+    #def test_ESObs(self):
+        #da2 = ESSetProperty(pObs=Observation(), jObj={ES.prp_valName:[prop_pm10, prop_pm25], ES.prp_upperValue :'254'})
+        #self.opt["json_prp_type"] = False
+        #self.assertEqual(da2.json(**self.opt))[ES.prp_valName], [prop_pm10, prop_pm25]) 
+        #self.assertEqual(da2.mAtt[ES.prp_upperValue], '254') 
         
     def test_ESElement(self):
         el = ESElement()
@@ -425,7 +404,6 @@ class TestBytes(unittest.TestCase):
         self.assertEqual(da2.valueList[0].ind, r6.ind)
         self.assertEqual(da2.valueList[1].value, r7.value)
         self.assertEqual(da2.valueList[1].ind, r7.ind)
-        #ob2.option["json_res_index"]=True
         da2 = ESSetResult(pObs=Observation())
         da2.from_bytes(da3.to_bytes(False, True, ES.nullDict, ['CO2', 'CO2']), ['CO2', 'CO2'])
         self.assertEqual(da2.valueList[1].value, r7.value)
@@ -531,7 +509,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         self.assertEqual(dict((obs_1, truc_mach, loc3)),    json.loads(ob1.to_json()))
         ob1 = Observation(json.dumps(dict((obs_1, truc_mach, prop2))))
         _option_simple(ob1)
-        ob1.option["json_prp_type"] = False
         self.assertEqual(dict((obs_1, truc_mach, prop2)),    json.loads(ob1.to_json()))
         ob1 = Observation(json.dumps(dict((obs_1, truc_mach, _res(9)))))
         _option_simple(ob1)
@@ -541,9 +518,9 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         self.assertEqual(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(9))),json.loads(ob1.to_json()))
         
     def test_obs_att(self):
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, 
-                                           (ES.obs_reference, 25), (ES.prp_upperValue,'254'),
-                                           _res(9)))))
+        ob1 = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, 
+                               (ES.obs_reference, 25), (ES.prp_upperValue,'254'),
+                                           _res(9))))
         self.assertEqual(ob1.mAtt['truc'], 'machin')
         self.assertEqual(ob1.mAtt[ES.obs_reference], 25)
         self.assertEqual(ob1.setProperty.mAtt[ES.prp_upperValue], '254')
@@ -553,21 +530,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         _option_simple(ob1)
         ob1.option["json_res_index"] = True
         self.assertEqual(json.loads(ob1.to_json())[ES.res_valName][0], [_val(9)[0], ES.nullInd])
-        ob1.option["json_ESobs_class"] = True
-        self.assertTrue(ES.dat_classES in json.loads(ob1.to_json()))
-        self.assertTrue(ES.res_classES in json.loads(ob1.to_json()))
-        self.assertTrue(ES.loc_classES in json.loads(ob1.to_json()))
-        self.assertTrue(ES.prp_classES in json.loads(ob1.to_json()))
-        ob1.option["json_elt_type"] = True
-        self.assertTrue(ES.type + ES.dat_classES in json.loads(ob1.to_json())[ES.dat_classES])
-        self.assertTrue(ES.type + ES.res_classES in json.loads(ob1.to_json())[ES.res_classES])
-        self.assertTrue(ES.type + ES.loc_classES in json.loads(ob1.to_json())[ES.loc_classES])
-        self.assertTrue(ES.type + ES.prp_classES in json.loads(ob1.to_json())[ES.prp_classES])
-        ob1.option["json_obs_val"] = False
-        self.assertTrue(ES.dat_classES in json.loads('{' + ob1.to_json() + '}'))
-        ob1.option["json_obs_val"] = True
-        ob1.option["json_obs_attrib"] = True
-        self.assertTrue(ES.obs_attributes in json.loads(ob1.to_json()))
         ob1.option["json_info_type"] = True
         ob1.option["json_info_nval"] = True
         ob1.option["json_info_autre"] = True
@@ -732,13 +694,10 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         
     def test_obs_add(self):
         ob = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18)))))
-        ob.option["json_prp_type"] = False
         ob.option["json_loc_name"] = ob.option["json_dat_name"] = ob.option["json_prp_name"] = True
         obp = Observation(json.dumps(dict((obs_1, truc_mach, pdat3, ploc3, pprop2, _res(18)))))
-        obp.option["json_prp_type"] = False
         obp.option["json_loc_name"] = obp.option["json_dat_name"] = obp.option["json_prp_name"] = True
         obc = copy.copy(ob)
-        obc.option["json_prp_type"] = False
         obc.option["add_equal"] = "value"
         obc.option["json_loc_name"] = obc.option["json_dat_name"] = obc.option["json_prp_name"] = True
         obc += ob
@@ -771,7 +730,7 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         self.assertEqual(json.loads(ob.to_json())[ES.prp_valName] + json.loads(obp.to_json())[ES.prp_valName],
                          json.loads(ob2.to_json())[ES.prp_valName])
         obp2 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, pprop2, _res(18)))))
-        obp2.option["json_prp_type"] = False
+        #obp2.option["json_prp_type"] = False
         ob2 = ob + obp2
         self.assertEqual(json.loads(ob.to_json())[ES.res_valName] + json.loads(obp.to_json())[ES.res_valName], 
                          json.loads(ob2.to_json())[ES.res_valName])
@@ -802,8 +761,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
             obs.append(DatationValue(datetime(2021, 6, 4+i, 12, 5).isoformat()),
                        LocationValue([14+i, 40]), nprop1, ResultValue(45+i))
         obs.majType()
-        obs.option["json_ESobs_class"] = True
-        obs.option["json_elt_type"] = True
         obs.option["json_info_type"] = True
         self.assertEqual(json.loads(obs.to_json())[ES.information]["typeobs"], ES.obsCat[122])
         
@@ -821,20 +778,17 @@ class TestExports(unittest.TestCase):
         _resgeo = dict([(ES.type,"MultiPoint"), ("coordinates",_resloc)])
         self.assertEqual(ob.__geo_interface__, _resgeo)
         self.assertEqual(ob.__geo_interface__["coordinates"], _resloc)
-        ob.option["json_loc_point"] = False
         self.assertEqual(ob.__geo_interface__, _resgeo)
         ob = Observation(dict((obs_1, dpt2, dat1)))
         dpt2pt = {'type': 'Polygon', 'coordinates': (((0.5, 1.5), (0.0, 2.0),
           (1.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)}
         self.assertEqual(ob.__geo_interface__, dpt2pt)
-        ob.option["json_loc_point"] = False
         #dpt2pol = {'type': 'MultiPolygon', 'coordinates': [(((0.0, 1.0), (1.0, 2.0), (1.0, 1.0), (0.0, 1.0)),),
         #                                                   (((0.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 2.0)),)]}
         #self.assertEqual(ob.__geo_interface__, dpt2pol)  # !!! multiponints pas multipolygon
 
     def test_obs_polygon(self):
         ob = Observation(json.dumps(dict((obs_1, dat3, dpt2, prop2, _res(6)))))
-        ob.option["json_loc_point"] = False
         #self.assertEqual(json.dumps(ob.__geo_interface__),           # !!! multiponints pas multipolygon
         #                 json.dumps({"type": "MultiPolygon", "coordinates": dpt2[1]}))
         
@@ -903,7 +857,6 @@ class TestExports(unittest.TestCase):
 
     def test_exports(self):
         ob = Observation(json.dumps(dict((obs_1, dat3, dpt3, prop1, _res(3)))), order='px')
-        #ob.majType()
         self.assertTrue(type(ob.to_xarray()) != type(None))
         #self.assertTrue(type(ob.to_dataFrame()) != type(None))
         #self.assertTrue(ob.choropleth() != None)

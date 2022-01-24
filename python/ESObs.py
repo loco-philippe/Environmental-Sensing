@@ -48,6 +48,12 @@ class ESObs(ESElement):
         if (pObs != None): pObs.addComposant(self)
 
     @property
+    def boundingBox(self):
+        val = copy.deepcopy(self.valueList[0].value)
+        for i in range(1,self.nValue): val = val.union(self.valueList[i].value)
+        return self.ValueClass._Box(*val.bounds)
+
+    @property
     def observation(self):
         ''' return the Observation linked to the `ESObs` '''
         for cont in self.pContenant :
@@ -134,11 +140,8 @@ class ESSetDatation(ESSet, Datation):   # !!! début ESSet
     """
     def __init__(self, jObj = None, pObs = None):
         Datation.__init__(self, pObs)
-        self.typeES = ES.set_typeES
-        #self.mAtt[ES.type] = ES.dat_valueType
-        self.mAtt[ES.type] = ES.dat_valName
+        self.typeES = ES.dat_valName
         self._initESSet(DatationValue, jObj)
-        #self.majMeta()
 
     def __repr__(self):
         return '\n' + self.json(ES.mOption) + '\n'
@@ -147,9 +150,12 @@ class ESSetDatation(ESSet, Datation):   # !!! début ESSet
         ''' not implemented'''
         pass
 
-    def json(self, **option):
+    """def json(self, **option):
     #def json(self, option = ES.mOption):
         '''call `ES.ESSet.ESSet.jsonESSet` '''
+        return self.jsonESSet(ES.dat_valName, **option)"""
+
+    def json(self, **option):
         return self.jsonESSet(ES.dat_valName, **option)
 
     def to_numpy(self, func=ES._identity):
@@ -170,7 +176,7 @@ class ESSetDatation(ESSet, Datation):   # !!! début ESSet
         return [val.vSlot() for val in self.valueList]
 
         
-class ESSetLocation(ESSet, Location):
+class ESSetLocation(ESSet, Location):       # !!!
     """
     This class represent the list of `ES.ESValue.LocationValue`
     
@@ -191,23 +197,19 @@ class ESSetLocation(ESSet, Location):
     """
     def __init__(self, jObj = None, pObs = None):
         Location.__init__(self, pObs)
-        self.typeES = ES.set_typeES
-        #self.mAtt[ES.type] = ES.loc_valueType
-        self.mAtt[ES.type] = ES.loc_valName
+        self.typeES = ES.loc_valName
         self._initESSet(LocationValue, jObj)
-        #self.majMeta()
-
+   
     def __repr__(self): return '\n' + self.json(ES.mOption) + '\n'
 
     def analyse(self):
         ''' not implemented'''
         pass
-
-    def json(self, **option):       
-    #def json(self, option = ES.mOption):       
-        '''call `ESSet.ESSet.jsonESSet` '''
-        return self.jsonESSet(ES.loc_valName, **option)
     
+    def json(self, **option):
+        '''call `ESSet.ESSet.jsonESSet`'''
+        return self.jsonESSet(ES.loc_valName, **option)
+
     def to_numpy(self, func=ES._identity):
         return np.array(self.vList(func))
     
@@ -223,7 +225,7 @@ class ESSetLocation(ESSet, Location):
     def vListShap(self):
         return [val.vShap() for val in self.valueList]
 
-class ESSetProperty(ESSet, Property):
+class ESSetProperty(ESSet, Property):       # !!!
     """
     This class represent the list of `ES.ESValue.PropertyValue`
     
@@ -242,16 +244,13 @@ class ESSetProperty(ESSet, Property):
     """
     def __init__(self, jObj = None, pObs = None):
         Property.__init__(self, pObs)
-        self.typeES = ES.set_typeES
-        #self.mAtt[ES.type] = ES.prp_valueType
-        self.mAtt[ES.type] = ES.prp_valName
+        self.typeES = ES.prp_valName
         self._initESSet(PropertyValue, jObj)
-        #self.majMeta()
 
     def __repr__(self): return '\n' + self.json(ES.mOption) + '\n'
 
-    def json(self, **option):       
-    #def json(self, option = ES.mOption):       
+    def json(self, **option):
+        '''call `ESSet.ESSet.jsonESSet`'''
         return self.jsonESSet(ES.prp_valName, **option)
 
     def to_numpy(self, func=ES._identity):
@@ -261,7 +260,7 @@ class ESSetProperty(ESSet, Property):
     def vListType(self):
         return [val.vType() for val in self.valueList]
 
-class ESSetResult(ESSet, Result):
+class ESSetResult(ESSet, Result):       # !!!
     """
     This class represent the list of `ES.ESValue.ResultValue`.
     
@@ -292,11 +291,8 @@ class ESSetResult(ESSet, Result):
     """
     def __init__(self, jObj = None, pObs = None):
         Result.__init__(self, pObs)
-        self.typeES = ES.set_typeES
-        #self.mAtt[ES.type] = ES.res_valueType
-        self.mAtt[ES.type] = ES.res_valName
+        self.typeES = ES.res_valName
         self._initESSet(ResultValue, jObj)
-        #self.majMeta()
 
     def __repr__(self):
         return '\n' + self.json(ES.mOption) + '\n'
@@ -365,7 +361,7 @@ class ESSetResult(ESSet, Result):
         return True
 
     def json(self, **option):
-    #def json(self, option = ES.mOption):
+        '''call `ESSet.ESSet.jsonESSet`'''
         return self.jsonESSet(ES.res_valName, **option)
 
     def majIndex(self, nRes, nPrp, nDat, nLoc, order = 'dlp'):
@@ -464,7 +460,7 @@ class ESSetResult(ESSet, Result):
     def vListIndex(self):
         return [val.ind for val in self.valueList]
 
-    def _axeCoor(self, nValAxe) :
+    def _axeCoor(self, nValAxe) :    # !!! intern methods
         for ax in self.axes :
             if ax > 100 : return ax
             if ax < 9 and nValAxe == ax : return ax

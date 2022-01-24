@@ -182,6 +182,9 @@ class DatationValue(ESValue):   # !!! début ESValue
         
         '''
         ESValue.__init__(self)
+        if type(val) == str : 
+            try: val=json.loads(val)
+            except: pass
         self.slot = TimeSlot()
         self._init(val)
         if self.slot == TimeSlot() and TimeSlot(slot) != TimeSlot() : self.slot = TimeSlot(slot)
@@ -374,9 +377,14 @@ class LocationValue(ESValue):              # !!! début LocationValue
         (or Polygon) and name is a string
         '''
         ESValue.__init__(self)
+        if type(val) == str : 
+            try: val=json.loads(val)
+            except: pass
         self.shap = self._gshape(ES.nullCoor)
-        self._init(val, shape, name)
-    
+        self._init(val)
+        if self.shap == self._gshape(ES.nullCoor) and shape != None : self.shap = shape
+        if self.name == ES.nullName and name != ES.nullName : self.name = name
+
     def __eq__(self, other): 
         return self.shap == other.shap and self.name  == other.name
     
@@ -508,7 +516,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
                 return shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))
             except: pass
     
-    def _init(self, val=ES.nullCoor, shape=None, name=ES.nullName):
+    def _init(self, val=ES.nullCoor):
         ''' LocationValue creation '''
         if type(val) == LocationValue :
             self.shap = val.shap
@@ -520,8 +528,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
         if shap == None :
             if type(val) == str and self.name == ES.nullName : self.name = val
         else : self.shap = shap
-        if self.shap == self._gshape(ES.nullCoor) and shape != None : self.shap = shape
-        if self.name == ES.nullName and name != ES.nullName : self.name = name
 
 class PropertyValue(ESValue):              # !!! début ESValue
     """
@@ -549,6 +555,9 @@ class PropertyValue(ESValue):              # !!! début ESValue
     
     def __init__(self, val={}):
         ESValue.__init__(self)
+        if type(val) == str : 
+            try: val=json.loads(val)
+            except: pass
         self.name           = ES.nullName
         self.pType          = ES.nullDict
         self.unit           = ES.nullDict
@@ -584,6 +593,16 @@ class PropertyValue(ESValue):              # !!! début ESValue
         return 10
 
     def json(self, **kwargs): 
+        ''' Export in Json format (string or dict). 
+        
+        *Parameters*
+        
+        - **json_string** : boolean (default True) - choice for return formet (string if True, dict else)
+                
+        *Returns*
+        
+        - **string or dict**
+        '''
         option = ES.mOption | kwargs
         if self.name == ES.nullName : js = self._jsonDict(False)
         elif self._jsonDict(False) == {} : js = self.name
@@ -674,13 +693,24 @@ class ResultValue (ESValue):               # !!! début ESValue
     def __init__(self, val = None, ind = ES.nullInd, name=ES.nullName):
         '''
         Several ResultValue creation modes :
+            
+        - ResultValue({name : value}) 
+        - ResultValue(value) 
+        - ResultValue(resval) 
+        - ResultValue(value, ind=ind, name=name) 
         
-        
+        where 'resval' is a ResultValue(copy), 'value' is a 'result' or ['result', 'ind'],
+        'result' is an Object, 'ind' is a list with three integer and 'name' is a string.        
         '''
         self.ind = ind
         ESValue.__init__(self)
-        self._init(val, ind)
-        
+        if type(val) == str : 
+            try: val=json.loads(val)
+            except: pass
+        self._init(val)
+        if type(ind) == list and ind != ES.nullInd and self.ind == ES.nullInd : self.ind = ind
+        if self.name == ES.nullName and name != ES.nullName : self.name = name
+
         
     def __eq__(self, other): return self.value == other.value
 
@@ -691,32 +721,55 @@ class ResultValue (ESValue):               # !!! début ESValue
               (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] <  other.ind[o[1]]) or \
               (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] == other.ind[o[1]] and self.ind[o[2]] < other.ind[o[2]])
 
-    def __repr__(self): return  self.json(ES.mOption)
+    def __repr__(self): return  self.json(**ES.mOption)
 
     def from_bytes(self, byt, resInd = False, prp = ES.nullDict):
+        '''
+        Complete an empty `Observation` with binary data. 
+        
+        *Parameters*
+        
+        - **byt** : binary representation of an Observation
+        - **order** : string - indicates the order for the Index creation 
+        ('d' for Datation, 'l' for Location, 'p' for Property).*
+        
+        *Returns*
+        
+        - **None**
+        '''
         formaPrp = ES.prop[prp][1]
         leng = ES.prop[prp][2]
         dexp = ES.prop[prp][3]
         bexp = ES.prop[prp][4]        
         if resInd :
             dt = struct.unpack('<BBB'+ formaPrp, byt[0:leng + 3])
-            self._init(dt[3] * 10**dexp * 2**bexp, [dt[0], dt[1], dt[2]])
+            self.__init__(val=dt[3] * 10**dexp * 2**bexp, ind=[dt[0], dt[1], dt[2]])
             return 3 + leng
         else :
-            self._init(struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
+            self.__init__(val=struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
             return leng
 
     def isNotNull(self): return self!=ResultValue()
 
     def json(self, **kwargs): 
+        ''' Export in Json format (string or dict). 
+        
+        *Parameters (optionnal)*
+        
+        - **json_string** : boolean (default True) - choice for return formet (string if True, dict else)
+        - **json_res_index** : Boolean - include index for ResultValue
+                
+        *Returns*
+        
+        - **string or dict**
+        '''
         option = ES.mOption | kwargs
-        if (type(self.value) == str and json.dumps(self.value)[1:-1]!=self.value):
-            if option["json_res_index"]: return '[' + self.value + ', ' + json.dumps(self.ind) + ']'
-            else: return self.value
-        else:
-            if option["json_res_index"] : return json.dumps([self.value, self.ind])
-            else: return json.dumps(self.value)
-    
+        if self.name == ES.nullName : js = self._jsonValInd(option['json_res_index'])
+        elif self.value == None : js = self.name
+        else : js = {self.name : self._jsonValInd(option['json_res_index'])}
+        if option['json_string'] : return json.dumps(js)
+        else : return js
+        
     def setIndValue(self, val):
         if (type(val) == list) : 
             self._setValue(val[0])
@@ -735,37 +788,29 @@ class ResultValue (ESValue):               # !!! début ESValue
     def to_float(self):
         if self.value == None :         return float('nan')
         elif type(self.value)==str:
-            if self.value == 'null':    return float('nan')
+            if self.value == ES.nullAtt:    return float('nan')
             else : 
                 try:                    return float(self.value)
                 except:                 return float('nan')
         else :                          return float(self.value)           
 
-    def _init(self, val = None, ind = ES.nullInd):
-        if type(val) == str : 
-            try: js=json.loads(val)
-            except:
-                self._setValue(val)
-                return
-            if (type(js) == list and ind != ES.nullInd): self._setValue(json.dumps(js))
-            elif (type(js) == list and ind == ES.nullInd): 
-                if type(js[1]) == list: self.setIndValue(js)
-                else: self._setValue(json.dumps(js))
-            elif (type(js) == float or type(js) == int): self._setValue(js)
-            else : self._setValue(json.dumps(js))
-        elif type(val) == list : self.setIndValue(val)
-        elif type(val) == ResultValue : 
+    def _init(self, val = None):
+        if type(val) == ResultValue : 
             self.name = val.name
             self.value = val.value
             self.ind = val.ind
-        elif (type(val) == float or type(val) == int): self._setValue(val)
-        else : 
-            from ESObservation import Observation
-            if type(val) == Observation : self._setValue(val.name)
-            else : self._setValue(json.dumps(val))
-        if type(ind) == list and ind != ES.nullInd and self.ind == ES.nullInd : self.ind = ind
+            return
+        elif type(val) == dict :
+            self.name, val = list(val.items())[0]   
+        if type(val) == str : 
+            self._setValue(val)
+        elif type(val) == list : self.setIndValue(val)
+        else: self._setValue(val)
 
     def _setValue(self, val):
-        if (type(val) in [str, int, float]) : self.value = val
-        else : self.value = json.dumps(val)
+        self.value = val
 
+    def _jsonValInd(self, optIndex) : 
+        if optIndex : return [self.value, self.ind]
+        else : return self.value 
+        

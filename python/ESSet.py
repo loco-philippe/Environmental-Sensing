@@ -19,10 +19,7 @@ from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue
 
 ValueCod = [ None, LocationValue, DatationValue, PropertyValue, 
             LocationValue, DatationValue, PropertyValue]
-'''ValueDict = { ES.dat_valName : DatationValue,
-              ES.loc_valName : LocationValue,
-              ES.prp_valName : PropertyValue,
-              ES.res_valName : ResultValue}'''
+
 class ESSet:
     """
     This class represent a set of `ESValue.ESValue`.
@@ -147,19 +144,11 @@ class ESSet:
         return ind
 
     def jsonESSet(self, ES_valName, **option):
-        try:
-            if len(self.valueList) == 0: return ""
-        except: return""
-        elt_type_nb = 0
-        if option["json_elt_type"] : elt_type_nb = min(2, self.nValue)
-        js = ""
-        if option["json_ESobs_class"]: js = '"' + self.classES + '":{'
-        js += self._jsonAtt(elt_type_nb) 
-        js += '"' + ES_valName + '":' + self._jsonSet(**option) + ","
-        if js[-1] == ',': js = js[:-1]
-        if option["json_ESobs_class"]: js += '}' 
-        return js
-
+        if self.valueList == None or len(self.valueList) == 0: js = {}
+        else : js = {ES_valName : self._jsonSet(**option)}
+        if 'json_string' in option and  option['json_string'] : return json.dumps(js)
+        else : return js
+    
     def majList(self, listVal, name=False):
         if name : self.majListName(listVal)
         else : self.majListValue(listVal)
@@ -189,7 +178,7 @@ class ESSet:
         byt = bytes()
         offset = 3 * (not nameES)
         code_el = ES.codeb[self.classES] # type de ESobs
-        if code_el < 4 : code_ES = ES.codeb[self.mAtt[ES.type]] + offset # choix name ou value
+        if code_el < 4 : code_ES = ES.codeb[self.typeES] + offset # choix name ou value
         else : code_ES = ES.prop[forma][0]     
         if code_el == 4 and resIndex : code_el = 5
         unique = self.nValue == 1 
@@ -220,21 +209,8 @@ class ESSet:
             if val.ind != ES.nullInd :
                 for i in range(len(self.valueList)):
                     if self.valueList[i].ind == val.ind : return i     
-                    
-    def _jsonSet(self, **option) :
-        if self.ValueClass in [DatationValue, LocationValue] :
-            if len(self.valueList) == 0 : return ""
-            if len(self.valueList) == 1 : return self.valueList[0].json(json_string=True) 
-            li = list()
-            for i in range(self.nValue): 
-                li.append(self.valueList[i].json(json_string=False))
-            return json.dumps(li)
-        else :
-            if len(self.valueList) == 0 : return ""
-            if len(self.valueList) == 1 : return self.valueList[0].json() 
-            li = list()
-            for i in range(self.nValue): 
-                try: li.append(json.loads(self.valueList[i].json(**option)))
-                except: li.append(self.valueList[i].json(**option))
-            return json.dumps(li)
 
+    def _jsonSet(self, **option) :
+            if len(self.valueList) == 0 : return []
+            elif len(self.valueList) == 1 : return self.valueList[0].json(**option) 
+            else : return [val.json(**option) for val in self.valueList]

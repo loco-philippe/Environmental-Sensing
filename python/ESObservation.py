@@ -42,9 +42,6 @@ class Observation(ESElement):
 
     - **complet** : Boolean, True if the number of ResultValue is consistent with 
     the number of LocationValue, DatationValue and PropertyValue
-    - **score** : Integer, codification of the number of ESValue for each ESObs. 
-    For example, 122 means one PropertyValue (1), several LocationValue (2), 
-    several DatationValue (2)
     - **option** : Dictionnary with options
     - **userAtt** : namedValue dictionnary
     - **name** : textual description
@@ -62,6 +59,7 @@ class Observation(ESElement):
     - `Observation.setResult`
     - `Observation.bounds`
     - `Observation.jsonFeature`
+    - `Observation.score`
     - `Observation.typeObs`
     - `Observation.nValueObs`
     - `Observation.json`
@@ -130,19 +128,18 @@ class Observation(ESElement):
         It indicates the order for the Index creation ('d' for Datation, 'l' for Location, 'p' for Property).*
         '''
         ESElement.__init__(self)
-        self.name = "observtion du " + datetime.now().isoformat()
+        self.name = "observation du " + datetime.now().isoformat()
         self.option = ES.mOption.copy()
         self.mAtt[ES.obs_reference] = 0
-        self.score = -1
         self.complet = False
         self.mAtt[ES.obs_resultTime] = "null"
         self.classES = ES.obs_classES
         self.typeES = ES.obs_typeES
-        self.mAtt[ES.type] = "obsError"
         self.mAtt[ES.obs_id] = "null"
         self._initESObs(*args, **kwargs)
         self.majType(order)
-    
+        self.parameter = "null"
+
     @property
     def __geo_interface__(self):
         '''dict (@property) : geometry (see shapely)'''
@@ -170,7 +167,6 @@ class Observation(ESElement):
         self.option["maj_index"] = True
         self.majType()
         equal = self.option["add_equal"]
-        #if other.setResult != None and other.setResult.getMaxIndex() > -1:
         if other.setResult != None and other.setResult.maxIndex > -1:
             for resVal in other.setResult.valueList:
                 ndat = self.addValue(other.setDatation.valueList[resVal.ind[idat]], equal)
@@ -205,7 +201,8 @@ class Observation(ESElement):
         '''
         if type(js) != dict: return
         for k, v in js.items():
-            if ESElement.isESAtt(ES.obs_classES, k) or ESElement.isUserAtt(k): self.mAtt[k] = v
+            if (ESElement.isESAtt(ES.obs_classES, k) or ESElement.isUserAtt(k)) \
+                and k != ES.type : self.mAtt[k] = v
             if k == ES.parameter: 
                 try:  self.parameter = json.dumps(v)
                 except:  self.parameter = "null"
@@ -344,7 +341,6 @@ class Observation(ESElement):
         '''
         if len(listVal)==len(listDat)==len(listLoc)==len(listPrp) :
             for i in range(len(listVal)) :
-                #self.addResultValue(ResultValue(listVal[i], [listIdat[i], listIloc[i], listIprp[i]]))
                 self.append(listDat[i], listLoc[i], listPrp[i], listVal[i])
 
     @property
@@ -445,20 +441,14 @@ class Observation(ESElement):
                         propList = [self.setProperty.valueList[i].pType 
                                     for i in range(self.setProperty.nValue)]
                     else : propList = []
-                    #propList = [self.setProperty.valueList[i].pType 
-                    #        for i in range(self.setProperty.nValue)]
                 else :
                     [nPrp, nDat, nLoc, nRes] = self.nValueObs
                     es.from_bytes(byt[idx:], [])
                     es.majIndex(es.nValue, nPrp, nDat, nLoc)
-                    #es.majIndex(es.nValue, self.setProperty.nValue, 
-                    #        self.setDatation.nValue, self.setLocation.nValue)
                     if self.setProperty != None :
                         propList = [self.setProperty.valueList[es.valueList[i].ind[2]].pType 
                                     for i in range(self.setProperty.nValue)]
                     else : propList = []
-                    #propList = [self.setProperty.valueList[es.valueList[i].ind[2]].pType
-                    #        for i in range(es.nValue)]
                     es.__init__()
             else: return
             if code_el < 4 : 
@@ -568,8 +558,10 @@ class Observation(ESElement):
             
     @property
     def json(self):
-        ''' string (@property) : ObsJSON - complete JSON Observation'''
-        return self.to_json()
+        ''' string (@property) : ObsJSON - complete JSON Observation whit index 
+        and whitout informations'''
+        return self.to_json(json_string=True, json_info=False, json_res_index=True,
+                            json_param=True)
     
     @property
     def jsonFeature(self):
@@ -659,7 +651,6 @@ class Observation(ESElement):
         if self.setResult   != None: self.setResult.  analyse()
         if self.setLocation != None: self.setLocation.analyse()
         if self.setDatation != None: self.setDatation.analyse()
-        self.mAtt[ES.type] = self.typeObs
 
     def majValue(self, esValue, newEsValue, equal="full"):
         '''
@@ -718,7 +709,6 @@ class Observation(ESElement):
         
         - **None**
         '''
-        #if self.setResult.getMaxIndex() == -1 : return
         if self.setResult.maxIndex == -1 : return
         obx = self.to_xarray(numeric = True, complet=True, sort=sort, maxname=maxname)
         if len(obx.dims) == 1:
@@ -758,6 +748,31 @@ class Observation(ESElement):
                                                      yticks=list(obx.coords['loc'].values))
         plt.show()
         
+    @property
+    def score(self):
+        '''
+        integer (@property) : Observation type (calculated from `ES.ESSetResult` dim 
+        and `Observation` nValueObs). The score is a codification of the number of ESValue for each ESObs. 
+        E.g., score=122 means one PropertyValue (1), several LocationValue (2), 
+        several DatationValue (2)
+        '''
+        [nPrp, nDat, nLoc, nRes] = self.nValueObs
+        score = min(max(min(nPrp, 2) * 100 + min(nLoc,2) * 10 + min(nDat, 2), -1), 229);
+        if self.setResult == None or (self.setResult.error or self.setResult.maxIndex == -1 or \
+           self.setResult.nInd[0] > nDat or self.setResult.nInd[1] > nLoc or self.setResult.nInd[2] > nPrp):
+               return score
+        if score == 22  and self.setResult.dim == 2:	score = 23
+        if score == 122 and self.setResult.dim == 2:	score = 123
+        if score == 202 and self.setResult.dim == 2:	score = 203
+        if score == 212 and self.setResult.dim == 2:	score = 213
+        if score == 220 and self.setResult.dim == 2:	score = 223
+        if score == 221 and self.setResult.dim == 2:	score = 224
+        if score == 222 and self.setResult.dim == 3:	score = 228
+        if score == 222 and self.setResult.dim == 2 and 2 in self.setResult.axes:	score = 225
+        if score == 222 and self.setResult.dim == 2 and 1 in self.setResult.axes:	score = 226
+        if score == 222 and self.setResult.dim == 2 and 0 in self.setResult.axes:	score = 227
+        return score
+
     @property
     def setDatation(self):  
         '''object `ES.ESObs.ESSetDatation` (@property) if exists, None otherwise.'''
@@ -897,39 +912,38 @@ class Observation(ESElement):
                                   ).to_dataframe(name=arrayname)
         else : return None
 
+
     def to_json(self, **kwargs): 
         '''
         Export in Json format. 
         
+        *Parameters (optional)*
+        
+        - **json_string**    : Boolean - return format (string or dict)
+        - **json_res_index** : Boolean - include index for ResultValue
+        - **json_param**     : Boolean - include ESObs Parameter
+        - **json_info**      : Boolean - include ESObs Information with all information
+        - **json_info_type** : Boolean - include in ESObs Information the type of ESObs
+        - **json_info_nval** : Boolean - include in ESObs Information the lenght of ESObs
+        - **json_info_box**  : Boolean - include in ESObs Information the bounding box
+        - **json_info_other**: Boolean - include in ESObs Information the other information
+
         *Returns*
         
-        - **string** : Json string 
+        - **string or dict** : Json string or dict
         '''
-        #info = 'storage' in kwargs.keys() and kwargs['storage'] == True
         option = self.option | kwargs
-    
-        if option["json_elt_type"]: option_type = 1
-        else: option_type = 0
-        js =""
-        if option["json_obs_val"]: js = "{"
-        js += '"' + ES.type +'":"' + ES.obs_classES +'",'
-        if self.mAtt[ES.obs_id] != "null": js += '"' + ES.obs_id + '":"' + self.mAtt[ES.obs_id] + '",'
-        if option["json_obs_attrib"]: js += '"' + ES.obs_attributes + '":{'
-        js += self._jsonAtt(option_type)
+        option2 = option | {'json_string' : False}
+        dic = { ES.type : ES.obs_classES }
+        if self.mAtt[ES.obs_id] != ES.nullAtt: dic[ES.obs_id] = self.mAtt[ES.obs_id]
+        dic |= self._jsonAtt(**option2)
         for cp in self.pComposant:
-            js += cp.json(**option)
-            if js[-1] != ',': js += ","
-        if option["json_param"] and self.parameter != "null": 
-            js += '"' + ES.parameter +'":' + self.parameter + ','
-        jsInfo = self._info(True, option["json_info"] or option["json_info_type"], 
-                                  option["json_info"] or option["json_info_nval"],
-                                  option["json_info"] or option["json_info_box"], 
-                                  option["json_info"] or option["json_info_autre"])
-        if jsInfo != "" : js +=  jsInfo + ','
-        if js[-1] == ',': js = js[:-1]
-        if self.option["json_obs_attrib"]: js += "}"
-        if self.option["json_obs_val"]:    js += "}"
-        return js
+            dic |= cp.json(**option2)        
+        if option["json_param"] and self.parameter != ES.nullAtt: 
+            dic[ES.parameter] = self.parameter
+        dic |= self._info(**option2) 
+        if option['json_string'] : return json.dumps(dic)
+        else : return dic
     
     def to_xarray(self, dataArray=True, sort=True, complet=False, name=True,
                   info=False, numeric=False, fullAxes=False, func=ES._identity,
@@ -955,7 +969,6 @@ class Observation(ESElement):
         
         - **xarray.DataArray or xarray.DataSet**
         '''
-        #if self.setResult.getMaxIndex() == -1 : return None
         if self.setResult.maxIndex == -1 : return None
         if sort : self.sort()
         xList = self._xlist(squeeze= not fullAxes, fullAxes=fullAxes, func=func,
@@ -975,25 +988,12 @@ class Observation(ESElement):
     @property
     def typeObs(self):
         '''
-        string (@property) : Observation type (calculated from `ES.ESSetResult` dim 
-        and `Observation` score)
+        string (@property) : Observation type (calculated from `Observation` score)
         '''
         [nPrp, nDat, nLoc, nRes] = self.nValueObs
-        self.score = min(max(min(nPrp, 2) * 100 + min(nLoc,2) * 10 + min(nDat, 2), -1), 229);
-        #if self.setResult == None or (self.setResult.error or self.setResult.getMaxIndex() == -1 or \
         if self.setResult == None or (self.setResult.error or self.setResult.maxIndex == -1 or \
            self.setResult.nInd[0] > nDat or self.setResult.nInd[1] > nLoc or self.setResult.nInd[2] > nPrp):
                return ES.obsCat[-1]
-        if self.score == 22  and self.setResult.dim == 2:	self.score = 23
-        if self.score == 122 and self.setResult.dim == 2:	self.score = 123
-        if self.score == 202 and self.setResult.dim == 2:	self.score = 203
-        if self.score == 212 and self.setResult.dim == 2:	self.score = 213
-        if self.score == 220 and self.setResult.dim == 2:	self.score = 223
-        if self.score == 221 and self.setResult.dim == 2:	self.score = 224
-        if self.score == 222 and self.setResult.dim == 3:	self.score = 228
-        if self.score == 222 and self.setResult.dim == 2 and 2 in self.setResult.axes:	self.score = 225
-        if self.score == 222 and self.setResult.dim == 2 and 1 in self.setResult.axes:	self.score = 226
-        if self.score == 222 and self.setResult.dim == 2 and 0 in self.setResult.axes:	self.score = 227
         return ES.obsCat[self.score]
 
     def view(self, name=True, dat=True, loc=True, prp=True, lenres=0, width=15, sep = '_') :
@@ -1044,7 +1044,6 @@ class Observation(ESElement):
         
         - **None**
         '''
-        #if self.setResult.getMaxIndex() == -1 : return        
         if self.setResult.maxIndex == -1 : return        
         obc = copy.deepcopy(self)
         if sort : obc.sort()
@@ -1060,7 +1059,92 @@ class Observation(ESElement):
         ax.set(xlabel='dat (index)', ylabel='loc (index)', zlabel='prp (index)')
         plt.show()
 
-    def _initESObs(self, *args, **kwargs) :     # !!! methodes internes
+    def _addValueObservation(self, idat, iloc, iprp, val): #!!!methods intern
+        '''
+        Add a new `ES.ESValue.ResultValue` 
+        
+        **idat, iloc, iprp** : integer, ES.ESValue.ESIndexValue
+        **val** : ES.ESValue.ResultValue compatible type
+        **return** int : last index in the `ES.ESValue.ESSet` valueList.
+        '''
+        if self.setResult == None: ESSetResult(pObs=self)
+        return self.addResultValue(ResultValue(val, [idat, iloc, iprp]))
+
+    def _infoType(self):
+        ''' Add information's key-value to dict dcinf'''
+        dcinf = dict()
+        dcinf[ES.json_type_obs] = self.typeObs
+        if self.setLocation != None :
+            if self.setLocation.nValue > 1 : 
+                dcinf[ES.json_type_loc] = ES.multi + self.setLocation.typeES
+            else :
+                dcinf[ES.json_type_loc] = self.setLocation.typeES
+        if self.setDatation != None :
+            if self.setDatation.nValue > 1 : 
+                dcinf[ES.json_type_dat] = ES.multi + self.setDatation.typeES
+            else :
+                dcinf[ES.json_type_dat] = self.setDatation.typeES
+        if self.setProperty != None :
+            if self.setProperty.nValue > 1 : 
+                dcinf[ES.json_type_prp] = ES.multi + self.setProperty.typeES
+            else :
+                dcinf[ES.json_type_prp] = self.setProperty.typeES
+        if self.setResult != None :
+            if self.setResult.nValue > 1 : 
+                dcinf[ES.json_type_res] = ES.multi + self.setResult.typeES
+            else :
+                dcinf[ES.json_type_res] = self.setResult.typeES
+        return dcinf
+    
+    def _infoNval(self):
+        ''' Add valueList lenght to dict dcinf'''
+        dcinf = dict()
+        if self.setLocation != None : dcinf[ES.json_nval_loc] = self.setLocation.nValue
+        if self.setDatation != None : dcinf[ES.json_nval_dat] = self.setDatation.nValue
+        if self.setProperty != None : dcinf[ES.json_nval_prp] = self.setProperty.nValue
+        if self.setResult   != None : dcinf[ES.json_nval_res] = self.setResult.nValue
+        return dcinf
+    
+    def _infoBox(self):
+        ''' Add box informations's key-value to dict dcinf'''
+        dcinf = dict()
+        if self.setLocation != None and self.setLocation.nValue > 0:
+            dcinf[ES.loc_box] = list(self.setLocation.boundingBox.bounds)
+        if self.setDatation != None and self.setDatation.nValue > 0:
+            dcinf[ES.dat_box] = list(self.setDatation.boundingBox.bounds)
+        return dcinf
+    
+    def _infoOther(self):
+        ''' Add other's information key-value to dict dcinf'''
+        dcinf = dict()
+        dcinf[ES.obs_complet] = self.complet
+        dcinf[ES.obs_score]   = self.score
+        if self.setResult != None :
+            dcinf[ES.res_mRate] = self.setResult.measureRate
+            dcinf[ES.res_dim]   = self.setResult.dim
+            dcinf[ES.res_axes]  = self.setResult.axes
+        return dcinf
+    
+    def _info(self, **kwargs):
+        ''' Create json string with dict datas'''
+        option = self.option | kwargs
+        dcinf = dict()
+        if option["json_info"] or option["json_info_type"] : dcinf |= self._infoType()
+        if option["json_info"] or option["json_info_nval"] : dcinf |= self._infoNval()
+        if option["json_info"] or option["json_info_box"]  : dcinf |= self._infoBox()
+        if option["json_info"] or option["json_info_other"]: dcinf |= self._infoOther()
+        ldel =[]
+        for k,v in dcinf.items() :
+            if type(v) == str and (v == "null" or v =='')   : ldel.append(k)
+            if type(v) == list and v == ES.nullCoor         : ldel.append(k) 
+        for k in ldel :         del dcinf[k]
+        if len(dcinf) != 0 : dcinf = {ES.information : dcinf }
+        if option["json_string"] :
+            if len(dcinf) == 0 :    return ""
+            else :                  return json.dumps(dcinf)
+        else: return dcinf
+    
+    def _initESObs(self, *args, **kwargs) :
         ''' ESObs creation '''
         for arg in args :
             if type(arg) == str :       # creation à partir d'un json "key : [liste]"
@@ -1092,88 +1176,7 @@ class Observation(ESElement):
         self.addAttributes(js)
         self.addESObs(js)
     
-    def _addValueObservation(self, idat, iloc, iprp, val):
-        '''
-        Add a new `ES.ESValue.ResultValue` 
-        **idat, iloc, iprp** : integer, ES.ESValue.ESIndexValue
-        **val** : ES.ESValue.ResultValue compatible type
-        **return** int : last index in the `ES.ESValue.ESSet` valueList.
-        '''
-        if self.setResult == None: ESSetResult(pObs=self)
-        return self.addResultValue(ResultValue(val, [idat, iloc, iprp]))
 
-    def _infoType(self):
-        ''' Add information's key-value to dict dcinf'''
-        dcinf = dict()
-        dcinf[ES.json_type_obs] = self.mAtt[ES.type]
-        if self.setLocation != None :
-            if self.setLocation.nValue > 1 : 
-                dcinf[ES.json_type_loc] = ES.multi + self.setLocation.mAtt[ES.type]
-            else :
-                dcinf[ES.json_type_loc] = self.setLocation.mAtt[ES.type]
-        if self.setDatation != None :
-            if self.setDatation.nValue > 1 : 
-                dcinf[ES.json_type_dat] = ES.multi + self.setDatation.mAtt[ES.type]
-            else :
-                dcinf[ES.json_type_dat] = self.setDatation.mAtt[ES.type]
-        if self.setProperty != None :
-            if self.setProperty.nValue > 1 : 
-                dcinf[ES.json_type_prp] = ES.multi + self.setProperty.mAtt[ES.type]
-            else :
-                dcinf[ES.json_type_prp] = self.setProperty.mAtt[ES.type]
-        if self.setResult != None :
-            if self.setResult.nValue > 1 : 
-                dcinf[ES.json_type_res] = ES.multi + self.setResult.mAtt[ES.type]
-            else :
-                dcinf[ES.json_type_res] = self.setResult.mAtt[ES.type]
-        return dcinf
-    
-    def _infoNval(self):
-        ''' Add valueList lenght to dict dcinf'''
-        dcinf = dict()
-        if self.setLocation != None : dcinf[ES.json_nval_loc] = self.setLocation.nValue
-        if self.setDatation != None : dcinf[ES.json_nval_dat] = self.setDatation.nValue
-        if self.setProperty != None : dcinf[ES.json_nval_prp] = self.setProperty.nValue
-        if self.setResult   != None : dcinf[ES.json_nval_res] = self.setResult.nValue
-        return dcinf
-    
-    def _infoBox(self):
-        ''' Add box informations's key-value to dict dcinf'''
-        dcinf = dict()
-        if self.setLocation != None and self.setLocation.nValue > 0:
-            dcinf[ES.loc_box] = list(self.setLocation.boundingBox.bounds)
-        if self.setDatation != None and self.setDatation.nValue > 0:
-            dcinf[ES.dat_box] = list(self.setDatation.boundingBox.bounds)
-        return dcinf
-    
-    def _infoAutre(self):
-        ''' Add other's information key-value to dict dcinf'''
-        dcinf = dict()
-        dcinf[ES.obs_complet] = self.complet
-        dcinf[ES.obs_score] = self.score
-        if self.setResult != None :
-            dcinf[ES.res_mRate] = self.setResult.measureRate
-            dcinf[ES.res_dim] = self.setResult.dim
-            dcinf[ES.res_axes] = self.setResult.axes
-        return dcinf
-    
-    def _info(self, string=True, types=True, nval=True, box=True, autre=True):
-        ''' Create json string with dict datas'''
-        dcinf = dict()
-        if types :  dcinf |= self._infoType()
-        if nval :   dcinf |= self._infoNval()
-        if box :    dcinf |= self._infoBox()
-        if autre:   dcinf |= self._infoAutre()
-        ldel =[]
-        for k,v in dcinf.items() :
-            if type(v) == str and (v == "null" or v =='')   : ldel.append(k)
-            if type(v) == list and v == ES.nullCoor         : ldel.append(k) 
-        for k in ldel :         del dcinf[k]
-        if string :
-            if len(dcinf) == 0 :    return ""
-            else :                  return '"' +ES.information + '":' + json.dumps(dcinf)
-        else: return dcinf
-        
     @staticmethod
     def _sortAlign(npInd, list1, ind1, ind2):
         return [int(npInd[list(npInd[:,ind1]).index(i),:][ind2])  for i in list1]    
@@ -1225,7 +1228,9 @@ class Observation(ESElement):
     def _xAttrs(self) :
         ''' attrs generation for Xarray'''
         attrs = ES.xattrs
-        attrs['info']   = json.loads("{" + self._info(True, True, False, True, False) + "}")["information"]
+        attrs['info'] = self._info(json_string=False, json_info_type=True,
+                                   json_info_nval  =False, json_info_box =True, 
+                                   json_info_other =False)["information"]
         return attrs
 
     def _xCoord(self, xList, attrs, dataArray, complet, name, numeric, fullAxes=False) :
