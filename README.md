@@ -1,5 +1,5 @@
 # Environnemental-Sensing
-Environnemental data interoperability (standard and connectors)
+Environnemental data interoperability (standard and connectors Python/C++)
 
 Documentation :
 - [ObsJSON ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
