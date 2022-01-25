@@ -5,7 +5,7 @@ Documentation :
 - [ObsJSON standard](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
 - [Main concepts (in french) ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ES%20-%20Standard.pdf)
 - [Technical presentation ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/presentation%technique.pdf)
-- [python documentation ](https://loco-philippe.github.io/ES.html)
+- [Connectors documentation](https://loco-philippe.github.io/ES.html)
 
 Bluetooth Links 
 - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
