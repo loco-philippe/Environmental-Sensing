@@ -68,6 +68,7 @@ class Observation(ESElement):
     
     - `Observation.append`
     - `Observation.appendList`
+    - `Observation.appendObs`
     - `Observation.addESObs`
     - `Observation.addAttributes`
     - `Observation.addResultValue`
@@ -343,11 +344,37 @@ class Observation(ESElement):
             for i in range(len(listVal)) :
                 self.append(listDat[i], listLoc[i], listPrp[i], listVal[i])
 
+    def appendObs(self, obs, equal="full") :
+        '''
+        Add an `Observation` as a new `ES.ESValue.ResultValue` with other `ES.ESValue`
+        
+        *Parameters*
+        
+        - **obs** : Observation
+        
+        *Returns*
+        
+        - **int** : last index in the `ES.ESValue.ESSet` valueList.
+        '''
+        #arg = [obs.setDatation.boundingBox, obs.setLocation.boundingBox, 
+        #       obs.setProperty[0]]
+        ind = [0,0,0]
+        arg = obs.bounds
+        for i in range(3) :
+            if type(arg[i]) == int : ind[i] = arg[i]
+            else : ind[i] = self.addValue(_EsValue[i](arg[i]), equal)
+        self._addValueObservation(ind[0], ind[1], ind[2], obs)
+        self.majType()
+        
     @property
     def bounds(self):
         '''tuple (@property) : Observation boundingBox (xmin, ymin, xmax, ymax).'''
-        if self.setLocation : return shape(self).bounds
-        else : return None
+        bound = [None, None, None]
+        #if self.setLocation : return shape(self).bounds
+        if self.setDatation : bound[0] = self.setDatation.boundingBox
+        if self.setLocation : bound[1] = self.setLocation.boundingBox
+        if self.setProperty : bound[2] = self.setProperty[0]
+        return bound
 
     def choropleth(self, name="choropleth"):
         '''

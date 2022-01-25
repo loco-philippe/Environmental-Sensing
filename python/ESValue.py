@@ -241,9 +241,9 @@ class DatationValue(ESValue):   # !!! début ESValue
         return DatationValue(slot=[arg, arg], name='instant')
 
     @staticmethod
-    def Interval(arg1, arg2):
+    def Interval(minMax):
         '''DatationValue built with a compatible TimeSlot [arg1, arg2] (static method)'''
-        return DatationValue(slot=TimeSlot([arg1, arg2]), name='interval')
+        return DatationValue(slot=TimeSlot([minMax[0], minMax[1]]), name='interval')
 
     def json(self, **kwargs): 
         '''
@@ -321,7 +321,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         if self.slot == TimeSlot() : 
             if type(val) == str and self.name == ES.nullName : self.name = val
 
-    def _Box(*args): return DatationValue.Interval(*args)
+    def _Box(minMax): return DatationValue.Interval(minMax)
     
 class LocationValue(ESValue):              # !!! début LocationValue
     """
@@ -336,6 +336,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     *property (getters)*
 
+    - `coords`
     - `bounds`
     - `point`
     - `value`
@@ -401,14 +402,27 @@ class LocationValue(ESValue):              # !!! début LocationValue
         return self.shap.bounds
 
     @property
+    def coords(self):
+        ''' return geoJson coordinates'''
+        if type(self.shap) == shapely.geometry.polygon.Polygon:  
+            coords = [list(self.shap.exterior.coords)]
+        elif type(self.shap) == shapely.geometry.point.Point:
+            coords = list(self.shap.coords)[0]
+        elif type(self.shap) == shapely.geometry.linestring.LineString:  
+            coords = list(self.shap.coords)
+        else : coords = ES.nullCoor
+        return json.loads(json.dumps(coords))
+    
+    @property
     def coorInv(self):  
         '''list (@property) : vPoint inverse coordinates [vPoint[1], vPoint[0]]'''
         return [self.vPoint()[1], self.vPoint()[0]]
     
     @staticmethod
-    def Cuboid(minx, miny, maxx, maxy, ccw=True):
+    def Cuboid(minMax, ccw=True):
         '''LocationValue built with shapely.geometry.box parameters (static method)'''
-        return LocationValue(shape=shapely.geometry.box(minx, miny, maxx, maxy, ccw), name='box')
+        #return LocationValue(shape=shapely.geometry.box(minx, miny, maxx, maxy, ccw), name='box')
+        return LocationValue(shape=shapely.geometry.box(*minMax, ccw), name='box')
 
     def from_bytes(self, byt):
         '''
@@ -439,16 +453,17 @@ class LocationValue(ESValue):              # !!! début LocationValue
         
         *Parameters*
         
-        - **json_string** : boolean (default True) - choice for return formet (string if True, dict else)
+        - **json_string** : boolean (default True) - choice for return format (string if True, dict else)
                 
         *Returns*
         
         - **string or dict**
         '''
         option = ES.mOption | kwargs
-        if self.name == ES.nullName : js = self.vPoint()
-        elif self.vPoint() == ES.nullCoor : js = self.name
-        else : js = {self.name : self.vPoint()}
+        #if self.name == ES.nullName : js = self.vPoint()
+        if self.name == ES.nullName : js = self.coords
+        elif self.coords == ES.nullCoor : js = self.name
+        else : js = {self.name : self.coords}
         if option['json_string'] : return json.dumps(js)
         else : return js
 
@@ -503,7 +518,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
         return self.shap
     
     @staticmethod
-    def _Box(*args): return LocationValue.Cuboid(*args)
+    def _Box(minMax): return LocationValue.Cuboid(minMax)
 
     @staticmethod
     def _gshape(coord):
@@ -515,7 +530,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
             try:
                 return shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))
             except: pass
-    
+
     def _init(self, val=ES.nullCoor):
         ''' LocationValue creation '''
         if type(val) == LocationValue :
@@ -576,7 +591,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
         self.application == other.application and self.EMFId == other.EMFId and \
         self.detail == other.detail and self.name == other.name
 
-    def __repr__(self): return self.json(ES.mOption)
+    def __repr__(self): return self.json(**ES.mOption)
 
     def __lt__(self, other): return self.pType + self.name < other.pType + other.name
 
@@ -702,14 +717,14 @@ class ResultValue (ESValue):               # !!! début ESValue
         where 'resval' is a ResultValue(copy), 'value' is a 'result' or ['result', 'ind'],
         'result' is an Object, 'ind' is a list with three integer and 'name' is a string.        
         '''
-        self.ind = ind
+        self.ind = ES.nullInd
         ESValue.__init__(self)
         if type(val) == str : 
             try: val=json.loads(val)
             except: pass
         self._init(val)
         if type(ind) == list and ind != ES.nullInd and self.ind == ES.nullInd : self.ind = ind
-        if self.name == ES.nullName and name != ES.nullName : self.name = name
+        if self.name == ES.nullName and type(name) == str and name != ES.nullName : self.name = name
 
         
     def __eq__(self, other): return self.value == other.value
@@ -721,7 +736,9 @@ class ResultValue (ESValue):               # !!! début ESValue
               (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] <  other.ind[o[1]]) or \
               (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] == other.ind[o[1]] and self.ind[o[2]] < other.ind[o[2]])
 
-    def __repr__(self): return  self.json(**ES.mOption)
+    def __repr__(self): 
+        if self.ind != ES.nullInd : return  self.json(json_res_index=True)
+        else : return  self.json(json_res_index=False)
 
     def from_bytes(self, byt, resInd = False, prp = ES.nullDict):
         '''
@@ -811,6 +828,8 @@ class ResultValue (ESValue):               # !!! début ESValue
         self.value = val
 
     def _jsonValInd(self, optIndex) : 
-        if optIndex : return [self.value, self.ind]
-        else : return self.value 
+        if type(self.value) in [str, int, float]: val = self.value 
+        else : val = object.__repr__(self.value)
+        if optIndex : return [val, self.ind]
+        else : return val 
         

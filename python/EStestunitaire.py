@@ -256,14 +256,14 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(LocationValue(lyon).json(**self.opt), json.dumps(lyon)) 
         self.assertEqual(LocationValue(lyon), LocationValue(LocationValue(lyon)))
         self.assertTrue(LocationValue(lyon) > LocationValue(paris))
-        self.assertEqual(LocationValue(pol1).json(**self.opt), json.dumps(pol1centre)) 
+        self.assertEqual(LocationValue(pol1).json(**self.opt), json.dumps(pol1)) 
         self.assertTrue(LocationValue(paris).shap == LocationValue({'paris':paris}).shap ==
                         LocationValue(name='paris', shape=LocationValue._gshape(paris)).shap)
         self.assertTrue(LocationValue('paris').name == LocationValue({'paris':paris}).name ==
                         LocationValue(name='paris', shape=LocationValue._gshape(paris)).name)
-        #self.assertEqual(LocationValue(pol1).json(self.opt), json.dumps(pol1)) # !!! à traiter point / polygon
-        self.assertEqual(LocationValue.Cuboid(*LocationValue(paris).bounds).bounds, 
+        self.assertEqual(LocationValue.Cuboid(LocationValue(paris).bounds).bounds, 
                          LocationValue({'box':paris}).bounds)
+
     def test_DatationValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(DatationValue(t1), DatationValue(DatationValue(t1)))
@@ -680,6 +680,13 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop3, _res(3)))), order='x')
         self.assertEqual(ob1.iLoc(1,1,1)[ES.res_classES], '1')
 
+    def test_append_obs(self):
+        ob = Observation(dict((obs_1, dat3, dpt3, prop2, _res(6))), order='px')
+        ob1 = copy.copy(ob)
+        ob1.appendObs(ob)
+        self.assertEqual(ob1.setResult[6].value, ob)
+        self.assertEqual(ob1.setLocation[3], ob.bounds[1])
+        
     def test_obs_sort(self):
         ob = Observation(dict((obs_1, dat3, dpt3, prop2, _res(6))), order='px')
         test = ob.iLoc(1,1,0)
@@ -693,9 +700,9 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         self.assertEqual(ob.iLoc(1,1,1), test)
         
     def test_obs_add(self):
-        ob = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18)))))
+        ob  = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18))))
         ob.option["json_loc_name"] = ob.option["json_dat_name"] = ob.option["json_prp_name"] = True
-        obp = Observation(json.dumps(dict((obs_1, truc_mach, pdat3, ploc3, pprop2, _res(18)))))
+        obp = Observation(dict((obs_1, truc_mach, pdat3, ploc3, pprop2, _res(18))))
         obp.option["json_loc_name"] = obp.option["json_dat_name"] = obp.option["json_prp_name"] = True
         obc = copy.copy(ob)
         obc.option["add_equal"] = "value"

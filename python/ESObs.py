@@ -51,7 +51,7 @@ class ESObs(ESElement):
     def boundingBox(self):
         val = copy.deepcopy(self.valueList[0].value)
         for i in range(1,self.nValue): val = val.union(self.valueList[i].value)
-        return self.ValueClass._Box(*val.bounds)
+        return self.ValueClass._Box(val.bounds)
 
     @property
     def observation(self):
@@ -200,14 +200,23 @@ class ESSetLocation(ESSet, Location):       # !!!
         self.typeES = ES.loc_valName
         self._initESSet(LocationValue, jObj)
    
-    def __repr__(self): return '\n' + self.json(ES.mOption) + '\n'
+    def __repr__(self): return '\n' + self.json(**ES.mOption) + '\n'
 
     def analyse(self):
         ''' not implemented'''
         pass
     
     def json(self, **option):
-        '''call `ESSet.ESSet.jsonESSet`'''
+        '''Export in Json format (call `ESSet.ESSet.jsonESSet`)
+        
+        *Parameters (optional)*
+        
+        - **json_string**    : Boolean - return format (string or dict)
+        - **json_res_index** : Boolean - include index for ResultValue
+
+        *Returns*
+        
+        - **string or dict** : Json string or dict'''
         return self.jsonESSet(ES.loc_valName, **option)
 
     def to_numpy(self, func=ES._identity):

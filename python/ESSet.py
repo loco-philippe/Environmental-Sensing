@@ -93,7 +93,7 @@ class ESSet:
     def boundingBox(self):
         val = copy.deepcopy(self.valueList[0].value)
         for i in range(1,self.nValue): val = val.union(self.valueList[i].value)
-        return self.ValueClass._Box(*val.bounds)
+        return self.ValueClass._Box(val.bounds)
 
     def from_bytes(self, byt, prpList = []):  #prplist complète si sans index
         code_ES =  byt[0] & 0b00001111
@@ -144,6 +144,19 @@ class ESSet:
         return ind
 
     def jsonESSet(self, ES_valName, **option):
+        '''
+        Export in Json format
+        
+        *Parameters*
+        
+        - **ES_valName**              : String  - name of the ESValue
+        - **json_string (option)**    : Boolean - return format (string or dict)
+        - **json_res_index (option)** : Boolean - include index for ResultValue
+
+        *Returns*
+        
+        - **string or dict** : Json string or dict
+        '''
         if self.valueList == None or len(self.valueList) == 0: js = {}
         else : js = {ES_valName : self._jsonSet(**option)}
         if 'json_string' in option and  option['json_string'] : return json.dumps(js)
