@@ -2,7 +2,7 @@
 Environnemental data interoperability (standard and connectors Python/C++)
 
 Documentation :
-- [ObsJSON ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
+- [ObsJSON standard](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
 - [Main concepts (in french) ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ES%20-%20Standard.pdf)
 - [Technical presentation ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/presentation%technique.pdf)
 - [python documentation ](https://loco-philippe.github.io/ES.html)
