@@ -8,7 +8,7 @@ The `ES.ESObservation` module contains the main class
 of Environmental Sensing : `Observation` class.
 
 """
-from ESObs import ESSetDatation, ESSetLocation, ESSetProperty, ESSetResult
+from ESObs import ESSetResult, ESObsSet
 from ESElement import ESElement
 from ESconstante import ES
 from ESValue import LocationValue, DatationValue, PropertyValue, \
@@ -21,15 +21,15 @@ import xarray as xr
 import matplotlib.pyplot as plt
 
 
-_EsObs: list = [ESSetDatation, ESSetLocation, ESSetProperty, ESSetResult]
+_EsObs: list = ['DatationValue', 'LocationValue', 'PropertyValue', ESSetResult, ESObsSet]
 '''ordered list for classES '''  
 
 _EsValue: list = [DatationValue, LocationValue, PropertyValue]
 '''ordered list for ESValue '''  
 
-_EsObsDict: dict = {ES.dat_classES : ESSetDatation, 
-                   ES.loc_classES : ESSetLocation,
-                   ES.prp_classES : ESSetProperty,
+_EsObsDict: dict = {ES.dat_classES : 'DatationValue', 
+                   ES.loc_classES : 'LocationValue',
+                   ES.prp_classES : 'PropertyValue',
                    ES.res_classES : ESSetResult}
 '''dict classES : ESObs '''  
         
@@ -145,9 +145,9 @@ class Observation(ESElement):
     def __geo_interface__(self):
         '''dict (@property) : geometry (see shapely)'''
         if self.setLocation : 
-            collec = self.setLocation.vListShap[0]
+            collec = self.setLocation.vListValue[0]
             first = True
-            for shap in self.setLocation.vListShap :
+            for shap in self.setLocation.vListValue :
                 if not first : collec = collec.union(shap)
                 first = False
             return collec.__geo_interface__
@@ -170,9 +170,9 @@ class Observation(ESElement):
         equal = self.option["add_equal"]
         if other.setResult != None and other.setResult.maxIndex > -1:
             for resVal in other.setResult.valueList:
-                ndat = self.addValue(other.setDatation.valueList[resVal.ind[idat]], equal)
-                nloc = self.addValue(other.setLocation.valueList[resVal.ind[iloc]], equal)
-                nprp = self.addValue(other.setProperty.valueList[resVal.ind[iprp]], equal)
+                ndat = self.addValue(other.setDatation[resVal.ind[idat]], equal)
+                nloc = self.addValue(other.setLocation[resVal.ind[iloc]], equal)
+                nprp = self.addValue(other.setProperty[resVal.ind[iprp]], equal)
                 resv = ResultValue(resVal.value)
                 resv.ind = [ndat, nloc, nprp]
                 self.addResultValue(resv)
@@ -216,18 +216,18 @@ class Observation(ESElement):
         *Parameters*
         
         - **js** : ES.ESObs compatible type
-        - **classES** : string, optional (default None) - value of the ES.ESObs ESclass attributes
+        - **classES** : string, optional (default None) - datation, location, property or result
         
-        *Returns*
-        
-        - **None**
+        *Returns* : None
+
         '''
         if classES in (None, ES.dat_classES) and ESElement.isESObs(ES.dat_classES, js) \
-            and self.setDatation == None: ESSetDatation(pObs=self, jObj=js)
+            and self.setDatation == None: ESObsSet(esValue='DatationValue', pObs=self, jObj=js)
+            #and self.setDatation == None: ESSetDatation(pObs=self, jObj=js)
         if classES in (None, ES.loc_classES) and ESElement.isESObs(ES.loc_classES, js) \
-            and self.setLocation == None: ESSetLocation(pObs=self, jObj=js)
+            and self.setLocation == None: ESObsSet(esValue='LocationValue', pObs=self, jObj=js)
         if classES in (None, ES.prp_classES) and ESElement.isESObs(ES.prp_classES, js) \
-            and self.setProperty == None: ESSetProperty(pObs=self, jObj=js)
+            and self.setProperty == None: ESObsSet(esValue='PropertyValue', pObs=self, jObj=js)
         if classES in (None, ES.res_classES) and ESElement.isESObs(ES.res_classES, js) \
             and self.setResult   == None: ESSetResult  (pObs=self, jObj=js)
 
@@ -254,7 +254,7 @@ class Observation(ESElement):
 
         *Parameters*
         
-        - **ValueClass** : name of the selected class ES.ESValue
+        - **ValueClass** : selected class ES.ESValue
         - **listEsValue** : list of ES.ESValue
         
         *Returns*
@@ -280,44 +280,46 @@ class Observation(ESElement):
     
     def addValue(self, esValue, equal="full"):
             '''
-            Add a new `ES.ESValue` in the `ES.ESValue.ESSet`
+            Add a new `ES.ESValue` in the `ES.ESObs.ESObsSet`
     
             *Parameters*
             
-            - **esValue** : ES.ESValue
-            - **equal** : criteria used to compare ESValue ('full', 'name', 'value')
+            - **esValue** : object in a ES.ESValue class
+            - **equal** : string, criteria used to compare ESValue ('full', 'name', 'value')
             
             *Returns*
             
             - **Int** : last index in the `ES.ESValue.ESSet` valueList.
             '''
             if type(esValue)== PropertyValue:
-                if self.setProperty == None: ESSetProperty(pObs=self)
+                if self.setProperty == None: ESObsSet(esValue='PropertyValue', pObs=self)
                 return self.setProperty.addValue(esValue, equal)
             elif type(esValue)== LocationValue:
-                if self.setLocation == None: ESSetLocation(pObs=self)
+                if self.setLocation == None: ESObsSet(esValue='LocationValue', pObs=self)
                 return self.setLocation.addValue(esValue, equal)
             elif type(esValue)== DatationValue:
-                if self.setDatation == None: ESSetDatation(pObs=self)
+                #if self.setDatation == None: ESSetDatation(pObs=self)
+                if self.setDatation == None: ESObsSet(pObs=self, esValue='DatationValue')
                 return self.setDatation.addValue(esValue, equal)
             else: return None
             
     def append(self, dat, loc, prp, res, equal="full") :
         '''
-        Add a new `ES.ESValue.ResultValue` with or without other `ESObs`
+        Add a new `ES.ESValue.ResultValue`
         
         *Parameters*
         
         - **dat, loc, prp** :
         
-            integer for the index of an existant `ES.ESValue.ESIndexValue`  
-            or compatible Value for an existing or a new `ES.ESValue`
+            integer for the index of an existant `ES.ESValue`
+            or compatible Value for an existing `ES.ESValue`
+            or compatible Value for a new `ES.ESValue`
             
         - **res** : new `ES.ESValue.ResultValue`
         
         *Returns*
         
-        - **int** : last index in the `ES.ESValue.ESSet` valueList.
+        - **int** : last index in the `ES.ESObs.ESSetResult` valueList.
         '''
         arg = [dat, loc, prp]
         ind = [0,0,0]
@@ -336,9 +338,7 @@ class Observation(ESElement):
         - **listVal** : list of ES.ESValue.ResultValue compatible type
         - **listDat, listLoc, listPrp** : list of index or Value to define a `ES.ESValue`
         
-        *Returns*
-
-        - **None**
+        *Returns* : None
         '''
         if len(listVal)==len(listDat)==len(listLoc)==len(listPrp) :
             for i in range(len(listVal)) :
@@ -356,8 +356,6 @@ class Observation(ESElement):
         
         - **int** : last index in the `ES.ESValue.ESSet` valueList.
         '''
-        #arg = [obs.setDatation.boundingBox, obs.setLocation.boundingBox, 
-        #       obs.setProperty[0]]
         ind = [0,0,0]
         arg = obs.bounds
         for i in range(3) :
@@ -370,7 +368,6 @@ class Observation(ESElement):
     def bounds(self):
         '''tuple (@property) : Observation boundingBox (xmin, ymin, xmax, ymax).'''
         bound = [None, None, None]
-        #if self.setLocation : return shape(self).bounds
         if self.setDatation : bound[0] = self.setDatation.boundingBox
         if self.setLocation : bound[1] = self.setLocation.boundingBox
         if self.setProperty : bound[2] = self.setProperty[0]
@@ -387,7 +384,7 @@ class Observation(ESElement):
         - **folium.Map**
         '''
         if self.setResult.dim == 1 or self.setResult.dim // 10 == 1:
-            m = folium.Map(location=self.setLocation.valueList[0].coorInv, zoom_start=6)
+            m = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
             folium.Choropleth(
                 geo_data=self.jsonFeature,
                 name=name,
@@ -425,7 +422,7 @@ class Observation(ESElement):
         
     def find(self, crit = None): 
         '''
-        Finds `ES.ESValue` that meets a given criteria.
+        Find `ES.ESValue` that meets a given criteria.
 
         *Parameters*
         
@@ -447,9 +444,7 @@ class Observation(ESElement):
         - **order** : string - indicates the order for the Index creation 
         ('d' for Datation, 'l' for Location, 'p' for Property).*
         
-        *Returns*
-        
-        - **None**
+        *Returns* : None
         '''
         code_ob = (byt[0] & 0b11100000) >> 5
         self.mAtt[ES.obs_reference] = byt[0] & 0b00011111
@@ -458,14 +453,15 @@ class Observation(ESElement):
         while idx < byt.__len__() :
             code_el = (byt[idx] & 0b11100000) >> 5
             #forma =  byt[idx] & 0b00001111
-            if   code_el == 1: es = ESSetLocation(pObs=self)
-            elif code_el == 2: es = ESSetDatation(pObs=self)
-            elif code_el == 3: es = ESSetProperty(pObs=self)
+            #if   code_el == 1: es = ESSetLocation(pObs=self)
+            if   code_el == 1: es = ESObsSet(esValue='LocationValue', pObs=self)
+            elif code_el == 2: es = ESObsSet(esValue='DatationValue', pObs=self)
+            elif code_el == 3: es = ESObsSet(esValue='PropertyValue', pObs=self)
             elif code_el < 6:
                 es = ESSetResult(pObs=self)
                 if code_el == 5: 
                     if self.setProperty != None :
-                        propList = [self.setProperty.valueList[i].pType 
+                        propList = [self.setProperty[i].simple 
                                     for i in range(self.setProperty.nValue)]
                     else : propList = []
                 else :
@@ -473,7 +469,7 @@ class Observation(ESElement):
                     es.from_bytes(byt[idx:], [])
                     es.majIndex(es.nValue, nPrp, nDat, nLoc)
                     if self.setProperty != None :
-                        propList = [self.setProperty.valueList[es.valueList[i].ind[2]].pType 
+                        propList = [self.setProperty[es[i].ind[2]].simple 
                                     for i in range(self.setProperty.nValue)]
                     else : propList = []
                     es.__init__()
@@ -494,9 +490,7 @@ class Observation(ESElement):
         - **order** : string - indicates the order for the Index creation 
         ('d' for Datation, 'l' for Location, 'p' for Property).*
         
-        *Returns*
-        
-        - **None**
+        *Returns* : None
         '''
         try: dic=json.loads(js)
         except: return
@@ -519,9 +513,10 @@ class Observation(ESElement):
         - **list** : empty list if maj is True, else `ES.ESObs.ESSetResult` value.List
         '''
         if allAxes :
-            if self.setDatation == None: ESSetDatation(pObs=self)
-            if self.setLocation == None: ESSetLocation(pObs=self)
-            if self.setProperty == None: ESSetProperty(pObs=self)        
+            #if self.setDatation == None: ESSetDatation(pObs=self)
+            if self.setDatation == None: ESObsSet(pObs=self, esValue='DatationValue')
+            if self.setLocation == None: ESObsSet(esValue='LocationValue', pObs=self)
+            if self.setProperty == None: ESObsSet(esValue='PropertValue',pObs=self)        
         return self.setResult.full(maj)
     
     def iLoc(self, idat, iloc, iprp, json=True):
@@ -535,24 +530,24 @@ class Observation(ESElement):
 
         *Returns*
         
-        - **dict** : ES.ESValue or JSON of each ES.ESObs
+        - **dict** : dict or JSON of each ES.ESValue
         '''
         if not self.complet or type(idat) != int or type(iloc) != int or type(iprp) != int: return dict()
         dic = dict()
         if self.setDatation != None and idat < self.setDatation.nValue: 
-            if json : dic[ES.dat_classES] = self.setDatation.valueList[idat].json(**self.option)
-            else : dic[ES.dat_classES] = self.setDatation.valueList[idat]
+            if json : dic[ES.dat_classES] = self.setDatation[idat].json(**self.option)
+            else : dic[ES.dat_classES] = self.setDatation[idat]
         if self.setLocation != None and iloc < self.setLocation.nValue: 
-            if json : dic[ES.loc_classES] = self.setLocation.valueList[iloc].json(**self.option)
-            else: dic[ES.loc_classES] = self.setLocation.valueList[iloc]
+            if json : dic[ES.loc_classES] = self.setLocation[iloc].json(**self.option)
+            else: dic[ES.loc_classES] = self.setLocation[iloc]
         if self.setProperty != None and iprp < self.setProperty.nValue: 
-            if json : dic[ES.prp_classES] = self.setProperty.valueList[iprp].json(**self.option)
-            else : dic[ES.prp_classES] = self.setProperty.valueList[iprp]
+            if json : dic[ES.prp_classES] = self.setProperty[iprp].json(**self.option)
+            else : dic[ES.prp_classES] = self.setProperty[iprp]
         if self.setResult != None : 
             for i in range(self.setResult.nValue) : 
-                if self.setResult.valueList[i].ind == [idat, iloc, iprp] : 
-                    if json : dic[ES.res_classES] = self.setResult.valueList[i].json(**self.option)
-                    else : dic[ES.res_classES] = self.setResult.valueList[i]
+                if self.setResult[i].ind == [idat, iloc, iprp] : 
+                    if json : dic[ES.res_classES] = self.setResult[i].json(**self.option)
+                    else : dic[ES.res_classES] = self.setResult[i]
         return dic
     
     def indexLoc(self, esValue, string=True):
@@ -681,11 +676,12 @@ class Observation(ESElement):
 
     def majValue(self, esValue, newEsValue, equal="full"):
         '''
-        Update the value of an existing `ES.ESValue` by that of the `ES.ESValue.ESSet`
+        Update the value of an existing `ES.ESValue` by a new `ES.ESValue`
 
         *Parameters*
         
-        - **esValue** : ESValue
+        - **esValue** : ESValue to update
+        - **newEsValue** : new ESValue
         - **equal** : criteria used to compare ESValue ('full', 'name', 'value')
         
         *Returns*
@@ -709,8 +705,8 @@ class Observation(ESElement):
         
     @property 
     def nValueObs(self):
-        '''list (@property) : lenght of `ES.ESObs.ESSetProperty`, `ES.ESObs.ESSetDatation`, 
-                `ES.ESObs.ESSetLocation`, `ES.ESObs.ESSetResult`.'''
+        '''list (@property) : lenght of `ES.ESObs.ESObsSet` property, `ES.ESObs.ESObsSet` datation, 
+                `ES.ESObs.ESObsSet` Location, `ES.ESObs.ESSetResult`.'''
         nPrp = nDat = nLoc = nRes = 0
         if self.setResult   != None: nRes = self.setResult.nValue
         if self.setLocation != None: nLoc = self.setLocation.nValue
@@ -802,17 +798,17 @@ class Observation(ESElement):
 
     @property
     def setDatation(self):  
-        '''object `ES.ESObs.ESSetDatation` (@property) if exists, None otherwise.'''
+        '''object `ES.ESObs.ESObSet` with `ES.ESValue.DatationValue` if exists, None otherwise (@property).'''
         return self.element(ES.dat_classES)
     
     @property
     def setLocation(self):
-        '''object `ES.ESObs.ESSetLocation` (@property) if exists, None otherwise.'''
+        '''object `ES.ESObs.ESObSet` with `ES.ESValue.LocationValue` if exists, None otherwise (@property).'''
         return self.element(ES.loc_classES)
     
     @property
     def setProperty(self):  
-        '''object `ES.ESObs.ESSetProperty` (@property) if exists, None otherwise.'''
+        '''object `ES.ESObs.ESObSet` with `ES.ESValue.PropertyValue` if exists, None otherwise (@property).'''
         return self.element(ES.prp_classES)
     
     @property
@@ -880,7 +876,7 @@ class Observation(ESElement):
             byt += self.setProperty.to_bytes(self.option["json_prp_name"])
         if self.setResult != None: 
             if self.setProperty != None :
-                propList = [self.setProperty.valueList[i].pType 
+                propList = [self.setProperty[i].simple 
                             for i in range(self.setProperty.nValue)]
             else : propList = []
             byt += self.setResult.to_bytes(False, self.option["json_res_index"], 
@@ -1090,9 +1086,9 @@ class Observation(ESElement):
         '''
         Add a new `ES.ESValue.ResultValue` 
         
-        **idat, iloc, iprp** : integer, ES.ESValue.ESIndexValue
+        **idat, iloc, iprp** : integer, index of ES.ESValue.ResultValue
         **val** : ES.ESValue.ResultValue compatible type
-        **return** int : last index in the `ES.ESValue.ESSet` valueList.
+        **return** int : last index in the `ES.ESObs.ESObs` valueList.
         '''
         if self.setResult == None: ESSetResult(pObs=self)
         return self.addResultValue(ResultValue(val, [idat, iloc, iprp]))
@@ -1185,14 +1181,21 @@ class Observation(ESElement):
             elif type(arg) == list :    # création à partir d'un jeu de valeur [[dat], [loc], [prp], [res]]
                 if len(arg) == 4 : 
                     for i in range(4) :
-                        if self.element(ES.esObsClass[i]) == None : _EsObs[i](arg[i], self)
+                        if self.element(ES.esObsClass[i]) == None :
+                            if i == 3 :
+                                ESSetResult(jObj=arg[i], pObs=self)
+                            else :
+                                ESObsSet(esValue=_EsObs[i], jObj=arg[i], pObs=self)
             elif type(arg) == tuple :   # creation uniquement d'un jeu de données dat, loc, prp, res
                 self.append(arg[0], arg[1], arg[2], arg[3])
         for k in kwargs :
             if k in ES.esObsClass and self.element(k) == None and type(kwargs[k]) in _EsObs: 
                 self.addComposant(kwargs[k])
             elif k in ES.esObsClass and self.element(k) == None : 
-                _EsObsDict[k](kwargs[k], self)
+                if k == ES.res_classES :
+                    ESSetResult(jObj=kwargs[k], pObs=self)
+                else :
+                    ESObsSet(esValue=_EsObsDict[k], jObj=kwargs[k], pObs=self)
 
     def _initDict(self, js) :
         ''' attributes and ESObs creation '''
@@ -1228,13 +1231,13 @@ class Observation(ESElement):
         if self.setDatation != None: 
             xList['dat']    = self.setDatation.to_numpy()
             xList['datstr'] = self.setDatation.to_numpy(func = DatationValue.json)
-            xList['datins'] = self.setDatation.to_numpy(func = DatationValue.vInstant)
+            xList['datins'] = self.setDatation.to_numpy(func = DatationValue.vSimple)
             xList['datnam'] = self.setDatation.to_numpy(func = DatationValue.vName)
             xList['datran'] = np.arange(len(xList['dat']))
         if self.setProperty != None: 
             xList['prp']    = self.setProperty.to_numpy()
             xList['prpstr'] = self.setProperty.to_numpy(func = PropertyValue.json)
-            xList['prptyp'] = self.setProperty.to_numpy(func = PropertyValue.vType)
+            xList['prptyp'] = self.setProperty.to_numpy(func = PropertyValue.vSimple)
             xList['prpnam'] = self.setProperty.to_numpy(func = PropertyValue.vName)
             xList['prpran'] = np.arange(len(xList['prp']))
         if self.setResult  != None: 
@@ -1316,15 +1319,15 @@ class Observation(ESElement):
             res = self.setResult[i]
             resList = []
             if self.setDatation != None : 
-                if name : resList.append(self.setDatation.valueList[res.ind[0]].name)
-                if dat  : resList.append(self.setDatation.valueList[res.ind[0]].vInstant(string=True))
+                if name : resList.append(self.setDatation[res.ind[0]].name)
+                if dat  : resList.append(self.setDatation[res.ind[0]].vSimple(string=True))
             if self.setLocation != None : 
-                if name : resList.append(self.setLocation.valueList[res.ind[1]].name)
-                if loc  : resList.append(self.setLocation.valueList[res.ind[1]].vPoint()[0])
-                if loc  : resList.append(self.setLocation.valueList[res.ind[1]].vPoint()[1])
+                if name : resList.append(self.setLocation[res.ind[1]].name)
+                if loc  : resList.append(self.setLocation[res.ind[1]].vSimple()[0])
+                if loc  : resList.append(self.setLocation[res.ind[1]].vSimple()[1])
             if self.setProperty != None : 
-                if name : resList.append(self.setProperty.valueList[res.ind[2]].name)
-                if prp  : resList.append(self.setProperty.valueList[res.ind[2]].pType)
+                if name : resList.append(self.setProperty[res.ind[2]].name)
+                if prp  : resList.append(self.setProperty[res.ind[2]].simple)
             resList.append(res.value)
             tab.append(resList)
         return tab            

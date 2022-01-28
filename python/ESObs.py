@@ -6,51 +6,43 @@ Created on Tue Aug  3 23:40:06 2021
 
 An object of the `ESObs` module is a component of an `ES.ESObservation.Observation` object
 
-This module include the parent classes :
+This module include the classes :
     
 - `ESObs` : parent class of the others
-- `Datation`,
-- `Location`,
-- `Property`,
-- `Result`  
-
-and the child classes :
-    
-- `ESSetDatation`,
-- `ESSetLocation`,
-- `ESSetProperty`,
+- `ESObsSet`,
 - `ESSetResult`  
 
 """
 from ESElement import ESElement
 from ESconstante import ES
-from datetime import datetime
-from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue   #, ESSet
+from ESValue import ResultValue, ESValueSet, ESValnameSet, ESClassSet
 from ESSet import ESSet
 import numpy as np
 import copy
 
 class ESObs(ESElement):
     """
-    Parent Class of `Datation`, `Location`, `Property`, `Result`
+    Parent Class of `ESObsSet`, `ESSetResult`
     
     *Attributes (for @property see methods)* :
     
-    - None
+    - **ValueClass** : Child class of `ESValue.ESValue`
      
     The methods defined in this class are : 
 
     - `observation`(@property) : Observation linked to `ESObs`
+    - `boundingBox`(@property) : mini, maxi of the `ESValue.ESValue`
     """
-    def __init__(self, pObs=None):
+    def __init__(self, ValueClass=None, pObs=None):
         ''' This method initialize the link with the `ES.ESObservation.Observation` '''
         ESElement.__init__(self)
         if (pObs != None): pObs.addComposant(self)
+        self.ValueClass = ValueClass
 
     @property
     def boundingBox(self):
-        val = copy.deepcopy(self.valueList[0].value)
-        for i in range(1,self.nValue): val = val.union(self.valueList[i].value)
+        val = copy.deepcopy(self[0].value)
+        for i in range(1,self.nValue): val = val.union(self[i].value)
         return self.ValueClass._Box(val.bounds)
 
     @property
@@ -60,7 +52,7 @@ class ESObs(ESElement):
             if cont.classES == ES.obs_classES : return cont
         return None
 
-    def _initESSet(self, ValueClass, jObj):
+    def _initESSet(self, jObj):
         ''' creation and initialization of `ESSet` '''
         if type(jObj) == dict:
             userAtt = False
@@ -72,55 +64,12 @@ class ESObs(ESElement):
             for k, v in jDat.items(): # attributs
                 if ESElement.isESAtt(self.classES, k) or \
                     (userAtt and ESElement.isUserAtt(k)): self.mAtt[k] = v
-            if ValueClass.valName in list(jDat):    # si valeurs simple ou detaillee précisée
-                    ESSet.__init__(self, ValueClass, jDat[ValueClass.valName]) 
-            else :  ESSet.__init__(self, ValueClass, jObj)
-        else :      ESSet.__init__(self, ValueClass, jObj)
+            if self.ValueClass.valName in list(jDat):    # si valeurs simple ou detaillee précisée
+                    ESSet.__init__(self, jDat[self.ValueClass.valName]) 
+            else :  ESSet.__init__(self, jObj)
+        else :      ESSet.__init__(self, jObj)
 
-class Datation(ESObs):
-    """
-    Parent Class of `ESSetDatation` (no attributes, no methods)
-    """
-    def __init__(self, pObs=None):
-        ''' Initialize the 'classES' attribute '''
-        ESObs.__init__(self, pObs)
-        self.classES = ES.dat_classES
-
-class Location(ESObs):
-    """
-    Parent Class of `ESSetLocation` (no attributes, no methods)
-    """
-    def __init__(self, pObs=None):
-        ESObs.__init__(self, pObs)
-        self.classES = ES.loc_classES
-
-class Property(ESObs):
-    """
-    Parent Class of `ESSetLocation` (no attributes, no methods)
-    """
-    def __init__(self, pObs=None):
-        ESObs.__init__(self, pObs)
-        self.classES = ES.prp_classES
-
-class Result(ESObs):
-    """
-    Parent Class of `ESSetResult`.
-    
-    *Attributes* :
-    
-    - error : boolean, indicate if the Result is consistent
-    - axes : array of integer with value 0, 1, 2, 10, 20, 21, 120
-     
-    No methods defined in this class
-    """
-    def __init__(self, pObs=None):
-        ''' initialize error (True) and axes ([])'''
-        ESObs.__init__(self, pObs)
-        self.classES = ES.res_classES
-        self.error = True
-        self.axes = []
-            
-class ESSetDatation(ESSet, Datation):   # !!! début ESSet
+class ESObsSet(ESSet, ESObs):   # !!! début ESSet
     """
     This class represent the list of `ES.ESValue.DatationValue`
     
@@ -130,146 +79,17 @@ class ESSetDatation(ESSet, Datation):   # !!! début ESSet
 
     *property (getters)*
 
-    - `vListInstant`
-    - `vListSlot`
+    - `vListSimple`
 
-    *export*
-
-    - `json`
-    - `to_numpy`
     """
-    def __init__(self, jObj = None, pObs = None):
-        Datation.__init__(self, pObs)
-        self.typeES = ES.dat_valName
-        self._initESSet(DatationValue, jObj)
-
-    def __repr__(self):
-        return '\n' + self.json(ES.mOption) + '\n'
-
-    def analyse(self):
-        ''' not implemented'''
-        pass
-
-    """def json(self, **option):
-    #def json(self, option = ES.mOption):
-        '''call `ES.ESSet.ESSet.jsonESSet` '''
-        return self.jsonESSet(ES.dat_valName, **option)"""
-
-    def json(self, **option):
-        return self.jsonESSet(ES.dat_valName, **option)
-
-    def to_numpy(self, func=ES._identity):
-        datList = self.vList(func)
-        if type(datList[0]) == str :
-            try : datetime.fromisoformat(datList[0])
-            except : return np.array(datList)
-            return np.array(datList, dtype=np.datetime64)
-        elif type(datList[0]) == datetime : return np.array(datList, dtype=np.datetime64)
-        else: return np.array(datList)
-
-    @property
-    def vListInstant(self, string=False):
-        return [val.vInstant(string=string) for val in self.valueList]
-
-    @property
-    def vListSlot(self):
-        return [val.vSlot() for val in self.valueList]
-
+    def __init__(self, jObj=None, pObs=None, esValue=None):
+        if esValue not in ESClassSet : return
+        ESObs.__init__(self, ESValueSet[esValue], pObs)
+        self.classES = ESClassSet[esValue]
+        self.typeES = ESValnameSet[esValue]
+        self._initESSet(jObj)
         
-class ESSetLocation(ESSet, Location):       # !!!
-    """
-    This class represent the list of `ES.ESValue.LocationValue`
-    
-    *Attributes* : None (inherited from parent classes)
-     
-    The methods defined in this class are : 
-
-    *property (getters)*
-
-    - `vListCodePlus`
-    - `vListPoint`
-    - `vListShap`
-
-    *export*
-
-    - `json`
-    - `to_numpy`
-    """
-    def __init__(self, jObj = None, pObs = None):
-        Location.__init__(self, pObs)
-        self.typeES = ES.loc_valName
-        self._initESSet(LocationValue, jObj)
-   
-    def __repr__(self): return '\n' + self.json(**ES.mOption) + '\n'
-
-    def analyse(self):
-        ''' not implemented'''
-        pass
-    
-    def json(self, **option):
-        '''Export in Json format (call `ESSet.ESSet.jsonESSet`)
-        
-        *Parameters (optional)*
-        
-        - **json_string**    : Boolean - return format (string or dict)
-        - **json_res_index** : Boolean - include index for ResultValue
-
-        *Returns*
-        
-        - **string or dict** : Json string or dict'''
-        return self.jsonESSet(ES.loc_valName, **option)
-
-    def to_numpy(self, func=ES._identity):
-        return np.array(self.vList(func))
-    
-    @property
-    def vListCodePlus(self):
-        return [val.vCodePlus(self.observation.option) for val in self.valueList]
-
-    @property
-    def vListPoint(self):
-        return [val.vPoint() for val in self.valueList]
-
-    @property
-    def vListShap(self):
-        return [val.vShap() for val in self.valueList]
-
-class ESSetProperty(ESSet, Property):       # !!!
-    """
-    This class represent the list of `ES.ESValue.PropertyValue`
-    
-    *Attributes* : None (inherited from parent classes)
-     
-    The methods defined in this class are : 
-
-    *property (getters)*
-
-    - `vListType`
-
-    *export*
-
-    - `json`
-    - `to_numpy`
-    """
-    def __init__(self, jObj = None, pObs = None):
-        Property.__init__(self, pObs)
-        self.typeES = ES.prp_valName
-        self._initESSet(PropertyValue, jObj)
-
-    def __repr__(self): return '\n' + self.json(ES.mOption) + '\n'
-
-    def json(self, **option):
-        '''call `ESSet.ESSet.jsonESSet`'''
-        return self.jsonESSet(ES.prp_valName, **option)
-
-    def to_numpy(self, func=ES._identity):
-        return np.array(self.vList(func))
-    
-    @property
-    def vListType(self):
-        return [val.vType() for val in self.valueList]
-
-class ESSetResult(ESSet, Result):       # !!!
+class ESSetResult(ESSet, ESObs):       # !!!
     """
     This class represent the list of `ES.ESValue.ResultValue`.
     
@@ -295,16 +115,15 @@ class ESSetResult(ESSet, Result):       # !!!
 
     *export*
 
-    - `json`
     - `to_numpy`
     """
     def __init__(self, jObj = None, pObs = None):
-        Result.__init__(self, pObs)
+        ESObs.__init__(self, ResultValue, pObs)
+        self.classES = ES.res_classES
+        self.error = True
+        self.axes = []
         self.typeES = ES.res_valName
-        self._initESSet(ResultValue, jObj)
-
-    def __repr__(self):
-        return '\n' + self.json(ES.mOption) + '\n'
+        self._initESSet(jObj)
 
     def analyse(self):
         '''
@@ -369,10 +188,6 @@ class ESSetResult(ESSet, Result):       # !!!
             if min(val.ind) == -1 : return False
         return True
 
-    def json(self, **option):
-        '''call `ESSet.ESSet.jsonESSet`'''
-        return self.jsonESSet(ES.res_valName, **option)
-
     def majIndex(self, nRes, nPrp, nDat, nLoc, order = 'dlp'):
         if self.maxIndex > -1 : return
         n = {'d' : nDat, 'l' : nLoc, 'p' : nPrp, 'x' : -1}
@@ -385,9 +200,9 @@ class ESSetResult(ESSet, Result):       # !!!
                     i[0] = ir // n12 
                     i[1] = (ir % n12) // n[order[2]] 
                     i[2] = (ir % n12) %  n[order[2]] 
-                    self.valueList[ir].ind = [ i[ind['d']], i[ind['l']], i[ind['p']] ]
+                    self[ir].ind = [ i[ind['d']], i[ind['l']], i[ind['p']] ]
         elif nRes == nPrp and nDat == nLoc and nRes == nLoc :
-            for ir in range(nRes) : self.valueList[ir].ind = [ir, ir, ir]
+            for ir in range(nRes) : self[ir].ind = [ir, ir, ir]
         else :
             if not 'x' in order : order = 'xp'
             n0 = n[order[0]]
@@ -404,7 +219,7 @@ class ESSetResult(ESSet, Result):       # !!!
                         if not 'd' in ind.keys() : ind['d'] = ind['x']
                         if not 'l' in ind.keys() : ind['l'] = ind['x']
                         if not 'p' in ind.keys() : ind['p'] = ind['x']
-                        self.valueList[ir].ind = [ i[ind['d']], i[ind['l']], i[ind['p']] ]
+                        self[ir].ind = [ i[ind['d']], i[ind['l']], i[ind['p']] ]
                 
     @property 
     def maxIndex(self):
@@ -505,4 +320,61 @@ class ESSetResult(ESSet, Result):       # !!!
         lis.sort()
         return lis
         
-                    
+'''class ESSetDatation(ESSet, ESObs):   # !!! début ESSet
+    """
+    This class represent the list of `ES.ESValue.DatationValue`
+    
+    *Attributes* : None (inherited from parent classes)
+     
+    The methods defined in this class are : 
+
+    *property (getters)*
+
+    - `vListSimple`
+
+    """
+    def __init__(self, jObj = None, pObs = None):
+        ESObs.__init__(self, pObs)
+        self.classES = ES.dat_classES
+        self.typeES = ES.dat_valName
+        self._initESSet(DatationValue, jObj)
+        
+class ESSetLocation(ESSet, ESObs):       # !!!
+    """
+    This class represent the list of `ES.ESValue.LocationValue`
+    
+    *Attributes* : None (inherited from parent classes)
+     
+    The methods defined in this class are : 
+
+    *property (getters)*
+
+    - `vListPoint`
+
+    """
+    def __init__(self, jObj = None, pObs = None):
+        ESObs.__init__(self, pObs)
+        self.classES = ES.loc_classES
+        self.typeES = ES.loc_valName
+        self._initESSet(LocationValue, jObj)
+
+
+class ESSetProperty(ESSet, ESObs):       # !!!
+    """
+    This class represent the list of `ES.ESValue.PropertyValue`
+    
+    *Attributes* : None (inherited from parent classes)
+     
+    The methods defined in this class are : 
+
+    *property (getters)*
+
+    - `vListType`
+
+    """
+    def __init__(self, jObj = None, pObs = None):
+        ESObs.__init__(self, pObs)
+        self.classES = ES.prp_classES
+        self.typeES = ES.prp_valName
+        self._initESSet(PropertyValue, jObj)'''
+                   

@@ -29,8 +29,6 @@ class TimeSlot:
             if type(val[0]) == list : 
                 for interv in val : self._initInterval(interv)
             else : self._initInterval(val)
-        #elif type(val) == DatationValue:
-        #    self.slot = val.slot.slot
         elif type(val) == TimeSlot :
             self.slot = val.slot
         else : 

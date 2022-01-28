@@ -87,10 +87,9 @@ temporal, spatial and physical values.
 
 <img src="./ES/structure.png" width="800">
 
-Common properties (indicators) are associated 
-with each Observation. They allow processing to be performed on Observations 
-without having to know their composition (e.g. bounding boxes, type of observation,
-volume, etc.).   
+Common properties (indicators) are associated with each Observation. 
+They allow processing to be performed on Observations without having to know 
+their composition (e.g. bounding boxes, type of observation, volume, etc.).   
 
 ## Index
 
@@ -102,7 +101,7 @@ and a lot of columns for Datation, Location and Property.
 This representation is simple and readable, but it duplicates the information and
  is not suitable for updates. 
  
-In the ES project, we chose the indexed representation suitable for computer 
+In the ES project, we choose the indexed representation suitable for computer 
 processing. Thus, the Result object is made up of its own attributes as well as
  an index to the Datation, Location and Property objects. 
 
@@ -129,15 +128,15 @@ Parameters and additional information may be added at different levels:
     
 - global : At the Observation level, we may add specific informations with specific 
 key / value e.g.:
-    - ***{ 'type' : 'observation' , 'test campaign' : 'first' , 
+    - *{ 'type' : 'observation' ,**'test campaign' : 'first'**, 
        'datvalue' : 'morning' , 'locvalue' : 'paris' , 'prpvalue' : ' Temp' , 
-       'resvalue' : 'high' }***
+       'resvalue' : 'high' }*
 - local : We may customize the 'name' attribute e.g.:
-    - ***'datvalue' : [ { 'first campaign' : '2021-01-01' } , { 'second campaign' : ''2021-03-01' } ]
-    - 'prpvalue' : [ { 'inside' : 'Temp' } , { 'outside' : 'Temp' } ]***
+    - *'datvalue' : [ { **'first campaign'** : '2021-01-01' } , { **'second campaign'** : ''2021-03-01' } ]
+    - 'prpvalue' : [ { **'inside'** : 'Temp' } , { **'outside'** : 'Temp' } ]*
 - individual : Each ResultValue may be annotate e.g.:
-    - ***'resvalue' : { 'first result' : 'high' }
-    - 'resvalue' : { 'https://loco-philippe.github.io/ES.html' : 'high' }***
+    - *'resvalue' : { **'first result'** : 'high' }
+    - 'resvalue' : {**'https://loco-philippe.github.io/ES.html'** : 'high' }*
 
 The PropertyValues are defined in a catalogue which may be specific. 
 
@@ -179,7 +178,7 @@ target="_blank">ObsJSON document</a>.
 The binary payload is necessary for exchanges with LPWAN networks (e.g. SigFox, 
 LoRaWAN). The payload should be as compact as possible to minimize the Time-on-Air 
 and reduce power consumption (for battery operated) devices. For example, the maximum
-lenght of the payload is 12 bytes for SigFox and between 51 bytes and 222 bytes for LoRaWAN.
+lenght of the payload is between 51 bytes and 222 bytes for LoRaWAN.
 
 To obtain this maximum length, limitations are imposed.
 
@@ -322,13 +321,10 @@ Modules contain the following classes:
 - ESObservation : `ES.ESObservation.Observation`
 - ESValue : `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, 
 `ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`
-- ESSet : `ES.ESValue.ESSet`
-- ESElement : `ES.ESElement.ESElement`, `ES.ESElement.ESObs`
-- ESObs : `ES.ESObs.Location`, `ES.ESObs.Datation`, `ES.ESObs.Property`,
-`ES.ESObs.Result`, `ES.ESObs.ESSetLocation`, `ES.ESObs.ESSetDatation`,
-`ES.ESObs.ESSetProperty`, `ES.ESObs.ESSetResult`
+- ESSet : `ES.ESSet.ESSet`
+- ESElement : `ES.ESElement.ESElement`
+- ESObs : `ES.ESObs.ESObs`, `ES.ESObs.ESObsSet`, `ES.ESObs.ESSetResult`
 - ESconstante : `ES.ESconstante.Es`.
-
 """
 
 

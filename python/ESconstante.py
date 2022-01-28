@@ -66,7 +66,7 @@ class Es:
                         self.obs_reference   : self.obs_classES  ,
                         self.obs_id          : self.obs_classES  ,
                         "ResultQuality"      : self.res_classES  ,            
-                        self.prp_propType	    : self.prp_classES  ,
+                        self.prp_type	    : self.prp_classES  ,
                         self.prp_unit		    : self.prp_classES  ,
                         self.prp_sampling	    : self.prp_classES  ,
                         self.prp_appli       : self.prp_classES  ,
@@ -254,7 +254,7 @@ class Es:
         self.dat_box            = "timeBox"
         self.loc_box            = "boudingBox"
         
-        self.prp_propType	    = "prp";
+        self.prp_type	        = "prp";
         self.prp_unit		    = "unit";
         self.prp_sampling	    = "samplingFunction";
         self.prp_appli		    = "application";
