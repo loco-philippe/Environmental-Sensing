@@ -76,6 +76,8 @@ class TimeSlot:
 
     def __lt__(self, other): return self.instant < other.instant
 
+    def __hash__(self): return hash(self.json(True))
+
     def json(self, string=False): 
         if self.type == 'null' : js = ES.nullDate
         if self.type == 'instant' : js = self.slot[0][0].isoformat()

@@ -37,7 +37,7 @@ class Es:
                       "json_info_nval"      : False,
                       "json_info_box"       : False,
                       "json_info_other"     : False,
-                      "unic_index"          : True,  # dans ESSet
+                      #"unic_index"          : True,  # dans ESSet
                       "add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
                       "sort_order"          : 'dlp'
@@ -51,14 +51,23 @@ class Es:
                         self.prp_classES  :   self.prp }
         '''name for json classES identification '''
         
-        self.mValObs: Dict = {self.loc_valName  : self.loc_classES  ,
+        """self.mValObs: Dict = {self.loc_valName  : self.loc_classES  ,
                         self.dat_valName  : self.dat_classES  ,
                         self.prp_valName  : self.prp_classES  ,
                         self.res_valName  : self.res_classES  }
-        '''assignment of ESValue name to ESObs objects '''
+        '''assignment of ESValue name to ESObs objects '''"""
         
+        self.json_type: list = [self.json_type_dat, self.json_type_loc, self.json_type_prp, self.json_type_res]
+        '''ordered list for json_type '''  
+
+        self.json_nval: list = [self.json_nval_dat, self.json_nval_loc, self.json_nval_prp, self.json_nval_res]
+        '''ordered list for json_type '''  
+
         self.esObsClass: list = [self.dat_classES, self.loc_classES, self.prp_classES, self.res_classES]
         '''ordered list for classES '''  
+
+        """self.esObsId: dict = { self.dat_classES : 0, self.loc_classES : 1, self.prp_classES : 2, self.res_classES : 3}
+        '''ordered dict value for classES '''  """
         
         self.mTypeAtt: Dict ={self.type            : self.obs_classES  ,
                         self.information     : self.nul_classES  ,
@@ -66,19 +75,19 @@ class Es:
                         self.obs_reference   : self.obs_classES  ,
                         self.obs_id          : self.obs_classES  ,
                         "ResultQuality"      : self.res_classES  ,            
-                        self.prp_type	    : self.prp_classES  ,
-                        self.prp_unit		    : self.prp_classES  ,
-                        self.prp_sampling	    : self.prp_classES  ,
+                        self.prp_type        : self.prp_classES  ,
+                        self.prp_unit		   : self.prp_classES  ,
+                        self.prp_sampling	   : self.prp_classES  ,
                         self.prp_appli       : self.prp_classES  ,
-                        self.prp_EMFId		    : self.prp_classES  ,
+                        self.prp_EMFId		   : self.prp_classES  ,
                         self.prp_sensorType	: self.prp_classES  ,
                         self.prp_upperValue	: self.prp_classES  ,
                         self.prp_lowerValue	: self.prp_classES  ,
-                        self.prp_period	    : self.prp_classES  ,
-                        self.prp_interval	    : self.prp_classES  ,
+                        self.prp_period	   : self.prp_classES  ,
+                        self.prp_interval	   : self.prp_classES  ,
                         self.prp_uncertain   : self.prp_classES  ,
-                        "EMFType "          : "ObservingEMF"  ,
-                        "ResultNature "     : "ObservingEMF"  }        
+                        "EMFType "           : "ObservingEMF"  ,
+                        "ResultNature "      : "ObservingEMF"  }        
         ''' Assignment of attributes to ESObs objects '''
 
         self.obsCat: Dict = {
@@ -203,7 +212,72 @@ class Es:
                      'dat' : {                     "standard_name":"horodatage"},
                      'prp' : {                     "standard_name":"property"}}
         '''Dictionnary for Xarray attrs informations '''
-
+        
+        self.reserved = [
+            self.json_nval_loc,
+            self.json_nval_dat,
+            self.json_nval_res,
+            self.json_nval_prp,
+            self.json_type_loc,
+            self.json_type_obs,
+            self.json_type_dat,
+            self.json_type_res,
+            self.json_type_prp,
+            
+            self.parameter    ,
+            self.information  ,
+            self.type         ,
+            self.multi        ,
+            self.obs          ,
+            self.dat          ,
+            self.loc          ,
+            self.prp          ,
+            self.res          ,
+            self.coordinates  ,
+            
+            self.nul_classES  ,
+            self.obs_classES  ,
+            self.dat_classES  ,
+            self.loc_classES  ,
+            self.prp_classES  ,
+            self.res_classES  ,
+            
+            self.obs_attributes,
+            self.obs_id       ,
+            self.obs_resultTime,
+            self.obs_complet   ,
+            self.obs_reference ,
+            self.obs_score     ,
+            self.obs_order     ,
+            self.obs_idxref    ,
+            
+            self.res_mRate     ,
+            self.res_nEch      ,   
+            self.res_dim       , 
+            self.res_axes      , 
+            self.set_nValue    , 
+                  
+            self.dat_box       ,
+            self.loc_box       ,
+            
+            self.prp_type	   ,
+            self.prp_unit		,
+            self.prp_sampling	,
+            self.prp_appli		,
+            self.prp_EMFId		,
+            self.prp_sensorType,
+            self.prp_upperValue,
+            self.prp_lowerValue,
+            self.prp_period	   ,
+            self.prp_interval	,
+            self.prp_uncertain ,
+            self.prp_name      ,
+            
+            self.dat_valName   ,
+            self.loc_valName   ,   
+            self.prp_valName   ,   
+            self.res_valName   ]
+        
     def _initName(self) :    
         ''' Name initialization (string) '''        
         self.json_nval_loc    = "nvalloc" 
@@ -240,16 +314,14 @@ class Es:
         self.obs_complet      = "complet"
         self.obs_reference    = "reference"
         self.obs_score        = "score"
+        self.obs_order        = "order"
+        self.obs_idxref       = "idxref"
         
         self.res_mRate        = "measureRate"
-        self.res_sRate        = "samplingRate"
         self.res_nEch         = "nEch"
         self.res_dim          = "dim"
         self.res_axes         = "axes"
         self.set_nValue       = "nval"
-        
-        self.obs_typeES       = "observation"
-        self.set_typeES       = "set"
         
         self.dat_box            = "timeBox"
         self.loc_box            = "boudingBox"

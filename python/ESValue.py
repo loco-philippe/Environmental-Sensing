@@ -11,24 +11,38 @@ This module groups the classes of the objects used in the `ES.ESObs` module :
 - `PropertyValue`,
 - `ResultValue`
 
-the parent class :
+and the parent class :
     
 - `ESValue`
 """
-import json, geojson, struct, shapely
+import json, geojson, struct, shapely.geometry
 from datetime import datetime
 from ESconstante import ES
 from geopy import distance
-from openlocationcode import encode
+#import os
+#os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/Slot')
 from ESSlot import TimeSlot
+#os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/openLocationCode')
+from openlocationcode import encode
+#os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 
+class ESValueEncoder(json.JSONEncoder):
+    def default(self, value) :
+        return value.json(json_string=False)
+    
 class ESValue:
     """
     This class is the parent class for each kind of values 
      (`DatationValue`, `LocationValue`, `PropertyValue`, `ResultValue`)
+
+    *Attributes (for @property see methods)* :
+    
+    - **name** : Name of `ESValue.ESValue` objects
      
     The methods defined in this class are : 
 
+    - `simple` (@property)
+    - `cast` (@staticmethod)
     - `isEqual`
     - `isNotNull`
     - `json`
@@ -46,6 +60,32 @@ class ESValue:
     
     def __repr__(self): return self.json(json_string=True)
 
+    def __copy__(self): return self.__class__(self)
+
+    def __hash__(self): return hash(self.json())
+    
+    @staticmethod
+    def cast(value, ValueClass):
+        '''
+        tranform a value in a `ESValue`
+
+        *Parameters*
+        
+        - **value** : value to transform
+        - **ValueClass** : `ESValue` class
+        - **unique** : boolean (default False) - True if value is unique, False if it is a list
+        
+        *Returns*
+        
+        - **ESvalue** : `ESValue` or list of `ESValue`
+        '''
+        if type(value) == list :
+            try : 
+                return [ValueClass(val) for val in value]
+            except :
+                return [ValueClass(value)]
+        else : return [ValueClass(value)]
+    
     def getValue(self) : 
         ''' return self.value object ''' 
         return self.value
@@ -66,6 +106,7 @@ class ESValue:
         '''
         equalName = self.name == other.name
         nullName  = self.name == ES.nullName
+        ListESValue = [LocationValue, DatationValue, PropertyValue, ResultValue]
         if   self.__class__ in ListESValue  : 
             nullValue  = self.value  == self.__class__.nullValue()
             equalValue = self.value  == other.value
@@ -123,15 +164,14 @@ class ESValue:
         - **None** 
         '''        
         self.value  = self.__class__(val).value
-        '''if   type(self) == LocationValue : self.value  = LocationValue(val).value
-        elif type(self) == DatationValue : self.value  = DatationValue(val).value
-        elif type(self) == ResultValue   : self.value  = ResultValue  (val).value'''
 
     @property
     def simple(self): 
         '''vSimple object (@property) '''
         return self.vSimple(string=False)    
 
+    def vSimple(self): return self.__class__.vSimple(self, string=False) 
+              
     def vName(self, genName=ES.nullName):  
         '''
         Return the Name of the `ESValue`
@@ -253,12 +293,6 @@ class DatationValue(ESValue):   # !!! début ESValue
         if self.value.type == 'interval': return self.value. slot[0]
         else : return None 
 
-
-    """@property 
-    def simple(self) : 
-        '''datetime (@property) : middle of the TimeSlot'''
-        return self.value.instant"""
-
     @staticmethod
     def Instant(arg):
         '''DatationValue built with a compatible TimeSlot arg (static method)'''
@@ -298,22 +332,6 @@ class DatationValue(ESValue):   # !!! début ESValue
         if string : return json.dumps([self.value.interval[0].isoformat(), self.value.interval[0].isoformat()])
         else : return self.value.interval
             
-    """def vInstant(self, string=True) :
-        '''Middle of the DatationValue slot (timestamp or datetime). 
-        
-        *Parameters*
-        
-        - **string** : boolean (default True) - choice for return format (timestamp if True, datetime else)
-                
-        *Returns*
-        
-        - **timestamp or datetime**
-        '''
-        #if string : return self.value.instant.isoformat()
-        #else : return self.value.instant        
-        if string : return self.simple.isoformat()
-        else : return self.simple"""
-
     def vSimple(self, string=False) : 
         '''datetime (@property) : middle of the TimeSlot'''
         if string : return self.value.instant.isoformat()
@@ -509,7 +527,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
         ''' transform a GeoJSON coordinates (list) into a shapely geometry'''
         if type(coord) == list:  coor = json.dumps(coord)
         elif type(coord) == str: coor = coord
-        else: coor = coord.copy()
+        else: coor = coord.__copy__()
         for tpe in ["Point", "MultiPoint", "Polygon", "MultiPolygon"]:
             try:
                 return shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))
@@ -609,7 +627,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
         else : return li
 
 class ResultValue (ESValue):               # !!! début ESValue
-    """
+    '''
     This class represent the Result of an Observation.
     
     *Attributes (for @property see methods)* :
@@ -630,10 +648,10 @@ class ResultValue (ESValue):               # !!! début ESValue
     - `to_bytes`
     - `to_float`
 
-    """
+    '''
     valName     = ES.res_valName
 
-    def __init__(self, val = None, ind = ES.nullInd, name=ES.nullName):
+    def __init__(self, val = ES.nullVal, name=ES.nullName):
         '''
         Several ResultValue creation modes :
             
@@ -645,71 +663,20 @@ class ResultValue (ESValue):               # !!! début ESValue
         where 'resval' is a ResultValue(copy), 'value' is a 'result' or ['result', 'ind'],
         'result' is an Object, 'ind' is a list with three integer and 'name' is a string.        
         '''
-        self.ind = ES.nullInd
         ESValue.__init__(self)
         if type(val) == str : 
             try: val=json.loads(val)
             except: pass
         self._init(val)
-        if type(ind) == list and ind != ES.nullInd and self.ind == ES.nullInd : self.ind = ind
         if self.name == ES.nullName and type(name) == str and name != ES.nullName : self.name = name
 
-    def __lt__(self, other):  
-        order = ES.mOption["sort_order"]
-        o = [ES.nax[order[0]], ES.nax[order[1]], ES.nax[order[2]]]
-        return self.ind[o[0]] < other.ind[o[0]] or \
-              (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] <  other.ind[o[1]]) or \
-              (self.ind[o[0]] == other.ind[o[0]] and self.ind[o[1]] == other.ind[o[1]] and self.ind[o[2]] < other.ind[o[2]])
-
-    def __repr__(self): 
-        if self.ind != ES.nullInd : return  self.json(json_res_index=True)
-        else : return  self.json(json_res_index=False)
-
-    def from_bytes(self, byt, resInd = False, prp = ES.nullDict):
-        '''
-        Complete an empty `Observation` with binary data. 
-        
-        *Parameters*
-        
-        - **byt** : binary representation of an Observation
-        - **order** : string - indicates the order for the Index creation 
-        ('d' for Datation, 'l' for Location, 'p' for Property).*
-        
-        *Returns*
-        
-        - **None**
-        '''
-        formaPrp = ES.prop[prp][1]
-        leng = ES.prop[prp][2]
-        dexp = ES.prop[prp][3]
-        bexp = ES.prop[prp][4]        
-        if resInd :
-            dt = struct.unpack('<BBB'+ formaPrp, byt[0:leng + 3])
-            self.__init__(val=dt[3] * 10**dexp * 2**bexp, ind=[dt[0], dt[1], dt[2]])
-            return 3 + leng
-        else :
-            self.__init__(val=struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
-            return leng
+    def __lt__(self, other): 
+        if self.value == other.value : return self.name <  other.name
+        else : return self.value < other.value
 
     @staticmethod
-    def nullValue() : return ES.nullAtt
-    
-    def setIndValue(self, val):
-        if (type(val) == list) : 
-            #self._setValue(val[0])
-            self.setValue(val[0])
-            self.ind = val[1]
-        else : self.value = None
-
-    def to_bytes(self, resIndex = False, prp = ES.nullDict):
-        formaPrp = ES.prop[prp][1]
-        dexp = ES.prop[prp][3]
-        bexp = ES.prop[prp][4]
-        val = self.value * 10**-dexp * 2**-bexp
-        if resIndex : return struct.pack('<BBB' + formaPrp,  self.ind[0],
-                                         self.ind[1], self.ind[2], val)
-        else : return struct.pack('<' + formaPrp, val)
-        
+    def nullValue() : return ResultValue().value
+         
     def to_float(self):
         if self.value == None :         return float('nan')
         elif type(self.value)==str:
@@ -719,29 +686,23 @@ class ResultValue (ESValue):               # !!! début ESValue
                 except:                 return float('nan')
         else :                          return float(self.value)           
 
+    def vSimple(self, string=False) : 
+        '''float value'''
+        if string : return str(self.to_float())
+        else : return self.to_float()
+
     def _init(self, val = None):
-        if type(val) == ResultValue : 
+        try : 
             self.name = val.name
             self.value = val.value
-            self.ind = val.ind
-            return
-        elif type(val) == dict :
-            self.name, val = list(val.items())[0]   
-        if type(val) == str : 
-            self.value = val
-        elif type(val) == list : self.setIndValue(val)
-        else: self.value = val
+        except :
+            if type(val) == dict :
+                self.name, val = list(val.items())[0]   
+            if type(val) == str : 
+                self.value = val
+            else: self.value = val
 
     def _jsonValue(self, **option) : 
         if type(self.value) in [str, int, float]: val = self.value 
         else : val = object.__repr__(self.value)
-        if option['json_res_index'] : return [val, self.ind]
-        else : return val 
-        
-ListESValue = [LocationValue, DatationValue, PropertyValue, ResultValue]
-ESValueSet = {'LocationValue' : LocationValue, 'DatationValue' : DatationValue,
-              'PropertyValue' : PropertyValue, 'ResultValue' : ResultValue}
-ESClassSet = {'LocationValue' : ES.loc_classES, 'DatationValue' : ES.dat_classES,
-              'PropertyValue' : ES.prp_classES, 'ResultValue' : ES.res_classES}
-ESValnameSet = {'LocationValue' : ES.loc_valName, 'DatationValue' : ES.dat_valName,
-                'PropertyValue' : ES.prp_valName, 'ResultValue' : ES.res_valName}
+        return val 
