@@ -8,23 +8,51 @@ The `ES.ilist` module contains the `Ilist` class.
 
 # What is the Ilist Object ?
 
-The Ilist Object is a combination of a set of data and properties that describe it.
+The Ilist Object is a combination of a set of data and properties (index) that describe it.
 In the example below, the set of data is scores of students and the properties are the name, the age and the subject.
 
-<img src="./ilist_example.png" width="600">
+<img src="./ilist_example.png" width="500">
 
 The Ilist Object has many properties and can be converted into a matrix (e.g. numpy
 or Xarray object to perform statistical processing) or into several formats (e.g. json, csv).
 
-<img src="./ilist_xarray.png" width="400">
+<img src="./ilist_xarray.png" width="300">
 
 The data model is as follows :
     
-<img src="./ilist_data_structure.png" width="600">
+<img src="./ilist_data_structure.png" width="500">
     
 - the user data (extval, extidx) can be everything,
 - the internal data (ival, iidx) are integers, which makes the processing to be performed much simpler
 - the index user data (extidx) are dynamic to reduce the size of data. 
+
+# Main principles
+
+## Index properties
+
+There are 4 index categories :
+    
+- coupled index : two index are coupled if there is a 1-to-1 correspondence between each value
+- derived index : two index are derived if there is a 1-to-n correspondence between each value
+- unique index : the values of an index are identical
+- independant index : if the index is not unique, not derived, not coupled
+
+In the example below, 3 columns are independant (Full name, Course, Examen), 
+3 columns are derived (First name, Last name, Group), 1 column is coupled (Surname), 
+1 column is unique (Year).
+
+<img src="./ilist_index.png" width="800">
+
+If an index is not independant, values can be calculated from independent indexes. 
+This property is very usefull if new values have to be added to the Ilist, for example, 
+if i decide to have all the combinations of independant index. 
+
+In the example below, the 'full' method generates missing data for all combinations 
+of independent indexes fullname, course and examen.
+
+<img src="./ilist_full.png" width="800">
+
+
 
 """
 import json, xarray, csv
