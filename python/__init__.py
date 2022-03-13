@@ -308,11 +308,7 @@ We also present how ResultValue without index can be loaded with the 'order' par
 An `ESObservation.Observation` is an object representing a set of information having
 spatial and temporal characteristics associated with measurable or observable
  properties.
-<img src="./ES/ESclasses.png" width="800">
-
-## What are the ES classes ?
-
-The ES functions are divided according to the class hierarchy below:
+The ES functions are divided according to the class below:
  
 <img src="./ES/EShierarchie.png" width="800">
 
@@ -321,32 +317,6 @@ Modules contain the following classes:
 - ESObservation : `ES.ESObservation.Observation`
 - ESValue : `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, 
 `ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`
+- Ilist : `ES.ilist.Ilist`
 - ESconstante : `ES.ESconstante.Es`.
-"""
-
-
-"""
-<img src="./Example/first observation.png" width="800">
-<img src="./Example/first observation2.png" width="800">
-<img src="./Example/first observation carto.png" width="800">
-<img src="./Example/first observation carto2.png" width="800">
-
-## More complex Observation
-
-<img src="./Example/complex observation.png" width="800">
-<img src="./Example/complex observation2.png" width="800">
-<img src="./Example/complex observation3.png" width="800">
-
-## Synthesis
-
-<img src="./Example/synthesis.png" width="800">
-<img src="./Example/synthesis2.png" width="800">
-
-*Note: This “domain range” indexed representation is preferred to an “interleaved”
-tabular representation which associates temporal, spatial and physical values  
-​​with each value of the result.*
-
-[ObsJSON ](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
-document.
-
 """
