@@ -351,11 +351,11 @@ class Es:
         self.nullCoor         = [-1, -1]
         self.nullInd          = [-1, -1, -1]
         self.nullAtt          = "null"
+        self.nullPrp          = {}
         self.nullName         = ""
         self.nullDict         = "-"
-        self.nullName         = ""
         self.nullVal          = 0
         self.nullValues = (self.nullDate, self.nullCoor, self.nullInd, self.nullName,
-                           self.nullAtt, self.nullDict, self.nullName, self.nullVal)
+                           self.nullAtt, self.nullDict, self.nullName, self.nullVal, self.nullPrp)
 
 ES = Es()

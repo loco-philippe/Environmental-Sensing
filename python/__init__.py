@@ -261,45 +261,45 @@ We also present how ResultValue without index can be loaded with the 'order' par
     
 ## Observation management
 
-
+*Under construction*
 
 # Quick overview
 
+*Under construction*
+
 ## Create an Observation
 
-### Measuring station
+*Under construction*
 
-### Mobile sensor
-
-### Simulation
-
-### Access information
-
-### Visualize an Observation
+- Measuring station
+- Mobile sensor
+- Simulation
+- Access information
+- Visualize an Observation
 
 ## Generate an Exchange format
 
-### Binary format
+*Under construction*
 
-### Json format
-
-### No SQL format
+- Binary format
+- Json format
+- No SQL format
 
 ## Managing Observations
 
-### Add
+*Under construction*
 
-### Sort
-
-### Aggregation
+- Add
+- Sort
+- Aggregation
 
 ## Interface
 
-### Numpy export
+*Under construction*
 
-### Xarray export
-
-### Storage
+- Numpy export
+- Xarray export
+- File storage
 
 # Developers documentation
 
@@ -308,15 +308,32 @@ We also present how ResultValue without index can be loaded with the 'order' par
 An `ESObservation.Observation` is an object representing a set of information having
 spatial and temporal characteristics associated with measurable or observable
  properties.
+ 
+The Observation Object is built around three main bricks :
+    
+- Ilist Object which deal with indexing,
+- ESValue Object which integrate the specificities of environmental data,
+- Tools dedicated to particular domains (Shapely for location, TimeSlot for Datation)
+    
 The ES functions are divided according to the class below:
  
 <img src="./ES/EShierarchie.png" width="800">
 
 Modules contain the following classes:
     
-- ESObservation : `ES.ESObservation.Observation`
-- ESValue : `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, 
-`ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`
-- Ilist : `ES.ilist.Ilist`
-- ESconstante : `ES.ESconstante.Es`.
+- ESObservation : 
+    
+    - `ES.ESObservation.Observation`
+    
+- ESValue : 
+    
+    - `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, `ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`
+    
+- Ilist : 
+    
+    - `ES.ilist.Ilist`
+    
+- ESconstante : 
+    
+    - `ES.ESconstante.Es`.
 """

@@ -4,7 +4,7 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-This module groups the classes of the objects used in the `ES.ESObs` module :
+This module groups the classes of the objects used in the `ES.Observation` module :
     
 - `DatationValue`,
 - `LocationValue`,
@@ -14,6 +14,30 @@ This module groups the classes of the objects used in the `ES.ESObs` module :
 and the parent class :
     
 - `ESValue`
+
+# What is the ESValue Object ?
+
+The ESValue is a class dedicated to Environmental data (such as dates, location or 
+measurable properties) and groups common properties and concepts  :
+    
+- each ESValue can have three levels of representation : textual, simplified and complete
+- ESValue has common function (getters, setters, boundary, conversion, export)
+- each ESValue can have additional function or attribute
+
+<img src="./ESValue_common.png" width="800">
+
+ESValue is build around two attributes :
+    
+- 'name' which is a simple String
+- 'value' which corresponds to a more or less complex object :
+    
+    - DatationValue : value is a TimeSlot Object which represent a set of time intervals
+    - LocationValue : value is a Shapely Geometry which represent a set of polygons
+    - PropertyValue : value is a simple dictionary which specifies all the characteristics of a property
+    - ResultValue   : value can be any object
+
+<img src="./ESValue_class.png" width="800">
+
 """
 import json, geojson, struct, shapely.geometry
 from datetime import datetime
@@ -35,60 +59,88 @@ class ESValue:
     This class is the parent class for each kind of values 
      (`DatationValue`, `LocationValue`, `PropertyValue`, `ResultValue`)
 
-    *Attributes (for @property see methods)* :
+    *Attributes* :
     
-    - **name** : Name of `ESValue.ESValue` objects
+    - **name**  : name  of `ESValue.ESValue` objects
+    - **value** : value of `ESValue.ESValue` objects
+    - `bounds` (@property) : boundary  of `ESValue.ESValue` objects
+    - `simple` (@property) : simplified value of `ESValue.ESValue` objects
      
     The methods defined in this class are : 
 
-    - `simple` (@property)
     - `cast` (@staticmethod)
+    - `getValue`
+    - `getName`
     - `isEqual`
     - `isNotNull`
     - `json`
     - `setName`
-    - `getValue`
     - `setValue`
     - `vName`
+    - `vSimple`
     """   
-    def __init__(self):
-        '''This method initialize the 'name' attribute'''
+    def __init__(self, val, name):
+        '''Initialize 'name' and 'value' attribute'''
         self.name = ES.nullName
+        self.value = self.nullValue()
+        if type(val) == str : 
+            try: val=json.loads(val)
+            except: pass
+        self._init(val)
+        if self.name == ES.nullName and type(name) == str and name != ES.nullName : self.name = name
 
     def __eq__(self, other): 
         return self.value == other.value and self.name == other.name
-    
+
+    def __lt__(self, other): 
+        if self.value == other.value : return self.name <  other.name
+        else : return self.value < other.value
+     
     def __repr__(self): return self.json(json_string=True)
 
     def __copy__(self): return self.__class__(self)
 
     def __hash__(self): return hash(self.json())
+
+    @property
+    def bounds(self):
+        '''list or tuple (@property) 
+            DatationValue : datetime.isoformat boundingBox [tmin, tmax]
+            LocationValue : boundingBox (minx, miny, maxx, maxy)
+            Other ESValue : [] '''        
+        try :
+            return self.value.bounds
+        except :
+            return []
     
     @staticmethod
     def cast(value, ValueClass):
         '''
-        tranform a value in a `ESValue`
+        tranform a value in a list of `ESValue`
 
         *Parameters*
         
         - **value** : value to transform
         - **ValueClass** : `ESValue` class
-        - **unique** : boolean (default False) - True if value is unique, False if it is a list
         
         *Returns*
         
-        - **ESvalue** : `ESValue` or list of `ESValue`
+        - **list** : list of `ESValue`
         '''
         if type(value) == list :
             try : 
                 return [ValueClass(val) for val in value]
             except :
                 return [ValueClass(value)]
-        else : return [ValueClass(value)]
+        else : return  [ValueClass(value)]
     
     def getValue(self) : 
         ''' return self.value object ''' 
         return self.value
+
+    def getName(self) : 
+        ''' return self.name object ''' 
+        return self.name
 
     def isEqual(self, other, name=True, value=True):
         '''
@@ -115,7 +167,9 @@ class ESValue:
                 (name and not value and equalName  and not nullName) or \
                 (not name and value and equalValue and not nullValue)
 
-    def isNotNull(self): return self != self.__class__()
+    def isNotNull(self): 
+        '''return boolean. True if the 'ESValue' is not a NullValue'''
+        return self != self.__class__()
     
     def json(self, **kwargs): 
         '''
@@ -126,14 +180,11 @@ class ESValue:
         - **json_string** : boolean (default True) - choice for return format (string if True, dict else)
         - **json_res_index** : boolean - include index (for ResultValue)
                 
-        *Returns*
-        
-        - **string or dict** 
-        '''
+        *Returns* :  string or dict '''
         option = ES.mOption | kwargs
-        if self.name == ES.nullName : js = self._jsonValue(**option)
-        elif self.value == self.__class__.nullValue() : js = self.name
-        else : js = {self.name : self._jsonValue(**option)}        
+        if self.name == ES.nullName :                   js =  self._jsonValue(**option)
+        elif self.value == self.__class__.nullValue() : js =  self.name
+        else :                                          js = {self.name : self._jsonValue(**option)}        
         if option['json_string'] : return json.dumps(js, ensure_ascii=False)
         else : return js
     
@@ -145,10 +196,7 @@ class ESValue:
         
         - **nam** : string - value to set
         
-        *Returns*
-        
-        - **None**
-        '''
+        *Returns* : None'''
         if nam != ES.nullName : self.name = nam
 
     def setValue(self, val):
@@ -159,10 +207,7 @@ class ESValue:
         
         - **val** : compatible ESValue - New ESValue
         
-        *Returns*
-        
-        - **None** 
-        '''        
+        *Returns* : None'''        
         self.value  = self.__class__(val).value
 
     @property
@@ -170,7 +215,9 @@ class ESValue:
         '''vSimple object (@property) '''
         return self.vSimple(string=False)    
 
-    def vSimple(self): return self.__class__.vSimple(self, string=False) 
+    def vSimple(self, string=False): 
+        ''' Return the vSimple of the `ESValue`  '''
+        return self.__class__.vSimple(self, string=string)
               
     def vName(self, genName=ES.nullName):  
         '''
@@ -213,11 +260,6 @@ class DatationValue(ESValue):   # !!! début ESValue
      
     The methods defined in this class are : 
 
-    *getters (@property)*
-
-    - `bounds`
-    - `simple`
-
     *getters*
 
     - `getInstant`
@@ -249,23 +291,8 @@ class DatationValue(ESValue):   # !!! début ESValue
         and name is a string
         
         '''
-        ESValue.__init__(self)
-        if type(val) == str : 
-            try: val=json.loads(val)
-            except: pass
-        self.value = self.__class__.nullValue()
-        self._init(val)
+        ESValue.__init__(self, val, name)
         if self.value == self.__class__.nullValue() and TimeSlot(slot) != TimeSlot() : self.value = TimeSlot(slot)
-        if self.name == ES.nullName and name != ES.nullName : self.name = name
-
-    def __lt__(self, other): 
-        if self.value == other.value : return self.name <  other.name
-        else : return self.value < other.value
- 
-    @property
-    def bounds(self):
-        '''list (@property) : datetime.isoformat boundingBox [tmin, tmax]'''
-        return self.value.bounds
 
     def from_bytes(self, byt):
         '''
@@ -369,7 +396,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
     *getters (@property)*
 
     - `coords`
-    - `bounds`
     - `coorInv`
 
     *getters*
@@ -404,24 +430,13 @@ class LocationValue(ESValue):              # !!! début LocationValue
         - LocationValue(shape=shape, name=name) where shape is a shapely.geometry.Point 
         (or Polygon) and name is a string
         '''
-        ESValue.__init__(self)
-        if type(val) == str : 
-            try: val=json.loads(val)
-            except: pass
-        self.value = self.nullValue()
-        self._init(val)
+        ESValue.__init__(self, val, name)
         if self.value == self.nullValue() and shape != None : self.value = shape
-        if self.name == ES.nullName and name != ES.nullName : self.name = name
     
     def __lt__(self, other): 
         if self.coorInv==ES.nullCoor : return self.name <  other.name
         else : return distance.distance(self.coorInv, ES.distRef) <  \
                       distance.distance(other.coorInv, ES.distRef)
-    
-    @property
-    def bounds(self):
-        '''tuple (@property) : boundingBox (minx, miny, maxx, maxy)'''
-        return self.value.bounds
 
     @property
     def coords(self):
@@ -556,15 +571,12 @@ class PropertyValue(ESValue):              # !!! début ESValue
     """
     valName     = ES.prp_valName
 
-    def __init__(self, val={}):
-        ESValue.__init__(self)
-        if type(val) == str : 
-            try: val=json.loads(val)
-            except: pass
-        self.value = {ES.prp_type : ES.nullDict }
-        self._init(val)
+    def __init__(self, val=ES.nullPrp, name=ES.nullName):
+        ESValue.__init__(self, val, name)
+
     
-    def __lt__(self, other): return self.simple + self.name < other.simple + other.name
+    def __lt__(self, other): 
+        return self.simple + self.name < other.simple + other.name
 
     def from_bytes(self, byt):
         bytl = byt[0:6] + b'\x00' +byt[6:9] + b'\x00' + byt[9:10]
@@ -579,7 +591,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
         return 10
 
     @staticmethod
-    def nullValue() : return PropertyValue().value
+    def nullValue() : return {ES.prp_type: ES.nullDict, ES.prp_unit: ES.prop[ES.nullDict][5]}
     
     def vSimple(self, string=False): 
         ''' return simple value (type for the property) in a string format or in a object format''' 
@@ -638,10 +650,6 @@ class ResultValue (ESValue):               # !!! début ESValue
      
     The methods defined in this class are : 
 
-    *setters*
-
-    - `setIndValue`
-    
     *exports - imports*
 
     - `from_bytes`
@@ -663,19 +671,10 @@ class ResultValue (ESValue):               # !!! début ESValue
         where 'resval' is a ResultValue(copy), 'value' is a 'result' or ['result', 'ind'],
         'result' is an Object, 'ind' is a list with three integer and 'name' is a string.        
         '''
-        ESValue.__init__(self)
-        if type(val) == str : 
-            try: val=json.loads(val)
-            except: pass
-        self._init(val)
-        if self.name == ES.nullName and type(name) == str and name != ES.nullName : self.name = name
-
-    def __lt__(self, other): 
-        if self.value == other.value : return self.name <  other.name
-        else : return self.value < other.value
+        ESValue.__init__(self, val, name)
 
     @staticmethod
-    def nullValue() : return ResultValue().value
+    def nullValue() : return ES.nullVal
          
     def to_float(self):
         if self.value == None :         return float('nan')

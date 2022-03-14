@@ -16,7 +16,7 @@ In the example below, the set of data is scores of students and the properties a
 The Ilist Object has many properties and can be converted into a matrix (e.g. numpy
 or Xarray object to perform statistical processing) or into several formats (e.g. json, csv).
 
-<img src="./ilist_xarray.png" width="300">
+<img src="./ilist_xarray.png" width="400">
 
 The data model is as follows :
     
@@ -1301,7 +1301,7 @@ class Ilist:
             if funcidx==[] : funci=identity 
             else : funci= funcidx[i]
             if   self.idxcoupled[i] : 
-                xlisti = self._tonumpy(self._xderived(i, self.idxder[i]), func=funci, **kwargs)
+                xlisti = self._tonumpy(self._xderived(i, self.idxref[i]), func=funci, **kwargs)
                 coord[self.idxname[i]] = (self.idxname[self.idxref[i]], xlisti)
             elif self.idxderived[i] : 
                 xlisti = self._tonumpy(self._xderived(i, self.idxder[i]), func=funci, **kwargs)
