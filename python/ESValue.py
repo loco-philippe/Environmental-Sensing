@@ -2,7 +2,7 @@
 """
 Created on Mon Aug  2 14:51:23 2021
 
-@author: philippe@loco-labs.io
+@author: philippe@loco-labs.io alias gros doudou poilu
 
 This module groups the classes of the objects used in the `ES.Observation` module :
     
