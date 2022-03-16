@@ -4,7 +4,7 @@ Created on Sun Aug  1 22:05:08 2021
 
 @author: Philippe@loco-labs.io
 
-The `ES.EStestunitaire` module contains the unit tests (class unittest) for all the 
+The `ES.test_observation` module contains the unit tests (class unittest) for all the 
 Environmental Sensing functions.
 """
 import unittest

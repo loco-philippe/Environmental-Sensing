@@ -313,7 +313,8 @@ The Observation Object is built around three main bricks :
     
 - Ilist Object which deal with indexing,
 - ESValue Object which integrate the specificities of environmental data,
-- Tools dedicated to particular domains (Shapely for location, TimeSlot for Datation)
+- Tools dedicated to particular domains ([Shapely](https://shapely.readthedocs.io/en/stable/manual.html) 
+for location, TimeSlot for Datation)
     
 The ES functions are divided according to the class below:
  
@@ -323,17 +324,22 @@ Modules contain the following classes:
     
 - ESObservation : 
     
-    - `ES.ESObservation.Observation`
+    - `ES.ESObservation`
     
 - ESValue : 
     
-    - `ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, `ES.ESValue.PropertyValue`, `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`
+    - `ES.ESValue`(`ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, `ES.ESValue.PropertyValue`,
+    `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`)
     
 - Ilist : 
     
-    - `ES.ilist.Ilist`
+    - `ES.ilist`
     
+- TimeSlot : 
+    
+    - `ES.timeslot`
+
 - ESconstante : 
     
-    - `ES.ESconstante.Es`.
+    - `ES.ESconstante`.
 """

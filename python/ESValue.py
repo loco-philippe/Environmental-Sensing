@@ -45,7 +45,7 @@ from ESconstante import ES
 from geopy import distance
 #import os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/Slot')
-from ESSlot import TimeSlot
+from timeslot import TimeSlot
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/openLocationCode')
 from openlocationcode import encode
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
@@ -105,13 +105,13 @@ class ESValue:
     @property
     def bounds(self):
         '''list or tuple (@property) 
-            DatationValue : datetime.isoformat boundingBox [tmin, tmax]
+            DatationValue : datetime.isoformat boundingBox (tmin, tmax)
             LocationValue : boundingBox (minx, miny, maxx, maxy)
-            Other ESValue : [] '''        
+            Other ESValue : () '''        
         try :
             return self.value.bounds
         except :
-            return []
+            return ()
     
     @staticmethod
     def cast(value, ValueClass):
@@ -331,7 +331,8 @@ class DatationValue(ESValue):   # !!! début ESValue
         return DatationValue(slot=TimeSlot([minMax[0], minMax[1]]), name='interval')
 
     @staticmethod
-    def nullValue() : return TimeSlot()
+    def nullValue() : return TimeSlot(ES.nullDate)
+    #def nullValue() : return TimeSlot()
     
     def to_bytes(self):
         '''
@@ -376,6 +377,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         self.value = TimeSlot(val)
         if self.value == TimeSlot() : 
             if type(val) == str and self.name == ES.nullName : self.name = val
+            self.value = TimeSlot(ES.nullDate) #!!!!!
 
     def _jsonValue(self, **kwargs): return self.value.json(string=False)
     

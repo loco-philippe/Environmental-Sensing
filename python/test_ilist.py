@@ -2,14 +2,17 @@
 """
 Created on Sat Jan 29 22:44:05 2022
 
-@author: a179227
+@author: Philippe@loco-labs.io
+
+The `ES.test_ilist` module contains the unit tests (class unittest) for the 
+`Ilist` functions.
 """
 import unittest
 from ilist import Ilist
 from copy import copy
 import csv, os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from EStestunitaire import obs_1, dat3, loc3, prop2, _res
+from test_observation import obs_1, dat3, loc3, prop2, _res
 #from ESObservation import Observation
 from ESValue import ResultValue, DatationValue, LocationValue, PropertyValue, ESValue
 from datetime import datetime
