@@ -16,7 +16,7 @@ import json, folium, copy, csv
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
-import os
+#import os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/iList')
 from ilist import Ilist
 

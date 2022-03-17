@@ -10,13 +10,14 @@ The `ES.test_ilist` module contains the unit tests (class unittest) for the
 import unittest
 from ilist import Ilist
 from copy import copy
-import csv, os
+import csv #, os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from test_observation import obs_1, dat3, loc3, prop2, _res
+from test_observation import dat3, loc3, prop2
 #from ESObservation import Observation
 from ESValue import ResultValue, DatationValue, LocationValue, PropertyValue, ESValue
 from datetime import datetime
-
+import bson
+#from bson.codec_options import CodecOptions
 #import ..\ESValue
 
 f = ['er', 'rt', 'er', 'ry']
@@ -32,7 +33,13 @@ resind = [[0,2,3,1], [2,1,3,0], [0,1,2,3]]
 setres =Ilist.Iext(reslist, resind) 
 dicttest = dict((obs_1, dat3, loc3, prop2, _res(6)))'''
 
+def dumps(file, dic):
+    with open(file, "wb") as binary_file :   binary_file.write(bson.BSON.encode(dic))
 
+def loads(file):
+    with open(file, "rb") as binary_file : byt = binary_file.read()
+    return bson.BSON.decode(byt)
+    
 class Test_ilist(unittest.TestCase):
 
     il = Ilist.Idict({}, {'id1':[0,1,2], 'id2':[3,4,5]})
@@ -186,6 +193,10 @@ class Test_ilist(unittest.TestCase):
         il2 = il | ilx
         self.assertEqual(il2.extidx, ilx.extidx)
         self.assertEqual(il2.extval, il .extval)
+        il2=Ilist.Iext(['_er', '_rt', '_er', '_ry', '_ab'], [[10, 2, 10, 12, 10], [110,0,120,120,115]])
+        il2.addlistidx('truc', ['un', 'deux'], [0,0,1,1,0])
+        il2.addextidx('truc2', ['un', 'de', 'un', 'de', 'un'])
+        self.assertEqual(il2.loc([12, 120, "deux", "de"]), '_ry')
         
     def test_swap(self):
         il = Ilist.Iset([['a', [0, 0, 0]], ['b', [0, 0, 1]], ['c', [1, 1, 0]],
@@ -196,12 +207,6 @@ class Test_ilist(unittest.TestCase):
         il.swapindex([2,0,1])
         il.swapindex([2,0,1])
         self.assertEqual(il, il1)
-
-    def test_extend(self):
-        il2=Ilist.Iext(['_er', '_rt', '_er', '_ry', '_ab'], [[10, 2, 10, 12, 10], [110,0,120,120,115]])
-        il2.addlistidx('truc', ['un', 'deux'], [0,0,1,1,0])
-        il2.addextidx('truc2', ['un', 'de', 'un', 'de', 'un'])
-        self.assertEqual(il2.loc([12, 120, "deux", "de"]), '_ry')
         
     def test_to_numpy(self):      
         il = Ilist.Idict({'result':[ResultValue(0), ResultValue(1), ResultValue(2), 
@@ -243,6 +248,7 @@ class Test_ilist(unittest.TestCase):
         test.to_xarray(axes=[0,2], fillvalue=-1) 
         test.json(json_mode='vi')
         
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
 

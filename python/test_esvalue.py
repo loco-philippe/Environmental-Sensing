@@ -161,6 +161,8 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(val.vSimple(), [4,5])
         val.setValue(LocationValue([[6,7], [7,8], [8,6]]))
         self.assertEqual(val.value, LocationValue._gshape([[6,7], [7,8], [8,6]]))
+        val.setValue(LocationValue([[[6,7], [7,8], [8,6]]]))
+        self.assertEqual(val.value, LocationValue._gshape([[[6,7], [7,8], [8,6]]]))
         val.setName('truc')
         self.assertEqual(val.name, 'truc')     
         val = DatationValue(t1)
