@@ -90,12 +90,12 @@ class Ilist:
 
     *class methods (constructor)*
 
-    - `Ilist.Idict`
-    - `Ilist.Iset`
-    - `Ilist.Iidx`
-    - `Ilist.Iext`
-    - `Ilist.Izip`
     - `Ilist.Icsv`
+    - `Ilist.Idict`
+    - `Ilist.Iext`
+    - `Ilist.Iidx`
+    - `Ilist.Iset`
+    - `Ilist.Izip`
 
     *dynamic value property (getters)*
 
@@ -154,6 +154,7 @@ class Ilist:
     - `Ilist.full`
     - `Ilist.reindex`
     - `Ilist.reorder`
+    - `Ilist.setfilter`
     - `Ilist.sort`
     - `Ilist.sortidx`
     - `Ilist.swapindex`
@@ -259,10 +260,9 @@ class Ilist:
             idxname = ['default index']
         elif extidx != [] and type(extidx[0]) != list : ext = [extidx]
         else :                                          ext = extidx
-        setidx = [Ilist._toset(ind) for ind in ext]
-        iidx   = [Ilist._toint(ind, setind) for (ind, setind) in zip(ext, setidx)]
+        setidx, iidx = Ilist._resetidx(ext)        
         return cls(extval, setidx, iidx, valname, idxname, defaultidx)
-
+        
     @classmethod
     def Izip(cls, *args):
         '''
@@ -360,22 +360,6 @@ class Ilist:
                 if type(idxname[i]) == str : self.idxname[i] = idxname[i]
 
     @staticmethod
-    def _initset(validx, setidx, idxref, order, defaultidx=True):
-        ''' generate extval and iidx '''
-        if validx == [] :
-            extval = []
-            iidx   = [[] for i in setidx]
-        elif type(validx[0]) != list :
-            extval = validx
-            idxlen = [len(ind) for ind in setidx]
-            iidx   = Ilist._initiidx(len(extval), idxlen, idxref, order, defaultidx)
-        else :
-            tvalidx = Ilist._transpose(validx)
-            extval  = tvalidx[0]
-            iidx    = Ilist._transpose(tvalidx[1])
-        return (extval, iidx)
-
-    @staticmethod
     def _initdict(dictvaliidx, dictsetidx, order=[], idxref=[]):
         ''' generate extval, setidx, iidx, valname and idxname'''
         valname = 'value'
@@ -422,6 +406,22 @@ class Ilist:
         for i in idxcoupled :
             iidx.insert(i,iidx[ref[i]])
         return iidx
+
+    @staticmethod
+    def _initset(validx, setidx, idxref, order, defaultidx=True):
+        ''' generate extval and iidx '''
+        if validx == [] :
+            extval = []
+            iidx   = [[] for i in setidx]
+        elif type(validx[0]) != list :
+            extval = validx
+            idxlen = [len(ind) for ind in setidx]
+            iidx   = Ilist._initiidx(len(extval), idxlen, idxref, order, defaultidx)
+        else :
+            tvalidx = Ilist._transpose(validx)
+            extval  = tvalidx[0]
+            iidx    = Ilist._transpose(tvalidx[1])
+        return (extval, iidx)
 
     def __repr__(self):
         ''' return ival and iidx'''
@@ -690,13 +690,14 @@ class Ilist:
         in textidx append is refuse.
 
         *Returns* : none '''
-        if not ((self.isextIndex(extind) and unique) or
-                (self.isValue(extval) and self.isextIndex(extind))):
-            self.extval.append(extval)
-            tiidx = self.tiidx
-            tiidx.append(self._updateset(extind))
-            self.iidx = self._transpose(tiidx)
-
+        if (self.iseIndex(extind) and unique) or \
+           (self.isValue(extval) and self.iseIndex(extind)): return
+        self.extval.append(extval)
+        tiidx = self.tiidx
+        tiidx.append(self._updateset(extind))
+        self.iidx = self._transpose(tiidx)
+        self.setidx, self.iidx = self._resetidx(self.extidx)
+            
     def appendi(self, extval, intind, unique=False):
         '''
         add a new value extval with index intind.
@@ -709,12 +710,13 @@ class Ilist:
         in tiidx append is refuse.
 
         *Returns* : none '''
-        if not ((self.isiIndex(intind) and unique) or
-                (self.isValue(extval) and self.isiIndex(intind))):
-            self.extval.append(extval)
-            tiidx = self.tiidx
-            tiidx.append(intind)
-            self.iidx = self._transpose(tiidx)
+        if (self.isiIndex(intind) and unique) or \
+           (self.isValue(extval) and self.isiIndex(intind)): return
+        self.extval.append(extval)
+        tiidx = self.tiidx
+        tiidx.append(intind)
+        self.iidx = self._transpose(tiidx)
+        self.setidx, self.iidx = self._resetidx(self.extidx)
 
     def extidxtoi(self, extind):
         '''
@@ -813,7 +815,7 @@ class Ilist:
             raise IlistError('index not found')
         return self.extval[ival]
 
-    def isextIndex(self, extind):
+    def iseIndex(self, extind):
         '''
         Return True if extind is present in extidx.
 
@@ -885,7 +887,7 @@ class Ilist:
             js = {}
             for i in range(len(self.setidx)) :
                 if self.idxlen[i] > 0 : js[self.idxname[i]] = self.setidx[i]
-            if len(lis) > 1 : js[self.valname] = lis
+            if len(lis) > 0 : js[self.valname] = lis
         if option2['json_string']: return json.dumps(js)
         return js
 
@@ -925,7 +927,8 @@ class Ilist:
 
     def reorder(self, sort=[], inplace=True):
         '''
-        Change the order of extval and iidx with a new order define by sort.
+        Change the order of extval and iidx with a new order define by sort 
+        (sort can be a subset of the items list).
 
         *Parameters*
 
@@ -937,13 +940,39 @@ class Ilist:
 
         - **None, if inplace. Ilist if not inplace**'''
         extval = self._reorder(self.extval, sort)
-        iidx =  [self._reorder(idx, sort) for idx in self.iidx]
+        iidx =  [self._reorder(idx, sort) for idx in self.iidx]       
+        extidx =  [self._reorder(eidx, sort) for eidx in self.extidx] #!!!
+        setidx, iidx = self._resetidx(extidx) #!!!
         if inplace :
             self.extval = extval
             self.iidx   = iidx
+            self.setidx = setidx #!!!
             return None
-        return Ilist(extval, self.setidx, iidx, self.valname, self.idxname)
+        return Ilist(extval, setidx, iidx, self.valname, self.idxname) #!!!
 
+    def setfilter(self, setidxfilt=None, inplace=True, index=True):
+        '''
+        Remove values that does not match the indexes filter. 
+        The filter is a reduced list of indexes. 
+
+        *Parameters*
+
+        - **setidxfilt** : list of lists (default None) - new reduced setidx. If None, no change.
+        - **index** : boolean (default True) - indicates if setidxfilt is a list of values (False)
+        or indexes (True).
+        - **inplace** : boolean (default True) - if True, new setidx is apply to self,
+        if False a new Ilist is created.
+
+        *Returns*
+
+        - **None, if inplace. Ilist if not inplace**'''
+        if setidxfilt is None or not isinstance(setidxfilt, list) : return
+        tiidx = self.tiidx
+        if index : setidxf = copy(setidxfilt)
+        else : setidxf = [self._index(self.setidx[i], setidxfilt[i]) for i in range(self.lenidx)]
+        sort = [idx for idx in range(len(self)) if self._isinset(tiidx[idx], setidxf)]
+        return self.reorder(sort, inplace=inplace)
+    
     def sort(self, sort=[], order=[], reindex=True, inplace=True):
         ''' sort : calculate a new list order'''
         return self.reorder(self.sortidx(order, sort, reindex), inplace)
@@ -1106,10 +1135,11 @@ class Ilist:
         *Returns* : none'''
         if len(extind) != self.lenidx or indval < 0 or indval >= len(self) :
             raise IlistError("out of bounds")
-        if self.isextIndex(extind) and unique : return
+        if self.iseIndex(extind) and unique : return
         tiidx = self.tiidx
         tiidx[indval] = self._updateset(extind)
         self.iidx = self._transpose(tiidx)
+        self.setidx, self.iidx = self._resetidx(self.extidx)
 
     def updatelist(self, extlist, idx=None):
         '''
@@ -1129,6 +1159,7 @@ class Ilist:
             else :
                 self.setidx[ind] = self._toset(extl)
                 self.iidx[ind] = self._toint(extl, self.setidx[ind])
+                self.setidx, self.iidx = self._resetidx(self.extidx)
 
     def vlist(self, *args, func=None, idx=None, **kwargs):
         '''
@@ -1146,6 +1177,7 @@ class Ilist:
         return self._funclist(self.extidx[index], func, *args, **kwargs)
 
     def _checkidxlist(self, listidx, idx):      # !!!
+        ''' check if listidx and idx are consistent and return a list for each'''
         # idx=-1 -> val
         if isinstance(idx, int) : index = [idx]
         elif idx is None :    index = [-1]
@@ -1187,6 +1219,13 @@ class Ilist:
                         'setval':self.setval, 'tiidx':self.tiidx, 'textidx':self.textidx}
         return dic
 
+    @staticmethod 
+    def _filter(func, lis, res, *args, **kwargs ):
+        '''apply "func" to each value of "lis" and tests if equals "res".
+        Return the list of index with True result.'''
+        lisf = Ilist._funclist(lis, func, *args, **kwargs)
+        return [i for i in range(len(lis)) if lisf[i] == res]
+
     @staticmethod
     def _funclist(value, func, *args, **kwargs):
         '''return the function func applied to the object value with parameters args and kwargs'''
@@ -1206,6 +1245,19 @@ class Ilist:
         if len(lis) == 1 : return lis[0]
         return lis
 
+    def _idxfilter(self, func, attr, idx, *args ):
+        # méthode à conserver (attr : extidx, iidx, setidx) ??
+        if attr not in ['extidx', 'iidx', 'setidx'] : raise IlistError("attr not supported")
+        listidx = getattr(self, attr)[idx]
+        try : getattr(listidx[0], func)
+        except : raise IlistError("function not available with the index")
+        try : return [i for i in range(len(listidx)) if getattr(listidx[i], func)(args[0])]
+        except : 
+            try : return [i for i in range(len(listidx)) if getattr(listidx[i], func)(args[0], args[1])]
+            except : 
+                try : return [i for i in range(len(listidx)) if getattr(listidx[i], func)(args[0], args[1], args[2])]
+                except : return
+                
     def _idxfull(self, axes=[]):
         '''return iidx with full index in the axes'''
         if    axes==[] : axe = [i for i in range(self.lenidx) if not self.idxcoupled[i]]
@@ -1239,8 +1291,16 @@ class Ilist:
     @staticmethod
     def _index(idx, val):
         '''return the index of val in idx'''
-        return idx.index(val)
-
+        if type(val) != list : return idx.index(val)
+        return [idx.index(v) for v in val]
+   
+    @staticmethod 
+    def _isinset(ind, setidxfilt):
+        ''' tests if each index value in "ind" is present in the list of indexes "setidxfilt"''' 
+        for i, idx in enumerate(ind) : 
+            if idx not in setidxfilt[i] : return False 
+        return True
+        
     @staticmethod
     def _json(val, json_string=False):
         '''return the json format of val (if function json() or to_json() exists'''
@@ -1276,6 +1336,13 @@ class Ilist:
     def _reorder(val, sort=[]):
         if sort == [] : return val
         return [val[ind] for ind in sort]
+   
+    @staticmethod
+    def _resetidx(extidx):
+        '''return setidx and iidx from extidx'''
+        setidx = [Ilist._toset(ind) for ind in extidx]
+        iidx   = [Ilist._toint(ind, setind) for (ind, setind) in zip(extidx, setidx)]
+        return (setidx, iidx)
 
     @staticmethod
     def _setable(extv):
@@ -1290,7 +1357,8 @@ class Ilist:
         ext = Ilist._setable(extv)
         return [extset.index(val) for val in ext]
 
-    def _toival(self, extval): return self.setval.index(extval)
+    def _toival(self, extval):
+        return self.setval.index(extval)
 
     @staticmethod
     def _toext(iidx, extset):
@@ -1352,6 +1420,7 @@ class Ilist:
     def _xderived(self, idxder, idxori) :
         dic = self._idxlink(self.extidx[idxori], self.extidx[idxder], coupled=False)
         return [dic[i] for i in self.setidx[idxori]]
+    
 
 class IlistError(Exception):
     ''' Ilist Exception'''

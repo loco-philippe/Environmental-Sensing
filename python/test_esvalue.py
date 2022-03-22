@@ -8,12 +8,12 @@ The `ES.test_esvalue` module contains the unit tests (class unittest) for the
 `ESValue` functions.
 """
 import unittest, json
-
+from ilist import Ilist
 
 from ESValue import ResultValue, LocationValue, DatationValue, \
-    PropertyValue #, _gshape
+    PropertyValue, ESValue #, _gshape
 from ESconstante import ES
-from pprint import pprint
+#from pprint import pprint
 from datetime import datetime
 
 # couverture tests (True if non passed)----------------------------------------
@@ -172,7 +172,27 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(val.vInterval(False), s1)
         val.setName('truc')
         self.assertEqual(val.name, 'truc')
-    
+
+    def test_link(self):
+        dat = DatationValue(datetime(2005,1,1))
+        dat2 = DatationValue([datetime(2000,1,2), datetime(2006,1,1)])
+        self.assertEqual(dat.link(dat2), 'within')
+        self.assertTrue(dat.within(dat2))
+        loc = LocationValue([[[0,1],[1,1], [1,0], [0,0]]])
+        loc2 = LocationValue([[[0,10],[10,10], [10,0],[0,0]]])
+        loc3 = LocationValue([0.5, 0.5])
+        self.assertEqual(loc.link(loc2), 'within')
+        self.assertTrue(loc.within(loc2))
+        self.assertEqual(loc.link(loc3), 'contains')
+        self.assertEqual(LocationValue([0.5, 0.5]).link(LocationValue([0.5, 0.5])), 'equals')
+        prp = PropertyValue({'a':2, 'b':3})
+        prp2 = PropertyValue({'a':2})
+        self.assertEqual(prp.link(prp2), 'contains')
+        self.assertTrue(prp.contains(prp2))
+        prp2 = PropertyValue({'a':3})
+        self.assertEqual(prp.link(prp2), 'intersects')
+        prp2 = PropertyValue({'c':3})
+        self.assertEqual(prp.link(prp2), 'disjoint')
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

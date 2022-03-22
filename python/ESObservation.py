@@ -58,6 +58,13 @@ class Observation :
     - `Observation.setResult`
     - `Observation.typeObs`
     
+    *getters*
+    
+    - `Observation.vList`
+    - `Observation.vListName`
+    - `Observation.vListSimple`
+    - `Observation.vListValue`
+    
     *add value*
     
     - `Observation.addAttributes`
@@ -79,9 +86,9 @@ class Observation :
     *management*
     
     - `Observation.extend`
+    - `Observation.filter`
     - `Observation.full`
     - `Observation.sort`
-    - `Observation.find`
     
     *visualization*
     
@@ -120,13 +127,13 @@ class Observation :
         kwargs |= {'order' : order, 'idxref' : idxref}
         self.name = "observation du " + datetime.now().isoformat()
         self.option = ES.mOption.copy()
-        self.mAtt = {}
+        self.parameter = ES.nullAtt        # json
         self.ilist = Ilist()
+        self.mAtt = {}
         self.mAtt[ES.obs_reference] = 0
         self.mAtt[ES.obs_resultTime] = "null"
         self.mAtt[ES.obs_id] = "null"
         self._initObs(*args, **kwargs)
-        self.parameter = ES.nullAtt        # json
 
     
     def _initObs(self, *args, **kwargs):
@@ -165,7 +172,9 @@ class Observation :
         for classES in ES.esObsClass[0:3] :
             if classES in list(js) : 
                 dicidx[classES] = ESValue.cast(js[classES], _EsClassValue[classES])
-        if ES.res_classES in list(js) : dicres[ES.res_classES] = js[ES.res_classES]
+        if ES.res_classES in list(js) : 
+            dicres[ES.res_classES] = js[ES.res_classES]
+            #dicres[ES.res_classES] = ESValue.cast(js[ES.res_classES], ResultValue)
         if 'order' in list(js) : order = js['order']
         if 'idxref' in list(js) : idxref = js['idxref']
         (v, seti, ii, vname, iname) = Ilist._initdict(dicres, dicidx, order, idxref)
@@ -223,7 +232,8 @@ class Observation :
 
     def __iadd__(self, other):
         ''' Add other's values to self's values'''
-        self.ilist += other.ilist
+        #self.ilist += other.ilist
+        self.ilist.iadd(other.ilist, unique=self.option["unic_index"])
         self.option = other.option | self.option
         self.mAtt = other.mAtt | self.mAtt
         return self
@@ -519,7 +529,45 @@ class Observation :
         if ES.loc_classES in nameES: newindex.append(nameES.index(ES.loc_classES))
         if ES.prp_classES in nameES: newindex.append(nameES.index(ES.prp_classES))
         self.ilist.swapindex(newindex)
+
+    def filter(self, inplace=False, **filterdic):
+        '''
+        Remove `ES.ESValue.ResultValue` that does not match the indexes filter. 
+        The filter is a list of tests of the form : "indexvalue.method(parameter) is True"
+        where keyword "method : parameter" are given in the dictionnary. Filters are cumulatives.
+ 
+        *Parameters*
         
+        - **inplace** : boolean (default False) - If True, apply filter to 
+        Observation, else return new Observation.        
+        - **filterdic** : keyword arguments (keys is a ClassES and value is a dictionnary) .
+                          where dict value contains keyword "method : parameter"
+        
+        *Returns*
+        
+        - **Observation** : new observation if not inplace, else None.
+        '''
+        setidxf = [list(range(self.ilist.idxlen[idx])) for idx in range(self.ilist.lenidx)]
+        if filterdic is None or not isinstance(filterdic,  dict) : 
+            raise ObservationError("filter is not a dictionnary")
+        for ESclass, dic in filterdic.items():
+            if dic is None or not isinstance(dic,  dict) : 
+                raise ObservationError("filter is not a dictionnary") 
+            if ESclass not in ES.esObsClass : continue
+            idx = self.ilist.idxname.index(ESclass)
+            for test, value in dic.items():
+                setidx = self.ilist._idxfilter(test, 'setidx', idx, value)
+                setidxf[idx] = [i for i in setidxf[idx] if i in setidx]                
+        if inplace :
+            self.ilist.setfilter(setidxf, inplace=inplace)
+            return None
+        newobs = Observation()
+        newobs.ilist     = self.ilist.setfilter(setidxf, inplace=False)
+        newobs.mAtt      = self.mAtt
+        newobs.parameter = self.parameter
+        newobs.option    = self.option 
+        return newobs    
+                    
     def from_json(self, js):
         '''
         Complete an empty `Observation` with json data. 
@@ -557,13 +605,12 @@ class Observation :
         if inplace :
             self.ilist.full(axes=axes, fillvalue=fillvalue, inplace=inplace)
             return None
-        else : 
-            newobs = Observation()
-            newobs.ilist     = self.ilist.full(axes=axes, fillvalue=fillvalue, inplace=inplace)
-            newobs.mAtt      = self.mAtt
-            newobs.parameter = self.parameter
-            newobs.option    = self.option 
-            return newobs    
+        newobs = Observation()
+        newobs.ilist     = self.ilist.full(axes=axes, fillvalue=fillvalue, inplace=inplace)
+        newobs.mAtt      = self.mAtt
+        newobs.parameter = self.parameter
+        newobs.option    = self.option 
+        return newobs    
     
     def iLoc(self, idat, iloc, iprp, json=True):
         '''
@@ -821,7 +868,8 @@ class Observation :
         dic = { ES.type : ES.obs_classES }
         if self.mAtt[ES.obs_id] != ES.nullAtt: dic[ES.obs_id] = self.mAtt[ES.obs_id]
         dic |= self._jsonAtt(**option2)
-        dic |= self.ilist.json(**option2, cls=ESValueEncoder)
+        #dic |= self.ilist.json(**option2, cls=ESValueEncoder)
+        dic |= self.ilist.json(**option2)
         if option["json_param"] and self.parameter != ES.nullAtt: 
             dic[ES.parameter] = self.parameter
         dic |= self._info(**option2) 
@@ -1009,38 +1057,6 @@ class Observation :
         for i in range(1,len(listValue)): val = val.union(listValue[i].value)
         return ValueClass._Box(val.bounds)
 
-    def _infoType(self):
-        ''' Add information's key-value to dict dcinf'''
-        dcinf = dict()
-        dcinf[ES.json_type_obs] = self.typeObs
-        for i in range(4) :
-            if     self.nValueObs[i] > 1 : dcinf[ES.json_type[i]] = ES.multi + ES.esObsClass[i]
-            else :                         dcinf[ES.json_type[i]] =            ES.esObsClass[i]
-        return dcinf
-    
-    def _infoNval(self):
-        ''' Add valueList lenght to dict dcinf'''
-        dcinf = dict()
-        for i in range(4) : dcinf[ES.json_nval[i]] = self.nValueObs[i]
-        return dcinf
-    
-    def _infoBox(self):                 # !!!!!! à faire
-        ''' Add box informations's key-value to dict dcinf'''
-        dcinf = dict()
-        dcinf[ES.loc_box] = []
-        dcinf[ES.dat_box] = []
-        return dcinf
-    
-    def _infoOther(self):
-        ''' Add other's information key-value to dict dcinf'''
-        dcinf = dict()
-        dcinf[ES.obs_complet] = self.complet
-        dcinf[ES.obs_score]   = self.score
-        dcinf[ES.res_mRate]   = self.rate
-        dcinf[ES.res_dim]     = self.dimension
-        dcinf[ES.res_axes]    = self.axes
-        return dcinf
-    
     def _info(self, **kwargs):
         ''' Create json string with dict datas'''
         option = self.option | kwargs
@@ -1060,6 +1076,38 @@ class Observation :
             else :                  return json.dumps(dcinf)
         else: return dcinf
 
+    def _infoBox(self):                 # !!!!!! à faire
+        ''' Add box informations's key-value to dict dcinf'''
+        dcinf = dict()
+        dcinf[ES.loc_box] = []
+        dcinf[ES.dat_box] = []
+        return dcinf
+    
+    def _infoNval(self):
+        ''' Add valueList lenght to dict dcinf'''
+        dcinf = dict()
+        for i in range(4) : dcinf[ES.json_nval[i]] = self.nValueObs[i]
+        return dcinf
+    
+    def _infoOther(self):
+        ''' Add other's information key-value to dict dcinf'''
+        dcinf = dict()
+        dcinf[ES.obs_complet] = self.complet
+        dcinf[ES.obs_score]   = self.score
+        dcinf[ES.res_mRate]   = self.rate
+        dcinf[ES.res_dim]     = self.dimension
+        dcinf[ES.res_axes]    = self.axes
+        return dcinf
+    
+    def _infoType(self):
+        ''' Add information's key-value to dict dcinf'''
+        dcinf = dict()
+        dcinf[ES.json_type_obs] = self.typeObs
+        for i in range(4) :
+            if     self.nValueObs[i] > 1 : dcinf[ES.json_type[i]] = ES.multi + ES.esObsClass[i]
+            else :                         dcinf[ES.json_type[i]] =            ES.esObsClass[i]
+        return dcinf
+    
     @staticmethod
     def _isESAtt(esClass, key):
         """identify if 'key' is included in 'esClass'
@@ -1094,7 +1142,9 @@ class Observation :
     @staticmethod        
     def _majListName(listVal, newlistVal):
         ''' update name in a list of `ES.ESValue` '''
-        if len(listVal) != len(newlistVal) : return
+        if len(listVal) != len(newlistVal) : 
+            raise ObservationError("inconsistent length of the lists : " + 
+                                   str(len(listVal)) + " and " + str(len(newlistVal)))
         if type(newlistVal[0]) == str :
             for i in range(len(listVal)) : listVal[i].setName(newlistVal[i])
         else : 

@@ -39,7 +39,7 @@ ESValue is build around two attributes :
 <img src="./ESValue_class.png" width="800">
 
 """
-import json, geojson, struct, shapely.geometry
+import json, geojson, struct, shapely.geometry, re
 from datetime import datetime
 from ESconstante import ES
 from geopy import distance
@@ -69,11 +69,22 @@ class ESValue:
 
     The methods defined in this class are :
 
+    **binary predicates**
+    
+    - `contains`
+    - `equals`
+    - `intersects`
+    - `within`
+    - `disjoint`
+    - `isEqual`
+    - `isNotNull`
+    - `isName`
+
+    **other methods**
+    
     - `cast` (@staticmethod)
     - `getValue`
     - `getName`
-    - `isEqual`
-    - `isNotNull`
     - `json`
     - `setName`
     - `setValue`
@@ -173,6 +184,30 @@ class ESValue:
         return  (name and     value and equalName  and equalValue) or \
                 (name and not value and equalName  and not nullName) or \
                 (not name and value and equalValue and not nullValue)
+
+    def isName(self, pattern):
+        '''check if a pattern (regex) is presenty in the ESValue name.'''
+        return re.search(pattern, self.getName()) is not None
+
+    def equals(self, other):
+        '''check if self value equals other value (return a boolean).'''
+        return self.link(other) == 'equals'
+
+    def disjoint(self, other):
+        '''check if self value is disjoint from other value (return a boolean).'''
+        return self.link(other) == 'disjoint'
+
+    def contains(self, other):
+        '''check if self value contains other value (return a boolean).'''
+        return self.link(other) == 'contains'
+
+    def within(self, other):
+        '''check if self value is within other value (return a boolean).'''
+        return self.link(other) == 'within'
+
+    def intersects(self, other):
+        '''check if self value intersects other value (return a boolean).'''
+        return self.link(other) == 'intersects'
 
     def isNotNull(self):
         '''return boolean. True if the 'ESValue' is not a NullValue'''
@@ -278,7 +313,8 @@ class DatationValue(ESValue):   # !!! début ESValue
 
     - `Instant`
     - `Interval`
-
+    - `link`
+    
     *exports - imports*
 
     - `from_bytes`
@@ -337,6 +373,17 @@ class DatationValue(ESValue):   # !!! début ESValue
         '''DatationValue built from a datetime.isoformat tuple (tmin, tmax) (static method)'''
         return DatationValue(slot=TimeSlot([minMax[0], minMax[1]]), name='interval')
 
+    def link(self, other):
+        ''' 
+        return the link (string) between self.value and other.value :
+        - equals     : if self and other are the same
+        - disjoint   : if self's intervals and other's intervals are all disjoint
+        - within     : if all self's intervals are included in other's intervals
+        - contains   : if all other's intervals are included in self's intervals
+        - intersects : in the others cases'''
+        if self.isEqual(other, name=False) : return 'equals'
+        return self.value.link(other.value)[0]        
+            
     @staticmethod
     def nullValue() : return TimeSlot(ES.nullDate)
 
@@ -399,7 +446,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     *Attributes (for @property see methods)* :
 
-    - **value** : Shapely object (instant, interval or list of interval)
+    - **value** : Shapely object (point, polygon)
     - **name** : String
 
     The methods defined in this class are :
@@ -420,6 +467,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     *conversion (static method)*
 
+    - `link`
     - `Point`
     - `Cuboid`
 
@@ -468,7 +516,8 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     @staticmethod
     def Cuboid(minMax, ccw=True):
-        '''LocationValue built with shapely.geometry.box parameters (static method)'''
+        '''static method : LocationValue built with shapely.geometry.box parameters
+        (minx, miny, maxx, maxy)'''
         return LocationValue(shape=shapely.geometry.box(*minMax, ccw), name='box')
 
     def from_bytes(self, byt):
@@ -492,6 +541,22 @@ class LocationValue(ESValue):              # !!! début LocationValue
         if type(self.value) == shapely.geometry.point.Point : return [self.value.x, self.value.y]
         return None
 
+    def link(self, other):
+        ''' 
+        return the link (string) between self.value and other.value :
+        - equals     : if self and other are the same
+        - disjoint   : if self's shape and other's shape are disjoint
+        - within     : if other's shape contains self's shape
+        - contains   : if self's shape contains other's shape
+        - intersects : in the others cases'''
+        if self.isEqual(other, name=False) :        return 'equals'
+        if self.value.equals(other.value) :         return 'equals'        
+        if self.value.contains(other.value) :       return 'contains'
+        if self.value.within(other.value) :         return 'within'
+        if self.value.disjoint(other.value) :       return 'disjoint'
+        if self.value.intersects(other.value) :     return 'intersects'
+
+    
     @staticmethod
     def nullValue() : return LocationValue._gshape(ES.nullCoor)
 
@@ -580,6 +645,10 @@ class PropertyValue(ESValue):              # !!! début ESValue
 
     - `vSimple`
 
+    *functions*
+    
+    - `link`
+    
     *exports - imports*
 
     - `from_bytes`
@@ -617,6 +686,22 @@ class PropertyValue(ESValue):              # !!! début ESValue
         self.value[ES.prp_uncertain]  = prp[5] // 2
         return 10
 
+    def link(self, other):
+        ''' 
+        return the link (string) between self.value and other.value :
+        - equals     : if self and other are the same
+        - disjoint   : if the self's key/val are all different from other's key/val
+        - within     : if all self's key/val are included in other's key/val
+        - contains   : if all other's key/val are included in self's key/val
+        - intersects : in the others cases'''
+        if self.isEqual(other, name=False) : return 'equals'
+        union = other.value | self.value            
+        union2 = self.value | other.value    
+        if union == self.value and union2 == self.value:   return 'contains'
+        if union == other.value and union2 == other.value: return 'within'
+        if union == union2:                                return 'disjoint'
+        return 'intersects'
+    
     @staticmethod
     def nullValue() : return {ES.prp_type: ES.nullDict, ES.prp_unit: ES.prop[ES.nullDict][5]}
 
@@ -704,12 +789,13 @@ class ResultValue (ESValue):               # !!! début ESValue
     def nullValue() : return ES.nullVal
 
     def to_float(self):
+        '''converts into a float value '''
         if self.value == None :         return float('nan')
         if type(self.value)==str:
             if self.value == ES.nullAtt:return float('nan')
             try:                        return float(self.value)
             except:                     return float('nan')
-        else :                          return float(self.value)
+        return float(self.value)
 
     def vSimple(self, string=False) :
         '''float value'''

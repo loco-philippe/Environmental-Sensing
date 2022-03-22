@@ -18,6 +18,7 @@ from ESconstante import ES
 import json, copy #, shapely
 import requests as rq
 from datetime import datetime
+from ilist import Ilist
 
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False
@@ -433,7 +434,7 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob1 = copy.copy(ob)
         ob1.appendObs(ob)
         self.assertEqual(ob1.setResult[6].value, ob)
-        self.assertEqual(ob1.setLocation[3], ob.bounds[1])
+        self.assertEqual(ob1.setLocation[1].value, ob.bounds[1].value) # ordre changeant
         
     def test_obs_sort(self):
         ob = Observation(dict((obs_1, dat3, dpt3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
@@ -455,6 +456,7 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         obc = copy.copy(ob)
         obc.option["add_equal"] = "value"
         obc.option["json_loc_name"] = obc.option["json_dat_name"] = obc.option["json_prp_name"] = True
+        obc.option["unic_index"] = True
         obc += ob
         self.assertEqual(json.loads(ob.to_json())[ES.res_classES], json.loads(obc.to_json())[ES.res_classES])
         self.assertEqual(json.loads(ob.to_json())[ES.dat_classES], json.loads(obc.to_json())[ES.dat_classES])
@@ -467,31 +469,22 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         self.assertEqual(json.loads(ob.to_json())[ES.prp_classES], json.loads(ob2.to_json())[ES.prp_classES])
         obc = copy.copy(ob)
         obc += obp
-        self.assertEqual(json.loads(ob.to_json())[ES.res_classES] + json.loads(obp.to_json())[ES.res_classES], 
-                         json.loads(obc.to_json())[ES.res_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.dat_classES] + json.loads(obp.to_json())[ES.dat_classES],
-                         json.loads(obc.to_json())[ES.dat_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.loc_classES] + json.loads(obp.to_json())[ES.loc_classES],
-                         json.loads(obc.to_json())[ES.loc_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.prp_classES] + json.loads(obp.to_json())[ES.prp_classES],
-                         json.loads(obc.to_json())[ES.prp_classES])
+        self.assertEqual(set(ob.setResult   + obp.setResult),   set(obc.setResult))
+        self.assertEqual(set(ob.setDatation + obp.setDatation), set(obc.setDatation))
+        self.assertEqual(set(ob.setLocation + obp.setLocation), set(obc.setLocation))
+        self.assertEqual(set(ob.setProperty + obp.setProperty), set(obc.setProperty))
         ob2 = ob + obp
-        self.assertEqual(json.loads(ob.to_json())[ES.res_classES] + json.loads(obp.to_json())[ES.res_classES], 
-                         json.loads(ob2.to_json())[ES.res_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.dat_classES] + json.loads(obp.to_json())[ES.dat_classES],
-                         json.loads(ob2.to_json())[ES.dat_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.loc_classES] + json.loads(obp.to_json())[ES.loc_classES],
-                         json.loads(ob2.to_json())[ES.loc_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.prp_classES] + json.loads(obp.to_json())[ES.prp_classES],
-                         json.loads(ob2.to_json())[ES.prp_classES])
+        self.assertEqual(set(ob.setResult   + obp.setResult),   set(ob2.setResult))
+        self.assertEqual(set(ob.setDatation + obp.setDatation), set(ob2.setDatation))
+        self.assertEqual(set(ob.setLocation + obp.setLocation), set(ob2.setLocation))
+        self.assertEqual(set(ob.setProperty + obp.setProperty), set(ob2.setProperty))
         obp2 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, pprop2, _res(18)))))
         ob2 = ob + obp2
-        self.assertEqual(json.loads(ob.to_json())[ES.res_classES] + json.loads(obp.to_json())[ES.res_classES], 
-                         json.loads(ob2.to_json())[ES.res_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.dat_classES], json.loads(ob2.to_json())[ES.dat_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.loc_classES], json.loads(ob2.to_json())[ES.loc_classES])
-        self.assertEqual(json.loads(ob.to_json())[ES.prp_classES] + json.loads(obp2.to_json())[ES.prp_classES],
-                         json.loads(ob2.to_json())[ES.prp_classES])
+        self.assertEqual(set(ob.setResult   + obp.setResult),    set(ob2.setResult))
+        self.assertEqual(set(ob.setDatation), set(ob2.setDatation))
+        self.assertEqual(set(ob.setLocation), set(ob2.setLocation))
+        self.assertEqual(set(ob.setProperty + obp2.setProperty), set(ob2.setProperty))
+
 
     def test_obs_full(self):
         ob=Observation('{"type": "observation", "datation": [{"date1": "2021-02-04T12:05:00"}, \
@@ -633,5 +626,29 @@ class TestExports(unittest.TestCase):
         #self.assertTrue(type(ob.to_geoDataFrame()) != type(None))
         self.assertTrue(ob.jsonFeature != '')
 
+    def test_filter(self):
+        dic = {'type': 'observation', 
+               'property': {'property': 'Temp', 'unit': 'deg C'}, 
+               'location': [[14, 42], [15, 42], [16, 42], [17, 42], [18, 42], [19, 42]], 
+               'datation': [{'test':'2021-05-04T12:05:00'}, '2021-05-05T12:05:00', 
+                            '2021-05-06T12:05:00', '2021-05-07T12:05:00', '2021-05-08T12:05:00',
+                            '2021-05-09T12:05:00'], 
+               'result':   [25, 26, 27, 28, 29, 30]}
+        ob = Observation(dic, idxref=[0,0,2])
+        ob.majList(DatationValue, ['name1', 'autre name', 'encore autre name3', '', '', ''], name=True)        
+        self.assertEqual(len(ob.filter(datation={'__lt__' : DatationValue(datetime(2021,5,8))} )), 4)
+        self.assertEqual(len(ob.filter(datation={'equals' : DatationValue(datetime(2021,5,5,12,5))} )), 1)
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,6)])} )), 2)
+        self.assertEqual(len(ob.filter(location={'intersects' : LocationValue([[[15,42], [17.5, 42], [15,42]]])} )), 3)
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,6)])},
+                                       location={'intersects' : LocationValue([[[15,42], [17.5, 42], [15,42]]])} )), 1)
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,6)])},
+                                       location={'within' : LocationValue.Cuboid((14.5, 41, 17.5, 44))} )), 1)
+        self.assertEqual(len(ob.filter(datation={'isName' : 'name.'} )), 2)
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,8)]),
+                                                 'isName' : 'name'} )), 3)
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,8)]),    # 4
+                                                 'isName' : 'name'},                                                    # 3
+                                       location={'within' : LocationValue.Cuboid((14.5, 41, 18.5, 44))} )), 2)
 if __name__ == '__main__':
     unittest.main(verbosity=2)

@@ -64,7 +64,7 @@ by ensuring convergence:
 
 <img src="./ES/standard.png" width="800">
 
-## Data structure
+## Observation
 
 In the ISO-19156 standard, an Observation is characterized by:
 
@@ -90,6 +90,23 @@ temporal, spatial and physical values.
 Common properties (indicators) are associated with each Observation. 
 They allow processing to be performed on Observations without having to know 
 their composition (e.g. bounding boxes, type of observation, volume, etc.).   
+
+## Data structure
+
+The implemented data structure respects the principles of the standard. 
+
+An Observation object groups common data (name, options, parameters) and associates
+ each of the dimensions 
+ 
+- spatial (LocationValue objects)
+- temporal (DatingValue objects)
+- properties (PropertyValue objects)
+
+to results (ResultValue objects).
+
+<img src="./ES/ESmodel.png" width="600">
+
+An Observation can represent both a single measurement and a large historical data set.
 
 ## Index
 
@@ -291,6 +308,7 @@ We also present how ResultValue without index can be loaded with the 'order' par
 
 - Add
 - Sort
+- Filter
 - Aggregation
 
 ## Interface

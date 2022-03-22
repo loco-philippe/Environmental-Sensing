@@ -36,7 +36,7 @@ Multiple properties are associated with the data :
 
 ## Relationships and assembly
 
-Two `TimeSlot` can be compared with five statuses (equal, subset, superset, disjoint, stacked).
+Two `TimeSlot` can be compared with five statuses (equals, contains, whitin, disjoint, intersects).
 
 Multiple operations between two objects can be performed :
     
@@ -94,11 +94,11 @@ class TimeSlot:
             self.slot = slot
             return
         if type(val) == tuple: val = list(val)
-        if type(val) == list and len(val) == 2 :  
+        if type(val) == list and len(val) == 2 and type(val[0]) != TimeInterval:  
             try :                         slot.append(TimeInterval(val))
             except :
                 for interv in val :       slot.append(TimeInterval(interv))
-        elif type(val) == list and len(val) != 2 :  
+        elif type(val) == list:  
             try :
                 for interv in val :       slot.append(TimeInterval(interv))
             except :                      slot.append(TimeInterval(val))
@@ -138,7 +138,7 @@ class TimeSlot:
         return self.stype + '\n' + self.json(True)
     
     def __eq__(self, other):
-        '''equal if the slots are equal'''
+        '''equal if the slots are equals'''
         try: return self.slot == other.slot
         except: return False
                
@@ -208,31 +208,48 @@ class TimeSlot:
     def link(self, other):
         '''
         Return the status (string) of the link between two TimeSlot (self and other).
-        - equal    : if self and other are the same
-        - disjoint : if self's intervals and other's intervals are all disjoint
-        - superset : if all other's intervals are included in self's intervals
-        - subset   : if all self's intervals are included in other's intervals
-        - stacked  : in the others cases
+        - equals     : if self and other are the same
+        - disjoint   : if self's intervals and other's intervals are all disjoint
+        - within     : if all self's intervals are included in other's intervals
+        - contains   : if all other's intervals are included in self's intervals
+        - intersects : in the others cases
 
         *Parameters*
         
         - **other** : TimeSlot to be compared
                 
-        *Returns* : string'''
-        union = self + other
-        if   union.duration == self.duration == other.duration : 
-            if len(union) == len(self) == len(other) : return 'full equal' 
-            else : return 'equal'
-        elif union.duration == self.duration + other.duration : 
-            if len(union) == len(self) + len(other) : return 'full disjoint' 
-            else : return 'disjoint'
-        elif union.duration == self.duration :
-            if len(union) == len(self) : return 'full superset' 
-            else : return 'superset'
-        elif union.duration == other.duration :
-            if len(union) == len(other) : return 'full subset' 
-            else : return 'subset'
-        else : return 'stacked'
+        *Returns* 
+        
+        - **tuple** : (string(status), boolean(full or not))'''
+        if self.stype == 'instant' : point, oslot = self[0], other
+        elif other.stype == 'instant' : point, oslot = other[0], self
+        else : point = None
+        if point is not None :
+            contains = equals = False
+            for interv in oslot:
+                contains = contains or interv.link(point) == 'contains'
+                equals = equals or interv.link(point) == 'equals'
+            if equals and not contains : return ('equals', True)
+            if contains and point == other[0] : return ('contains', True) 
+            if contains and point == self[0] : return ('within', True)
+            return ('disjoint', True)
+        else :
+            union = self + other
+            link = 'intersects'
+            full = True
+            if   union.duration == self.duration == other.duration : 
+                full = len(union) == len(self) == len(other)
+                link = 'equals'
+            elif union.duration == self.duration :
+                full = len(union) == len(self)
+                link = 'contains'
+            elif union.duration == other.duration :
+                full = len(union) == len(other)
+                link = 'within'
+            elif union.duration == self.duration + other.duration : 
+                full = len(union) == len(self) + len(other)
+                link = 'disjoint'
+            return (link, full)
 
     def timetuple(self, index=0, json_string=False): 
         '''
@@ -272,8 +289,8 @@ class TimeSlot:
         i = j = 0
         while i < len(slot) :
             for j in range(i + 1, len(slot)):
-                if   interv.link(slot[j]) == 'subset'   : interv = slot[j]
-                elif interv.link(slot[j]) == 'stacked'  : interv = interv.union(slot[j])
+                if   interv.link(slot[j]) == 'within'      : interv = slot[j]
+                elif interv.link(slot[j]) == 'intersects'  : interv = interv.union(slot[j])
                 elif interv.link(slot[j]) == 'disjoint' :
                     union.append(interv)
                     interv = slot[j]
@@ -338,7 +355,7 @@ class TimeInterval:    # !!! interval
         return self.stype + '\n' + self.json(True)
     
     def __eq__(self, other):
-        '''equal if the 'start' and 'end' dates are equal'''
+        '''equal if the 'start' and 'end' dates are equals'''
         return self.start == other.start and self.end == other.end
 
     def __lt__(self, other): 
@@ -391,22 +408,22 @@ class TimeInterval:    # !!! interval
     def link(self, other):
         '''
         Return the status (string) of the link between two TimeIntervals (self and other).
-        - equal    : if self and other are the same
-        - disjoint : if self's interval and other's interval are disjoint
-        - superset : if other's interval is included in self's interval
-        - subset   : if self's interval is included in other's interval
-        - stacked  : in the others cases
+        - equals     : if self and other are the same
+        - disjoint   : if self's interval and other's interval are disjoint
+        - within     : if other's interval is included in self's interval
+        - contains   : if self's interval is included in other's interval
+        - intersects : in the others cases
 
         *Parameters*
         
         - **other** : TimeInterval to be compared
                 
         *Returns* : string'''
-        if   self.start == other.start and self.end == other.end : return 'equal'
-        elif self.start <= other.start and self.end >= other.end : return 'superset'
-        elif self.start >= other.start and self.end <= other.end : return 'subset'
-        elif self.start <= other.end and self.end >= other.start : return 'stacked'
-        elif self.start >= other.end or  self.end <= other.start : return 'disjoint'
+        if self.start == other.start and self.end == other.end : return 'equals'
+        if self.start <= other.start and self.end >= other.end : return 'contains'
+        if self.start >= other.start and self.end <= other.end : return 'within'
+        if self.start <= other.end and self.end >= other.start : return 'intersects'
+        return 'disjoint'
 
     def timetuple(self, index=0, json_string=False): 
         '''

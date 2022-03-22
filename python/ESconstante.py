@@ -37,8 +37,8 @@ class Es:
                       "json_info_nval"      : False,
                       "json_info_box"       : False,
                       "json_info_other"     : False,
-                      #"unic_index"          : True,  # dans ESSet
-                      "add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
+                      "unic_index"          : True,  # dans add
+                      #"add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
                       "sort_order"          : 'dlp'
                       }
@@ -357,5 +357,4 @@ class Es:
         self.nullVal          = 0
         self.nullValues = (self.nullDate, self.nullCoor, self.nullInd, self.nullName,
                            self.nullAtt, self.nullDict, self.nullName, self.nullVal, self.nullPrp)
-
 ES = Es()

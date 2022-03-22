@@ -12,8 +12,8 @@ from ilist import Ilist
 from copy import copy
 import csv #, os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from test_observation import dat3, loc3, prop2
-#from ESObservation import Observation
+from test_observation import dat3, loc3, prop2, _res
+from ESObservation import Observation
 from ESValue import ResultValue, DatationValue, LocationValue, PropertyValue, ESValue
 from datetime import datetime
 import bson
@@ -34,10 +34,10 @@ setres =Ilist.Iext(reslist, resind)
 dicttest = dict((obs_1, dat3, loc3, prop2, _res(6)))'''
 
 def dumps(file, dic):
-    with open(file, "wb") as binary_file :   binary_file.write(bson.BSON.encode(dic))
+    with open(file, "wb") as b_file :   b_file.write(bson.BSON.encode(dic))
 
 def loads(file):
-    with open(file, "rb") as binary_file : byt = binary_file.read()
+    with open(file, "rb") as b_file : byt = b_file.read()
     return bson.BSON.decode(byt)
     
 class Test_ilist(unittest.TestCase):
@@ -120,6 +120,28 @@ class Test_ilist(unittest.TestCase):
         self.assertEqual( il.sortidx([1,0]), [1, 3, 2, 0])
         self.assertEqual( il.sortidx([0,1]), [2, 0, 1, 3])
         self.assertEqual( il.sort(inplace=False).sort(inplace=False), il.sort(inplace=False))
+        self.assertEqual( il.reorder([1,3], inplace=False).idxlen, [1,2])
+
+    def test_filter(self):
+        il = Ilist.Iext(f,l).setfilter([[0, 2], [12, 20, 30]], inplace=False, index=False)
+        self.assertEqual( il.setidx, [[0, 2], [12, 20, 30]])
+        il = Ilist.Iext(f,l).setfilter([[2], [12, 20, 30]], inplace=False, index=False)
+        self.assertEqual( il.setidx, [[2], [12]])
+        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
+        ob.majList(DatationValue, ['name1', 'autre name', 'encore autre name3'], name=True)
+        self.assertEqual(ob.ilist._idxfilter('isName', 'setidx', 0, 'name[1-9]'), [0,2])
+        self.assertEqual(Ilist._filter(ESValue.isName, ob.ilist.setidx[0], True, 'name[1-9]'), [0,2])
+        self.assertEqual(Ilist._filter(LocationValue.link, ob.ilist.setidx[1], 'within', 
+                                       LocationValue([[[6,41], [6,44], [4,44], [4,41], [6,41]]])), [2])
+        self.assertEqual(Ilist._filter(LocationValue.link, ob.ilist.setidx[1], 'within', 
+                                       LocationValue.Cuboid((4, 41, 6, 44))), [2])
+        self.assertEqual(Ilist._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}), ESValue.getName), 'date1')
+        self.assertTrue(Ilist._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}), 
+                                         ESValue.equals, DatationValue("2021-02-04T12:05:00")))
+        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
+        self.assertEqual(Ilist._filter(ESValue.getName, ob.setDatation, 'date1'), [0])
+
+
         
     def test_full(self) :
         f = ['er', 'rt', 'er', 'ry']
@@ -166,7 +188,11 @@ class Test_ilist(unittest.TestCase):
         self.assertEqual(il.extidx[0], [0,1,1])
         il.updatelist([0,2,2],0)
         self.assertEqual(il.extidx[0], [0,2,2])
-
+        il= Ilist.Izip(['a', 'b', 'c'], [1,2,2], [4,5,5])
+        il.updateidx(1,["d",8,2])
+        il.append("truc", ["z", 1,10])     
+        self.assertEqual(il.idxlen, [4,3,4])
+        
     def test_add(self):
         il1 = Ilist.Iext(['er', 'rt', 'er', 'ry', 'ab'], [[0, 2, 0, 2, 0], [10,0,20,20,15]])
         il2 = Ilist.Iext(['_er', '_rt', '_er', '_ry', '_ab'], [[10, 12, 10, 12, 10], [110,10,120,120,115]])
