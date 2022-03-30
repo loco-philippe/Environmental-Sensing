@@ -16,8 +16,7 @@ from test_observation import dat3, loc3, prop2, _res
 from ESObservation import Observation
 from ESValue import ResultValue, DatationValue, LocationValue, PropertyValue, ESValue
 from datetime import datetime
-import bson
-#from bson.codec_options import CodecOptions
+
 #import ..\ESValue
 
 f = ['er', 'rt', 'er', 'ry']
@@ -33,12 +32,6 @@ resind = [[0,2,3,1], [2,1,3,0], [0,1,2,3]]
 setres =Ilist.Iext(reslist, resind) 
 dicttest = dict((obs_1, dat3, loc3, prop2, _res(6)))'''
 
-def dumps(file, dic):
-    with open(file, "wb") as b_file :   b_file.write(bson.BSON.encode(dic))
-
-def loads(file):
-    with open(file, "rb") as b_file : byt = b_file.read()
-    return bson.BSON.decode(byt)
     
 class Test_ilist(unittest.TestCase):
 
@@ -134,7 +127,7 @@ class Test_ilist(unittest.TestCase):
         self.assertEqual(Ilist._filter(LocationValue.link, ob.ilist.setidx[1], 'within', 
                                        LocationValue([[[6,41], [6,44], [4,44], [4,41], [6,41]]])), [2])
         self.assertEqual(Ilist._filter(LocationValue.link, ob.ilist.setidx[1], 'within', 
-                                       LocationValue.Cuboid((4, 41, 6, 44))), [2])
+                                       LocationValue.Box((4, 41, 6, 44))), [2])
         self.assertEqual(Ilist._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}), ESValue.getName), 'date1')
         self.assertTrue(Ilist._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}), 
                                          ESValue.equals, DatationValue("2021-02-04T12:05:00")))
@@ -256,7 +249,7 @@ class Test_ilist(unittest.TestCase):
     def test_csv(self):
         il=Ilist.Iext(['er', 'rt', 'er', 'ry', 'ab'], [[0, 2, 0, 2, 0], [10,0,20,20,15], [1,2,1,2,1]])
         il.to_csv('ilist.txt', dialect='excel')
-        il2 = Ilist.Icsv('ilist.txt', quoting=csv.QUOTE_NONNUMERIC)
+        il2 = Ilist.from_csv('ilist.txt', quoting=csv.QUOTE_NONNUMERIC)
         self.assertEqual(il, il2)
 
     def test_list(self):
@@ -274,6 +267,24 @@ class Test_ilist(unittest.TestCase):
         test.to_xarray(axes=[0,2], fillvalue=-1) 
         test.json(json_mode='vi')
         
+        cours = Ilist.from_csv('example cours light.csv', delimiter=';')
+        coursfull = cours.full(cours.axesmin, fillvalue='-')
+        coursfull.to_csv('example cours light full.txt')
+        print('\n', 'taille (bytes) : ', coursfull.to_bytes().__sizeof__(), '\n')  # 2025, csv : 2749, xlsx : 12245
+    
+    def test_bson(self):
+        il = Ilist.Idict({'result':[ResultValue(0), ResultValue(1), ResultValue(2), 
+                                    ResultValue(3), ResultValue(4), ResultValue(5)]}, 
+                         {'datation':[DatationValue(dat3[1][0]), DatationValue(dat3[1][1]), 
+                                      DatationValue(dat3[1][2])],
+                          'location':[LocationValue(loc3[1][0]), LocationValue(loc3[1][1]), 
+                                      LocationValue(loc3[1][2])],
+                          'property':[PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]},
+                         idxref=[0,0,2], order=[2,0])
+        il2 = Ilist.from_bytes(il.to_bytes(bjson_format=True, bin_iidx=True))
+        self.assertEqual(il.json(bjson_format=False, bjson_bson=True), il2.json(bjson_format=False, bjson_bson=True))
+        #print(il2)
+                
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

@@ -39,8 +39,8 @@ ESValue is build around two attributes :
 <img src="./ESValue_class.png" width="800">
 
 """
-import json, geojson, struct, shapely.geometry, re
-from datetime import datetime
+import json, geojson, struct, shapely.geometry, re, bson
+import datetime
 from ESconstante import ES
 from geopy import distance
 #import os
@@ -53,7 +53,7 @@ from openlocationcode import encode
 class ESValueEncoder(json.JSONEncoder):
     """add a new json encoder for ESValue"""
     def default(self, o) :
-        return o.json(json_string=False)
+        return o.json(bjson_bson=False)
 
 class ESValue:
     """
@@ -83,6 +83,7 @@ class ESValue:
     **other methods**
     
     - `cast` (@staticmethod)
+    - `fromjson` (@classmethod)
     - `getValue`
     - `getName`
     - `json`
@@ -110,9 +111,12 @@ class ESValue:
         if self.value == other.value : return self.name <  other.name
         return self.value < other.value
 
-    def __repr__(self):
+    def __str__(self):
         '''return json string format'''
-        return self.json(json_string=True)
+        return self.json(bjson_format=True, bjson_bson=False)
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'({self.json(bjson_format=True, bjson_bson=False)})'
 
     def __copy__(self):
         '''return a new object with the same attributes'''
@@ -120,10 +124,30 @@ class ESValue:
 
     def __hash__(self): return hash(self.json())
 
+    def __to_bytes__(self, **option): 
+        js = {self.__class__.__name__ : self.json(bjson_format=False, bjson_bson=True)}
+        if option['bjson_format']: return bson.encode(js)
+        return js
+
+    @staticmethod
+    def __from_bytes__(bs):
+        if not isinstance(bs, (bytes, dict)): raise ESValueError("parameter is not dict or bytes")
+        if isinstance(bs, bytes): dic = bson.decode(bs)
+        else: dic = bs
+        ClassValue = eval(list(dic.keys())[0])
+        return ClassValue(list(dic.values())[0])
+    
+    @classmethod
+    def from_json(cls, bs):
+        if not isinstance(bs, (str, bytes, dict)): raise ESValueError("parameter is not string, dict or bytes")
+        if isinstance(bs, bytes): dic = bson.decode(bs)
+        else: dic = bs
+        return cls(dic)
+    
     @property
     def bounds(self):
         '''list or tuple (@property)
-            DatationValue : datetime.isoformat boundingBox (tmin, tmax)
+            DatationValue : boundingBox (tmin, tmax)
             LocationValue : boundingBox (minx, miny, maxx, maxy)
             Other ESValue : () '''
         try :
@@ -131,10 +155,22 @@ class ESValue:
         except :
             return ()
 
+    def boxUnion(self, other, name=''):
+        ''' 
+        return the union between box(self) and box(other) (new `ESValue`) with a new name.
+        '''
+        sbox = self.Box (self. bounds).value
+        obox = other.Box(other.bounds).value
+        if sbox == obox: ubox = sbox 
+        else : ubox = sbox.union(obox)
+        boxunion = self.__class__(val=self.Box(ubox.bounds))
+        if name != '': boxunion.name = name
+        return boxunion
+        
     @staticmethod
     def cast(value, ValueClass):
         '''
-        tranform a value in a list of `ESValue`
+        tranform a value (unique or list) in a list of `ESValue`
 
         *Parameters*
 
@@ -215,19 +251,22 @@ class ESValue:
 
     def json(self, **kwargs):
         '''
-        Export in Json format (string or dict).
+        Export in json/bson format (string or dict).
 
         *Parameters*
 
-        - **json_string** : boolean (default True) - choice for return format (string if True, dict else)
+        - **bjson_format** : boolean (default True) - choice for return format (string/bytes if True, dict else)
+        - **bjson_bson **  : boolean (default False)- choice for return format (bson if True, json else)
         - **json_res_index** : boolean - include index (for ResultValue)
 
         *Returns* :  string or dict '''
         option = ES.mOption | kwargs
-        if self.name == ES.nullName :                   js =  self._jsonValue(**option)
+        option2 = option | {'bjson_format': False}
+        if self.name == ES.nullName :                   js =  self._jsonValue(**option2)
         elif self.value == self.__class__.nullValue() : js =  self.name
-        else :                                          js = {self.name : self._jsonValue(**option)}
-        if option['json_string'] : return json.dumps(js, ensure_ascii=False)
+        else :                                          js = {self.name : self._jsonValue(**option2)}
+        if option['bjson_format'] and not option['bjson_bson'] : return json.dumps(js)
+        if option['bjson_format'] and option['bjson_bson']: return bson.encode(js)
         return js
 
     def setName(self, nam):
@@ -302,6 +341,11 @@ class DatationValue(ESValue):   # !!! début ESValue
 
     The methods defined in this class are :
 
+    *constructor (@classmethod)*
+    
+    - `Simple` (instant)
+    - `Box`    (interval)
+        
     *getters*
 
     - `getInstant`
@@ -311,8 +355,6 @@ class DatationValue(ESValue):   # !!! début ESValue
 
     *conversion (static method)*
 
-    - `Instant`
-    - `Interval`
     - `link`
     
     *exports - imports*
@@ -322,7 +364,19 @@ class DatationValue(ESValue):   # !!! début ESValue
     """
     valName     = ES.dat_valName
 
-    def __init__(self, val=ES.nullDate, slot=TimeSlot(), name=ES.nullName):
+    @classmethod
+    def Simple(cls, instant):
+        '''DatationValue built with a time value (instant) '''
+        return cls(slot=TimeSlot(instant), name='instant')
+
+    @classmethod
+    def Box(cls, bounds):
+        '''DatationValue built from a tuple or list box coordinates (tmin, tmax)'''
+        if isinstance(bounds, cls): bound = bounds.bounds
+        else : bound = bounds
+        return cls(slot=TimeSlot(bound), name='interval')
+
+    def __init__(self, val=ES.nullDate, name=ES.nullName, slot=TimeSlot()):
         '''
         Several DatationValue creation modes :
 
@@ -350,7 +404,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         - **int** : number of bytes used to decode a dateTime = 7
         '''
         dt = struct.unpack('<HBBBBB', byt[0:7])
-        self._init(datetime(dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]))
+        self._init(datetime.datetime(dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]))
         return 7
 
     def getInstant(self) :
@@ -363,16 +417,6 @@ class DatationValue(ESValue):   # !!! début ESValue
         if self.value.type == 'interval': return self.value. slot[0]
         return None
 
-    @staticmethod
-    def Instant(arg):
-        '''DatationValue built with a compatible TimeSlot arg (static method)'''
-        return DatationValue(slot=[arg, arg], name='instant')
-
-    @staticmethod
-    def Interval(minMax):
-        '''DatationValue built from a datetime.isoformat tuple (tmin, tmax) (static method)'''
-        return DatationValue(slot=TimeSlot([minMax[0], minMax[1]]), name='interval')
-
     def link(self, other):
         ''' 
         return the link (string) between self.value and other.value :
@@ -384,6 +428,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         if self.isEqual(other, name=False) : return 'equals'
         return self.value.link(other.value)[0]        
             
+
     @staticmethod
     def nullValue() : return TimeSlot(ES.nullDate)
 
@@ -399,18 +444,18 @@ class DatationValue(ESValue):   # !!! début ESValue
                            self.simple.day, self.simple.hour,
                            self.simple.minute, self.simple.second)
 
-    def vInterval(self, json_string=True):
+    def vInterval(self, bjson_bson=True):
         """[t1, t2] with t1, t2 - Mini, maxi of the TimeSlot (timestamp or datetime).
 
         *Parameters*
 
-        - **json_string** : boolean (default True) - choice for return format (timestamp if True, datetime else)
+        - **bjson_bson** : boolean (default True) - choice for return format (timestamp if True, datetime else)
 
         *Returns*
 
         - **JSON with timestamp or list with datetime**
         """
-        if json_string : return json.dumps([self.value.interval[0].isoformat(), self.value.interval[1].isoformat()])
+        if bjson_bson : return json.dumps([self.value.interval[0].isoformat(), self.value.interval[1].isoformat()])
         return self.value.interval
 
     def vSimple(self, string=False) :
@@ -429,16 +474,11 @@ class DatationValue(ESValue):   # !!! début ESValue
         self.value = TimeSlot(val)
         if self.value == TimeSlot() :
             if type(val) == str and self.name == ES.nullName : self.name = val
-            self.value = TimeSlot(ES.nullDate) #!!!!!
+            self.value = TimeSlot(ES.nullDate)
 
-    def _jsonValue(self, **kwargs):
-        '''return a Json dict for the value (TimeSlot) '''
-        return self.value.json(json_string=False)
-
-    @staticmethod
-    def _Box(minMax):
-        ''' return a DatationValue object from a tuple (tmin, tmax)'''
-        return DatationValue.Interval(minMax)
+    def _jsonValue(self, **option):
+        '''return a json/bson dict for the value (TimeSlot) '''
+        return self.value.json(**option) 
 
 class LocationValue(ESValue):              # !!! début LocationValue
     """
@@ -450,6 +490,11 @@ class LocationValue(ESValue):              # !!! début LocationValue
     - **name** : String
 
     The methods defined in this class are :
+
+    *constructor (@classmethod)*
+    
+    - `Simple` (point)
+    - `Box`
 
     *getters (@property)*
 
@@ -468,8 +513,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
     *conversion (static method)*
 
     - `link`
-    - `Point`
-    - `Cuboid`
 
     *exports - imports*
 
@@ -479,7 +522,19 @@ class LocationValue(ESValue):              # !!! début LocationValue
     """
     valName     = ES.loc_valName
 
-    def __init__(self, val=ES.nullCoor, shape=None, name=ES.nullName):
+    @classmethod
+    def Simple(cls, coord):
+        '''LocationValue built with tuple or list coordinates (x,y)'''
+        return cls(shape=shapely.geometry.Point(*coord), name='point')
+
+    @classmethod
+    def Box(cls, bounds, ccw=True):
+        '''LocationValue built with tuple or list box coordinates (minx, miny, maxx, maxy)'''
+        if isinstance(bounds, cls): bound = bounds.bounds
+        else : bound = bounds
+        return cls(shape=shapely.geometry.box(*bound, ccw), name='box')
+    
+    def __init__(self, val=ES.nullCoor, name=ES.nullName, shape=None):
         '''Several LocationValue creation modes :
 
         - LocationValue({name : coord}) where coord is a GeoJSON or list coordinates format
@@ -513,12 +568,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
     def coorInv(self):
         '''list (@property) : vSimple inverse coordinates [vSimple[1], vSimple[0]]'''
         return [self.vSimple()[1], self.vSimple()[0]]
-
-    @staticmethod
-    def Cuboid(minMax, ccw=True):
-        '''static method : LocationValue built with shapely.geometry.box parameters
-        (minx, miny, maxx, maxy)'''
-        return LocationValue(shape=shapely.geometry.box(*minMax, ccw), name='box')
 
     def from_bytes(self, byt):
         '''
@@ -560,11 +609,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @staticmethod
     def nullValue() : return LocationValue._gshape(ES.nullCoor)
 
-    @staticmethod
-    def Point(x, y):
-        '''LocationValue built with a compatible TimeSlot arg (static method)'''
-        return LocationValue(shape=shapely.geometry.Point(x, y), name='point')
-
     def to_bytes(self):
         '''Export in binary format.
 
@@ -597,10 +641,10 @@ class LocationValue(ESValue):              # !!! début LocationValue
         ''' return point (property) coordinates y '''
         return self.vSimple()[1]
 
-    @staticmethod
+    """@staticmethod
     def _Box(minMax):
         ''' return a LocationValue object from a tuple (minx, miny, maxx, maxy)'''
-        return LocationValue.Cuboid(minMax)
+        return LocationValue.Cuboid(minMax)"""
 
     def _jsonValue(self, **kwargs):
         ''' return geoJson coordinates'''
@@ -608,14 +652,19 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     def _init(self, val=ES.nullCoor):
         ''' LocationValue creation  (value and name)'''
-        if type(val) == LocationValue:
+        geom = (shapely.geometry.multipoint.MultiPoint, shapely.geometry.point.Point,
+                shapely.geometry.polygon.Polygon, shapely.geometry.multipolygon.MultiPolygon)
+        if isinstance(val, geom): 
+            self.value = val
+            return
+        if isinstance(val, LocationValue):
             self.value = val.value
             self.name = val.name
             return
-        if type(val) == dict: self.name, val = list(val.items())[0]
+        if isinstance(val, dict): self.name, val = list(val.items())[0]
         shap = self._gshape(val)
         if shap is None:
-            if type(val) == str and self.name == ES.nullName: self.name = val
+            if isinstance(val, str) and self.name == ES.nullName: self.name = val
         else: self.value = shap
 
     @staticmethod
@@ -668,7 +717,6 @@ class PropertyValue(ESValue):              # !!! début ESValue
         (or Polygon) and name is a string
         '''
         ESValue.__init__(self, val, name)
-
 
     def __lt__(self, other):
         """lower if string simple value + name is lower"""
@@ -729,8 +777,19 @@ class PropertyValue(ESValue):              # !!! début ESValue
                            period, interval, uncertain * 2 )
         return byt[0:6] +byt[7:10] + byt[11:12]
 
-    def _jsonValue(self, **kwargs): return self._jsonDict(False)
-
+    def _jsonValue(self, **kwargs): 
+        #return self._jsonDict(False)
+        option = {'bjson_format' : False} | kwargs
+        li = {}
+        for k, v in self.value.items() :
+            if   k in [ES.prp_type, ES.prp_unit, ES.prp_sampling, ES.prp_appli, ES.prp_EMFId] :
+                if v != ES.nullDict: li[k] = v
+            elif k in [ES.prp_period, ES.prp_interval, ES.prp_uncertain] :
+                if v != ES.nullVal : li[k] = v
+            else : li[k] = v
+        if option['bjson_format']: return json.dumps(li, ensure_ascii=False)
+        return li
+        
     def _init(self, val={}):
         if type(val) == dict : self.value |= val
         elif type(val) == str : self.name = val
@@ -739,7 +798,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
             self.name  = val.name
         self.value[ES.prp_unit] = ES.prop[self.value[ES.prp_type]][5]
 
-    def _jsonDict(self, string=True):
+    '''def _jsonDict(self, string=True):
         li = {}
         for k, v in self.value.items() :
             if   k in [ES.prp_type, ES.prp_unit, ES.prp_sampling, ES.prp_appli, ES.prp_EMFId] :
@@ -748,7 +807,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
                 if v != ES.nullVal : li[k] = v
             else : li[k] = v
         if string : return json.dumps(li, ensure_ascii=False)
-        return li
+        return li'''
 
 class ResultValue (ESValue):               # !!! début ESValue
     '''
@@ -761,6 +820,10 @@ class ResultValue (ESValue):               # !!! début ESValue
     - **name** : String
 
     The methods defined in this class are :
+
+    *getters*
+
+    - `vSimple`
 
     *exports - imports*
 
@@ -814,6 +877,15 @@ class ResultValue (ESValue):               # !!! début ESValue
             else: self.value = val
 
     def _jsonValue(self, **option) :
-        if type(self.value) in [str, int, float]: val = self.value
-        else : val = object.__repr__(self.value)
-        return val
+        '''return a json/bson dict for the value '''
+        if type(self.value) in [int, str, float, bool, list, dict, datetime.datetime, type(None), bytes]: 
+            return self.value
+        if option['bjson_bson']: 
+            try : return self.value.__to_bytes__(bjson_format=False)
+            except : raise ESValueError("impossible to apply __to_bytes__ method to object " + str(type(self.value)))
+        try: return self.value.to_json(bjson_format=False, bjson_bson=False,
+                                    json_info=False, json_res_index=True, json_param=True)
+        except : return object.__repr__(self.value)
+
+class ESValueError(Exception):
+    ''' ESValue Exception'''

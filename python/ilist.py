@@ -62,13 +62,26 @@ import json
 import csv
 import numpy as np
 import xarray
-
+#from bson import decode, encode
+import bson
+from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue
 
 def identity(*args, **kwargs):
     '''return the same value as args or kwargs'''
     if len(args) > 0 : return args[0]
     if len(kwargs) > 0 : return kwargs[list(kwargs.keys())[0]]
     return None
+
+class IlistEncoder(json.JSONEncoder):
+    """add a new json encoder for Ilist"""
+    def default(self, o) :
+        if isinstance(o, datetime) : return o.isoformat()
+        option = {'bjson_format': False, 'bjson_bson': False}
+        try : return o.json(**option)
+        except : 
+            try : return o.__to_json__()
+            except : return json.JSONEncoder.default(self, o)
+
 
 class Ilist:
     '''
@@ -88,9 +101,8 @@ class Ilist:
 
     The methods defined in this class are :
 
-    *class methods (constructor)*
+    *constructor (classmethod))*
 
-    - `Ilist.Icsv`
     - `Ilist.Idict`
     - `Ilist.Iext`
     - `Ilist.Iidx`
@@ -144,7 +156,7 @@ class Ilist:
     - `Ilist.extidxtoi`
     - `Ilist.iidxtoext`
     - `Ilist.iloc`
-    - `Ilist.isextIndex`
+    - `Ilist.iseIndex`
     - `Ilist.isiIndex`
     - `Ilist.isValue`
     - `Ilist.loc`
@@ -161,7 +173,10 @@ class Ilist:
 
     *exports methods*
 
+    - `Ilist.from_bytes` (classmethod)
+    - `Ilist.from_csv` (classmethod)
     - `Ilist.json`
+    - `Ilist.to_bytes`
     - `Ilist.to_csv`
     - `Ilist.to_numpy`
     - `Ilist.to_xarray`
@@ -278,48 +293,6 @@ class Ilist:
         return cls.Iext(extval=[], extidx=list(args), valname='value', idxname=[], defaultidx=True)
 
 
-    @classmethod
-    def Icsv(cls, filename='ilist.csv', valfirst=False, header=True, **kwargs):
-        '''
-        Ilist constructor (from a csv file). Each column represents extidx or extval values.
-
-        *Parameters*
-
-        - **filename** : string (default 'ilist.csv'), name of the file to read
-        - **valfirst** : boolean (default False). If False extval is the last columns
-        else it's the first
-        - **header** : boolean (default True). If True, the first raw is dedicated to names
-
-        *Returns*
-
-        - **Ilist**  '''
-        extval=[]
-        extidx=[]
-        valname='value'
-        idxname=[]
-        with open(filename, newline='') as f:
-            reader = csv.reader(f, **kwargs)
-            first=True
-            for row in reader:
-                if first :
-                    for vrow in row[1:] : extidx.append([])
-                if first and header :
-                    if valfirst      :
-                        valname = row[0]
-                        for vrow in row[1:] : idxname.append(vrow)
-                    else :
-                        valname = row[len(row)-1]
-                        for vrow in row[:len(row)-1] : idxname.append(vrow)
-                else :
-                    if valfirst      :
-                        extval.append(row[0])
-                        for i in range(len(row)-1) : extidx[i].append(row[i+1])
-                    else :
-                        extval.append(row[len(row)-1])
-                        for i in range(len(row)-1) : extidx[i].append(row[i])
-                first = False
-            return cls.Iext(extval, extidx, valname, idxname)
-
     def __init__(self, extval=[], setidx=[], iidx=[], valname='value', idxname=[], defaultidx=True):
         '''
         Ilist constructor.
@@ -432,9 +405,10 @@ class Ilist:
     def __str__(self):
         ''' return valname, extval, idxname and extidx'''
         texLis = ''
+        option = {'bjson_format': True, 'bjson_bson': False}
         for (idx, nam) in zip(self.extidx, self.idxname) :
-            texLis += '\n' + nam + ' : ' + self._json(idx, json_string=True)
-        return self.valname + ' : ' + self._json(self.extval, json_string=True) + '\n' + texLis
+            texLis += '\n' + nam + ' : ' + self._json(idx, **option)
+        return self.valname + ' : ' + self._json(self.extval, **option) + '\n' + texLis
 
     def __eq__(self, other):
         ''' equal if extval and extidx are equal'''
@@ -732,6 +706,74 @@ class Ilist:
         try :  return [self.setidx[i].index(extind[i]) for i in range(len(extind))]
         except : return None
 
+    @classmethod
+    def from_bytes(cls, bs):
+        '''
+        Generate an Ilist Object from a bytes value
+    
+        *Parameters*
+    
+        - **bson** : bytes data to convert 
+    
+        *Returns* : Ilist '''
+        setidx = []
+        #if isinstance(bson, bytes) : dic = bson.BSON.decode(bson)
+        #if isinstance(bson, bytes) : dic = bson.decode(bson)
+        if isinstance(bs, bytes) : dic = bson.decode(bs)
+        else : dic = bs
+        if '_id' in dic : dic.pop('_id')
+        names = list(dic)
+        valname = names[0]
+        idxname = names[2:len(dic)]
+        extval = Ilist._frombytes(dic[names[0]])
+        for name in idxname : setidx.append(Ilist._frombytes(dic[name]))
+        if isinstance(dic[names[1]], list): iidx = dic[names[1]]
+        else: iidx = np.frombuffer(dic[names[1]], dtype='int32').reshape((len(idxname), len(extval))).tolist()
+        return cls(extval, setidx, iidx, valname, idxname)
+                
+    @classmethod
+    def from_csv(cls, filename='ilist.csv', valfirst=False, header=True, **kwargs):
+        '''
+        Ilist constructor (from a csv file). Each column represents extidx or extval values.
+
+        *Parameters*
+
+        - **filename** : string (default 'ilist.csv'), name of the file to read
+        - **valfirst** : boolean (default False). If False extval is the last columns
+        else it's the first
+        - **header** : boolean (default True). If True, the first raw is dedicated to names
+        - **kwargs** : see csv.reader options
+
+        *Returns*
+
+        - **Ilist**  '''
+        extval=[]
+        extidx=[]
+        valname='value'
+        idxname=[]
+        with open(filename, newline='') as f:
+            reader = csv.reader(f, **kwargs)
+            first=True
+            for row in reader:
+                if first :
+                    for vrow in row[1:] : extidx.append([])
+                if first and header :
+                    if valfirst      :
+                        valname = row[0]
+                        for vrow in row[1:] : idxname.append(vrow)
+                    else :
+                        valname = row[len(row)-1]
+                        for vrow in row[:len(row)-1] : idxname.append(vrow)
+                else :
+                    if valfirst      :
+                        extval.append(row[0])
+                        for i in range(len(row)-1) : extidx[i].append(row[i+1])
+                    else :
+                        extval.append(row[len(row)-1])
+                        for i in range(len(row)-1) : extidx[i].append(row[i])
+                first = False
+            return cls.Iext(extval, extidx, valname, idxname)
+
     def full(self, axes=[], fillvalue=None, inplace=False):
         '''
         add new extval with new extidx to have a complet Ilist
@@ -851,21 +893,22 @@ class Ilist:
         *Returns* : boolean - True if found'''
         if extval in self.extval : return True
         return False
-
+    
     def json(self, **option):
         '''
         Return json string with val (extval or ival) and idx (extidx or iidx or none).
 
         *Parameters (option)*
 
-        - **json_string** : defaut False - if True return string, else return dict
+        - **bjson_format** : boolean (default False) - choice for return format (string/bytes if True, dict else)
+        - **bjson_bson **  : boolean (default False)- choice for return format (bson if True, json else)
         - **json_res_index** : default True - if True add the index to the value
         - **json_mode** : string (default 'vv')
         - **json_mode[0]** : char - if 'v', value is extval else ival
         - **json_mode[1]** : char - if 'v', index is extidx else iidx
 
         *Returns* : string or dict'''
-        option2 = {'json_string' : False, 'json_res_index' :True, 'json_mode' :'vv'} | option
+        option2 = {'bjson_format': False, 'bjson_bson': False, 'json_res_index':True, 'json_mode':'vv'} | option
         lis = []
         textidx = []
         if   option2['json_mode'][1]=='v' and self.extidx == [] :
@@ -874,21 +917,24 @@ class Ilist:
             lis=[[self.valname, self.idxname]]
             textidx = self._transpose(self.extidx)
         for i in range(len(self)):
-            if option2['json_mode'][0]=='v' : jval = self._json(self.extval[i])
+            if option2['json_mode'][0]=='v' : jval = self._json(self.extval[i], **option2)
             else                            : jval = self.ival[i]
             if not option2['json_res_index'] or self.tiidx == [] : lis.append(jval)
             else :
                 lig=[jval]
-                if option2['json_mode'][1]=='v' : lig.append(textidx[i])
-                else                            : lig.append(self.tiidx[i])
+                #if option2['json_mode'][1]=='v' : lig.append(textidx[i])
+                if option2['json_mode'][1]=='v': 
+                    lig.append([self._json(extind, **option2) for extind in textidx[i]])
+                else: lig.append(self.tiidx[i])
                 lis.append(lig)
         if option2['json_mode'][1]=='v': js = lis
         else :
             js = {}
             for i in range(len(self.setidx)) :
-                if self.idxlen[i] > 0 : js[self.idxname[i]] = self.setidx[i]
+                if self.idxlen[i] > 0 : js[self.idxname[i]] = [self._json(idx, **option2) for idx in self.setidx[i]]
             if len(lis) > 0 : js[self.valname] = lis
-        if option2['json_string']: return json.dumps(js)
+        if option2['bjson_format'] and not option2['bjson_bson']: return json.dumps(js, cls=IlistEncoder)
+        if option2['bjson_format'] and option2['bjson_bson']: return bson.encode(js)
         return js
 
     def loc(self, extind):
@@ -1026,6 +1072,27 @@ class Ilist:
         self.iidx   = iidx
         self.setidx = setidx
         self.idxname = idxname
+
+    def to_bytes(self, bjson_format=True, bin_iidx=True, bin_setidx=False):
+        '''
+        Generate a bytes Object
+
+        *Parameters*
+
+        - **bjson_format** : boolean (default True) - if True return bson format, if False return dict. 
+        - **bin_iidx** : boolean (default True) - if True iidx is converted to bytes with numpy.tobytes method
+        - **bin_setidx** : unused (in progress)
+
+        *Returns* : bytes ou dict '''
+        dic = {}
+        dic[self.valname] = Ilist._tobytes(self.extval, bjson_format)
+        if bin_iidx:    dic['iidx'] = np.array(self.iidx).tobytes()
+        else:           dic['iidx'] = self.iidx
+        for i, name in enumerate(self.idxname) : dic[name] = Ilist._tobytes(self.setidx[i], bjson_format)
+        if not bjson_format : return dic
+        #return bson.BSON.encode(dic)
+        return bson.encode(dic)
+        #return encode(dic)
 
     def to_csv(self, filename='ilist.csv', func=None, ifunc=[], valfirst=False,
                order=[], header=True, **kwargs):
@@ -1227,6 +1294,24 @@ class Ilist:
         return [i for i in range(len(lis)) if lisf[i] == res]
 
     @staticmethod
+    def _frombytes(listbson):
+        if not isinstance(listbson, list) : 
+            raise IlistError("the object to convert is not a list")
+        listvalue = []
+        for bs in listbson :
+            if isinstance(bs, (int, str, float, bool, list, datetime, type(None))) : 
+                listvalue.append(bs)
+            elif isinstance(bs, dict) : 
+                try: listvalue.append(eval(list(bs.keys())[0])(bs[list(bs.keys())[0]]))
+                except: listvalue.append(bs)
+            else : 
+                try : 
+                    dic = bson.decode(bs)
+                    listvalue.append(eval(list(dic.keys())[0])(dic[list(dic.keys())[0]]))
+                except : raise IlistError("impossible to decode a bson object")
+        return listvalue
+
+    @staticmethod
     def _funclist(value, func, *args, **kwargs):
         '''return the function func applied to the object value with parameters args and kwargs'''
         if func in (None, []) : return value
@@ -1302,13 +1387,14 @@ class Ilist:
         return True
         
     @staticmethod
-    def _json(val, json_string=False):
+    def _json(val, **option):
         '''return the json format of val (if function json() or to_json() exists'''
-        if type(val) in [str, int, float, bool, tuple, list] :
-            if json_string : return json.dumps(val)
+        if type(val) in [str, int, float, bool, tuple, list, datetime] :
+            if option['bjson_format'] and not option['bjson_bson']: return json.dumps(val, cls=IlistEncoder)
+            if option['bjson_format'] and option['bjson_bson']: return bson.encode(val)
             return val
-        try     : return val.json(json_string=json_string)
-        except  : return val.to_json(json_string=json_string)
+        try     : return val.json(**option)
+        except  : return val.to_json(**option)
 
     @staticmethod
     def _list(idx): return list(map(list, idx))
@@ -1352,6 +1438,20 @@ class Ilist:
         except :
             return Ilist._tuple(extv)
 
+    @staticmethod
+    def _tobytes(listvalue, bjson_format=True):
+        listbytes = []
+        if not isinstance(listvalue, list) : 
+            raise IlistError("the objetc to convert to bytes is not a list")
+        for value in listvalue :
+            if isinstance(value, (int, str, float, bool, list, dict, datetime, type(None), bytes)): 
+                listbytes.append(value)
+            else : 
+                try : listbytes.append(value.__to_bytes__(bjson_format=bjson_format))
+                except : raise IlistError("impossible to apply __to_bytes__ method to object " 
+                                          + str(type(value)))
+        return listbytes
+        
     @staticmethod
     def _toint(extv, extset):
         ext = Ilist._setable(extv)

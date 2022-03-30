@@ -17,8 +17,11 @@ from ESObservation import Observation
 from ESconstante import ES
 import json, copy #, shapely
 import requests as rq
-from datetime import datetime
+import datetime
+#from datetime import datetime
 from ilist import Ilist
+from pymongo import MongoClient
+
 
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False
@@ -59,19 +62,19 @@ prop_pm10   = dict([(ES.prp_type,"PM10"), (ES.prp_unit, "kg/m3")])
 prop_co2    = dict([(ES.prp_type,"CO2"), (ES.prp_unit, "kg/m3")])
 pprop_pm25   = dict([(ES.prp_type,"PM25"), (ES.prp_unit, "kg/m3"), (ES.prp_appli, "air")])
 pprop_pm10   = dict([(ES.prp_type,"PM10"), (ES.prp_unit, "kg/m3"), (ES.prp_appli, "air"), ("truc", "machin")])
-matin = [ datetime(2020, 2, 4, 8), datetime(2020, 2, 4, 12)]
-midi  = [ datetime(2020, 2, 4, 12), datetime(2020, 2, 4, 14)]
-aprem  = [ datetime(2020, 2, 4, 14), datetime(2020, 2, 4, 18)]
+matin = [ datetime.datetime(2020, 2, 4, 8), datetime.datetime(2020, 2, 4, 12)]
+midi  = [ datetime.datetime(2020, 2, 4, 12), datetime.datetime(2020, 2, 4, 14)]
+aprem  = [ datetime.datetime(2020, 2, 4, 14), datetime.datetime(2020, 2, 4, 18)]
 travail = [matin, aprem]
-pt1 = datetime(2020, 2, 4, 12, 5, 0)
-pt2 = datetime(2020, 5, 4, 12, 5, 0)
-pt3 = datetime(2020, 7, 4, 12, 5, 0)
-tnull = datetime(1970, 1, 1, 0, 0, 0)
+pt1 = datetime.datetime(2020, 2, 4, 12, 5, 0)
+pt2 = datetime.datetime(2020, 5, 4, 12, 5, 0)
+pt3 = datetime.datetime(2020, 7, 4, 12, 5, 0)
+tnull = datetime.datetime(1970, 1, 1, 0, 0, 0)
 snull = (tnull.isoformat(), tnull.isoformat())
-t1 = datetime(2021, 2, 4, 12, 5, 0)
+t1 = datetime.datetime(2021, 2, 4, 12, 5, 0)
 t1n = json.dumps({'date1' : t1.isoformat()})
-t2 = datetime(2021, 7, 4, 12, 5, 0)
-t3 = datetime(2021, 5, 4, 12, 5, 0)
+t2 = datetime.datetime(2021, 7, 4, 12, 5, 0)
+t3 = datetime.datetime(2021, 5, 4, 12, 5, 0)
 r1 = ResultValue('{"er":2}')
 r2 = ResultValue(23)
 r3 = ResultValue("coucou")
@@ -115,14 +118,36 @@ def _option_simple(ob1):
     ob1.option["json_info_box"]         = False
     ob1.option["json_info_res_classES"] = False
 
-def _envoi_mongo(ob):
+def _envoi_mongo_url(data):
     url = "https://webhooks.mongodb-realm.com/api/client/v2.0/app/observation_app-wsjge/service/postObs/incoming_webhook/api?secret=10minutes"
-    r = rq.post(url, data=ob.to_json())  
+    r = rq.post(url, data=data)  
     print("réponse : ", r.text, "\n")
     return r.status_code
 
+def _envoi_mongo_python(data):
+    user        = 'ESobsUser'
+    pwd         = 'observation'
+    site        = 'esobs.gwpay.mongodb.net/test'
+
+    baseMongo   = 'test_obs'
+    collection  = 'observation'
+
+    st = 'mongodb+srv://' + user +':' + pwd + '@' + site + \
+            '?' + 'authSource=admin' + \
+            '&' + 'replicaSet=atlas-13vws6-shard-0' + \
+            '&' + 'readPreference=primary' + \
+            '&' + 'appname=MongoDB%20Compass' + \
+            '&' + 'ssl=true'
+
+    client  = MongoClient(st)
+    collec  = client[baseMongo][collection]
+    return collec.insert_one(data).inserted_id
+    #try : return collec.insert_one(data).inserted_id
+    #except : return None
+
 def _indic(res):
-    return [res.json(json_string=True, json_res_index=True), res.dim, res.nMax,
+    return [res.json(bjson_format=True, bjson_bson=False, json_res_index=True), 
+            res.dim, res.nMax,
             res.nInd, res.axes, res.maxIndex, res.isextIndex, res.measureRate, 
             res.error, res.vListIndex, res.nValue, res.vListName, res.vListValue
             ,_sort(res)]
@@ -318,7 +343,7 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob2 = Observation(ob1.to_json())
         ob2.option = ob1.option
         self.assertTrue(ES.type in json.loads(ob2.to_json()))
-        self.assertEqual(ob2.to_json(json_string=False), ob1.to_json(json_string=False))
+        self.assertEqual(ob2.to_json(bjson_format=False, bjson_bson=False), ob1.to_json(bjson_format=False, bjson_bson=False))
         
     def test_obs_maj_type(self):
         maj = [False, True]
@@ -432,21 +457,21 @@ class TestObservation(unittest.TestCase):           # !!! test observation
     def test_append_obs(self):
         ob = Observation(dict((obs_1, dat3, dpt3, prop2, _res(6))), idxref=[0,0,2])
         ob1 = copy.copy(ob)
-        ob1.appendObs(ob)
-        self.assertEqual(ob1.setResult[6].value, ob)
-        self.assertEqual(ob1.setLocation[1].value, ob.bounds[1].value) # ordre changeant
+        ind = ob1.appendObs(ob)
+        self.assertEqual(ob1.setResult[ind].value, ob)
+        self.assertEqual(ob1.setLocation[ob1.iObsIndex(ind)[1]].value, ob.bounds[1].value) # ordre changeant
         
     def test_obs_sort(self):
         ob = Observation(dict((obs_1, dat3, dpt3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
-        self.assertEqual(str(ob.setResult), str([0, 1, 2, 3, 4, 5]))
+        self.assertEqual(ob.vListValue('result'), [0, 1, 2, 3, 4, 5])
         ob.sort(order=[1,0,2])
-        self.assertEqual(str(ob.setResult), str([3, 0, 4, 1, 5, 2]))
+        self.assertEqual(ob.vListValue('result'), [3, 0, 4, 1, 5, 2])
         ob.sort(order=[0,1,2])
-        self.assertEqual(str(ob.setResult), str([3, 0, 5, 2, 4, 1]))
+        self.assertEqual(ob.vListValue('result'), [3, 0, 5, 2, 4, 1])
         ob.sort()
-        self.assertEqual(str(ob.setResult), str([0, 1, 2, 3, 4, 5]))
+        self.assertEqual(ob.vListValue('result'), [0, 1, 2, 3, 4, 5])
         ob.sort(order=[2,0,1])
-        self.assertEqual(str(ob.setResult), str([3, 5, 4, 0, 2, 1]))        
+        self.assertEqual(ob.vListValue('result'), [3, 5, 4, 0, 2, 1])      
         
     def test_obs_add(self):
         ob  = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18))))
@@ -517,7 +542,7 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         obs = Observation()
         prop1 = PropertyValue(prop_pm25)
         for i in range(6): # simule une boucle de mesure
-            obs.append(DatationValue(datetime(2021, 6, 4+i, 12, 5).isoformat()),
+            obs.append(DatationValue(datetime.datetime(2021, 6, 4+i, 12, 5).isoformat()),
                        LocationValue([14+i, 40]), prop1, ResultValue(45+i))
         #obs.majType()
         obs.option["json_info_type"] = True
@@ -529,8 +554,11 @@ class TestExports(unittest.TestCase):
     @unittest.skipIf(mongo, "test envoi mongo")
     def test__envoi_mongo(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref=[0,0,2])
-        self.assertEqual(_envoi_mongo(ob), 200)
-
+        data = ob.to_json(bjson_format=False, bjson_bson=True, json_info=True)
+        self.assertFalse(_envoi_mongo_python(data)==None)
+        data = ob.to_json(bjson_format=True, bjson_bson=False)
+        self.assertEqual(_envoi_mongo_url(data), 200)
+        
     def test_geo_interface(self):
         ob = Observation(dict([obs_1, loc3]))
         _resloc = (tuple(paris), tuple(lyon), tuple(marseille))
@@ -636,19 +664,19 @@ class TestExports(unittest.TestCase):
                'result':   [25, 26, 27, 28, 29, 30]}
         ob = Observation(dic, idxref=[0,0,2])
         ob.majList(DatationValue, ['name1', 'autre name', 'encore autre name3', '', '', ''], name=True)        
-        self.assertEqual(len(ob.filter(datation={'__lt__' : DatationValue(datetime(2021,5,8))} )), 4)
-        self.assertEqual(len(ob.filter(datation={'equals' : DatationValue(datetime(2021,5,5,12,5))} )), 1)
-        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,6)])} )), 2)
+        self.assertEqual(len(ob.filter(datation={'__lt__' : DatationValue(datetime.datetime(2021,5,8))} )), 4)
+        self.assertEqual(len(ob.filter(datation={'equals' : DatationValue(datetime.datetime(2021,5,5,12,5))} )), 1)
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime.datetime(2021,5,4), datetime.datetime(2021,5,6)])} )), 2)
         self.assertEqual(len(ob.filter(location={'intersects' : LocationValue([[[15,42], [17.5, 42], [15,42]]])} )), 3)
-        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,6)])},
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime.datetime(2021,5,4), datetime.datetime(2021,5,6)])},
                                        location={'intersects' : LocationValue([[[15,42], [17.5, 42], [15,42]]])} )), 1)
-        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,6)])},
-                                       location={'within' : LocationValue.Cuboid((14.5, 41, 17.5, 44))} )), 1)
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime.datetime(2021,5,4), datetime.datetime(2021,5,6)])},
+                                       location={'within' : LocationValue.Box((14.5, 41, 17.5, 44))} )), 1)
         self.assertEqual(len(ob.filter(datation={'isName' : 'name.'} )), 2)
-        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,8)]),
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime.datetime(2021,5,4), datetime.datetime(2021,5,8)]),
                                                  'isName' : 'name'} )), 3)
-        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime(2021,5,4), datetime(2021,5,8)]),    # 4
+        self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime.datetime(2021,5,4), datetime.datetime(2021,5,8)]),    # 4
                                                  'isName' : 'name'},                                                    # 3
-                                       location={'within' : LocationValue.Cuboid((14.5, 41, 18.5, 44))} )), 2)
+                                       location={'within' : LocationValue.Box((14.5, 41, 18.5, 44))} )), 2)
 if __name__ == '__main__':
     unittest.main(verbosity=2)

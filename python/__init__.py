@@ -190,7 +190,14 @@ This format is defined in the
 <a href="https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf" 
 target="_blank">ObsJSON document</a>.
 
-## Binary interface
+This format is extended to the BSON binary format which allows :
+    
+- simple integration with NoSQL databases that integrate BSON format(like Mongodb)
+- storage of observation as a file
+- natural representation of dates (datetime)
+- taking into account all types of objects in binary form
+
+## Binary sensor interface
 
 The binary payload is necessary for exchanges with LPWAN networks (e.g. LoRaWAN). 
 The payload should be as compact as possible to minimize the Time-on-Air 

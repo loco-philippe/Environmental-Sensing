@@ -26,7 +26,8 @@ class Es:
                 
         #'''Observation initialization (dict) '''
         self.mOption : Dict = {
-                      "json_string"         : True, # sortie string ou dict
+                      "bjson_format"        : True, # sortie bson/json ou dict
+                      "bjson_bson"          : False, # sortie bson ou json
                       "json_res_index"      : False, # affiche index
                       "json_prp_name"       : False, # affiche name ou property
                       "json_dat_name"       : False, # affiche name ou instant/slot

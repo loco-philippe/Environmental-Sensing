@@ -123,13 +123,13 @@ class TestObsUnitaire(unittest.TestCase):
                         LocationValue(name='paris', shape=LocationValue._gshape(paris)).value)
         self.assertTrue(LocationValue('paris').name == LocationValue({'paris':paris}).name ==
                         LocationValue(name='paris', shape=LocationValue._gshape(paris)).name)
-        self.assertEqual(LocationValue.Cuboid(LocationValue(paris).bounds).bounds, 
+        self.assertEqual(LocationValue.Box(LocationValue(paris).bounds).bounds, 
                          LocationValue({'box':paris}).bounds)
 
     def test_DatationValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(DatationValue(t1), DatationValue(DatationValue(t1)))
-        self.assertEqual(DatationValue(t1).json(json_string=False), t1.isoformat()) 
+        self.assertEqual(DatationValue(t1).json(bjson_format=False), t1.isoformat()) 
         self.assertTrue(DatationValue(t1) < DatationValue(t2))
         self.assertEqual(DatationValue(json.loads(t1n)).json(), t1n)
         self.opt["json_dat_name"] = True
@@ -147,7 +147,7 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(PropertyValue(pprop_pm10).json(**self.opt), json.dumps(pprop_pm10))
         
     def test_nameValue(self):
-        self.assertEqual(DatationValue('recre').json(json_string=False), 'recre') 
+        self.assertEqual(DatationValue('recre').json(bjson_format=False), 'recre') 
         self.opt["json_prp_name"] = True
         self.assertEqual(PropertyValue(pprop_pm25).json(**self.opt), json.dumps(pprop_pm25))
         self.assertEqual(PropertyValue('test').json(**self.opt), '"test"')
@@ -193,6 +193,41 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(prp.link(prp2), 'intersects')
         prp2 = PropertyValue({'c':3})
         self.assertEqual(prp.link(prp2), 'disjoint')
+
+    def test_bjson(self):
+        v = DatationValue({"date1": "2021-02-04T12:05:00"})
+        self.assertTrue(v == DatationValue.from_json(v.json(bjson_format=True,  bjson_bson=True))
+                          == DatationValue.from_json(v.json(bjson_format=True,  bjson_bson=False))
+                          == DatationValue.from_json(v.json(bjson_format=False, bjson_bson=False))
+                          == DatationValue.from_json(v.json(bjson_format=False, bjson_bson=False)))
+        v = LocationValue({"loc1": pol2})
+        self.assertTrue(v == LocationValue.from_json(v.json(bjson_format=True,  bjson_bson=True))
+                          == LocationValue.from_json(v.json(bjson_format=True,  bjson_bson=False))
+                          == LocationValue.from_json(v.json(bjson_format=False, bjson_bson=False))
+                          == LocationValue.from_json(v.json(bjson_format=False, bjson_bson=False)))
+        v = DatationValue({"date1": "2021-02-04T12:05:00"})
+        self.assertTrue(v == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True))
+                          == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False)))        
+        v = LocationValue({"loc1": pol2})
+        self.assertTrue(v == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True))
+                          == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False)))     
+
+    def test_box_bounds(self):
+        v = LocationValue.Box(LocationValue(pol13))
+        self.assertTrue(v.isEqual(v.Box(v.bounds), name=False))
+        self.assertTrue(v == v.Box(v.bounds))
+        v = DatationValue.Box(DatationValue(travail))
+        self.assertTrue(v.isEqual(v.Box(v.bounds), name=False))
+        self.assertTrue(v == v.Box(v.bounds))
+        l = LocationValue(lyon)
+        p = LocationValue(paris)
+        self.assertEqual(l.boxUnion(p, 'union').bounds, 
+                         (min(l.bounds[0], p.bounds[0]), min(l.bounds[1], p.bounds[1]),
+                          max(l.bounds[2], p.bounds[2]), max(l.bounds[3], p.bounds[3])))
+        l = DatationValue(matin)
+        p = DatationValue(aprem)
+        self.assertEqual(l.boxUnion(p, 'union').bounds, 
+                         (min(l.bounds[0], p.bounds[0]), max(l.bounds[1], p.bounds[1])))
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

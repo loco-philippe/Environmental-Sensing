@@ -12,7 +12,7 @@ from ESconstante import ES
 from ESValue import LocationValue, DatationValue, PropertyValue, \
     ResultValue, ESValue, ESValueEncoder
 from datetime import datetime
-import json, folium, copy, csv
+import json, folium, copy, csv, bson
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
@@ -81,6 +81,7 @@ class Observation :
     
     - `Observation.indexLoc`
     - `Observation.iLoc`
+    - `Observation.iObsIndex`
     - `Observation.loc`
     
     *management*
@@ -142,8 +143,11 @@ class Observation :
         if len(args) == 0 and len(kwargs) == 2 : args = [{}]
         for arg in args :
             if type(arg) == str :       # creation à partir d'un json "key : [liste]"
-                try: arg=json.loads(arg)
+                try: arg=json.loads(arg)            
                 except: pass
+            elif type(arg) ==bytes:
+                try: arg=json.loads(arg)            
+                except: pass                
             if type(arg) == dict :      # creation à partir d'un dict "key : [liste]"
                 for k,v in arg.items() : 
                     if k not in dic : dic |= {k:v}
@@ -230,6 +234,10 @@ class Observation :
         obres.__ior__(other)
         return obres
 
+    def __getitem__(self, ind):
+        ''' return ResValue item'''
+        return self.ilist[ind]
+
     def __iadd__(self, other):
         ''' Add other's values to self's values'''
         #self.ilist += other.ilist
@@ -246,6 +254,10 @@ class Observation :
 
     def __len__(self): return len(self.ilist)
     
+    def __to_bytes__(self, **option):
+        return self.to_json(bjson_format=option['bjson_format'], bjson_bson=True,
+                            json_info=False, json_res_index=True, json_param=True)
+    
     @property               # !!!       properties
     def axes(self):
         '''
@@ -261,8 +273,10 @@ class Observation :
         '''
         **list of `ES.ESValue` (@property)** : `ES.ESValue` bounding box for each axis.'''
         bound = [None, None, None]
-        if self.setDatation : bound[0] = self._boundingBox(DatationValue, self.setDatation)
-        if self.setLocation : bound[1] = self._boundingBox(LocationValue, self.setLocation)
+        #if self.setDatation : bound[0] = self._boundingBox(DatationValue, self.setDatation)
+        #if self.setLocation : bound[1] = self._boundingBox(LocationValue, self.setLocation)
+        if self.setDatation : bound[0] = self._boundingBox(self.setDatation)
+        if self.setLocation : bound[1] = self._boundingBox(self.setLocation)
         if self.setProperty : bound[2] = self.setProperty[0]
         return bound
 
@@ -290,8 +304,8 @@ class Observation :
         ''' 
         **string (@property)** : JSON Observation (ObsJSON format) whit index 
         and whitout informations'''
-        return self.to_json(json_string=True, json_info=False, json_res_index=True,
-                            json_param=True)
+        return self.to_json(bjson_format=True, bjson_bson=False,
+                            json_info=False, json_res_index=True, json_param=True)
 
     @property
     def jsonFeature(self):
@@ -477,7 +491,7 @@ class Observation :
         
         - **int** : last index in the `Observation`
         '''
-        self.append(obs.bounds[0], obs.bounds[1], obs.bounds[2], obs, unique=unique, equal=equal)
+        return self.append(obs.bounds[0], obs.bounds[1], obs.bounds[2], obs, unique=unique, equal=equal)
 
     def choropleth(self, name="choropleth"):
         '''
@@ -669,6 +683,21 @@ class Observation :
         if string : return json.dumps(ind)
         else : return ind
             
+    def iObsIndex(self, ind):
+        '''
+        Return the `ES.ESValue` index values for an Observation index. 
+
+        *Parameters*
+        
+        - **ind** : index Observation (equivalent `ES.ESValue.ResultValue`
+        - **json** : Boolean (default True) - Return JSON string if True
+
+        *Returns*
+        
+        - **list** : index of each ES.ESValue [idat, iloc, iprp]  '''
+        return self.ilist.tiidx[ind]
+
+
     def loc(self, valDat, valLoc, valPrp, json=True):
         '''
         Return the `ES.ESValue` values for a DatationValue, LocationValue, PropertyValue. 
@@ -849,9 +878,10 @@ class Observation :
         '''
         Export in Json format. 
         
-        *Parameters (optional)*
+        *Parameters (optional, default value in option attribute)*
         
-        - **json_string**    : Boolean - return format (string or dict)
+        - **bjson_format**   : boolean - choice for return format (string/bytes if True, dict else)
+        - **bjson_bson **    : boolean - choice for return format (bson if True, json else)
         - **json_res_index** : Boolean - include index for ResultValue
         - **json_param**     : Boolean - include ESObs Parameter
         - **json_info**      : Boolean - include ESObs Information with all information
@@ -864,7 +894,7 @@ class Observation :
         
         - **string or dict** : Json string or dict        '''
         option = self.option | kwargs
-        option2 = option | {'json_string' : False, 'json_mode' : 'vi'}
+        option2 = option | {'bjson_format': False, 'json_mode' : 'vi'}
         dic = { ES.type : ES.obs_classES }
         if self.mAtt[ES.obs_id] != ES.nullAtt: dic[ES.obs_id] = self.mAtt[ES.obs_id]
         dic |= self._jsonAtt(**option2)
@@ -873,8 +903,11 @@ class Observation :
         if option["json_param"] and self.parameter != ES.nullAtt: 
             dic[ES.parameter] = self.parameter
         dic |= self._info(**option2) 
-        if option['json_string'] : return json.dumps(dic, cls=ESValueEncoder)
-        else : return dic
+        if option['bjson_format'] and not option['bjson_bson']: 
+            return json.dumps(dic, cls=ESValueEncoder)
+        if option['bjson_format'] and option['bjson_bson']: 
+            return bson.encode(dic)
+        return dic
 
     def to_numpy(self, func=None, ind='axe', fillvalue='?', **kwargs):
         '''
@@ -909,13 +942,14 @@ class Observation :
         *Returns*
         
         - **xarray.DataArray**        '''
-        if not self.ilist.consistent : raise ObservationError("Ilist not consistent")
+        if not self.ilist.consistent : raise ObservationError("Observation not consistent")
+        if not self.ilist.extval : raise ObservationError("Observation empty")
         if ind == 'axe' : axes = self.ilist.axes
         else : axes = list(range(self.ilist.lenidx))        
         ilf = self.ilist.full(axes=axes, fillvalue=fillvalue)
         ilf.sort(order=self.axes)
         xList = self._xlist(maxname=maxname)
-        attrs = ES.xattrs | {'info' : self._info(json_string=False, json_info_type=True,
+        attrs = ES.xattrs | {'info' : self._info(bjson_format=False, json_info_type=True,
                                    json_info_nval  =False, json_info_box =True, 
                                    json_info_other =False)["information"]}
         coord = self._xCoord(xList, attrs, ilf.idxref, numeric)
@@ -1051,42 +1085,51 @@ class Observation :
         plt.show()
 
     @staticmethod              # !!!!!! methodes internes
-    def _boundingBox(ValueClass, listValue):
+    def _boundingBox(listValue):
         ''' return a `ES.ESValue.ESValue` object with bounds values'''
-        val = copy.deepcopy(listValue[0].value)
-        for i in range(1,len(listValue)): val = val.union(listValue[i].value)
-        return ValueClass._Box(val.bounds)
+        box = copy.deepcopy(listValue[0])
+        for val in listValue:
+            box = box.boxUnion(val)
+        return box
 
     def _info(self, **kwargs):
-        ''' Create json string with dict datas'''
+        ''' Create json dict with info datas'''
         option = self.option | kwargs
         dcinf = dict()
         if option["json_info"] or option["json_info_type"] : dcinf |= self._infoType()
         if option["json_info"] or option["json_info_nval"] : dcinf |= self._infoNval()
-        if option["json_info"] or option["json_info_box"]  : dcinf |= self._infoBox()
+        if option["json_info"] or option["json_info_box"]  : dcinf |= self._infoBox(**option)
         if option["json_info"] or option["json_info_other"]: dcinf |= self._infoOther()
         ldel =[]
         for k,v in dcinf.items() :
             if type(v) == str and (v == "null" or v =='')   : ldel.append(k)
             if type(v) == list and v == ES.nullCoor         : ldel.append(k) 
         for k in ldel :         del dcinf[k]
-        if len(dcinf) != 0 : dcinf = {ES.information : dcinf }
-        if option["json_string"] :
+        if len(dcinf) == 0 :    return ""
+        return {ES.information : dcinf }
+        '''if len(dcinf) != 0 : dcinf = {ES.information : dcinf }
+        if option["bjson_format"] :
             if len(dcinf) == 0 :    return ""
             else :                  return json.dumps(dcinf)
-        else: return dcinf
+        else: return dcinf'''
 
-    def _infoBox(self):                 # !!!!!! à faire
+    def _infoBox(self, **option):
         ''' Add box informations's key-value to dict dcinf'''
         dcinf = dict()
-        dcinf[ES.loc_box] = []
-        dcinf[ES.dat_box] = []
+        if self.setLocation: dcinf[ES.loc_box] = list(self._boundingBox(self.setLocation).bounds)
+        if self.setDatation: 
+            bound = self._boundingBox(self.setDatation).bounds
+            if option["bjson_bson"] : 
+                dcinf[ES.dat_box] = [datetime.fromisoformat(bound[0]), 
+                                     datetime.fromisoformat(bound[1])]
+            else : dcinf[ES.dat_box] = list(bound)
         return dcinf
     
     def _infoNval(self):
         ''' Add valueList lenght to dict dcinf'''
         dcinf = dict()
-        for i in range(4) : dcinf[ES.json_nval[i]] = self.nValueObs[i]
+        for i in range(4) : 
+            if self.nValueObs[i] > 0 : dcinf[ES.json_nval[i]] = self.nValueObs[i]
         return dcinf
     
     def _infoOther(self):
@@ -1104,8 +1147,8 @@ class Observation :
         dcinf = dict()
         dcinf[ES.json_type_obs] = self.typeObs
         for i in range(4) :
-            if     self.nValueObs[i] > 1 : dcinf[ES.json_type[i]] = ES.multi + ES.esObsClass[i]
-            else :                         dcinf[ES.json_type[i]] =            ES.esObsClass[i]
+            if   self.nValueObs[i] > 1 : dcinf[ES.json_type[i]] = ES.multi + ES.esObsClass[i]
+            elif self.nValueObs[i] > 0 : dcinf[ES.json_type[i]] =            ES.esObsClass[i]
         return dcinf
     
     @staticmethod
@@ -1186,22 +1229,22 @@ class Observation :
             resList = []
             if self.setDatation != None : 
                 idat = self.ilist.idxname.index(ES.dat_classES)
-                if json : resList.append(self.setDatation[self.ilist.iidx[idat][i]].json(json_string=True))
+                if json : resList.append(self.setDatation[self.ilist.iidx[idat][i]].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setDatation[self.ilist.iidx[idat][i]].name)
                 if dat  : resList.append(self.setDatation[self.ilist.iidx[idat][i]].vSimple(string=True))
             if self.setLocation != None : 
                 iloc = self.ilist.idxname.index(ES.loc_classES)
-                if json : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].json(json_string=True))
+                if json : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].name)
                 if loc  : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].vSimple()[0])
                 if loc  : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].vSimple()[1])
             if self.setProperty != None : 
                 iprp = self.ilist.idxname.index(ES.prp_classES)
-                if json : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].json(json_string=True))
+                if json : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].name)
                 if prp  : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].simple)
             if self.setResult != None : 
-                if json : resList.append(self.setResult[i].json(json_string=True))
+                if json : resList.append(self.setResult[i].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setResult[i].name)
                 if res  : resList.append(self.setResult[i].value)
             tab.append(resList)
