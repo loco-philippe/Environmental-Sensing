@@ -717,8 +717,6 @@ class Ilist:
     
         *Returns* : Ilist '''
         setidx = []
-        #if isinstance(bson, bytes) : dic = bson.BSON.decode(bson)
-        #if isinstance(bson, bytes) : dic = bson.decode(bson)
         if isinstance(bs, bytes) : dic = bson.decode(bs)
         else : dic = bs
         if '_id' in dic : dic.pop('_id')
@@ -894,47 +892,47 @@ class Ilist:
         if extval in self.extval : return True
         return False
     
-    def json(self, **option):
+    def json(self, **kwargs):
         '''
         Return json string with val (extval or ival) and idx (extidx or iidx or none).
 
-        *Parameters (option)*
+        *Parameters (kwargs)*
 
         - **bjson_format** : boolean (default False) - choice for return format (string/bytes if True, dict else)
-        - **bjson_bson **  : boolean (default False)- choice for return format (bson if True, json else)
+        - **bjson_bson**  : boolean (default False)- choice for return format (bson if True, json else)
         - **json_res_index** : default True - if True add the index to the value
         - **json_mode** : string (default 'vv')
         - **json_mode[0]** : char - if 'v', value is extval else ival
         - **json_mode[1]** : char - if 'v', index is extidx else iidx
 
         *Returns* : string or dict'''
-        option2 = {'bjson_format': False, 'bjson_bson': False, 'json_res_index':True, 'json_mode':'vv'} | option
+        option = {'bjson_format': False, 'bjson_bson': False, 'json_res_index':True, 'json_mode':'vv'} | kwargs
+        option2 = option | {'bjson_format': False}
         lis = []
         textidx = []
-        if   option2['json_mode'][1]=='v' and self.extidx == [] :
+        if   option['json_mode'][1]=='v' and self.extidx == [] :
             lis = [self.valname]
-        elif option2['json_mode'][1]=='v' and self.extidx != []:
+        elif option['json_mode'][1]=='v' and self.extidx != []:
             lis=[[self.valname, self.idxname]]
             textidx = self._transpose(self.extidx)
         for i in range(len(self)):
-            if option2['json_mode'][0]=='v' : jval = self._json(self.extval[i], **option2)
+            if option['json_mode'][0]=='v' : jval = self._json(self.extval[i], **option2)
             else                            : jval = self.ival[i]
-            if not option2['json_res_index'] or self.tiidx == [] : lis.append(jval)
+            if not option['json_res_index'] or self.tiidx == [] : lis.append(jval)
             else :
                 lig=[jval]
-                #if option2['json_mode'][1]=='v' : lig.append(textidx[i])
-                if option2['json_mode'][1]=='v': 
+                if option['json_mode'][1]=='v': 
                     lig.append([self._json(extind, **option2) for extind in textidx[i]])
                 else: lig.append(self.tiidx[i])
                 lis.append(lig)
-        if option2['json_mode'][1]=='v': js = lis
+        if option['json_mode'][1]=='v': js = lis
         else :
             js = {}
             for i in range(len(self.setidx)) :
                 if self.idxlen[i] > 0 : js[self.idxname[i]] = [self._json(idx, **option2) for idx in self.setidx[i]]
             if len(lis) > 0 : js[self.valname] = lis
-        if option2['bjson_format'] and not option2['bjson_bson']: return json.dumps(js, cls=IlistEncoder)
-        if option2['bjson_format'] and option2['bjson_bson']: return bson.encode(js)
+        if option['bjson_format'] and not option['bjson_bson']: return json.dumps(js, cls=IlistEncoder)
+        if option['bjson_format'] and option['bjson_bson']: return bson.encode(js)
         return js
 
     def loc(self, extind):
@@ -1073,7 +1071,7 @@ class Ilist:
         self.setidx = setidx
         self.idxname = idxname
 
-    def to_bytes(self, bjson_format=True, bin_iidx=True, bin_setidx=False):
+    def to_bytes(self, bjson_format=True, bin_iidx=True, dtype_val=None):
         '''
         Generate a bytes Object
 
@@ -1081,18 +1079,18 @@ class Ilist:
 
         - **bjson_format** : boolean (default True) - if True return bson format, if False return dict. 
         - **bin_iidx** : boolean (default True) - if True iidx is converted to bytes with numpy.tobytes method
-        - **bin_setidx** : unused (in progress)
+        - **dtype_val** : string (default None) - Object name for extval (if unique)
+        - **dtype_idx** : string list (default None) - Object name for each idx (if unique)
 
         *Returns* : bytes ou dict '''
         dic = {}
-        dic[self.valname] = Ilist._tobytes(self.extval, bjson_format)
+        dic[self.valname] = Ilist._tobytes(self.extval, bjson_format=False)
         if bin_iidx:    dic['iidx'] = np.array(self.iidx).tobytes()
         else:           dic['iidx'] = self.iidx
-        for i, name in enumerate(self.idxname) : dic[name] = Ilist._tobytes(self.setidx[i], bjson_format)
+        for i, name in enumerate(self.idxname) : 
+            dic[name] = Ilist._tobytes(self.setidx[i], bjson_format=False)
         if not bjson_format : return dic
-        #return bson.BSON.encode(dic)
         return bson.encode(dic)
-        #return encode(dic)
 
     def to_csv(self, filename='ilist.csv', func=None, ifunc=[], valfirst=False,
                order=[], header=True, **kwargs):
@@ -1389,10 +1387,13 @@ class Ilist:
     @staticmethod
     def _json(val, **option):
         '''return the json format of val (if function json() or to_json() exists'''
-        if type(val) in [str, int, float, bool, tuple, list, datetime] :
+        #if type(val) in [str, int, float, bool, tuple, list, datetime] :
+        try :
             if option['bjson_format'] and not option['bjson_bson']: return json.dumps(val, cls=IlistEncoder)
             if option['bjson_format'] and option['bjson_bson']: return bson.encode(val)
-            return val
+            if type(val) in [str, int, float, bool, tuple, list, datetime] : return val
+            else : return val.json(**option)
+        except: pass
         try     : return val.json(**option)
         except  : return val.to_json(**option)
 
@@ -1440,17 +1441,17 @@ class Ilist:
 
     @staticmethod
     def _tobytes(listvalue, bjson_format=True):
-        listbytes = []
+        res = []
         if not isinstance(listvalue, list) : 
             raise IlistError("the objetc to convert to bytes is not a list")
         for value in listvalue :
             if isinstance(value, (int, str, float, bool, list, dict, datetime, type(None), bytes)): 
-                listbytes.append(value)
+                res.append(value)
             else : 
-                try : listbytes.append(value.__to_bytes__(bjson_format=bjson_format))
+                try : res.append(value.__to_bytes__(bjson_format=bjson_format))
                 except : raise IlistError("impossible to apply __to_bytes__ method to object " 
                                           + str(type(value)))
-        return listbytes
+        return res
         
     @staticmethod
     def _toint(extv, extset):

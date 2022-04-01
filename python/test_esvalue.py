@@ -142,8 +142,10 @@ class TestObsUnitaire(unittest.TestCase):
     def test_propertyValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(PropertyValue().json(**self.opt), '{}') 
-        self.assertEqual(PropertyValue({ES.prp_type : "PM25"}).json(**self.opt), 
+        self.assertEqual(PropertyValue({ES.prp_type : "PM25"}, prp_dict=True).json(**self.opt), 
                          '{"'+ES.prp_type+'": "PM25", "unit": "kg/m3"}')
+        self.assertEqual(PropertyValue({ES.prp_type : "PM25"}).json(**self.opt), 
+                         '{"'+ES.prp_type+'": "PM25"}')
         self.assertEqual(PropertyValue(pprop_pm10).json(**self.opt), json.dumps(pprop_pm10))
         
     def test_nameValue(self):
@@ -178,6 +180,7 @@ class TestObsUnitaire(unittest.TestCase):
         dat2 = DatationValue([datetime(2000,1,2), datetime(2006,1,1)])
         self.assertEqual(dat.link(dat2), 'within')
         self.assertTrue(dat.within(dat2))
+        
         loc = LocationValue([[[0,1],[1,1], [1,0], [0,0]]])
         loc2 = LocationValue([[[0,10],[10,10], [10,0],[0,0]]])
         loc3 = LocationValue([0.5, 0.5])
@@ -185,14 +188,19 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertTrue(loc.within(loc2))
         self.assertEqual(loc.link(loc3), 'contains')
         self.assertEqual(LocationValue([0.5, 0.5]).link(LocationValue([0.5, 0.5])), 'equals')
-        prp = PropertyValue({'a':2, 'b':3})
-        prp2 = PropertyValue({'a':2})
-        self.assertEqual(prp.link(prp2), 'contains')
-        self.assertTrue(prp.contains(prp2))
-        prp2 = PropertyValue({'a':3})
-        self.assertEqual(prp.link(prp2), 'intersects')
-        prp2 = PropertyValue({'c':3})
-        self.assertEqual(prp.link(prp2), 'disjoint')
+        
+        prp10 = PropertyValue({"prp":'PM10', "truc":12})
+        prp25 = PropertyValue({"prp":'PM25', "truc":15})
+        prp25bis = PropertyValue({"prp":'PM25', "truc":12})
+        prp25ter = PropertyValue({"prp":'PM25'})
+        prp10_20 = PropertyValue.Simple(['PM10', 'PM20'])
+        prp10_25 = PropertyValue.Simple(['PM10', 'PM25'])
+        self.assertEqual(prp10_20.link(prp10), 'contains')
+        self.assertTrue(prp10_20.contains(prp10))
+        self.assertEqual(prp10.link(prp10_20), 'within')
+        self.assertEqual(prp10_20.link(prp10_25), 'intersects')
+        self.assertEqual(prp25.link(prp25bis), 'intersects')
+        self.assertEqual(prp25.link(prp25ter), 'within')
 
     def test_bjson(self):
         v = DatationValue({"date1": "2021-02-04T12:05:00"})
@@ -206,11 +214,11 @@ class TestObsUnitaire(unittest.TestCase):
                           == LocationValue.from_json(v.json(bjson_format=False, bjson_bson=False))
                           == LocationValue.from_json(v.json(bjson_format=False, bjson_bson=False)))
         v = DatationValue({"date1": "2021-02-04T12:05:00"})
-        self.assertTrue(v == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True))
-                          == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False)))        
+        self.assertTrue(v == DatationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True)))
+                          == DatationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False))))        
         v = LocationValue({"loc1": pol2})
-        self.assertTrue(v == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True))
-                          == ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False)))     
+        self.assertTrue(v == LocationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True)))
+                          == LocationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False))))
 
     def test_box_bounds(self):
         v = LocationValue.Box(LocationValue(pol13))
@@ -228,6 +236,9 @@ class TestObsUnitaire(unittest.TestCase):
         p = DatationValue(aprem)
         self.assertEqual(l.boxUnion(p, 'union').bounds, 
                          (min(l.bounds[0], p.bounds[0]), max(l.bounds[1], p.bounds[1])))
+        prp10_20 = PropertyValue.Simple(['PM10', 'PM20'])
+        prp10_25 = PropertyValue.Simple(['PM10', 'PM25'])
+        self.assertEqual(prp10_20.boxUnion(prp10_25).vSimple(), ["PM10", "PM20", "PM25"])
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

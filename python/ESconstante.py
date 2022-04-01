@@ -28,7 +28,7 @@ class Es:
         self.mOption : Dict = {
                       "bjson_format"        : True, # sortie bson/json ou dict
                       "bjson_bson"          : False, # sortie bson ou json
-                      "json_res_index"      : False, # affiche index
+                      "json_res_index"      : True, # affiche index
                       "json_prp_name"       : False, # affiche name ou property
                       "json_dat_name"       : False, # affiche name ou instant/slot
                       "json_loc_name"       : False, # affiche name ou instant/slot
@@ -41,6 +41,7 @@ class Es:
                       "unic_index"          : True,  # dans add
                       #"add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
+                      "prp_dict"            : False, # si True, prp_type doit être dans ES.prop
                       "sort_order"          : 'dlp'
                       }
         ''' Default options for `ES.ESObservation.Observation`'''
@@ -324,8 +325,9 @@ class Es:
         self.res_axes         = "axes"
         self.set_nValue       = "nval"
         
-        self.dat_box            = "timeBox"
-        self.loc_box            = "boudingBox"
+        self.dat_box            = "datationBox"
+        self.loc_box            = "locationBox"
+        self.prp_box            = "propertyBox"
         
         self.prp_type	        = "prp";
         self.prp_unit		    = "unit";

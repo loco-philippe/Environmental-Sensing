@@ -82,8 +82,8 @@ class ESValue:
 
     **other methods**
     
-    - `cast` (@staticmethod)
-    - `fromjson` (@classmethod)
+    - `cast` (@classmethod)
+    - `from_json` (@classmethod)
     - `getValue`
     - `getName`
     - `json`
@@ -125,7 +125,8 @@ class ESValue:
     def __hash__(self): return hash(self.json())
 
     def __to_bytes__(self, **option): 
-        js = {self.__class__.__name__ : self.json(bjson_format=False, bjson_bson=True)}
+        #js = {self.__class__.__name__ : self.json(bjson_format=False, bjson_bson=True)}
+        js = self.json(bjson_format=False, bjson_bson=True)
         if option['bjson_format']: return bson.encode(js)
         return js
 
@@ -134,8 +135,9 @@ class ESValue:
         if not isinstance(bs, (bytes, dict)): raise ESValueError("parameter is not dict or bytes")
         if isinstance(bs, bytes): dic = bson.decode(bs)
         else: dic = bs
-        ClassValue = eval(list(dic.keys())[0])
-        return ClassValue(list(dic.values())[0])
+        return dic
+        #ClassValue = eval(list(dic.keys())[0])
+        #return ClassValue(list(dic.values())[0])
     
     @classmethod
     def from_json(cls, bs):
@@ -149,8 +151,10 @@ class ESValue:
         '''list or tuple (@property)
             DatationValue : boundingBox (tmin, tmax)
             LocationValue : boundingBox (minx, miny, maxx, maxy)
+            PropertyValue : boundingBox (list of type property)
             Other ESValue : () '''
         try :
+            if isinstance(self, PropertyValue): return tuple(self.value[ES.prp_type])
             return self.value.bounds
         except :
             return ()
@@ -159,6 +163,10 @@ class ESValue:
         ''' 
         return the union between box(self) and box(other) (new `ESValue`) with a new name.
         '''
+        if self.__class__ == PropertyValue : 
+            return PropertyValue.Box(sorted(list(self._setprp(self.value[ES.prp_type]) | 
+                                          self._setprp(other.value[ES.prp_type]))), 
+                                     name=name)
         sbox = self.Box (self. bounds).value
         obox = other.Box(other.bounds).value
         if sbox == obox: ubox = sbox 
@@ -167,20 +175,20 @@ class ESValue:
         if name != '': boxunion.name = name
         return boxunion
         
-    @staticmethod
-    def cast(value, ValueClass):
+    @classmethod
+    def cast(cls, value):
         '''
         tranform a value (unique or list) in a list of `ESValue`
 
         *Parameters*
 
         - **value** : value to transform
-        - **ValueClass** : `ESValue` class
 
         *Returns*
 
         - **list** : list of `ESValue`
         '''
+        ValueClass = cls
         if isinstance(value, list):
             try :
                 return [ValueClass(val) for val in value]
@@ -256,7 +264,7 @@ class ESValue:
         *Parameters*
 
         - **bjson_format** : boolean (default True) - choice for return format (string/bytes if True, dict else)
-        - **bjson_bson **  : boolean (default False)- choice for return format (bson if True, json else)
+        - **bjson_bson**    : boolean (default False)- choice for return format (bson if True, json else)
         - **json_res_index** : boolean - include index (for ResultValue)
 
         *Returns* :  string or dict '''
@@ -641,11 +649,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
         ''' return point (property) coordinates y '''
         return self.vSimple()[1]
 
-    """@staticmethod
-    def _Box(minMax):
-        ''' return a LocationValue object from a tuple (minx, miny, maxx, maxy)'''
-        return LocationValue.Cuboid(minMax)"""
-
     def _jsonValue(self, **kwargs):
         ''' return geoJson coordinates'''
         return self.coords
@@ -690,6 +693,11 @@ class PropertyValue(ESValue):              # !!! début ESValue
 
     The methods defined in this class are :
 
+    *constructor (@classmethod)*
+    
+    - `Simple` (property type)
+    - `Box`  (set of property type)
+
     *getters*
 
     - `vSimple`
@@ -706,18 +714,33 @@ class PropertyValue(ESValue):              # !!! début ESValue
     """
     valName     = ES.prp_valName
 
-    def __init__(self, val=ES.nullPrp, name=ES.nullName):
+    @classmethod
+    def Simple(cls, prp, name='simple', prp_dict=False):
+        '''PropertyValue built with a value (property type) '''
+        return cls(val = {ES.prp_type: prp}, name=name, prp_dict=prp_dict)
+    
+    @classmethod
+    def Box(cls, prp, name='box', prp_dict=False):
+        '''PropertyValue built with a value (property type) '''
+        return cls(val = {ES.prp_type: prp}, name=name, prp_dict=prp_dict)
+    
+    def __init__(self, val=ES.nullPrp, name=ES.nullName, prp_dict=False):
         '''Several PropertyValue creation modes :
 
-        - PropertyValue({name : coord}) where coord is a GeoJSON or list coordinates format
-        - LocationValue(coord) where coord is a is a GeoJSON or list coordinates format
-        - LocationValue(name) where name is a string
-        - LocationValue(locval) where locval is a LocationValue object (copy)
-        - LocationValue(shape=shape, name=name) where shape is a shapely.geometry.Point
-        (or Polygon) and name is a string
+        - PropertyValue({name : value}) where value is a property dict or json string
+        - PropertyValue(js) where js is a json string
+        - PropertyValue(name) where name is a string 
+        - PropertyValue(prpval) where prpval is a PropertyValue object (copy)
+        
+        prp_dict : boolean(default False) - if True type property has to be in the type dictionary
         '''
         ESValue.__init__(self, val, name)
-
+        if not ES.prp_type in self.value: raise ESValueError("type property not defined")
+        if isinstance(self.value[ES.prp_type], list): return
+        if prp_dict and not self.value[ES.prp_type] in ES.prop: 
+            raise ESValueError("property not present in standard dictionnary")
+        if prp_dict : self.value[ES.prp_unit] = ES.prop[self.value[ES.prp_type]][5]
+        
     def __lt__(self, other):
         """lower if string simple value + name is lower"""
         return self.simple + self.name < other.simple + other.name
@@ -743,20 +766,33 @@ class PropertyValue(ESValue):              # !!! début ESValue
         - contains   : if all other's key/val are included in self's key/val
         - intersects : in the others cases'''
         if self.isEqual(other, name=False) : return 'equals'
-        union = other.value | self.value            
-        union2 = self.value | other.value    
-        if union == self.value and union2 == self.value:   return 'contains'
-        if union == other.value and union2 == other.value: return 'within'
-        if union == union2:                                return 'disjoint'
-        return 'intersects'
-    
+        sprp =self._setprp(self.value[ES.prp_type])
+        oprp =self._setprp(other.value[ES.prp_type])
+        if oprp == sprp:
+            union = other.value | self.value            
+            union2 = self.value | other.value    
+            if union == self.value and union2 == self.value:   return 'within'
+            if union == other.value and union2 == other.value: return 'contains'
+            if union == union2:                                return 'disjoint'
+            return 'intersects'
+        if sprp == sprp | oprp: return 'contains'
+        if oprp == sprp | oprp: return 'within'
+        if oprp & sprp == set(): return 'disjoint'
+        else: return 'intersects'
+        return 'undefined'
+
+    @staticmethod
+    def _setprp(val):
+        if isinstance(val, list): return set(val)
+        return {val}
+        
     @staticmethod
     def nullValue() : return {ES.prp_type: ES.nullDict, ES.prp_unit: ES.prop[ES.nullDict][5]}
 
     def vSimple(self, string=False):
         ''' return simple value (type for the property) in a string format or in a object format'''
+        simple = ES.nullDict
         if ES.prp_type in self.value : simple = self.value[ES.prp_type]
-        else : simple = ES.nullDict
         if string : return json.dumps(simple)
         return simple
 
@@ -791,23 +827,16 @@ class PropertyValue(ESValue):              # !!! début ESValue
         return li
         
     def _init(self, val={}):
-        if type(val) == dict : self.value |= val
-        elif type(val) == str : self.name = val
-        elif type(val) == PropertyValue :
+        if isinstance(val, dict):           self.value |= val
+        elif isinstance(val, str) : 
+            try: 
+                dic = json.loads(val)
+                if isinstance(dic, dict):   self.value |= dic 
+                else:                       self.name = val
+            except:                         self.name = val
+        elif isinstance(val, PropertyValue) :
             self.value = val.value
             self.name  = val.name
-        self.value[ES.prp_unit] = ES.prop[self.value[ES.prp_type]][5]
-
-    '''def _jsonDict(self, string=True):
-        li = {}
-        for k, v in self.value.items() :
-            if   k in [ES.prp_type, ES.prp_unit, ES.prp_sampling, ES.prp_appli, ES.prp_EMFId] :
-                if v != ES.nullDict: li[k] = v
-            elif k in [ES.prp_period, ES.prp_interval, ES.prp_uncertain] :
-                if v != ES.nullVal : li[k] = v
-            else : li[k] = v
-        if string : return json.dumps(li, ensure_ascii=False)
-        return li'''
 
 class ResultValue (ESValue):               # !!! début ESValue
     '''
@@ -816,7 +845,6 @@ class ResultValue (ESValue):               # !!! début ESValue
     *Attributes (for @property see methods)* :
 
     - **value** : any kind of object
-    - **ind** : list, index [location, datation, property]
     - **name** : String
 
     The methods defined in this class are :
@@ -827,8 +855,6 @@ class ResultValue (ESValue):               # !!! début ESValue
 
     *exports - imports*
 
-    - `from_bytes`
-    - `to_bytes`
     - `to_float`
 
     '''

@@ -68,6 +68,7 @@ class Observation :
     *add value*
     
     - `Observation.addAttributes`
+    - `Observation.addJson`
     - `Observation.append`
     - `Observation.appendList`
     - `Observation.appendObs`
@@ -100,12 +101,13 @@ class Observation :
     
     *exports - imports*
     
+    - `Observation.from_obs`
     - `Observation.to_csv`
     - `Observation.to_dataFrame`
-    - `Observation.to_numpy`
-    - `Observation.to_xarray`
     - `Observation.to_json`
-    - `Observation.from_json`
+    - `Observation.to_numpy`
+    - `Observation.to_obs`
+    - `Observation.to_xarray`
     - `Observation.to_bytes`              # à voir
     - `Observation.from_bytes`            # à voir
 
@@ -116,7 +118,8 @@ class Observation :
         
         - Observation(dictESValue1, dictESValue2, ...) where dictESValue = {ESValuename : value}
         - Observation({ObsDict}) where ObsDict is a dictionnary with the same data as an ObsJSON
-        - Observation(ObsJSON) where ObsJSON is a string with the ObsJSON format
+        - Observation(ObsJSON) where ObsJSON is a string with the JSON format
+        - Observation(ObsBSON) where ObsBSON is a bytes with the BSON format
         - Observation([ESSetDatation, ESSetLocation, ESSetProperty, ESSetResult]) where ESSet is a list of ESValue :
             [ESValue1, ESValue2,...] or [ESValue] or ESValue
         - Observation(datation=ESSetDatation, location=ESSetLocation,
@@ -146,7 +149,7 @@ class Observation :
                 try: arg=json.loads(arg)            
                 except: pass
             elif type(arg) ==bytes:
-                try: arg=json.loads(arg)            
+                try: arg=bson.decode(arg)            
                 except: pass                
             if type(arg) == dict :      # creation à partir d'un dict "key : [liste]"
                 for k,v in arg.items() : 
@@ -175,14 +178,16 @@ class Observation :
         order = []
         for classES in ES.esObsClass[0:3] :
             if classES in list(js) : 
-                dicidx[classES] = ESValue.cast(js[classES], _EsClassValue[classES])
+                dicidx[classES] =  _EsClassValue[classES].cast(js[classES])
+                #dicidx[classES] = ESValue.cast(js[classES], _EsClassValue[classES])
         if ES.res_classES in list(js) : 
             dicres[ES.res_classES] = js[ES.res_classES]
             #dicres[ES.res_classES] = ESValue.cast(js[ES.res_classES], ResultValue)
         if 'order' in list(js) : order = js['order']
         if 'idxref' in list(js) : idxref = js['idxref']
         (v, seti, ii, vname, iname) = Ilist._initdict(dicres, dicidx, order, idxref)
-        res = ESValue.cast(v, ResultValue)
+        #res = ESValue.cast(v, ResultValue)
+        res = ResultValue.cast(v)
         self.ilist = Ilist(res, seti, ii, vname, iname, defaultidx=False)
         self.addAttributes(js)
 
@@ -192,12 +197,18 @@ class Observation :
         else : order = []
         if 'idxref' in kwargs : idxref = kwargs['idxref']
         else : idxref = []
-        self.ilist = Ilist.Iset(ESValue.cast(lis[3], ResultValue), 
+        self.ilist = Ilist.Iset(ResultValue.cast(lis[3]), 
+                                [DatationValue.cast(lis[0]),
+                                 LocationValue.cast(lis[1]),
+                                 PropertyValue.cast(lis[2])], 
+                                order, idxref, ES.esObsClass[3], ES.esObsClass[0:3],
+                                defaultidx=False)  
+        '''self.ilist = Ilist.Iset(ESValue.cast(lis[3], ResultValue), 
                                 [ESValue.cast(lis[0], DatationValue),
                                  ESValue.cast(lis[1], LocationValue),
                                  ESValue.cast(lis[2], PropertyValue)], 
                                 order, idxref, ES.esObsClass[3], ES.esObsClass[0:3],
-                                defaultidx=False)  
+                                defaultidx=False)  '''
 
     def __copy__(self):
         ''' Copy all the data, included ESValue'''
@@ -415,6 +426,21 @@ class Observation :
                 try:  self.parameter = json.dumps(v)
                 except:  self.parameter = ES.nullAtt
 
+    def addJson(self, js):
+        '''
+        Complete an empty `Observation` with json data. 
+        
+        *Parameters*
+        
+        - **js** : string - ObsJSON data
+        
+        *Returns*
+        
+        - **None**        '''
+        try: dic=json.loads(js)
+        except: return
+        self._initDict(dic)
+                
     def append(self, dat, loc, prp, res, unique=False, equal='full') :
         '''
         Add a new `ES.ESValue.ResultValue`
@@ -582,21 +608,23 @@ class Observation :
         newobs.option    = self.option 
         return newobs    
                     
-    def from_json(self, js):
+    @classmethod
+    def from_obs(cls, file) :
         '''
-        Complete an empty `Observation` with json data. 
-        
-        *Parameters*
-        
-        - **js** : string - ObsJSON data
-        
-        *Returns*
-        
-        - **None**        '''
-        try: dic=json.loads(js)
-        except: return
-        self._initDict(dic)
-                
+        Generate `Observation` object from file storage.
+
+         *Parameters*
+
+        - **file** : string - file name (with path)
+            
+        *Returns* : None'''
+        with open(file, 'rb') as f: btype = f.read(22)
+        if btype==bytes('{"' +ES.type+'": "' + ES.obs_classES +'"', 'UTF-8'):
+            with open(file, 'r', newline='') as f: bjson = f.read()
+        else:
+            with open(file, 'rb') as f: bjson = f.read()
+        return cls(bjson)
+    
     def full(self, minind=True, fillvalue=None, inplace=False) : 
         '''
         Add empty `ES.ESValue.ResultValue` to have a 'complete' `Observation`
@@ -828,13 +856,16 @@ class Observation :
         - **None**        '''
         self.ilist.sort(order=order, reindex=reindex)
 
-    def to_csv(self, file, json=True, name=True, dat=True, loc=True, prp=True, res=True, lenres=0) :
+    def to_csv(self, file, **kwargs) :
         '''
         Generate csv file to display `Observation` data.
 
         *Parameters*
         
         - **file** : string - file name (with path)
+
+        *Parameters (kwargs)*
+
         - **json** : boolean (default True) - Display json for `ES.ESValue`
         - **name** : boolean (default True) - Display name for `ES.ESValue`
         - **dat**  : boolean (default True) - Display value for `ES.ESValue.DatationValue`
@@ -846,11 +877,13 @@ class Observation :
         *Returns*
         
         - **None**        '''
-        tab = self._to_tab(json, name, dat, loc, prp, res, lenres)
+        option = {'json': True, 'name': True, 'dat': True, 'loc': True, 
+                  'prp': True, 'res': True, 'lenres': 0} | kwargs
+        tab = self._to_tab(**option)
         with open(file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             for lign in tab : writer.writerow(lign)
-        
+    
     def to_dataFrame(self, info=False, numeric=False, ind='axe', fillvalue='?', func=ES._identity,
                   name='Observation'):
         '''
@@ -876,12 +909,12 @@ class Observation :
     
     def to_json(self, **kwargs): 
         '''
-        Export in Json format. 
+        Export in Bson or Json format. 
         
         *Parameters (optional, default value in option attribute)*
         
         - **bjson_format**   : boolean - choice for return format (string/bytes if True, dict else)
-        - **bjson_bson **    : boolean - choice for return format (bson if True, json else)
+        - **bjson_bson**     : boolean - choice for return format (bson if True, json else)
         - **json_res_index** : Boolean - include index for ResultValue
         - **json_param**     : Boolean - include ESObs Parameter
         - **json_info**      : Boolean - include ESObs Information with all information
@@ -898,7 +931,6 @@ class Observation :
         dic = { ES.type : ES.obs_classES }
         if self.mAtt[ES.obs_id] != ES.nullAtt: dic[ES.obs_id] = self.mAtt[ES.obs_id]
         dic |= self._jsonAtt(**option2)
-        #dic |= self.ilist.json(**option2, cls=ESValueEncoder)
         dic |= self.ilist.json(**option2)
         if option["json_param"] and self.parameter != ES.nullAtt: 
             dic[ES.parameter] = self.parameter
@@ -924,6 +956,28 @@ class Observation :
         - **Numpy array**    '''
         return self.ilist.to_numpy(func=func, ind=ind, fillvalue=fillvalue, **kwargs)
 
+    def to_obs(self, file, **kwargs) :
+        '''
+        Generate obs file to display `Observation` data.
+
+         *Parameters (kwargs)*
+
+        - **file** : string - file name (with path)
+        - **kwargs** : see 'to_json' parameters
+            
+        *Returns*
+        
+        - **Integer** : file lenght (bytes)  '''
+        option = kwargs | {'bjson_format': True, 'json_res_index': True}       
+        data = self.to_json(**option)  
+        if kwargs['bjson_bson']: 
+            lendata = len(data)
+            with open(file, 'wb') as f: f.write(data)
+        else: 
+            lendata = len(bytes(data, 'UTF-8'))
+            with open(file, 'w', newline='') as f: f.write(data)
+        return lendata
+       
     def to_xarray(self, info=False, numeric=False, ind='axe', fillvalue='?',
                   name='Observation', maxname=20, func=None, **kwargs):
         '''
@@ -959,11 +1013,11 @@ class Observation :
         if not info : return xr.DataArray(data, coord, dims, name=name)
         else : return xr.DataArray(data, coord, dims, attrs=attrs['info'], name=name)
 
-    def view(self, name=True, dat=True, loc=True, prp=True, lenres=0, width=15, sep = '_') :
+    def view(self, **kwargs) :
         '''
         Generate tabular list to display `Observation` data.
 
-        *Parameters*
+        *Parameters (kwargs)*
         
         - **name** : boolean (default True) - Display name for `ES.ESValue`
         - **dat**  : boolean (default True) - Display value for `ES.ESValue.DatationValue`
@@ -976,7 +1030,12 @@ class Observation :
         *Returns*
         
         - **None**        '''
-        tab = self._to_tab(name, dat, loc, prp, lenres)
+        optiondeftab = {'name': True, 'dat': True, 'loc': True, 'prp': True, 'lenres': 0} 
+        optiondefview = {'width': 15, 'sep': '_'}
+        option = optiondeftab | optiondefview | kwargs
+        tab = self._to_tab(**{k: option[k] for k in optiondeftab})
+        sep   = option['sep']
+        width = option['width']
         septab = ''
         for i in range(width-2) : septab += sep
         separator = [ septab for val in tab[0]] 
@@ -1117,6 +1176,7 @@ class Observation :
         ''' Add box informations's key-value to dict dcinf'''
         dcinf = dict()
         if self.setLocation: dcinf[ES.loc_box] = list(self._boundingBox(self.setLocation).bounds)
+        if self.setProperty: dcinf[ES.prp_box] = list(self._boundingBox(self.setProperty).bounds)
         if self.setDatation: 
             bound = self._boundingBox(self.setDatation).bounds
             if option["bjson_bson"] : 
@@ -1201,8 +1261,11 @@ class Observation :
         for i in range(len(listVal)) : listVal[i].setValue(type(listVal[i])(newlistVal[i]))
         return listVal
 
-    def _to_tab(self, json=True, name=True, dat=True, loc=True, prp=True, res=True, lenres=0):
+    def _to_tab(self, **kwargs):
         ''' data preparation for view or csv export'''
+        option = {'json': True, 'name': True, 'dat': True, 'loc': True, 
+                  'prp': True, 'res': True, 'lenres': 0} | kwargs
+        json, name, dat, loc, prp, res, lenres = tuple(option.values())
         if self.setResult == None : return
         tab = list()
         resList = []

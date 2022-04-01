@@ -31,6 +31,8 @@ mongo   = True  # True
 # datas-----------------------------------------------------------------------
 def _val(n): return list(i for i in range(n))
 def _res(n): return (ES.res_classES, _val(n))
+def _dat(n): return (ES.dat_classES, [datetime.datetime(2000+i, 2, 4, 12, 5, 0) for i in range(n)])
+def _loc(n): return (ES.loc_classES, [[5+i, 20+i] for i in range(n)])
 with open('C:\\Users\\a179227\\OneDrive - Alliance\\perso Wx\\ES standard\\python ESstandard\\departements-version-simplifiee.geojson') as f: 
     dp = f.read()
 dpt = json.loads(dp)['features']
@@ -280,9 +282,12 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob2=Observation(datation=['ce matin'], location=['paris'], property=['pm10'], result=['fort'])
         self.assertTrue(ob.to_json()==ob1.to_json()==ob2.to_json())
         ob=Observation()
-        ob.from_json(json.dumps(dict((obs_1, _res(3), dat3))))
+        ob.addJson(json.dumps(dict((obs_1, _res(3), dat3))))
         ob1 = Observation(json.dumps(dict((obs_1, _res(3), dat3))))
         self.assertEqual(ob.json, ob1.json)
+        res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
+        ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref=[0,0,2])
+        self.assertEqual(ob.json, Observation(ob.json).json)
 
     def test_obs_loc_iloc_maj(self):
         ob = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[0,2])
@@ -678,5 +683,14 @@ class TestExports(unittest.TestCase):
         self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime.datetime(2021,5,4), datetime.datetime(2021,5,8)]),    # 4
                                                  'isName' : 'name'},                                                    # 3
                                        location={'within' : LocationValue.Box((14.5, 41, 18.5, 44))} )), 2)
+        
+    def test_file(self):
+        res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
+        ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref=[0,0,2])
+        ob.to_obs('test.obs', bjson_bson=True)
+        self.assertEqual(ob.json, Observation.from_obs('test.obs').json)
+        ob.to_obs('test.obs', bjson_bson=False)
+        self.assertEqual(ob.json, Observation.from_obs('test.obs').json)
+        
 if __name__ == '__main__':
     unittest.main(verbosity=2)

@@ -66,6 +66,12 @@ class Test_ilist(unittest.TestCase):
                           'propertyvalue' : [True, False]})
         self.assertEqual(il.iidx[1], [0, 0, 1, 1, 2, 2])
         self.assertEqual(il, il2)
+        il2 =Ilist.Idict({'resultvalue' :[[{'a':5}, [0, 0, 0]], ['b', [0, 0, 1]], ['c', [1, 1, 0]], ['d', [1, 1, 1]], 
+                                         ['e', [2, 2, 0]], [['f', 'g'], [2, 2, 1]]]},
+                         {'datationvalue' : [[{'a':5}, [0, 0, 0]],20,{'a':5, 'r':'r'}],
+                          'locationvalue' : [100,200,300],
+                          'propertyvalue' : [True, False]})
+        self.assertEqual(il.iidx[1], [0, 0, 1, 1, 2, 2])
 
     def test_init_set(self) :
         il = Ilist.Iset(['a', 'b', 'c', 'd', 'e', 'f'], [[10,20,30],[100,200,300], [True, False]], 
@@ -282,8 +288,17 @@ class Test_ilist(unittest.TestCase):
                           'property':[PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]},
                          idxref=[0,0,2], order=[2,0])
         il2 = Ilist.from_bytes(il.to_bytes(bjson_format=True, bin_iidx=True))
+        il2.setidx[0] = DatationValue.cast(il2.setidx[0])
+        il2.setidx[1] = LocationValue.cast(il2.setidx[1])
+        il2.setidx[2] = PropertyValue.cast(il2.setidx[2])
+        il2.extval = ResultValue.cast(il2.extval)
         self.assertEqual(il.json(bjson_format=False, bjson_bson=True), il2.json(bjson_format=False, bjson_bson=True))
-        #print(il2)
+        il3 = Ilist.from_bytes(il.to_bytes(bjson_format=False, bin_iidx=True))
+        il3.setidx[0] = DatationValue.cast(il3.setidx[0])
+        il3.setidx[1] = LocationValue.cast(il3.setidx[1])
+        il3.setidx[2] = PropertyValue.cast(il3.setidx[2])
+        il3.extval=ResultValue.cast(il3.extval)        
+        self.assertEqual(il.json(bjson_format=False, bjson_bson=True), il3.json(bjson_format=False, bjson_bson=True))        #print(il2)
                 
 
 if __name__ == '__main__':
