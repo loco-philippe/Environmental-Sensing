@@ -7,7 +7,7 @@ Created on Sun Aug  1 13:35:28 2021
 This module describes the constants and default values used in other modules.
 """
 from datetime import datetime
-from typing import Dict 
+from typing import Dict
 
 
 class Es:
@@ -23,7 +23,7 @@ class Es:
 
         #'''Application initialization (boolean)'''
         self.debug = False
-                
+
         #'''Observation initialization (dict) '''
         self.mOption : Dict = {
                       "bjson_format"        : True, # sortie bson/json ou dict
@@ -45,38 +45,38 @@ class Es:
                       "sort_order"          : 'dlp'
                       }
         ''' Default options for `ES.ESObservation.Observation`'''
-        
+
         self.vName: Dict = {  self.obs_classES  :   self.obs ,
                         self.dat_classES  :   self.dat ,
                         self.loc_classES  :   self.loc ,
                         self.res_classES  :   self.res ,
                         self.prp_classES  :   self.prp }
         '''name for json classES identification '''
-        
+
         """self.mValObs: Dict = {self.loc_valName  : self.loc_classES  ,
                         self.dat_valName  : self.dat_classES  ,
                         self.prp_valName  : self.prp_classES  ,
                         self.res_valName  : self.res_classES  }
         '''assignment of ESValue name to ESObs objects '''"""
-        
+
         self.json_type: list = [self.json_type_dat, self.json_type_loc, self.json_type_prp, self.json_type_res]
-        '''ordered list for json_type '''  
+        '''ordered list for json_type '''
 
         self.json_nval: list = [self.json_nval_dat, self.json_nval_loc, self.json_nval_prp, self.json_nval_res]
-        '''ordered list for json_type '''  
+        '''ordered list for json_type '''
 
         self.esObsClass: list = [self.dat_classES, self.loc_classES, self.prp_classES, self.res_classES]
-        '''ordered list for classES '''  
+        '''ordered list for classES '''
 
         """self.esObsId: dict = { self.dat_classES : 0, self.loc_classES : 1, self.prp_classES : 2, self.res_classES : 3}
         '''ordered dict value for classES '''  """
-        
+
         self.mTypeAtt: Dict ={self.type            : self.obs_classES  ,
                         self.information     : self.nul_classES  ,
                         self.obs_resultTime  : self.obs_classES  ,
                         self.obs_reference   : self.obs_classES  ,
                         self.obs_id          : self.obs_classES  ,
-                        "ResultQuality"      : self.res_classES  ,            
+                        "ResultQuality"      : self.res_classES  ,
                         self.prp_type        : self.prp_classES  ,
                         self.prp_unit		   : self.prp_classES  ,
                         self.prp_sampling	   : self.prp_classES  ,
@@ -89,7 +89,7 @@ class Es:
                         self.prp_interval	   : self.prp_classES  ,
                         self.prp_uncertain   : self.prp_classES  ,
                         "EMFType "           : "ObservingEMF"  ,
-                        "ResultNature "      : "ObservingEMF"  }        
+                        "ResultNature "      : "ObservingEMF"  }
         ''' Assignment of attributes to ESObs objects '''
 
         self.obsCat: Dict = {
@@ -147,7 +147,7 @@ class Es:
         `ES.ESObservation.Observation.to_bytes` '''
 
         #'''Property initialization (dict)
-        #  format : (code_ES, python format, lenght, dexp, bexp, unit) 
+        #  format : (code_ES, python format, lenght, dexp, bexp, unit)
         self.prop: Dict ={'utf-8'       : (2 ,  '', 0,  0, 0, self.nullDict),
                           'sfloat'      : (15, 'e', 2,  0, 0, self.nullDict),
                           'uint16'      : (3 , 'H', 2,  0, 0, self.nullDict),
@@ -164,10 +164,10 @@ class Es:
                           'Temp'        : (24, 'e', 2,  0, 0, '°C'         ),
                           self.nullDict : (0 , 'e', 2,  0, 0, self.nullDict)}
         '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
-        
+
         self.invProp: Dict = self._invnum(self.prop)
         '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
-        
+
         self.sampling: Dict = { self.nullDict       : 0,
                                'instantaneous'      : 1,
                                'arithmetic mean'    : 2,
@@ -177,7 +177,7 @@ class Es:
                                'accumulated'        : 6,
                                'count'              : 7}
         '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
-        
+
         self.invSampling: Dict = self._inv(self.sampling)
         '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
 
@@ -190,32 +190,64 @@ class Es:
                        'map database'                   : 6,
                        'barometric elevation source'    : 7}
         '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
-        
+
         self.invApplication = self._inv(self.application)
         '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
-        
-        # Xarray initialization (dict) 
+
+        # Xarray initialization (dict)
         self.nax: Dict = {'dat' : 0, 'loc' : 1, 'prp' : 2,
                           'd'   : 0, 'l'   : 1, 'p'   : 2}
         '''Dictionnary for axis Number '''
-        
-        self.axes: Dict = { 0  :  'dat',   # axes : [0,1,2], [0,21], [2, 10], [1, 20]
-                    1  :	'loc',   #        [0, 1],  [0, 2], [1, 2], [120]
-                    2  :	'prp',
-                    10 :	'datloc',
-                    20 :	'datprp',
-                    21 :	'locprp',
-                    120:	'datlocprp'}
+
+        self.axes: Dict = {
+            0  :  'dat',   # axes : [0,1,2], [0,21], [2, 10], [1, 20]
+            1  :	'loc',   #        [0, 1],  [0, 2], [1, 2], [120]
+            2  :	'prp',
+            10 :	'datloc',
+            20 :	'datprp',
+            21 :	'locprp',
+            120:	'datlocprp'}
         '''Dictionnary for Xarray axis name '''
-        
-        self.xattrs: Dict = {'lon' : {"units":"degrees",   "standard_name":"longitude"},
-                     'lat' : {"units":"degrees",   "standard_name":"latitude"},
-                     'loc' : {"units":"lon, lat",  "standard_name":"longitude - latitude"},
-                     'dat' : {                     "standard_name":"horodatage"},
-                     'prp' : {                     "standard_name":"property"}}
+
+        self.xattrs: Dict = {
+            'lon' : {"units":"degrees",   "standard_name":"longitude"},
+            'lat' : {"units":"degrees",   "standard_name":"latitude"},
+            'loc' : {"units":"lon, lat",  "standard_name":"longitude - latitude"},
+            'dat' : {                     "standard_name":"horodatage"},
+            'prp' : {                     "standard_name":"property"}}
         '''Dictionnary for Xarray attrs informations '''
-        
-        self.reserved = [
+
+        self.ntypevalue: Dict = {
+            'null':             0,
+            'name':             100,
+            'instant':          2,
+            'interval':         3,
+            'slot':             4,
+            'nameinstant':      102,
+            'nameinterval':     103,
+            'nameslot':         104,
+            'point':            12,
+            'polygon':          13,
+            'multipoint':       14,
+            'multipolygon':     15,
+            'namepoint':        112,
+            'namepolygon':      113,
+            'namemultipoint':   114,
+            'namemultipolygon': 115,
+            'property':         22,
+            'propertydict':     23,
+            'multiproperty':    24,
+            'nameproperty':     122,
+            'namepropertydict': 123,
+            'namemultiproperty':124,
+            'result':           32,
+            'nameresult':       132
+            }
+        '''Dictionnary for ESValue types '''
+
+        self.invntypevalue: Dict = self._inv(self.ntypevalue)
+
+        self.reserved: list = [
             self.json_nval_loc,
             self.json_nval_dat,
             self.json_nval_res,
@@ -225,7 +257,7 @@ class Es:
             self.json_type_dat,
             self.json_type_res,
             self.json_type_prp,
-            
+
             self.parameter    ,
             self.information  ,
             self.type         ,
@@ -236,14 +268,14 @@ class Es:
             self.prp          ,
             self.res          ,
             self.coordinates  ,
-            
+
             self.nul_classES  ,
             self.obs_classES  ,
             self.dat_classES  ,
             self.loc_classES  ,
             self.prp_classES  ,
             self.res_classES  ,
-            
+
             self.obs_attributes,
             self.obs_id       ,
             self.obs_resultTime,
@@ -252,16 +284,16 @@ class Es:
             self.obs_score     ,
             self.obs_order     ,
             self.obs_idxref    ,
-            
+
             self.res_mRate     ,
-            self.res_nEch      ,   
-            self.res_dim       , 
-            self.res_axes      , 
-            self.set_nValue    , 
-                  
+            self.res_nEch      ,
+            self.res_dim       ,
+            self.res_axes      ,
+            self.set_nValue    ,
+
             self.dat_box       ,
             self.loc_box       ,
-            
+
             self.prp_type	   ,
             self.prp_unit		,
             self.prp_sampling	,
@@ -274,15 +306,15 @@ class Es:
             self.prp_interval	,
             self.prp_uncertain ,
             self.prp_name      ,
-            
+
             self.dat_valName   ,
-            self.loc_valName   ,   
-            self.prp_valName   ,   
+            self.loc_valName   ,
+            self.prp_valName   ,
             self.res_valName   ]
-        
-    def _initName(self) :    
-        ''' Name initialization (string) '''        
-        self.json_nval_loc    = "nvalloc" 
+
+    def _initName(self) :
+        ''' Name initialization (string) '''
+        self.json_nval_loc    = "nvalloc"
         self.json_nval_dat    = "nvaldat"
         self.json_nval_res    = "nvalres"
         self.json_nval_prp    = "nvalprop"
@@ -291,7 +323,7 @@ class Es:
         self.json_type_dat    = "typedat"
         self.json_type_res    = "typeres"
         self.json_type_prp    = "typeprop"
-        
+
         self.parameter        = "parameter"
         self.information      = "information"
         self.type             = "type"
@@ -302,14 +334,14 @@ class Es:
         self.prp              = "prp"
         self.res              = "res"
         self.coordinates      = "coordinates"
-        
+
         self.nul_classES      = "nullClass"
         self.obs_classES      = "observation"
         self.dat_classES      = "datation"
         self.loc_classES      = "location"
         self.prp_classES      = "property"
         self.res_classES      = "result"
-        
+
         self.obs_attributes   = "attributes"
         self.obs_id           = "id"
         self.obs_resultTime   = "ResultTime"
@@ -318,17 +350,18 @@ class Es:
         self.obs_score        = "score"
         self.obs_order        = "order"
         self.obs_idxref       = "idxref"
-        
+
         self.res_mRate        = "measureRate"
         self.res_nEch         = "nEch"
         self.res_dim          = "dim"
         self.res_axes         = "axes"
         self.set_nValue       = "nval"
-        
+
         self.dat_box            = "datationBox"
         self.loc_box            = "locationBox"
+        self.geo_box            = "geobox"
         self.prp_box            = "propertyBox"
-        
+
         self.prp_type	        = "prp";
         self.prp_unit		    = "unit";
         self.prp_sampling	    = "samplingFunction";
@@ -341,13 +374,13 @@ class Es:
         self.prp_interval	    = "updateInterval";
         self.prp_uncertain      = "uncertainty";
         self.prp_name           = "name";
-        
+
         self.dat_valName      = "datvalue"
         self.loc_valName      = "locvalue"
         self.prp_valName      = "prpvalue"
         self.res_valName      = "resvalue"
-    
-    def _initReferenceValue(self):        
+
+    def _initReferenceValue(self):
         ''' Reference value initialization '''
         self.distRef          = [48.87, 2.35] # coordonnées Paris lat/lon
         self.nullDate         = datetime(1970, 1, 1)

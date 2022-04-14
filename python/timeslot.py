@@ -95,16 +95,17 @@ class TimeSlot:
             return
         if type(val) == tuple: val = list(val)
         if type(val) == list and len(val) == 2 and type(val[0]) != TimeInterval:  
-            try :                         slot.append(TimeInterval(val))
+            try :                           slot.append(TimeInterval(val))
             except :
-                for interv in val :       slot.append(TimeInterval(interv))
+                for interv in val :         slot.append(TimeInterval(interv))
         elif type(val) == list:  
             try :
-                for interv in val :       slot.append(TimeInterval(interv))
-            except :                      slot.append(TimeInterval(val))
-        elif type(val) == TimeSlot :      slot = val.slot
-        elif type(val) == TimeInterval :  slot.append(val)
-        else :                            slot.append(TimeInterval(val))
+                for interv in val :         slot.append(TimeInterval(interv))
+            except :                        slot.append(TimeInterval(val))
+        elif type(val) == datetime.datetime:slot.append(TimeInterval(val))
+        elif type(val) == TimeSlot :        slot = val.slot
+        elif type(val) == TimeInterval :    slot.append(val)
+        else :                              slot.append(TimeInterval(val))
         self.slot= TimeSlot._reduced(slot)
         
     def __add__(self, other):
@@ -195,7 +196,7 @@ class TimeSlot:
         if len(self.slot) == 1 : return self.slot[0].stype
         else : return 'slot'
 
-    def json(self, **option): 
+    def json(self, **kwargs): 
         '''
         Return json/bson structure with the list of TimeInterval.
 
@@ -205,7 +206,7 @@ class TimeSlot:
         - **bjson_bson**   : defaut False - if True return json, else return bson
                 
         *Returns* : string or dict'''
-        option = {'bjson_format' : False, 'bjson_bson' : False} | option
+        option = {'bjson_format' : False, 'bjson_bson' : False} | kwargs
         if len(self) == 1 : js = self.slot[0].json(bjson_format=False, bjson_bson=option['bjson_bson'])
         else : js = [interv.json(bjson_format=False, bjson_bson=option['bjson_bson']) for interv in self.slot]
         if option['bjson_format'] and not option['bjson_bson'] : return json.dumps(js)

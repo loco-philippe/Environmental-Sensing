@@ -57,14 +57,19 @@ of independent indexes fullname, course and examen.
 """
 from itertools import product
 from copy import copy, deepcopy
-from datetime import datetime
+import datetime
 import json
 import csv
+import re
 import numpy as np
 import xarray
 #from bson import decode, encode
 import bson
 from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue
+import math
+from collections import Counter
+
+#from time import time
 
 def identity(*args, **kwargs):
     '''return the same value as args or kwargs'''
@@ -75,15 +80,15 @@ def identity(*args, **kwargs):
 class IlistEncoder(json.JSONEncoder):
     """add a new json encoder for Ilist"""
     def default(self, o) :
-        if isinstance(o, datetime) : return o.isoformat()
+        if isinstance(o, datetime.datetime) : return o.isoformat()
         option = {'bjson_format': False, 'bjson_bson': False}
         try : return o.json(**option)
-        except : 
+        except :
             try : return o.__to_json__()
             except : return json.JSONEncoder.default(self, o)
 
-
 class Ilist:
+#%% intro
     '''
     An `Ilist` is a representation of an indexed list (a list is indexed by others list).
     E.g. python zip or csv file.
@@ -175,15 +180,20 @@ class Ilist:
 
     - `Ilist.from_bytes` (classmethod)
     - `Ilist.from_csv` (classmethod)
+    - `Ilist.from_file` (classmethod)
     - `Ilist.json`
     - `Ilist.to_bytes`
     - `Ilist.to_csv`
+    - `Ilist.to_file`
     - `Ilist.to_numpy`
     - `Ilist.to_xarray`
     - `Ilist.vlist`
     '''
     __slots__ = 'extval', 'iidx', 'setidx', 'valname', 'idxname'
+    c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
+    c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
 
+#%% constructor
     @classmethod     # !!! class methods
     def Idict(cls, dictvaliidx, dictsetidx, order=[], idxref=[], defaultidx=True):
         '''
@@ -253,7 +263,7 @@ class Ilist:
         return cls(extval, [], iidx, valname, idxname, defaultidx)
 
     @classmethod
-    def Iext(cls, extval=[], extidx=[], valname='value', idxname=[], defaultidx=True):
+    def Iext(cls, extval=[], extidx=[], valname='value', idxname=[], defaultidx=True, fast=False):
         '''
         Ilist constructor (external index).
 
@@ -264,6 +274,7 @@ class Ilist:
         - **valname** : string (default 'value') name of indexed list (see data model)
         - **idxname** : list of string (default []) name of index list (see data model)
         - **defaultidx** : boolean (default True). If True, a generic index
+        - **fast** : boolean (default False). If True, fast operation (reduction controls)
         is generated if no index is defined
 
         *Returns*
@@ -275,9 +286,9 @@ class Ilist:
             idxname = ['default index']
         elif extidx != [] and type(extidx[0]) != list : ext = [extidx]
         else :                                          ext = extidx
-        setidx, iidx = Ilist._resetidx(ext)        
+        setidx, iidx = Ilist._resetidx(ext, fast)
         return cls(extval, setidx, iidx, valname, idxname, defaultidx)
-        
+
     @classmethod
     def Izip(cls, *args):
         '''
@@ -396,6 +407,7 @@ class Ilist:
             iidx    = Ilist._transpose(tvalidx[1])
         return (extval, iidx)
 
+#%% special
     def __repr__(self):
         ''' return ival and iidx'''
         texLis = ''
@@ -460,12 +472,17 @@ class Ilist:
         ''' Copy all the data (deepcopy)'''
         return deepcopy(self)
 
-    @property           # !!! property
-    def axes(self):
+#%% property
+    @property
+    def axes(self):             # ,!!!!trop long
         ''' return the list of independant axes (not coupled and not unique)'''
+        idxlen = self.idxlen
+        idxref = self.idxref
+        idxcoupled = [idxref[i] != i for i in range(self.lenidx)]
+        #idxcoupled = self.idxcoupled
         axes = list(filter(lambda x: x >= 0, set(list(map(
                                 lambda x,y,z : -1 if (x <= 1 or y) else z,
-                                self.idxlen, self.idxcoupled, self.idxref)))))
+                                idxlen, idxcoupled, idxref)))))
         if self.lenidx > 0 and not axes : axes = [0]
         return axes
 
@@ -478,16 +495,21 @@ class Ilist:
     def axesmin(self):
         ''' return the list of independant axes (not coupled, not derived and not unique)'''
         axes = []
-        for i in range(self.lenidx):
-            if not self.idxcoupled[i] and not self.idxunique[i] and not self.idxderived[i]:
+        idxcoupled= self.idxcoupled
+        idxunique = self.idxunique
+        idxderived= self.idxderived
+        lenidx = self.lenidx
+        for i in range(lenidx):
+            if not idxcoupled[i] and not idxunique[i] and not idxderived[i]:
                 axes.append(i)
-        if self.lenidx > 0 and not axes : axes = [0]
+        if lenidx > 0 and not axes : axes = [0]
         return axes
 
     @property
     def axeslen(self):
         ''' return the list of axes lenght '''
-        return [self.idxlen[axe] for axe in self.axes]
+        idxlen = self.idxlen
+        return [idxlen[axe] for axe in self.axes]
 
     @property
     def complete(self):
@@ -498,7 +520,13 @@ class Ilist:
     def consistent(self):
         '''return a boolean (True if Ilist is consistent : only one extval
         for one list of index values'''
-        return len(set(self._tuple(self.tiidx))) == len(self)
+        tiidx = self.tiidx
+        return len(set(self._tuple(tiidx))) == len(self)
+
+    def unconsistent(self, ):
+        tiidx = self.tiidx
+        act = {tuple(self._indtoext(list(it))) for it in Counter(self._tuple(tiidx)).items() if it[1] >1}
+        return dict(self._list(act))
 
     @property
     def dimension(self):
@@ -515,23 +543,28 @@ class Ilist:
     @property
     def idxcoupled(self):
         '''return a list of boolean for each index (True if coupled)'''
-        return [self.idxref[i] != i for i in range(self.lenidx)]
+        idxref = self.idxref
+        return [idxref[i] != i for i in range(self.lenidx)]
 
     @property
     def idxder(self):
         '''return the list of derived index'''
-        lis = list(range(self.lenidx))
+        lenidx = self.lenidx
+        lis = list(range(lenidx))
         for i in range(len(lis)):
             for j in range(len(lis)):
                 if i != j and self._derived(self.iidx[i], self.iidx[j]):
                     lis[i] = j
                     break
+        while lis != [lis[lis[i]] for i in range(lenidx)] :
+            lis = [lis[lis[i]] for i in range(lenidx)]
         return lis
 
     @property
     def idxderived(self):
         '''return a list of boolean for each index (True if derived)'''
-        return [self.idxder[i] != i for i in range(self.lenidx)]
+        idxder = self.idxder
+        return [idxder[i] != i for i in range(self.lenidx)]
 
     @property
     def idxlen(self):
@@ -552,7 +585,8 @@ class Ilist:
     @property
     def idxunique(self):
         '''return a list of boolean for each index (True if unique)'''
-        return [ idl == 1 for idl in self.idxlen]
+        idxlen = self.idxlen
+        return [ idl == 1 for idl in idxlen]
 
     @property
     def ind(self):
@@ -567,7 +601,9 @@ class Ilist:
     @property
     def lencomplete(self):
         ''' return an integer : number of values if complete (prod(idxlen,not coupled))'''
-        return self._mul(list(map(lambda x,y: max((1-x)*y,1), self.idxcoupled, self.idxlen)))
+        idxcoupled = self.idxcoupled
+        idxlen = self.idxlen
+        return self._mul(list(map(lambda x,y: max((1-x)*y,1), idxcoupled, idxlen)))
 
     @property
     def lenidx(self):
@@ -604,21 +640,23 @@ class Ilist:
         return len(self.setval)
 
     @property
-    def tiidx(self):
-        '''return the tiidx (see data model)'''
-        return self._transpose(self.iidx)
-
-    @property
     def textidx(self):
         '''return the textidx (see data model)'''
         return self._transpose(self.extidx)
 
     @property
+    def tiidx(self):
+        '''return the tiidx (see data model)'''
+        return self._transpose(self.iidx)
+
+    @property
     def zip(self):
         '''return a zip format for textidx : tuple(tuple(idx)'''
-        return tuple(tuple(idx) for idx in self.textidx)
+        textidx = self.textidx
+        return tuple(tuple(idx) for idx in textidx)
 
-    def addextidx(self, idxname, extidx):             # !!! methods
+#%% methods
+    def addextidx(self, idxname, extidx):
         '''
         add a new index with name = idxname and extidx.
 
@@ -652,7 +690,7 @@ class Ilist:
             self.iidx   .append(iidx)
             self.idxname.append(idxname)
 
-    def append(self, extval, extind, unique=False):
+    def append(self, extval, extind, unique=False, fast=False):
         '''
         add a new value extval with index extind.
 
@@ -661,17 +699,23 @@ class Ilist:
         - **extval** : new object value
         - **extind** :  list - new index values to add to extidx
         - **unique** :  boolean (default False) - If True and extidx present
+        - **fast** : boolean (default False) - Update whithout reindex
         in textidx append is refuse.
 
         *Returns* : none '''
-        if (self.iseIndex(extind) and unique) or \
-           (self.isValue(extval) and self.iseIndex(extind)): return
+        if self.iseIndex(extind) and (unique or self.isValue(extval)): return
+        if fast :
+            self.extval.append(extval)
+            iind = self._updateset(extind)
+            for ind, idx in zip(iind, self.iidx) : idx.append(ind)
+            return
         self.extval.append(extval)
         tiidx = self.tiidx
         tiidx.append(self._updateset(extind))
         self.iidx = self._transpose(tiidx)
         self.setidx, self.iidx = self._resetidx(self.extidx)
-            
+        return
+
     def appendi(self, extval, intind, unique=False):
         '''
         add a new value extval with index intind.
@@ -710,11 +754,11 @@ class Ilist:
     def from_bytes(cls, bs):
         '''
         Generate an Ilist Object from a bytes value
-    
+
         *Parameters*
-    
-        - **bson** : bytes data to convert 
-    
+
+        - **bson** : bytes data to convert
+
         *Returns* : Ilist '''
         setidx = []
         if isinstance(bs, bytes) : dic = bson.decode(bs)
@@ -726,11 +770,11 @@ class Ilist:
         extval = Ilist._frombytes(dic[names[0]])
         for name in idxname : setidx.append(Ilist._frombytes(dic[name]))
         if isinstance(dic[names[1]], list): iidx = dic[names[1]]
-        else: iidx = np.frombuffer(dic[names[1]], dtype='int32').reshape((len(idxname), len(extval))).tolist()
+        else: iidx = np.frombuffer(dic[names[1]], dtype='u2').reshape((len(idxname), len(extval))).tolist()
         return cls(extval, setidx, iidx, valname, idxname)
-                
+
     @classmethod
-    def from_csv(cls, filename='ilist.csv', valfirst=False, header=True, **kwargs):
+    def from_csv(cls, filename='ilist.csv', valfirst=False, header=True, dtype=None, **kwargs):
         '''
         Ilist constructor (from a csv file). Each column represents extidx or extval values.
 
@@ -740,6 +784,7 @@ class Ilist:
         - **valfirst** : boolean (default False). If False extval is the last columns
         else it's the first
         - **header** : boolean (default True). If True, the first raw is dedicated to names
+        - **dtype** : list of string (default None) - data type for each column (default str) : str, int, float, datetime, coord
         - **kwargs** : see csv.reader options
 
         *Returns*
@@ -749,6 +794,7 @@ class Ilist:
         extidx=[]
         valname='value'
         idxname=[]
+        if not dtype : dtype =[None]
         with open(filename, newline='') as f:
             reader = csv.reader(f, **kwargs)
             first=True
@@ -757,20 +803,33 @@ class Ilist:
                     for vrow in row[1:] : extidx.append([])
                 if first and header :
                     if valfirst      :
-                        valname = row[0]
-                        for vrow in row[1:] : idxname.append(vrow)
+                        valname = str(row[0])
+                        for vrow in row[1:] : idxname.append(str(vrow))
                     else :
-                        valname = row[len(row)-1]
-                        for vrow in row[:len(row)-1] : idxname.append(vrow)
+                        valname = str(row[len(row)-1])
+                        for vrow in row[:len(row)-1] : idxname.append(str(vrow))
                 else :
                     if valfirst      :
-                        extval.append(row[0])
-                        for i in range(len(row)-1) : extidx[i].append(row[i+1])
+                        extval.append(Ilist._cast(row[0], dtype[0]))
+                        for i in range(len(row)-1) : extidx[i].append(Ilist._cast(row[i+1], dtype[min(i+1, len(dtype)-1)]))
                     else :
-                        extval.append(row[len(row)-1])
-                        for i in range(len(row)-1) : extidx[i].append(row[i])
+                        extval.append(Ilist._cast(row[len(row)-1], dtype[min(len(row)-1, len(dtype)-1)]))
+                        for i in range(len(row)-1) : extidx[i].append(Ilist._cast(row[i], dtype[min(i, len(dtype)-1)]))
                 first = False
-            return cls.Iext(extval, extidx, valname, idxname)
+        return cls.Iext(extval, extidx, valname, idxname)
+
+    @classmethod
+    def from_file(cls, file) :
+        '''
+        Generate `Ilist` object from file storage.
+
+         *Parameters*
+
+        - **file** : string - file name (with path)
+
+        *Returns* : Ilist object'''
+        with open(file, 'rb') as f: bs = f.read()
+        return cls.from_bytes(bs)
 
     def full(self, axes=[], fillvalue=None, inplace=False):
         '''
@@ -788,15 +847,22 @@ class Ilist:
         - **None, if inplace. Ilist if not inplace**'''
         if not self.consistent :
             raise IlistError("unable to generate full Ilist with inconsistent Ilist")
-        if axes==[] : axe = self.axes
+        if not axes : axe = self.axes
         else: axe = axes
-        tiidxfull = self.tiidx
+        iidxadd = self._idxfull(axes=axe)
+        if not iidxadd and inplace : return
+        if not iidxadd and not inplace : return deepcopy(self)
+        iidxfull = []
+        for idx, idxadd in zip(self.iidx, iidxadd) : iidxfull.append(idx + idxadd)
+        extvalfull = copy(self.extval)
+        extvalfull += [self._nullValue(type(extvalfull[0]), fillvalue) for i in range(len(iidxadd[0]))]
+        '''tiidxfull = self.tiidx
         extvalfull = copy(self.extval)
         for ind in self._transpose(self._idxfull(axes=axe)) :
             if ind not in tiidxfull :
                 tiidxfull.append(ind)
                 extvalfull.append(self._nullValue(type(extvalfull[0]), fillvalue))
-        iidxfull = self._transpose(tiidxfull)
+        iidxfull = self._transpose(tiidxfull)'''
         if inplace :
             self.extval = extvalfull
             self.iidx   = iidxfull
@@ -891,7 +957,7 @@ class Ilist:
         *Returns* : boolean - True if found'''
         if extval in self.extval : return True
         return False
-    
+
     def json(self, **kwargs):
         '''
         Return json string with val (extval or ival) and idx (extidx or iidx or none).
@@ -910,26 +976,30 @@ class Ilist:
         option2 = option | {'bjson_format': False}
         lis = []
         textidx = []
-        if   option['json_mode'][1]=='v' and self.extidx == [] :
+        extidx = self.extidx
+        ival = self.ival
+        tiidx = self.tiidx
+        idxlen = self.idxlen
+        if   option['json_mode'][1]=='v' and extidx == [] :
             lis = [self.valname]
-        elif option['json_mode'][1]=='v' and self.extidx != []:
+        elif option['json_mode'][1]=='v' and extidx != []:
             lis=[[self.valname, self.idxname]]
-            textidx = self._transpose(self.extidx)
+            textidx = self._transpose(extidx)
         for i in range(len(self)):
             if option['json_mode'][0]=='v' : jval = self._json(self.extval[i], **option2)
-            else                            : jval = self.ival[i]
-            if not option['json_res_index'] or self.tiidx == [] : lis.append(jval)
+            else                            : jval = ival[i]
+            if not option['json_res_index'] or tiidx == [] : lis.append(jval)
             else :
                 lig=[jval]
-                if option['json_mode'][1]=='v': 
+                if option['json_mode'][1]=='v':
                     lig.append([self._json(extind, **option2) for extind in textidx[i]])
-                else: lig.append(self.tiidx[i])
+                else: lig.append(tiidx[i])
                 lis.append(lig)
         if option['json_mode'][1]=='v': js = lis
         else :
             js = {}
             for i in range(len(self.setidx)) :
-                if self.idxlen[i] > 0 : js[self.idxname[i]] = [self._json(idx, **option2) for idx in self.setidx[i]]
+                if idxlen[i] > 0 : js[self.idxname[i]] = [self._json(idx, **option2) for idx in self.setidx[i]]
             if len(lis) > 0 : js[self.valname] = lis
         if option['bjson_format'] and not option['bjson_bson']: return json.dumps(js, cls=IlistEncoder)
         if option['bjson_format'] and option['bjson_bson']: return bson.encode(js)
@@ -953,7 +1023,7 @@ class Ilist:
             raise IlistError('index not found')
         return self.extval[ival]
 
-    def reindex(self, index = []):
+    def reindex(self, index=[], fast=False):
         '''
         Define new sorted index.
 
@@ -967,43 +1037,46 @@ class Ilist:
         for ind in index :
             oldidx = self.setidx[ind]
             self.setidx[ind] = sorted(self.setidx[ind])
-            self.iidx[ind]   = Ilist._reindexidx(self.iidx[ind], oldidx, self.setidx[ind])
+            self.iidx[ind]   = Ilist._reindexidx(self.iidx[ind], oldidx, self.setidx[ind], fast)
 
-    def reorder(self, sort=[], inplace=True):
+    def reorder(self, sort=[], inplace=True, fast=False):
         '''
-        Change the order of extval and iidx with a new order define by sort 
+        Change the order of extval and iidx with a new order define by sort
         (sort can be a subset of the items list).
 
         *Parameters*
 
-        - **sort** : list (default [])- new order to apply. If [], no change.
+        - **sort** : list (default [])- new record order to apply. If [], no change.
+        - **fast** : boolean (default False). If True, fast operation (reduction controls)
         - **inplace** : boolean (default True) - if True, new order is apply to self,
         if False a new Ilist is created.
 
         *Returns*
 
         - **None, if inplace. Ilist if not inplace**'''
+        selfextidx = self.extidx
         extval = self._reorder(self.extval, sort)
-        iidx =  [self._reorder(idx, sort) for idx in self.iidx]       
-        extidx =  [self._reorder(eidx, sort) for eidx in self.extidx] #!!!
-        setidx, iidx = self._resetidx(extidx) #!!!
+        iidx =  [self._reorder(idx, sort) for idx in self.iidx]
+        extidx =  [self._reorder(eidx, sort) for eidx in selfextidx]
+        setidx, iidx = self._resetidx(extidx, fast=fast)
         if inplace :
             self.extval = extval
             self.iidx   = iidx
-            self.setidx = setidx #!!!
+            self.setidx = setidx
             return None
-        return Ilist(extval, setidx, iidx, self.valname, self.idxname) #!!!
+        return Ilist(extval, setidx, iidx, self.valname, self.idxname)
 
-    def setfilter(self, setidxfilt=None, inplace=True, index=True):
+    def setfilter(self, setidxfilt=None, inplace=True, index=True, fast=False):
         '''
-        Remove values that does not match the indexes filter. 
-        The filter is a reduced list of indexes. 
+        Remove values that does not match the indexes filter.
+        The filter is a reduced list of indexes.
 
         *Parameters*
 
         - **setidxfilt** : list of lists (default None) - new reduced setidx. If None, no change.
         - **index** : boolean (default True) - indicates if setidxfilt is a list of values (False)
         or indexes (True).
+        - **fast** : boolean (default False). If True, fast operation (reduction controls)
         - **inplace** : boolean (default True) - if True, new setidx is apply to self,
         if False a new Ilist is created.
 
@@ -1012,16 +1085,17 @@ class Ilist:
         - **None, if inplace. Ilist if not inplace**'''
         if setidxfilt is None or not isinstance(setidxfilt, list) : return
         tiidx = self.tiidx
+        lenidx = self.lenidx
         if index : setidxf = copy(setidxfilt)
-        else : setidxf = [self._index(self.setidx[i], setidxfilt[i]) for i in range(self.lenidx)]
+        else : setidxf = [self._index(self.setidx[i], setidxfilt[i]) for i in range(lenidx)]
         sort = [idx for idx in range(len(self)) if self._isinset(tiidx[idx], setidxf)]
-        return self.reorder(sort, inplace=inplace)
-    
-    def sort(self, sort=[], order=[], reindex=True, inplace=True):
-        ''' sort : calculate a new list order'''
-        return self.reorder(self.sortidx(order, sort, reindex), inplace)
+        return self.reorder(sort, inplace=inplace, fast=fast)
 
-    def sortidx(self, order=[], sort=[], reindex=True):
+    def sort(self, sort=[], order=[], reindex=True, inplace=True, fast=False):
+        ''' sort : calculate a new list order'''
+        return self.reorder(self.sortidx(order, sort, reindex, fast), inplace, fast)
+
+    def sortidx(self, order=[], sort=[], reindex=True, fast=False):
         '''
         Define a new order to apply to extval and iidx (reorder method).
 
@@ -1029,16 +1103,17 @@ class Ilist:
 
         - **order** : list (default [])- new order of index to apply in sort function.
         If [], the sort function is applied to extval.
-        - **sort** : list (default [])- new order to apply. If [], the new order
+        - **sort** : list (default [])- new order of resval to apply. If [], the new order
         is calculated.
         - **reindex** : boolean (default True) - if True, the index are reindexed.
 
         *Returns*
 
         - **list** : sort - new order to apply'''
-        if sorted(sort) == sorted(self.extval): return sort
+        #if sorted(sort) == sorted(self.extval): return sort
+        if sorted([v.__repr__() for v in sort]) == sorted([v.__repr__() for v in self.extval]): return sort
         newsetidx = [sorted(self.setidx[ind]) for ind in range(len(self.setidx))]
-        newiidx = [Ilist._reindexidx(self.iidx[ind], self.setidx[ind], newsetidx[ind])
+        newiidx = [Ilist._reindexidx(self.iidx[ind], self.setidx[ind], newsetidx[ind], fast)
                    for ind in range(len(self.setidx))]
         if reindex :
             self.iidx = newiidx
@@ -1071,26 +1146,47 @@ class Ilist:
         self.setidx = setidx
         self.idxname = idxname
 
-    def to_bytes(self, bjson_format=True, bin_iidx=True, dtype_val=None):
+    def to_bytes(self, bjson_format=True, bin_iidx=True):
         '''
         Generate a bytes Object
 
         *Parameters*
 
-        - **bjson_format** : boolean (default True) - if True return bson format, if False return dict. 
+        - **bjson_format** : boolean (default True) - if True return bson format, if False return dict.
         - **bin_iidx** : boolean (default True) - if True iidx is converted to bytes with numpy.tobytes method
-        - **dtype_val** : string (default None) - Object name for extval (if unique)
-        - **dtype_idx** : string list (default None) - Object name for each idx (if unique)
 
         *Returns* : bytes ou dict '''
         dic = {}
         dic[self.valname] = Ilist._tobytes(self.extval, bjson_format=False)
-        if bin_iidx:    dic['iidx'] = np.array(self.iidx).tobytes()
+        if bin_iidx:    dic['iidx'] = np.array(self.iidx,  dtype='u2').tobytes()
         else:           dic['iidx'] = self.iidx
-        for i, name in enumerate(self.idxname) : 
+        for i, name in enumerate(self.idxname) :
             dic[name] = Ilist._tobytes(self.setidx[i], bjson_format=False)
         if not bjson_format : return dic
         return bson.encode(dic)
+
+
+    def to_file(self, file, **kwargs) :
+        '''
+        Generate il file to display `Ilist` data.
+
+         *Parameters (kwargs)*
+
+        - **file** : string - file name (with path)
+        - **kwargs** : see 'to_bytes' parameters
+
+        *Returns*
+
+        - **Integer** : file lenght (bytes)  '''
+        option = kwargs | {'bjson_format': True, 'json_res_index': True}
+        data = self.to_bytes()
+        if True: #kwargs['bjson_bson']:
+            lendata = len(data)
+            with open(file, 'wb') as f: f.write(data)
+        else:
+            lendata = len(bytes(data, 'UTF-8'))
+            with open(file, 'w', newline='') as f: f.write(data)
+        return lendata
 
     def to_csv(self, filename='ilist.csv', func=None, ifunc=[], valfirst=False,
                order=[], header=True, **kwargs):
@@ -1113,6 +1209,7 @@ class Ilist:
         if order == [] : order = list(range(self.lenidx))
         with open(filename, 'w', newline='') as f:
             writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC, **kwargs)
+            extidx = self.extidx
             if header:
                 row = []
                 if valfirst      : row.append(self.valname)
@@ -1124,14 +1221,14 @@ class Ilist:
                 if len(ifunc) == len(self) : funci = func[i]
                 else : funci = None
                 if valfirst      :
-                    row.append(self._funclist(self.extval[i],      func,  **kwargs))
+                    row.append(self._funclist(self.extval[i], func,  **kwargs))
                 for idx in order :
-                    row.append(self._funclist(self.extidx[idx][i], funci, **kwargs))
+                    row.append(self._funclist(extidx[idx][i], funci, **kwargs))
                 if not valfirst  :
-                    row.append(self._funclist(self.extval[i],      func,  **kwargs))
+                    row.append(self._funclist(self.extval[i], func,  **kwargs))
                 writer.writerow(row)
 
-    def to_numpy(self, func=None, ind='axe', fillvalue='?', **kwargs):
+    def to_numpy(self, func=None, ind='axe', fillvalue='?', fast=False, **kwargs):
         '''
         Complete the Ilist and generate a Numpy array with the dimension define by ind.
 
@@ -1141,6 +1238,7 @@ class Ilist:
         - **ind** : string (default 'axe') - 'axe' -> independant axes,
         'all' -> all axes, 'flat' -> one list
         - **fillvalue** : object (default '?') - value used for the new extval
+        - **fast** : boolean (default False). If True, fast operation (reduction controls)
         - **kwargs** : parameter for func
 
         *Returns* : none '''
@@ -1149,11 +1247,13 @@ class Ilist:
         if isinstance(ind, str) and ind == 'flat' :
             return self._tonumpy(self.extval, func=func, **kwargs)
         if isinstance(ind, str) and ind in ['axe', 'all']  :
-            if ind == 'axe' : axes = []
+            if ind == 'axe' : axes = self.axes
             else : axes = list(range(self.lenidx))
             ilf = self.full(axes=axes, fillvalue=fillvalue)
-            ilf.sort(order=self.axes)
-            return self._tonumpy(ilf.extval, func=func, **kwargs).reshape(ilf.axeslen)
+            ilf.sort(order=axes, fast=fast)
+            return (self._tonumpy(ilf.extval, func=func,
+                                 **kwargs).reshape([ilf.idxlen[idx] for idx in axes]),
+                    [ilf.setidx[ax] for ax in axes])
         return None
 
     def to_xarray(self, info=False, axes=[], fillvalue='?', func=None, ifunc=[],
@@ -1238,10 +1338,32 @@ class Ilist:
 
         *Returns* : list of func result'''
         index = self._checkidxlist(None, idx)[0]
+        extidx = self.extidx
         if index == -1 : return self._funclist(self.extval, func, *args, **kwargs)
-        return self._funclist(self.extidx[index], func, *args, **kwargs)
+        return self._funclist(extidx[index], func, *args, **kwargs)
 
-    def _checkidxlist(self, listidx, idx):      # !!!
+#%% internal
+    @staticmethod
+    def _cast(val, dtype):
+        if not dtype :      return val
+        if dtype == 'str':      return str(val)
+        #if val.lstrip() == '' and dtype in ['int', 'float']: return 0
+        if dtype == 'int':
+            try : return int(val.lstrip())
+            except : return math.nan
+        if dtype == 'float':
+            try : return float(val.lstrip())
+            except : return math.nan
+        if dtype == 'datetime':
+            try : return datetime.datetime.fromisoformat(val)
+            except : return datetime.datetime.min
+        if dtype == 'coord':
+            if Ilist.c1.search(val) and Ilist.c2.search(val) :
+                return [float(Ilist.c1.search(val)[0][:-1]), float(Ilist.c2.search(val)[0][1:])]
+            else : return [-1, -1]
+        raise IlistError("dtype : " + dtype + " inconsistent with data")
+
+    def _checkidxlist(self, listidx, idx):
         ''' check if listidx and idx are consistent and return a list for each'''
         # idx=-1 -> val
         if isinstance(idx, int) : index = [idx]
@@ -1266,25 +1388,28 @@ class Ilist:
         lis = set(Ilist._tuple(Ilist._transpose([ref, l2])))
         return len(lis) == len(set(l2)) and len(set(ref)) < len(set(l2))
 
-    def _dict(self, addproperty=True, long=False):
+    def _dict(self, addproperty=True, addlist=False, addother=False, long=False):
         '''return the value of the properties'''
         dic = {'valname' : self.valname, 'idxname' : self.idxname}
+        if addproperty :
+            dic |= {'complete':self.complete, 'consistent':self.consistent,
+                    'dimension':self.dimension, 'lenidx':self.lenidx, 'len': len(self),
+                    'rate':self.rate, 'setvallen':self.setvallen }
         if long :
             dic |= {'extval' : self.extval, 'iidx' : self.iidx, 'setidx' : self.setidx }
-        if addproperty :
-            dic |= {'axes':self.axes, 'axesall':self.axesall, 'axeslen':self.axeslen,
-            'axesmin':self.axesmin, 'complete':self.complete,
-            'consistent':self.consistent, 'dimension':self.dimension,
+        if addlist :
+            dic |= {'axes':self.axes, 'axeslen':self.axeslen, 'axesmin':self.axesmin,
             'idxcoupled':self.idxcoupled, 'idxderived':self.idxderived, 'idxlen':self.idxlen,
-            'idxunique':self.idxunique, 'idxder':self.idxder,
-            'idxref':self.idxref, 'lencomplete':self.lencomplete, 'lenidx':self.lenidx,
-            'minMaxIndex':self.minMaxIndex, 'rate':self.rate, 'setvallen':self.setvallen }
+            'idxunique':self.idxunique, 'idxder':self.idxder, 'idxref':self.idxref,
+            'minMaxIndex':self.minMaxIndex}
             if long :
                 dic |= { 'extidx':self.extidx, 'ind':self.ind, 'ival':self.ival,
                         'setval':self.setval, 'tiidx':self.tiidx, 'textidx':self.textidx}
+            if addother:
+                dic |= {'axesall':self.axesall, 'lencomplete':self.lencomplete, }
         return dic
 
-    @staticmethod 
+    @staticmethod
     def _filter(func, lis, res, *args, **kwargs ):
         '''apply "func" to each value of "lis" and tests if equals "res".
         Return the list of index with True result.'''
@@ -1293,17 +1418,17 @@ class Ilist:
 
     @staticmethod
     def _frombytes(listbson):
-        if not isinstance(listbson, list) : 
+        if not isinstance(listbson, list) :
             raise IlistError("the object to convert is not a list")
         listvalue = []
         for bs in listbson :
-            if isinstance(bs, (int, str, float, bool, list, datetime, type(None))) : 
+            if isinstance(bs, (int, str, float, bool, list, datetime.datetime, type(None))) :
                 listvalue.append(bs)
-            elif isinstance(bs, dict) : 
+            elif isinstance(bs, dict) :
                 try: listvalue.append(eval(list(bs.keys())[0])(bs[list(bs.keys())[0]]))
                 except: listvalue.append(bs)
-            else : 
-                try : 
+            else :
+                try :
                     dic = bson.decode(bs)
                     listvalue.append(eval(list(dic.keys())[0])(dic[list(dic.keys())[0]]))
                 except : raise IlistError("impossible to decode a bson object")
@@ -1335,32 +1460,45 @@ class Ilist:
         try : getattr(listidx[0], func)
         except : raise IlistError("function not available with the index")
         try : return [i for i in range(len(listidx)) if getattr(listidx[i], func)(args[0])]
-        except : 
+        except :
             try : return [i for i in range(len(listidx)) if getattr(listidx[i], func)(args[0], args[1])]
-            except : 
+            except :
                 try : return [i for i in range(len(listidx)) if getattr(listidx[i], func)(args[0], args[1], args[2])]
                 except : return
-                
-    def _idxfull(self, axes=[]):
-        '''return iidx with full index in the axes'''
+
+    def _idxfull(self, axes=[]): #!!!!!!
+        '''return additional iidx with full index in the axes'''
         if    axes==[] : axe = [i for i in range(self.lenidx) if not self.idxcoupled[i]]
         else           : axe = axes
         iidxr = [set(self.iidx[i]) for i in axe]
-        nidx = self._transpose(list(product(*iidxr))) # iidx réduit aux axes et complet
+        lenfull = Ilist._mul([len(iidxr[i]) for i in range(len(iidxr))])
+        if lenfull == len(self) : return []
+        #if [len(iidxr[i]) for i in range(len(iidxr))] == self.idxlen: return []
+        cnind = Counter(list(product(*iidxr))) # tiidx réduit aux axes et complet
+        cnind.subtract(Counter(self._tuple(self._transpose([self.iidx[ax] for ax in axe]))))
+        iidxadd = self._transpose(self._list(list(cnind.elements())))
+        if not iidxadd : return []
         iidxfull = [[] for i in range(self.lenidx)]
-        for idx in range(self.lenidx):
+        lenidx = self.lenidx
+        idxref = self.idxref
+        #idxcoupled = self.idxcoupled
+        idxcoupled = [idxref[i] != i for i in range(self.lenidx)]
+        idxder = self.idxder
+        #idxderived = self.idxderived
+        idxderived = [idxder[i] != i for i in range(self.lenidx)]
+        idxunique = self.idxunique
+        for idx in range(lenidx):
             if idx in axe :
-                iidxfull[idx] = nidx[axe.index(idx)]
-            elif idx not in axe and self.idxcoupled[idx] :
-                dic = self._idxlink(self.iidx[self.idxref[idx]], self.iidx[idx])
-                iidxfull[idx] = [dic[i] for i in nidx[axe.index(self.idxref[idx])]]
-            elif idx not in axe and not self.idxcoupled[idx] and \
-                   not self.idxunique[idx] and self.idxderived[idx] :
-                dic = self._idxlink(self.iidx[self.idxder[idx]], self.iidx[idx], coupled=False)
-                iidxfull[idx] = [dic[i] for i in nidx[axe.index(self.idxder[idx])]]
-            elif idx not in axe and not self.idxcoupled[idx] and \
-                   self.idxunique[idx] :
-                iidxfull[idx] = [self.iidx[idx][0] for i in range(len(nidx[0]))]
+                iidxfull[idx] = iidxadd[axe.index(idx)]
+            elif idx not in axe and idxcoupled[idx] and idxref[idx] in axe:
+                dic = self._idxlink(self.iidx[idxref[idx]], self.iidx[idx])
+                iidxfull[idx] = [dic[i] for i in iidxadd[axe.index(idxref[idx])]]
+            elif idx not in axe and not idxcoupled[idx] and not idxunique[idx] \
+                and idxderived[idx] and idxder[idx] in axe:
+                dic = self._idxlink(self.iidx[idxder[idx]], self.iidx[idx], coupled=False)
+                iidxfull[idx] = [dic[i] for i in iidxadd[axe.index(idxder[idx])]]
+            elif idx not in axe and not idxcoupled[idx] and idxunique[idx] :
+                iidxfull[idx] = [self.iidx[idx][0] for i in range(len(iidxadd[0]))]
             else : raise IlistError("index : " + str(idx) + " have to be in axes" )
         return iidxfull
 
@@ -1376,22 +1514,21 @@ class Ilist:
         '''return the index of val in idx'''
         if type(val) != list : return idx.index(val)
         return [idx.index(v) for v in val]
-   
-    @staticmethod 
+
+    @staticmethod
     def _isinset(ind, setidxfilt):
-        ''' tests if each index value in "ind" is present in the list of indexes "setidxfilt"''' 
-        for i, idx in enumerate(ind) : 
-            if idx not in setidxfilt[i] : return False 
+        ''' tests if each index value in "ind" is present in the list of indexes "setidxfilt"'''
+        for i, idx in enumerate(ind) :
+            if idx not in setidxfilt[i] : return False
         return True
-        
+
     @staticmethod
     def _json(val, **option):
         '''return the json format of val (if function json() or to_json() exists'''
-        #if type(val) in [str, int, float, bool, tuple, list, datetime] :
         try :
             if option['bjson_format'] and not option['bjson_bson']: return json.dumps(val, cls=IlistEncoder)
             if option['bjson_format'] and option['bjson_bson']: return bson.encode(val)
-            if type(val) in [str, int, float, bool, tuple, list, datetime] : return val
+            if type(val) in [str, int, float, bool, tuple, list, datetime.datetime] : return val
             else : return val.json(**option)
         except: pass
         try     : return val.json(**option)
@@ -1416,47 +1553,56 @@ class Ilist:
         return Class()
 
     @staticmethod
-    def _reindexidx(iidx, setidx, newsetidx) :
+    def _reindexidx(iidx, setidx, newsetidx, fast) :
+        if fast :
+            dic= {newsetidx[i]:i for i in range(len(newsetidx))}
+            return [dic[setidx[indb]] for indb in iidx]
         return [newsetidx.index(setidx[indb]) for indb in iidx]
 
     @staticmethod
     def _reorder(val, sort=[]):
         if sort == [] : return val
         return [val[ind] for ind in sort]
-   
-    @staticmethod
-    def _resetidx(extidx):
-        '''return setidx and iidx from extidx'''
-        setidx = [Ilist._toset(ind) for ind in extidx]
-        iidx   = [Ilist._toint(ind, setind) for (ind, setind) in zip(extidx, setidx)]
-        return (setidx, iidx)
 
     @staticmethod
+    def _resetidx(extidx, fast=False):
+        '''return setidx and iidx from extidx'''
+        setidx = [Ilist._toset(ind, fast) for ind in extidx]
+        iidx   = [Ilist._toint(ind, setind, fast) for (ind, setind) in zip(extidx, setidx)]
+        return (setidx, iidx)
+
+    '''@staticmethod
     def _setable(extv):
         try :
             set(extv)
             return extv
         except :
-            return Ilist._tuple(extv)
+            return Ilist._tuple(extv)'''
 
     @staticmethod
     def _tobytes(listvalue, bjson_format=True):
         res = []
-        if not isinstance(listvalue, list) : 
+        if not isinstance(listvalue, list) :
             raise IlistError("the objetc to convert to bytes is not a list")
         for value in listvalue :
-            if isinstance(value, (int, str, float, bool, list, dict, datetime, type(None), bytes)): 
+            if isinstance(value, (int, str, float, bool, list, dict, datetime.datetime, type(None), bytes)):
                 res.append(value)
-            else : 
+            else :
                 try : res.append(value.__to_bytes__(bjson_format=bjson_format))
-                except : raise IlistError("impossible to apply __to_bytes__ method to object " 
+                except : raise IlistError("impossible to apply __to_bytes__ method to object "
                                           + str(type(value)))
         return res
-        
+
     @staticmethod
-    def _toint(extv, extset):
+    def _toint(extv, extset, fast=False):
+        if fast :
+            dic = {extset[i]:i for i in range(len(extset))}
+            return [dic[val] for val in extv]
+        return [extset.index(val) for val in extv]
+        '''if not extv : return []
         ext = Ilist._setable(extv)
-        return [extset.index(val) for val in ext]
+        if isinstance(ext[0], tuple) : return [extset.index(list(val)) for val in ext]
+        return [extset.index(val) for val in ext]'''
 
     def _toival(self, extval):
         return self.setval.index(extval)
@@ -1465,22 +1611,33 @@ class Ilist:
     def _toext(iidx, extset):
         return [extset[idx] for idx in iidx]
 
+    def _indtoext(self, ind):
+        lenidx=self.lenidx
+        return [self.setidx[idx][ind[idx]] for idx in lenidx]
+
     @staticmethod
     def _tonumpy(lis, func=identity, **kwargs):
         if func is None : func = identity
         if func == 'index' : return np.array(list(range(len(lis))))
         valList = Ilist._funclist(lis, func, **kwargs)
         if type(valList[0]) == str :
-            try : datetime.fromisoformat(valList[0])
+            try : datetime.datetime.fromisoformat(valList[0])
             except : return np.array(valList)
             return np.array(valList, dtype=np.datetime64)
-        if type(valList[0]) == datetime : return np.array(valList, dtype=np.datetime64)
+        if type(valList[0]) == datetime.datetime : return np.array(valList, dtype=np.datetime64)
         return np.array(valList)
 
     @staticmethod
-    def _toset(extv):
-        ext = Ilist._setable(extv)
-        return list(set(ext))
+    def _toset(extv, fast=False):
+        if fast : return list(set(extv))
+        setidx = []
+        for val in extv :
+            if not val in setidx : setidx.append(val)
+        return setidx
+        '''ext = Ilist._setable(extv)
+        setext = list(set(ext))
+        if setext == [] or not isinstance(setext[0], tuple): return setext
+        return list(map(list, setext))'''
 
     @staticmethod
     def _transpose(idx):
@@ -1489,30 +1646,35 @@ class Ilist:
         return [[ix[ind] for ix in idx] for ind in range(len(idx[0]))]
 
     @staticmethod
-    def _tuple(idx): return list(map(tuple, idx))
+    def _tuple(idx): return [val if not isinstance(val, list) else tuple(val) for val in idx]
+    #def _tuple(idx): return list(map(tuple, idx))
 
-    def _updateset(self, extidx):
+    def _updateset(self, extind):
         # ajouter à la fin un recalcul de iidx en fonction de sorted(extset)
-        iidx = []
-        for i in range(len(extidx)):
+        iind = []
+        for i in range(len(extind)):
             if len(self.setidx) == i : self.setidx.append([])
-            if extidx[i] not in self.setidx[i] : self.setidx[i].append(extidx[i])
-            iidx.append(self.setidx[i].index(extidx[i]))
-        return iidx
+            if extind[i] not in self.setidx[i] : self.setidx[i].append(extind[i])
+            iind.append(self.setidx[i].index(extind[i]))
+        return iind
 
     def _xcoord(self, funcidx=[], **kwargs) :
         ''' Coords generation for Xarray'''
         coord = {}
+        idxref = self.idxref
+        idxcoupled = [idxref[i] != i for i in range(self.lenidx)]
+        idxder = self.idxder
+        idxderived = [idxder[i] != i for i in range(self.lenidx)]
         for i in range(self.lenidx):
             if self.idxunique[i] : continue
             if funcidx==[] : funci=identity
             else : funci= funcidx[i]
-            if   self.idxcoupled[i] :
-                xlisti = self._tonumpy(self._xderived(i, self.idxref[i]), func=funci, **kwargs)
-                coord[self.idxname[i]] = (self.idxname[self.idxref[i]], xlisti)
+            if   idxcoupled[i] :
+                xlisti = self._tonumpy(self._xderived(i, idxref[i]), func=funci, **kwargs)
+                coord[self.idxname[i]] = (self.idxname[idxref[i]], xlisti)
             elif self.idxderived[i] :
-                xlisti = self._tonumpy(self._xderived(i, self.idxder[i]), func=funci, **kwargs)
-                coord[self.idxname[i]] = (self.idxname[self.idxder[i]], xlisti)
+                xlisti = self._tonumpy(self._xderived(i, idxder[i]), func=funci, **kwargs)
+                coord[self.idxname[i]] = (self.idxname[idxder[i]], xlisti)
             else :
                 xlisti = self._tonumpy(self.setidx[i], func=funci, **kwargs)
                 coord[self.idxname[i]] = xlisti
@@ -1521,7 +1683,7 @@ class Ilist:
     def _xderived(self, idxder, idxori) :
         dic = self._idxlink(self.extidx[idxori], self.extidx[idxder], coupled=False)
         return [dic[i] for i in self.setidx[idxori]]
-    
+
 
 class IlistError(Exception):
     ''' Ilist Exception'''

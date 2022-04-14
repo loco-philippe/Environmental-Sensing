@@ -11,7 +11,7 @@ of Environmental Sensing : `Observation` class.
 from ESconstante import ES
 from ESValue import LocationValue, DatationValue, PropertyValue, \
     ResultValue, ESValue, ESValueEncoder
-from datetime import datetime
+import datetime
 import json, folium, copy, csv, bson
 import numpy as np
 import xarray as xr
@@ -19,17 +19,19 @@ import matplotlib.pyplot as plt
 #import os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/iList')
 from ilist import Ilist
+from tabulate import tabulate
 
-_EsClassValue: dict = {ES.dat_classES : DatationValue, 
+
+_EsClassValue: dict = {ES.dat_classES : DatationValue,
                        ES.loc_classES : LocationValue,
                        ES.prp_classES : PropertyValue,
                        ES.res_classES : ResultValue}
-'''dict classES : ESValue class '''  
+'''dict classES : ESValue class '''
 
 class Observation :
     """
     An `Observation` is made up of `ES.ilist` object which describe the axes of this object.
-    
+
     *Attributes (for @property see methods)* :
 
     - **option** : Dictionnary with options
@@ -38,10 +40,10 @@ class Observation :
     - **mAtt** : namedValue dictionnary (internal parameters)
     - **parameter** : namedValue dictionnary (external data)
 
-    The methods defined in this class are : 
-    
+    The methods defined in this class are :
+
     *property (getters)*
-    
+
     - `Observation.axes`
     - `Observation.bounds`
     - `Observation.complet`
@@ -52,55 +54,55 @@ class Observation :
     - `Observation.nValueObs`
     - `Observation.rate`
     - `Observation.score`
-    - `Observation.setDatation`    
+    - `Observation.setDatation`
     - `Observation.setLocation`
     - `Observation.setProperty`
     - `Observation.setResult`
     - `Observation.typeObs`
-    
+
     *getters*
-    
+
     - `Observation.vList`
     - `Observation.vListName`
     - `Observation.vListSimple`
     - `Observation.vListValue`
-    
+
     *add value*
-    
+
     - `Observation.addAttributes`
     - `Observation.addJson`
     - `Observation.append`
     - `Observation.appendList`
     - `Observation.appendObs`
-    
+
     *update value*
-    
+
     - `Observation.majList`
     - `Observation.majValue`
-    
+
     *selecting*
-    
+
     - `Observation.indexLoc`
     - `Observation.iLoc`
     - `Observation.iObsIndex`
     - `Observation.loc`
-    
+
     *management*
-    
+
     - `Observation.extend`
     - `Observation.filter`
     - `Observation.full`
     - `Observation.sort`
-    
+
     *visualization*
-    
+
     - `Observation.choropleth`
     - `Observation.voxel`
     - `Observation.plot`
     - `Observation.view`
-    
+
     *exports - imports*
-    
+
     - `Observation.from_obs`
     - `Observation.to_csv`
     - `Observation.to_dataFrame`
@@ -112,10 +114,11 @@ class Observation :
     - `Observation.from_bytes`            # à voir
 
     """
+#%% constructor
     def __init__(self, *args, order = [], idxref = [], **kwargs):
         '''
         Several Observation creation modes :
-        
+
         - Observation(dictESValue1, dictESValue2, ...) where dictESValue = {ESValuename : value}
         - Observation({ObsDict}) where ObsDict is a dictionnary with the same data as an ObsJSON
         - Observation(ObsJSON) where ObsJSON is a string with the JSON format
@@ -124,12 +127,12 @@ class Observation :
             [ESValue1, ESValue2,...] or [ESValue] or ESValue
         - Observation(datation=ESSetDatation, location=ESSetLocation,
                       property=ESSetProperty, result=ESSetResult)
-        
-        *Note : the parameters 'idxref' and 'order' are used only when an ESSetResult without Index is in arguments. 
+
+        *Note : the parameters 'idxref' and 'order' are used only when an ESSetResult without Index is in arguments.
         'order' indicates the order for the Index creation and 'idxref' the linked index (0 for Datation, 1 for Location, 2 for Property).*
         '''
         kwargs |= {'order' : order, 'idxref' : idxref}
-        self.name = "observation du " + datetime.now().isoformat()
+        self.name = "observation du " + datetime.datetime.now().isoformat()
         self.option = ES.mOption.copy()
         self.parameter = ES.nullAtt        # json
         self.ilist = Ilist()
@@ -139,48 +142,48 @@ class Observation :
         self.mAtt[ES.obs_id] = "null"
         self._initObs(*args, **kwargs)
 
-    
+
     def _initObs(self, *args, **kwargs):
         ''' data creation '''
         dic = {}
         if len(args) == 0 and len(kwargs) == 2 : args = [{}]
         for arg in args :
             if type(arg) == str :       # creation à partir d'un json "key : [liste]"
-                try: arg=json.loads(arg)            
+                try: arg=json.loads(arg)
                 except: pass
             elif type(arg) ==bytes:
-                try: arg=bson.decode(arg)            
-                except: pass                
+                try: arg=bson.decode(arg)
+                except: pass
             if type(arg) == dict :      # creation à partir d'un dict "key : [liste]"
-                for k,v in arg.items() : 
+                for k,v in arg.items() :
                     if k not in dic : dic |= {k:v}
         if dic != {} or len(args) == 0 or args == [{}] :
-            for k,v in kwargs.items() : 
+            for k,v in kwargs.items() :
                 if k not in dic : dic |= {k:v}
             self._initDict(dic)
-            return            
+            return
         for arg in args :
             if type(arg) == list and len(arg) == 4 :    # création à partir d'un jeu de valeur [[dat], [loc], [prp], [res]]
                 self._initList(arg, **kwargs)
                 return
             elif type(arg) == tuple :   # creation uniquement d'un jeu de données dat, loc, prp, res
                 self.append(arg[0], arg[1], arg[2], arg[3])
-                
+
     def _initDict(self, js) :
         ''' data creation in dict mode'''
         if ES.obs_id in list(js): self.mAtt[ES.obs_id] = js[ES.obs_id]
-        if ES.obs_attributes in list(js): 
+        if ES.obs_attributes in list(js):
             if type(js[ES.obs_attributes]) == dict: js = js[ES.obs_attributes]
             else: return
         dicidx = {}
-        dicres = {} 
+        dicres = {}
         idxref = []
         order = []
         for classES in ES.esObsClass[0:3] :
-            if classES in list(js) : 
+            if classES in list(js) :
                 dicidx[classES] =  _EsClassValue[classES].cast(js[classES])
                 #dicidx[classES] = ESValue.cast(js[classES], _EsClassValue[classES])
-        if ES.res_classES in list(js) : 
+        if ES.res_classES in list(js) :
             dicres[ES.res_classES] = js[ES.res_classES]
             #dicres[ES.res_classES] = ESValue.cast(js[ES.res_classES], ResultValue)
         if 'order' in list(js) : order = js['order']
@@ -197,19 +200,20 @@ class Observation :
         else : order = []
         if 'idxref' in kwargs : idxref = kwargs['idxref']
         else : idxref = []
-        self.ilist = Ilist.Iset(ResultValue.cast(lis[3]), 
+        self.ilist = Ilist.Iset(ResultValue.cast(lis[3]),
                                 [DatationValue.cast(lis[0]),
                                  LocationValue.cast(lis[1]),
-                                 PropertyValue.cast(lis[2])], 
+                                 PropertyValue.cast(lis[2])],
                                 order, idxref, ES.esObsClass[3], ES.esObsClass[0:3],
-                                defaultidx=False)  
-        '''self.ilist = Ilist.Iset(ESValue.cast(lis[3], ResultValue), 
+                                defaultidx=False)
+        '''self.ilist = Ilist.Iset(ESValue.cast(lis[3], ResultValue),
                                 [ESValue.cast(lis[0], DatationValue),
                                  ESValue.cast(lis[1], LocationValue),
-                                 ESValue.cast(lis[2], PropertyValue)], 
+                                 ESValue.cast(lis[2], PropertyValue)],
                                 order, idxref, ES.esObsClass[3], ES.esObsClass[0:3],
                                 defaultidx=False)  '''
 
+#%% special
     def __copy__(self):
         ''' Copy all the data, included ESValue'''
         return copy.deepcopy(self)
@@ -217,7 +221,7 @@ class Observation :
     @property
     def __geo_interface__(self):
         '''dict (@property) : return the union of geometry (see shapely)'''
-        if self.setLocation : 
+        if self.setLocation :
             collec = self.vListValue(ES.loc_classES)[0]
             first = True
             for shap in self.vListValue(ES.loc_classES) :
@@ -238,7 +242,7 @@ class Observation :
         if ES.prp_classES in nameES: newindex.append(nameES.index(ES.prp_classES))
         self.ilist.swapindex(newindex)
         return self
-    
+
     def __or__(self, other):
         ''' Add other's index to self's index and return a new Observation'''
         obres = self.__copy__()
@@ -256,7 +260,7 @@ class Observation :
         self.option = other.option | self.option
         self.mAtt = other.mAtt | self.mAtt
         return self
-    
+
     def __add__(self, other):
         ''' Add other's values to self's values and return a new Observation'''
         obres = self.__copy__()
@@ -264,12 +268,13 @@ class Observation :
         return obres
 
     def __len__(self): return len(self.ilist)
-    
+
     def __to_bytes__(self, **option):
         return self.to_json(bjson_format=option['bjson_format'], bjson_bson=True,
                             json_info=False, json_res_index=True, json_param=True)
-    
-    @property               # !!!       properties
+
+#%% properties
+    @property
     def axes(self):
         '''
         **list of integer (@property)** : list of independant axes in the Observation
@@ -294,7 +299,7 @@ class Observation :
     @property
     def complet(self):
         '''
-        **boolean (@property)** : True if self.ilist is complete (if the number of ResultValue is consistent with 
+        **boolean (@property)** : True if self.ilist is complete (if the number of ResultValue is consistent with
         the number of LocationValue, DatationValue and PropertyValue)'''
         return self.ilist.complete
 
@@ -312,26 +317,26 @@ class Observation :
 
     @property
     def json(self):
-        ''' 
-        **string (@property)** : JSON Observation (ObsJSON format) whit index 
+        '''
+        **string (@property)** : JSON Observation (ObsJSON format) whit index
         and whitout informations'''
         return self.to_json(bjson_format=True, bjson_bson=False,
                             json_info=False, json_res_index=True, json_param=True)
 
     @property
     def jsonFeature(self):
-        ''' 
+        '''
         **string (@property)** : "FeatureCollection" with ESSetLocation geometry'''
-        if self.setLocation : 
+        if self.setLocation :
             geo = self.__geo_interface__
             if geo['type'] == "MultiPolygon": typ = "Polygon"
             else : typ = "Point"
             lis = list(dict((("type", typ), ("coordinates", geo['coordinates'][i]))) for i in range(len(geo['coordinates'])))
             fea = list(dict((("type","Feature"), ("id", i), ("geometry", lis[i]))) for i in range(len(geo['coordinates'])))
-            return json.dumps(dict((("type","FeatureCollection"), ("features",fea))))            
-        else: return ''  
-            
-    @property 
+            return json.dumps(dict((("type","FeatureCollection"), ("features",fea))), cls=ESValueEncoder)
+        else: return ''
+
+    @property
     def nValueObs(self):
         '''
         **list (@property)** : lenght of axes [datation, location, properety, result].'''
@@ -343,7 +348,7 @@ class Observation :
             nvalue.append(nval)
         nvalue.append(self.ilist.setvallen)
         return nvalue
-    
+
     @property
     def rate(self):
         '''
@@ -353,9 +358,9 @@ class Observation :
     @property
     def score(self):
         '''
-        **integer (@property)** : Observation type (calculated from dimension , nValueObs and idxref). 
-        The score is a codification of the number of ESValue for each axis. 
-        E.g., score=122 means one PropertyValue (1), several LocationValue (2), 
+        **integer (@property)** : Observation type (calculated from dimension , nValueObs and idxref).
+        The score is a codification of the number of ESValue for each axis.
+        E.g., score=122 means one PropertyValue (1), several LocationValue (2),
         several DatationValue (2)'''
         [ nDat, nLoc, nPrp, nRes] = self.nValueObs
         score = min(max(min(nPrp, 2) * 100 + min(nLoc,2) * 10 + min(nDat, 2), -1), 229);
@@ -373,133 +378,133 @@ class Observation :
         return score
 
     @property
-    def setDatation(self): 
+    def setDatation(self):
         '''
         **list (@property)** : list of values in the datation axis'''
         try : return self.ilist.setidx[self.ilist.idxname.index(ES.dat_classES)]
         except : return None
 
     @property
-    def setLocation(self): 
+    def setLocation(self):
         '''
         **list (@property)** : list of values in the location axis'''
         try : return self.ilist.setidx[self.ilist.idxname.index(ES.loc_classES)]
         except : return None
-    
+
     @property
-    def setProperty(self): 
+    def setProperty(self):
         '''
         **list (@property)** : list of values in the property axis'''
         try : return self.ilist.setidx[self.ilist.idxname.index(ES.prp_classES)]
         except : return None
 
     @property
-    def setResult(self): 
+    def setResult(self):
         '''
         **list (@property)** : list of values in the result axis'''
         try : return self.ilist.extval
         except : return None
-        
+
     @property
     def typeObs(self):
         '''
         **string (@property)** : Observation type (calculated from the score)'''
         if self.consistent : return ES.obsCat[self.score]
         else : return ES.obsCat[-1]
-
-    def addAttributes(self, js):        # !!! methodes externes
+#%% methods
+    def addAttributes(self, js):
         '''
         Add informations attached to `Observation`
 
         *Parameters*
-        
+
         - **js** : Dict - Keys are Observation keys (dict mAtt) or users keys (dict parameter).
-        
+
         *Returns*
-        
+
         - **None**  '''
         if type(js) != dict: return
         for k, v in js.items():
-            if (self._isESAtt(ES.obs_classES, k) or k not in ES.reserved) and k != ES.type : 
+            if k not in [ES.type, ES.information] and (self._isESAtt(ES.obs_classES, k) or
+                                                       k not in ES.reserved) :
                 self.mAtt[k] = v
-            if k == ES.parameter: 
-                try:  self.parameter = json.dumps(v)
+            if k == ES.parameter:
+                try:  self.parameter = json.dumps(v, cls=ESValueEncoder)
                 except:  self.parameter = ES.nullAtt
 
     def addJson(self, js):
         '''
-        Complete an empty `Observation` with json data. 
-        
+        Complete an empty `Observation` with json data.
+
         *Parameters*
-        
+
         - **js** : string - ObsJSON data
-        
+
         *Returns*
-        
+
         - **None**        '''
         try: dic=json.loads(js)
         except: return
         self._initDict(dic)
-                
-    def append(self, dat, loc, prp, res, unique=False, equal='full') :
+
+    def append(self, dat, loc, prp, res, unique=False, equal='full', fast=False) :
         '''
         Add a new `ES.ESValue.ResultValue`
-        
+
         *Parameters*
-        
-        - **dat, loc, prp** :
-        
-            integer for the index of an existant `ES.ESValue`
-            or compatible Value for an existing `ES.ESValue`
-            or compatible Value for a new `ES.ESValue`
-            
-        - **res** : new `ES.ESValue.ResultValue`
+
+        - **dat, loc, prp** : compatible Value for an existing or new `ES.ESValue`
+        - **res** : compatible existing or new `ES.ESValue.ResultValue`
         - **unique** : boolean (default False), if False, duplicate index is allowed
-        - **equal** : string (default 'full'), if 'full', two ESValue are equal if all the attributes are equal,
-        if 'name', two ESValue are equal if only the names are equal.
-        
+        - **equal** : string (default 'full'), if 'full', two ESValue are equal
+            if all the attributes are equal, if 'name', two ESValue are equal if only the names are equal.
+        - **fast** : boolean (default False) - Update whith ESValue and whithout reindex, equal=full
+
         *Returns*
-        
-        - **int** : last index in the result valueList.  '''
+
+        - **int** : last index in the result valueList (or 0 if fast).  '''
         self.ilist.idxname = ES.esObsClass[0:3]
         self.ilist.valname = ES.esObsClass[3]
-        if   equal == 'full':
-            self.ilist.append(ResultValue(res), 
+        if fast :
+            self.ilist.append(res, [dat, loc, prp], unique=unique, fast=fast)
+            return 0
+        if equal == 'full':
+            self.ilist.append(ResultValue(res),
                           [DatationValue(dat), LocationValue(loc), PropertyValue(prp)],
-                          unique=unique)
+                          unique=unique, fast=fast)
         elif equal == 'name':
             datv = DatationValue(dat)
             for val in self.setDatation :
-                if ESValue.isEqual(val, DatationValue(dat), name=True, value=False): 
+                if ESValue.isEqual(val, DatationValue(dat), name=True, value=False):
                     datv = val
                     break
             locv = LocationValue(loc)
             for val in self.setLocation :
-                if ESValue.isEqual(val, LocationValue(loc), name=True, value=False): 
+                if ESValue.isEqual(val, LocationValue(loc), name=True, value=False):
                     locv = val
                     break
             prpv = PropertyValue(prp)
             for val in self.setProperty :
-                if ESValue.isEqual(val, PropertyValue(prp), name=True, value=False): 
+                if ESValue.isEqual(val, PropertyValue(prp), name=True, value=False):
                     prpv = val
                     break
-            self.ilist.append(ResultValue(res), [datv,locv, prpv], unique=unique)
-        return len(self.ilist) - 1        
+            self.ilist.append(ResultValue(res), [datv,locv, prpv], unique=unique, fast=fast)
+        return len(self.ilist) - 1
 
     def appendList(self, listDat, listLoc, listPrp, listVal, unique=False, equal='full'):
         '''
-        Add a list of new `ES.ESValue.ResultValue` 
-        
+        Add a list of new `ES.ESValue.ResultValue`
+
         *Parameters*
-        
+
         - **listVal** : list of ES.ESValue.ResultValue compatible type
         - **listDat, listLoc, listPrp** : list of index or Value to define a `ES.ESValue`
         - **unique** : boolean (default False), if False, duplicate index is allowed
         - **equal** : string (default 'full'), if 'full', two ESValue are equal if all the attributes are equal,
         if 'name', two ESValue are equal if only the names are equal.
-        
-        *Returns* 
-        
+
+        *Returns*
+
         - **None**        '''
         if len(listVal)==len(listDat)==len(listLoc)==len(listPrp) :
             for i in range(len(listVal)) :
@@ -508,13 +513,13 @@ class Observation :
     def appendObs(self, obs, unique=False, equal='full') :
         '''
         Add an `Observation` as a new `ES.ESValue.ResultValue` with bounding box for the other `ES.ESValue`
-        
+
         *Parameters*
-        
+
         - **obs** : Observation
-        
+
         *Returns*
-        
+
         - **int** : last index in the `Observation`
         '''
         return self.append(obs.bounds[0], obs.bounds[1], obs.bounds[2], obs, unique=unique, equal=equal)
@@ -524,9 +529,9 @@ class Observation :
         Display `Observation` on a folium.Map (only with dim=1)
 
         - **name** : String, optionnal (default 'choropleth') - Name of the choropleth
-            
+
         *Returns*
-        
+
         - **folium.Map**  '''
         if self.dimension == 1 :
             m = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
@@ -554,11 +559,11 @@ class Observation :
         Copy axis from other `Observation` to self `Observation` (if it daesn't exist)
 
         *Parameters*
-        
+
         - **other** : object Observation to copy
-        
+
         *Returns*
-        
+
         - **None**  '''
         if classES in self.ilist.idxname : raise ObservationError("duplicated index")
         if len(index) != len(self) : raise ObservationError("index lenght not equal")
@@ -572,32 +577,32 @@ class Observation :
 
     def filter(self, inplace=False, **filterdic):
         '''
-        Remove `ES.ESValue.ResultValue` that does not match the indexes filter. 
+        Remove `ES.ESValue.ResultValue` that does not match the indexes filter.
         The filter is a list of tests of the form : "indexvalue.method(parameter) is True"
         where keyword "method : parameter" are given in the dictionnary. Filters are cumulatives.
- 
+
         *Parameters*
-        
-        - **inplace** : boolean (default False) - If True, apply filter to 
-        Observation, else return new Observation.        
+
+        - **inplace** : boolean (default False) - If True, apply filter to
+        Observation, else return new Observation.
         - **filterdic** : keyword arguments (keys is a ClassES and value is a dictionnary) .
                           where dict value contains keyword "method : parameter"
-        
+
         *Returns*
-        
+
         - **Observation** : new observation if not inplace, else None.
         '''
         setidxf = [list(range(self.ilist.idxlen[idx])) for idx in range(self.ilist.lenidx)]
-        if filterdic is None or not isinstance(filterdic,  dict) : 
+        if filterdic is None or not isinstance(filterdic,  dict) :
             raise ObservationError("filter is not a dictionnary")
         for ESclass, dic in filterdic.items():
-            if dic is None or not isinstance(dic,  dict) : 
-                raise ObservationError("filter is not a dictionnary") 
+            if dic is None or not isinstance(dic,  dict) :
+                raise ObservationError("filter is not a dictionnary")
             if ESclass not in ES.esObsClass : continue
             idx = self.ilist.idxname.index(ESclass)
             for test, value in dic.items():
                 setidx = self.ilist._idxfilter(test, 'setidx', idx, value)
-                setidxf[idx] = [i for i in setidxf[idx] if i in setidx]                
+                setidxf[idx] = [i for i in setidxf[idx] if i in setidx]
         if inplace :
             self.ilist.setfilter(setidxf, inplace=inplace)
             return None
@@ -605,9 +610,9 @@ class Observation :
         newobs.ilist     = self.ilist.setfilter(setidxf, inplace=False)
         newobs.mAtt      = self.mAtt
         newobs.parameter = self.parameter
-        newobs.option    = self.option 
-        return newobs    
-                    
+        newobs.option    = self.option
+        return newobs
+
     @classmethod
     def from_obs(cls, file) :
         '''
@@ -616,7 +621,7 @@ class Observation :
          *Parameters*
 
         - **file** : string - file name (with path)
-            
+
         *Returns* : None'''
         with open(file, 'rb') as f: btype = f.read(22)
         if btype==bytes('{"' +ES.type+'": "' + ES.obs_classES +'"', 'UTF-8'):
@@ -624,21 +629,21 @@ class Observation :
         else:
             with open(file, 'rb') as f: bjson = f.read()
         return cls(bjson)
-    
-    def full(self, minind=True, fillvalue=None, inplace=False) : 
+
+    def full(self, minind=True, fillvalue=None, inplace=False) :
         '''
         Add empty `ES.ESValue.ResultValue` to have a 'complete' `Observation`
 
         *Parameters*
-        
-        - **inplace** : boolean (default False) - If True, add values to 
+
+        - **inplace** : boolean (default False) - If True, add values to
         Observation, else return new Observation.
-        - **minind** : boolean (default True) - If True, independent axes are 
+        - **minind** : boolean (default True) - If True, independent axes are
         completed with fillvalue, else all axes are completed
         - **fillvalue** : value used to complete the Observation
-        
+
         *Returns*
-        
+
         - **Observation** : new observation if not inplace, else None.
         '''
         if fillvalue is None : fillvalue = ResultValue.nullValue()
@@ -651,20 +656,20 @@ class Observation :
         newobs.ilist     = self.ilist.full(axes=axes, fillvalue=fillvalue, inplace=inplace)
         newobs.mAtt      = self.mAtt
         newobs.parameter = self.parameter
-        newobs.option    = self.option 
-        return newobs    
-    
+        newobs.option    = self.option
+        return newobs
+
     def iLoc(self, idat, iloc, iprp, json=True):
         '''
-        Return the `ES.ESValue` values for an `ES.ilist.Ilist` index. 
+        Return the `ES.ESValue` values for an `ES.ilist.Ilist` index.
 
         *Parameters*
-        
+
         - **idat, iloc, iprp** : `ES.ilist.Ilist` index value
         - **json** : Boolean (default True) - Return JSON string if True
 
         *Returns*
-        
+
         - **dict** : dict or JSON of each ES.ESValue (dat, loc, prp, res)  '''
         dic = dict()
         if self.ilist.lenidx != 3 : raise ObservationError("iloc not available ")
@@ -676,24 +681,24 @@ class Observation :
         dic[ES.loc_classES] = extidx[1]
         dic[ES.prp_classES] = extidx[2]
         if json : dic[ES.res_classES] = res.json(**self.option)
-        else    : dic[ES.res_classES] = res         
+        else    : dic[ES.res_classES] = res
         return dic
 
     def indexLoc(self, esValue, string=True):
         '''
         Return the index of a `ES.ESValue` in a `ES.ilist.Ilist` index
-        
+
         *Parameters*
-        
-        - **esValue** : `ES.ESValue`, 
+
+        - **esValue** : `ES.ESValue`,
         - **string** : Boolean (default True) - Return type (JSON if True, dict if False)
-        
+
         *Returns*
 
         - **dict or string** : {'full' : indFull, 'name' : indName, 'value' : indValue }
             - indFull : integer for the first index value with name and value equality
             - indName : integer for the first index value with name equality
-            - indFull : integer for the first index value with value equality  '''        
+            - indFull : integer for the first index value with value equality  '''
         if   type(esValue)== PropertyValue : lis = self.setProperty
         elif type(esValue)== LocationValue : lis = self.setLocation
         elif type(esValue)== DatationValue : lis = self.setDatation
@@ -701,41 +706,41 @@ class Observation :
         else: return None
         ind = {'full' : -1, 'name' : -1, 'value' : -1}
         for i in range(len(lis)):
-            if lis[i].isEqual(esValue, name=True, value=True): 
+            if lis[i].isEqual(esValue, name=True, value=True):
                 ind['full'] = ind['name'] = ind['value'] = i
                 return ind
-            if lis[i].isEqual(esValue, name=True, value=False) and ind['name'] == -1: 
+            if lis[i].isEqual(esValue, name=True, value=False) and ind['name'] == -1:
                 ind['name'] = i
-            if lis[i].isEqual(esValue, name=False, value=True) and ind['value'] == -1: 
+            if lis[i].isEqual(esValue, name=False, value=True) and ind['value'] == -1:
                 ind['value'] = i
-        if string : return json.dumps(ind)
+        if string : return json.dumps(ind, cls=ESValueEncoder)
         else : return ind
-            
+
     def iObsIndex(self, ind):
         '''
-        Return the `ES.ESValue` index values for an Observation index. 
+        Return the `ES.ESValue` index values for an Observation index.
 
         *Parameters*
-        
+
         - **ind** : index Observation (equivalent `ES.ESValue.ResultValue`
         - **json** : Boolean (default True) - Return JSON string if True
 
         *Returns*
-        
+
         - **list** : index of each ES.ESValue [idat, iloc, iprp]  '''
         return self.ilist.tiidx[ind]
 
 
     def loc(self, valDat, valLoc, valPrp, json=True):
         '''
-        Return the `ES.ESValue` values for a DatationValue, LocationValue, PropertyValue. 
+        Return the `ES.ESValue` values for a DatationValue, LocationValue, PropertyValue.
 
         *Parameters*
-        
+
         - **valdat, valloc, valprp** : DatationValue, LocationValue, PropertyValue
 
         *Returns*
-        
+
         - **dict** : dict or JSON of each ES.ESValue (dat, loc, prp, res)  '''
         index = self.ilist.extidxtoi([DatationValue(valDat),LocationValue(valLoc),PropertyValue(valPrp)])
         return self.iLoc(index[0], index[1], index[2])
@@ -745,24 +750,24 @@ class Observation :
         Modify an attribute (name or value) in an axis list.
 
         *Parameters*
-        
-        - **ValueClass** : class ES.ESValue 
+
+        - **ValueClass** : class ES.ESValue
         - **listVal** : new list of values
         - **name** : boolean (default True) - True for 'name' and False for 'value'
-        
+
         *Returns*
-        
+
         - **None**  '''
-        if ValueClass == DatationValue and self.setDatation != None : 
+        if ValueClass == DatationValue and self.setDatation != None :
             newlistVal = Observation._majList(self.setDatation, listVal, name)
             self.ilist.setidx[self.ilist.idxname.index(ES.dat_classES)] = newlistVal
-        elif ValueClass == LocationValue and self.setLocation != None : 
+        elif ValueClass == LocationValue and self.setLocation != None :
             newlistVal = Observation._majList(self.setLocation, listVal, name)
             self.ilist.setidx[self.ilist.idxname.index(ES.loc_classES)] = newlistVal
-        elif ValueClass == PropertyValue and self.setProperty != None : 
+        elif ValueClass == PropertyValue and self.setProperty != None :
             newlistVal = Observation._majList(self.setProperty, listVal, name)
             self.ilist.setidx[self.ilist.idxname.index(ES.prp_classES)] = newlistVal
-        elif ValueClass == ResultValue and self.setResult != None : 
+        elif ValueClass == ResultValue and self.setResult != None :
             newlistVal = Observation._majList(self.setResult, listVal, name)
             self.ilist.extval = newlistVal
 
@@ -771,13 +776,13 @@ class Observation :
         Update the value of an existing `ES.ESValue` by a new `ES.ESValue`
 
         *Parameters*
-        
+
         - **esValue** : ESValue to update
         - **newEsValue** : new ESValue
         - **equal** : criteria used to compare ESValue ('full', 'name', 'value')
-        
+
         *Returns*
-        
+
         - **Int** : index in the ESSet valueList.  '''
         index = self.indexLoc(esValue)[equal]
         if   type(esValue) == PropertyValue : setClass = self.setProperty
@@ -788,22 +793,22 @@ class Observation :
         if  setClass != None and index != None: setClass[index].setValue(newEsValue)
         return index
 
-    def plot(self, switch = False, line = True, sort = True, size = 5, 
+    def plot(self, switch = False, line = True, sort = True, size = 5,
              marker='o', maxname=20):
         '''
         This function visualize an `Observation` with line or colormesh.
-        
+
         *Parameters*
-        
-        - **switch** : Boolean (default False) - Switch between x and y axis.        
+
+        - **switch** : Boolean (default False) - Switch between x and y axis.
         - **line** : Boolean (default True) - Choice line or colormesh.
         - **sort** : Boolean (defaut True) - Sort along an axis or not.
         - **size** : Int (default 5) - Size of the figure to plot.
         - **marker** : Char (default 'o') - Symbol for each point.
         - **maxname** : String (default 20) - maximum length for string
-        
+
         *Returns*
-        
+
         - **None**  '''
         if not self.ilist.consistent : return
         obx = self.to_xarray(numeric = True, maxname=maxname)
@@ -816,43 +821,43 @@ class Observation :
                 if obx.dims[i] == 'dat' : ext[i] = 'str'
                 elif str(obx.coords[obx.dims[i]].dtype)[0] != 'i': ext[i] = 'ran'
             if switch : [order[0], order[1]] = [order[1], order[0]]
-            if line :   
-                obx.plot.line(x=obx.dims[order[0]]+ 'str', 
-                              xticks=list(obx.coords[obx.dims[0]+'str'].values), 
+            if line :
+                obx.plot.line(x=obx.dims[order[0]]+ 'str',
+                              xticks=list(obx.coords[obx.dims[0]+'str'].values),
                               hue=obx.dims[order[1]]+'str', size=size, marker=marker)
-            else: 
-                try : 
-                    obx.plot(x=obx.dims[order[0]]+ext[order[0]], y=obx.dims[order[1]]+ext[order[1]], 
-                         xticks=list(obx.coords[obx.dims[order[0]]+ext[order[0]]].values), 
-                         yticks=list(obx.coords[obx.dims[order[1]]+ext[order[1]]].values), 
+            else:
+                try :
+                    obx.plot(x=obx.dims[order[0]]+ext[order[0]], y=obx.dims[order[1]]+ext[order[1]],
+                         xticks=list(obx.coords[obx.dims[order[0]]+ext[order[0]]].values),
+                         yticks=list(obx.coords[obx.dims[order[1]]+ext[order[1]]].values),
                          size = size)
                 except :
-                    obx.plot(size=size)                   
-        elif len(obx.dims) == 3:       
+                    obx.plot(size=size)
+        elif len(obx.dims) == 3:
             if line :
                 obx = obx.set_index(prp = "prpstr", loc="locstr")
                 obx.sortby(["dat","loc","prp"]
-                           ).plot.line(x="dat", col="prp", xticks=list(obx.coords['dat'].values), 
+                           ).plot.line(x="dat", col="prp", xticks=list(obx.coords['dat'].values),
                                        col_wrap=2, size=size, marker=marker)
             else :
                 obx = obx.set_index(prp = "prpstr", loc="locran")
                 obx.sortby(["dat","loc","prp"]
-                           ).plot(x="dat", y="loc", col="prp", col_wrap=2, size=size, 
+                           ).plot(x="dat", y="loc", col="prp", col_wrap=2, size=size,
                                   xticks=list(obx.coords['dat'].values), yticks=list(obx.coords['loc'].values))
         plt.show()
-        
 
-    def sort(self, order=[], reindex=True): 
+
+    def sort(self, order=[], reindex=True):
         '''
         Modify the order of `ES.ESValue`.
 
         *Parameters*
-        
+
         - **order** : list (default []) - Ordered list to follow (0:dat, 1:loc, 2:prp).
         - **reindex** : boolean (default True) - calculate new index values.
-        
+
         *Returns*
-        
+
         - **None**        '''
         self.ilist.sort(order=order, reindex=reindex)
 
@@ -861,7 +866,7 @@ class Observation :
         Generate csv file to display `Observation` data.
 
         *Parameters*
-        
+
         - **file** : string - file name (with path)
 
         *Parameters (kwargs)*
@@ -873,46 +878,46 @@ class Observation :
         - **prp**  : boolean (default True) - Display value for `ES.ESValue.PropertyValue`
         - **res**  : boolean (default True) - Display value for `ES.ESValue.ResultValue`
         - **lenres** : int (default 0) - Number of raws (all if 0)
-            
+
         *Returns*
-        
+
         - **None**        '''
-        option = {'json': True, 'name': True, 'dat': True, 'loc': True, 
+        option = {'json': True, 'name': True, 'dat': True, 'loc': True,
                   'prp': True, 'res': True, 'lenres': 0} | kwargs
         tab = self._to_tab(**option)
         with open(file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             for lign in tab : writer.writerow(lign)
-    
+
     def to_dataFrame(self, info=False, numeric=False, ind='axe', fillvalue='?', func=ES._identity,
                   name='Observation'):
         '''
-        Convert `Observation` to pandas.DataFrame with the smallest dimension. 
-        
+        Convert `Observation` to pandas.DataFrame with the smallest dimension.
+
         *Parameters*
-        
+
         - **info** : Boolean (default False) - Generate a specific Coords with Observation characteristics.
-        - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values. 
+        - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
         - **ind** : String (default 'axe') - 'axe' only independant axes, 'all' : all the axes.
         - **fillvalue** : Object (default '?') used to complete result
         - **func** : String (default function identity) - Name of the function to apply to the result values
         - **name** : String (default 'Observation') - Name of the Dataframe
-            
+
         *Returns*
-        
+
         - **pandas.DataFrame**        '''
-        if self.ilist.consistent : 
+        if self.ilist.consistent :
             return self.to_xarray(info=info, numeric=numeric, fillvalue=fillvalue,
                                   func=func, name=name, ind=ind
                                   ).to_dataframe(name=name)
         else : return None
-    
-    def to_json(self, **kwargs): 
+
+    def to_json(self, **kwargs):
         '''
-        Export in Bson or Json format. 
-        
+        Export in Bson or Json format.
+
         *Parameters (optional, default value in option attribute)*
-        
+
         - **bjson_format**   : boolean - choice for return format (string/bytes if True, dict else)
         - **bjson_bson**     : boolean - choice for return format (bson if True, json else)
         - **json_res_index** : Boolean - include index for ResultValue
@@ -924,7 +929,7 @@ class Observation :
         - **json_info_other**: Boolean - include in ESObs Information the other information
 
         *Returns*
-        
+
         - **string or dict** : Json string or dict        '''
         option = self.option | kwargs
         option2 = option | {'bjson_format': False, 'json_mode' : 'vi'}
@@ -932,27 +937,27 @@ class Observation :
         if self.mAtt[ES.obs_id] != ES.nullAtt: dic[ES.obs_id] = self.mAtt[ES.obs_id]
         dic |= self._jsonAtt(**option2)
         dic |= self.ilist.json(**option2)
-        if option["json_param"] and self.parameter != ES.nullAtt: 
+        if option["json_param"] and self.parameter != ES.nullAtt:
             dic[ES.parameter] = self.parameter
-        dic |= self._info(**option2) 
-        if option['bjson_format'] and not option['bjson_bson']: 
+        dic |= self._info(**option2)
+        if option['bjson_format'] and not option['bjson_bson']:
             return json.dumps(dic, cls=ESValueEncoder)
-        if option['bjson_format'] and option['bjson_bson']: 
+        if option['bjson_format'] and option['bjson_bson']:
             return bson.encode(dic)
         return dic
 
     def to_numpy(self, func=None, ind='axe', fillvalue='?', **kwargs):
         '''
-        Convert `Observation` to Numpy array. 
-        
+        Convert `Observation` to Numpy array.
+
         *Parameters*
-        
+
         - **ind** : String (default 'axe') - 'axe' only independant axes, 'all' : all the axes, 'flat' : one dimension
         - **fillvalue** : Object (default '?') used to complete result
         - **func** : String (default function identity) - Name of the function to apply to the result values
-        
+
         *Returns*
-        
+
         - **Numpy array**    '''
         return self.ilist.to_numpy(func=func, ind=ind, fillvalue=fillvalue, **kwargs)
 
@@ -964,47 +969,47 @@ class Observation :
 
         - **file** : string - file name (with path)
         - **kwargs** : see 'to_json' parameters
-            
+
         *Returns*
-        
+
         - **Integer** : file lenght (bytes)  '''
-        option = kwargs | {'bjson_format': True, 'json_res_index': True}       
-        data = self.to_json(**option)  
-        if kwargs['bjson_bson']: 
+        option = kwargs | {'bjson_format': True, 'json_res_index': True}
+        data = self.to_json(**option)
+        if kwargs['bjson_bson']:
             lendata = len(data)
             with open(file, 'wb') as f: f.write(data)
-        else: 
+        else:
             lendata = len(bytes(data, 'UTF-8'))
             with open(file, 'w', newline='') as f: f.write(data)
         return lendata
-       
+
     def to_xarray(self, info=False, numeric=False, ind='axe', fillvalue='?',
                   name='Observation', maxname=20, func=None, **kwargs):
         '''
-        Convert `Observation` to DataArray. 
-        
+        Convert `Observation` to DataArray.
+
         *Parameters*
-        
+
         - **info** : Boolean (default False) - Generate a specific Coords with Observation characteristics.
         - **ind** : String (default 'axe') - 'axe' only independant axes, 'all' : all the axes, 'flat' : one dimension
         - **fillvalue** : Object (default '?') used to complete result
         - **func** : String (default function identity) - Name of the function applied to each `ES.ESValue.ResultValue`
-        - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values. 
+        - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
         - **name** : String (default 'Observation') - Name of the xArray
         - **maxname** : String (default 20) - maximum length for string
-        
+
         *Returns*
-        
+
         - **xarray.DataArray**        '''
         if not self.ilist.consistent : raise ObservationError("Observation not consistent")
         if not self.ilist.extval : raise ObservationError("Observation empty")
         if ind == 'axe' : axes = self.ilist.axes
-        else : axes = list(range(self.ilist.lenidx))        
+        else : axes = list(range(self.ilist.lenidx))
         ilf = self.ilist.full(axes=axes, fillvalue=fillvalue)
         ilf.sort(order=self.axes)
         xList = self._xlist(maxname=maxname)
         attrs = ES.xattrs | {'info' : self._info(bjson_format=False, json_info_type=True,
-                                   json_info_nval  =False, json_info_box =True, 
+                                   json_info_nval  =False, json_info_box =True,
                                    json_info_other =False)["information"]}
         coord = self._xCoord(xList, attrs, ilf.idxref, numeric)
         dims = [ES.vName[ilf.idxname[ax]] for ax in ilf.axes]
@@ -1018,57 +1023,42 @@ class Observation :
         Generate tabular list to display `Observation` data.
 
         *Parameters (kwargs)*
-        
+
+        - **json** : boolean (default True) - Display json for `ES.ESValue`
         - **name** : boolean (default True) - Display name for `ES.ESValue`
         - **dat**  : boolean (default True) - Display value for `ES.ESValue.DatationValue`
         - **loc**  : boolean (default True) - Display value for `ES.ESValue.LocationValue`
         - **prp**  : boolean (default True) - Display value for `ES.ESValue.PropertyValue`
         - **lenres** : Integer (default : 0) - Number of raws (all if 0)
         - **width** : Integer (default 15) - Number of characters displayed for each attribute.
-        - **sep** : Char (default '_') - Separation between header and raws
+        - **tabulate params** : default 'tablefmt': 'simple', 'numalign': 'left', 'stralign': 'left',
+                   'floatfmt': '.3f' - See tabulate module
 
-        *Returns*
-        
-        - **None**        '''
-        optiondeftab = {'name': True, 'dat': True, 'loc': True, 'prp': True, 'lenres': 0} 
-        optiondefview = {'width': 15, 'sep': '_'}
-        option = optiondeftab | optiondefview | kwargs
-        tab = self._to_tab(**{k: option[k] for k in optiondeftab})
-        sep   = option['sep']
-        width = option['width']
-        septab = ''
-        for i in range(width-2) : septab += sep
-        separator = [ septab for val in tab[0]] 
-        first=True
-        forms = '{:<'+str(width)+'.'+str(width-1)+'}'
-        formf = '{!s:<'+str(width)+'.'+str(width-1)+'}'
-        for lign in tab :
-            for val in lign :
-                if type(val)==str : print(forms.format(val), end='')
-                else : print(formf.format(val), end='')
-            print('')
-            if first : 
-                for val in separator :
-                    print(val.ljust(width), end='')
-                print('')
-                first = False
-            
+        *Returns* : None '''
+        opttab = {'json': True, 'name': True, 'dat': True, 'loc': True, 'prp': True, 'lenres': 0}
+        optview = {'tablefmt': 'simple', 'numalign': 'decimal', 'stralign': 'left', 'floatfmt': '.2f'}
+        option = opttab | optview | kwargs
+        tab = self._to_tab(**{k: option[k] for k in opttab})
+        width = ({'width': 15} | kwargs)['width']
+        tab2 = [[ (lambda x : x[:width] if type(x)==str else x)(val) for val in lig] for lig in tab]
+        print(tabulate(tab2, headers='firstrow', **{k: option[k] for k in optview}))
+
     def vList(self, idxname, func=ES._identity):
         '''
         Generate a list of value for an axis.
 
         *Parameters*
-        
+
         - **idxname** : string - Name of the axis (datation, location, property, result)
         - **func** : String (default function identity) - Name of the function applied to each `ES.ESValue`
 
         *Returns*
-        
+
         - **list** : list of the values      '''
-        if idxname == ES.res_classES : 
+        if idxname == ES.res_classES :
             if func == 'index': return [i for i in range(len(self))]
-            else :              return [func(val) for val in self.ilist.extval]            
-        else : 
+            else :              return [func(val) for val in self.ilist.extval]
+        else :
             ind = self.ilist.idxname.index(idxname)
             if func == 'index': return [i for i in range(self.ilist.idxlen[ind])]
             else :              return [func(self.ilist.setidx[ind][i]) for i in range(self.ilist.idxlen[ind])]
@@ -1078,13 +1068,13 @@ class Observation :
         Generate a list of value name for an axis.
 
         *Parameters*
-        
+
         - **idxname** : string - Name of the axis (datation, location, property, result)
 
         *Returns*
-        
-        - **list** : list of the value name      ''' 
-        if idxname == ES.res_classES : 
+
+        - **list** : list of the value name      '''
+        if idxname == ES.res_classES :
             return [self.ilist.extval[i].vName(ES.vName[idxname] + str(i)) for i in range(len(self.ilist.extval))]
         else :
             ind = self.ilist.idxname.index(idxname)
@@ -1095,40 +1085,40 @@ class Observation :
         Generate a list of simple value (see `ES.ESValue` vSimple method) for an axis.
 
         *Parameters*
-        
+
         - **idxname** : string - Name of the axis (datation, location, property, result)
 
         *Returns*
-        
+
         - **list** : list of the simple value      '''
         return self.vList(idxname, ESValue.vSimple)
-    
+
     def vListValue(self, idxname):
         '''
         Generate a list of value (see `ES.ESValue` getValue method) for an axis.
 
         *Parameters*
-        
+
         - **idxname** : string - Name of the axis (datation, location, property, result)
 
         *Returns*
-        
+
         - **list** : list of the values      '''
         return self.vList(idxname, func = ESValue.getValue)
 
     def voxel(self, sort=False):
         '''
         Visualize `ES.ESValue.ResultValue` in a cube with voxels.
-        
+
         *Parameters*
-        
+
         - **sort** : Boolean (default False) - Sort along axis.
-        
+
         *Returns*
-        
+
         - **None**
         '''
-        if not self.ilist.consistent : return        
+        if not self.ilist.consistent : return
         obc = copy.deepcopy(self)
         if sort : obc.sort()
         obc.ilist.full()
@@ -1143,7 +1133,8 @@ class Observation :
         ax.set(xlabel='dat (index)', ylabel='loc (index)', zlabel='prp (index)')
         plt.show()
 
-    @staticmethod              # !!!!!! methodes internes
+#%% internal
+    @staticmethod
     def _boundingBox(listValue):
         ''' return a `ES.ESValue.ESValue` object with bounds values'''
         box = copy.deepcopy(listValue[0])
@@ -1162,7 +1153,7 @@ class Observation :
         ldel =[]
         for k,v in dcinf.items() :
             if type(v) == str and (v == "null" or v =='')   : ldel.append(k)
-            if type(v) == list and v == ES.nullCoor         : ldel.append(k) 
+            if type(v) == list and v == ES.nullCoor         : ldel.append(k)
         for k in ldel :         del dcinf[k]
         if len(dcinf) == 0 :    return ""
         return {ES.information : dcinf }
@@ -1175,23 +1166,25 @@ class Observation :
     def _infoBox(self, **option):
         ''' Add box informations's key-value to dict dcinf'''
         dcinf = dict()
-        if self.setLocation: dcinf[ES.loc_box] = list(self._boundingBox(self.setLocation).bounds)
+        if self.setLocation:
+            dcinf[ES.loc_box] = list(self._boundingBox(self.setLocation).bounds)
+            dcinf[ES.geo_box] = self._boundingBox(self.setLocation).__geo_interface__
         if self.setProperty: dcinf[ES.prp_box] = list(self._boundingBox(self.setProperty).bounds)
-        if self.setDatation: 
+        if self.setDatation:
             bound = self._boundingBox(self.setDatation).bounds
-            if option["bjson_bson"] : 
-                dcinf[ES.dat_box] = [datetime.fromisoformat(bound[0]), 
-                                     datetime.fromisoformat(bound[1])]
+            if option["bjson_bson"] :
+                dcinf[ES.dat_box] = [datetime.datetime.fromisoformat(bound[0]),
+                                     datetime.datetime.fromisoformat(bound[1])]
             else : dcinf[ES.dat_box] = list(bound)
         return dcinf
-    
+
     def _infoNval(self):
         ''' Add valueList lenght to dict dcinf'''
         dcinf = dict()
-        for i in range(4) : 
+        for i in range(4) :
             if self.nValueObs[i] > 0 : dcinf[ES.json_nval[i]] = self.nValueObs[i]
         return dcinf
-    
+
     def _infoOther(self):
         ''' Add other's information key-value to dict dcinf'''
         dcinf = dict()
@@ -1201,7 +1194,7 @@ class Observation :
         dcinf[ES.res_dim]     = self.dimension
         dcinf[ES.res_axes]    = self.axes
         return dcinf
-    
+
     def _infoType(self):
         ''' Add information's key-value to dict dcinf'''
         dcinf = dict()
@@ -1210,19 +1203,19 @@ class Observation :
             if   self.nValueObs[i] > 1 : dcinf[ES.json_type[i]] = ES.multi + ES.esObsClass[i]
             elif self.nValueObs[i] > 0 : dcinf[ES.json_type[i]] =            ES.esObsClass[i]
         return dcinf
-    
+
     @staticmethod
     def _isESAtt(esClass, key):
         """identify if 'key' is included in 'esClass'
-        
+
         *Parameters*
-        
+
         - **esClass** : string for an ESClass attribute
         - **key** : string to search
-        
+
         *Returns*
-        
-        - **Boolean**        """        
+
+        - **Boolean**        """
         for k,v in ES.mTypeAtt.items():
             if k == key: return True
         return False
@@ -1231,7 +1224,7 @@ class Observation :
         ''' generate a dict with mAtt attributes'''
         att = dict()
         for k, v in self.mAtt.items():
-            if k in list(ES.mTypeAtt.keys()) : 
+            if k in list(ES.mTypeAtt.keys()) :
                 if v not in ES.nullValues : att[k] = v
             else: att[k] = v
         return att
@@ -1242,18 +1235,18 @@ class Observation :
         if name :   return Observation._majListName (listVal, newlistVal)
         else :      return Observation._majListValue(listVal, newlistVal)
 
-    @staticmethod        
+    @staticmethod
     def _majListName(listVal, newlistVal):
         ''' update name in a list of `ES.ESValue` '''
-        if len(listVal) != len(newlistVal) : 
-            raise ObservationError("inconsistent length of the lists : " + 
+        if len(listVal) != len(newlistVal) :
+            raise ObservationError("inconsistent length of the lists : " +
                                    str(len(listVal)) + " and " + str(len(newlistVal)))
         if type(newlistVal[0]) == str :
             for i in range(len(listVal)) : listVal[i].setName(newlistVal[i])
-        else : 
+        else :
             for i in range(len(listVal)) : listVal[i].setName(type(listVal[i])(newlistVal[i]).name)
         return listVal
-    
+
     @staticmethod
     def _majListValue(listVal, newlistVal):
         ''' update value in a list of `ES.ESValue` '''
@@ -1263,61 +1256,61 @@ class Observation :
 
     def _to_tab(self, **kwargs):
         ''' data preparation for view or csv export'''
-        option = {'json': True, 'name': True, 'dat': True, 'loc': True, 
+        option = {'json': True, 'name': True, 'dat': True, 'loc': True,
                   'prp': True, 'res': True, 'lenres': 0} | kwargs
         json, name, dat, loc, prp, res, lenres = tuple(option.values())
         if self.setResult == None : return
         tab = list()
         resList = []
-        if self.setDatation != None : 
+        if self.setDatation != None :
             if json : resList.append('datation')
-            if name : resList.append('datation name')
-            if dat  : resList.append('datation instant')
-        if self.setLocation != None : 
+            if name : resList.append('dat name')
+            if dat  : resList.append('dat instant')
+        if self.setLocation != None :
             if json : resList.append('location')
-            if name : resList.append('location name')
-            if loc  : resList.append('location coor x')
-            if loc  : resList.append('location coor y')
-        if self.setProperty != None : 
+            if name : resList.append('loc name')
+            if loc  : resList.append('loc coor x')
+            if loc  : resList.append('loc coor y')
+        if self.setProperty != None :
             if json : resList.append('property')
-            if name : resList.append('property name')
-            if prp  : resList.append('property type')
-        if self.setResult != None : 
+            if name : resList.append('prop name')
+            if prp  : resList.append('prop type')
+        if self.setResult != None :
             if json : resList.append('result')
-            if name : resList.append('result name')
-            if res :  resList.append('result value')
+            if name : resList.append('res name')
+            if res :  resList.append('res value')
         tab.append(resList)
         if lenres == 0 : lenres = len(self.setResult)
         for i in range(min(lenres, len(self.setResult))) :
             resList = []
-            if self.setDatation != None : 
+            if self.setDatation != None :
                 idat = self.ilist.idxname.index(ES.dat_classES)
                 if json : resList.append(self.setDatation[self.ilist.iidx[idat][i]].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setDatation[self.ilist.iidx[idat][i]].name)
                 if dat  : resList.append(self.setDatation[self.ilist.iidx[idat][i]].vSimple(string=True))
-            if self.setLocation != None : 
+            if self.setLocation != None :
                 iloc = self.ilist.idxname.index(ES.loc_classES)
                 if json : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].name)
                 if loc  : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].vSimple()[0])
                 if loc  : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].vSimple()[1])
-            if self.setProperty != None : 
+            if self.setProperty != None :
                 iprp = self.ilist.idxname.index(ES.prp_classES)
                 if json : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].name)
                 if prp  : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].simple)
-            if self.setResult != None : 
+            if self.setResult != None :
                 if json : resList.append(self.setResult[i].json(bjson_format=True, bjson_bson=False))
                 if name : resList.append(self.setResult[i].name)
                 if res  : resList.append(self.setResult[i].value)
             tab.append(resList)
-        return tab            
+        return tab
 
     def _xCoord(self, xList, attrs, idxref, numeric) :
         ''' Coords generation for Xarray'''
         coord = {}
         for key, val in xList.items() :
-            if key[:3] != 'res' : 
+            if key[:3] != 'res' :
                 axe = ES.axes[idxref[ES.nax[key[:3]]]]
                 coord[key] = (axe, val, attrs[key[:3]])
                 if key == 'loclon' : coord[key] = (coord[key][0], val, attrs['lon'])
@@ -1327,24 +1320,24 @@ class Observation :
             if 'dat' in coord.keys() : coord['dat'] = (coord['dat'][0], xList['datins'], coord['dat'][2])
             if 'prp' in coord.keys() : coord['prp'] = (coord['prp'][0], xList['prpran'], coord['prp'][2])
         return coord
-    
+
     def _xlist(self, maxname=0):
         '''list generation for Xarray'''
         xList = {}
-        if self.setLocation != None and len(self.setLocation) > 1: 
+        if self.setLocation != None and len(self.setLocation) > 1:
             xList['loc']    = self.ilist._tonumpy(self.setLocation)
             xList['locstr'] = self.ilist._tonumpy(self.setLocation, func = LocationValue.json)
             xList['loclon'] = self.ilist._tonumpy(self.setLocation, func = LocationValue.vPointX)
             xList['loclat'] = self.ilist._tonumpy(self.setLocation, func = LocationValue.vPointY)
             xList['locnam'] = self.ilist._tonumpy(self.setLocation, func = LocationValue.vName)
             xList['locran'] = np.arange(len(xList['loc']))
-        if self.setDatation != None and len(self.setDatation) > 1: 
+        if self.setDatation != None and len(self.setDatation) > 1:
             xList['dat']    = self.ilist._tonumpy(self.setDatation)
             xList['datstr'] = self.ilist._tonumpy(self.setDatation, func = DatationValue.json)
             xList['datins'] = self.ilist._tonumpy(self.setDatation, func = DatationValue.vSimple)
             xList['datnam'] = self.ilist._tonumpy(self.setDatation, func = DatationValue.vName)
             xList['datran'] = np.arange(len(xList['dat']))
-        if self.setProperty != None and len(self.setProperty) > 1: 
+        if self.setProperty != None and len(self.setProperty) > 1:
             xList['prp']    = self.ilist._tonumpy(self.setProperty)
             xList['prpstr'] = self.ilist._tonumpy(self.setProperty, func = PropertyValue.json)
             xList['prptyp'] = self.ilist._tonumpy(self.setProperty, func = PropertyValue.vSimple)
