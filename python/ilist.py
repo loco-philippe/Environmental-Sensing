@@ -190,8 +190,8 @@ class Ilist:
     - `Ilist.vlist`
     '''
     __slots__ = 'extval', 'iidx', 'setidx', 'valname', 'idxname'
-    c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
-    c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
+    _c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
+    _c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
 
 #%% constructor
     @classmethod     # !!! class methods
@@ -1358,8 +1358,8 @@ class Ilist:
             try : return datetime.datetime.fromisoformat(val)
             except : return datetime.datetime.min
         if dtype == 'coord':
-            if Ilist.c1.search(val) and Ilist.c2.search(val) :
-                return [float(Ilist.c1.search(val)[0][:-1]), float(Ilist.c2.search(val)[0][1:])]
+            if Ilist._c1.search(val) and Ilist._c2.search(val) :
+                return [float(Ilist._c1.search(val)[0][:-1]), float(Ilist._c2.search(val)[0][1:])]
             else : return [-1, -1]
         raise IlistError("dtype : " + dtype + " inconsistent with data")
 
