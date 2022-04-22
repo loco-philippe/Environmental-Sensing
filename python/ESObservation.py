@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 from ilist import Ilist
 from tabulate import tabulate
 
-
 _EsClassValue: dict = {ES.dat_classES : DatationValue,
                        ES.loc_classES : LocationValue,
                        ES.prp_classES : PropertyValue,
@@ -115,7 +114,7 @@ class Observation :
 
     """
 #%% constructor
-    def __init__(self, *args, order = [], idxref = [], **kwargs):
+    def __init__(self, *args, order = [], idxref = {}, **kwargs):
         '''
         Several Observation creation modes :
 
@@ -169,7 +168,7 @@ class Observation :
             elif type(arg) == tuple :   # creation uniquement d'un jeu de données dat, loc, prp, res
                 self.append(arg[0], arg[1], arg[2], arg[3])
 
-    def _initDict(self, js) :
+    """def _initDict_old(self, js) :
         ''' data creation in dict mode'''
         if ES.obs_id in list(js): self.mAtt[ES.obs_id] = js[ES.obs_id]
         if ES.obs_attributes in list(js):
@@ -192,19 +191,56 @@ class Observation :
         #res = ESValue.cast(v, ResultValue)
         res = ResultValue.cast(v)
         self.ilist = Ilist(res, seti, ii, vname, iname, defaultidx=False)
-        self.addAttributes(js)
+        self.addAttributes(js)"""
 
+    def _initDict(self, js) :
+        ''' data creation in dict mode'''
+        if ES.obs_id in list(js): self.mAtt[ES.obs_id] = js[ES.obs_id]
+        if ES.obs_attributes in list(js):
+            if type(js[ES.obs_attributes]) == dict: js = js[ES.obs_attributes]
+            else: return
+        dicilist = {}
+        #print(js)
+        '''dicidx = {}
+        dicres = {}
+        idxref = []'''
+        order = []
+        for classES in ES.esObsClass[0:3] :
+            if classES in list(js) :
+                dicilist[classES] =  _EsClassValue[classES].cast(js[classES])
+                order.append(classES)
+                #dicidx[classES] = ESValue.cast(js[classES], _EsClassValue[classES])
+        if ES.res_classES in list(js) :
+            dicilist[ES.res_classES] = ResultValue.cast(js[ES.res_classES])
+            #dicres[ES.res_classES] = ESValue.cast(js[ES.res_classES], ResultValue)
+        if 'order' in list(js) and len(js['order'])>0: dicilist['order'] = js['order']
+        else: dicilist['order'] = sorted(order)
+        if 'idxref' in list(js) : dicilist['idxref'] = js['idxref']
+        if 'index' in list(js) : dicilist['index'] = js['index']
+        #print(dicilist)
+        self.ilist = Ilist.from_bjson(dicilist)
+        ordern = sorted(self.ilist.idxname)
+        if ordern != self.ilist.idxname: 
+            self.ilist.swapindex([self.ilist.idxname.index(i) for i in ordern])
+        self.addAttributes(js)
+        
     def _initList(self, lis, **kwargs) :
         '''data creation in list mode '''
         if 'order' in kwargs : order = kwargs['order']
-        else : order = []
+        else : order = ['datation', 'location', 'property']
+        ordern = [ES.esObsClass.index(idx) for idx in order]
         if 'idxref' in kwargs : idxref = kwargs['idxref']
-        else : idxref = []
+        else : idxref = {}
+        idxrefn = [0,1,2]
+        for key, val in idxref.items() :
+            keyn = order.index(key)
+            valn = order.index(val)
+            idxrefn[max(keyn, valn)] = min(keyn, valn)
         self.ilist = Ilist.Iset(ResultValue.cast(lis[3]),
                                 [DatationValue.cast(lis[0]),
                                  LocationValue.cast(lis[1]),
                                  PropertyValue.cast(lis[2])],
-                                order, idxref, ES.esObsClass[3], ES.esObsClass[0:3],
+                                ordern, idxrefn, ES.esObsClass[3], ES.esObsClass[0:3],
                                 defaultidx=False)
         '''self.ilist = Ilist.Iset(ESValue.cast(lis[3], ResultValue),
                                 [ESValue.cast(lis[0], DatationValue),
@@ -281,7 +317,8 @@ class Observation :
         (0 for Datation, 1 for Location, 2 for Property)'''
         axes =[]
         for i in self.ilist.axes :
-            axes.append(ES.esObsClass.index(self.ilist.idxname[i]))
+            if self.ilist.idxname[i] in ES.esObsClass:
+                axes.append(ES.esObsClass.index(self.ilist.idxname[i]))
         return axes
 
     @property
@@ -343,7 +380,7 @@ class Observation :
         nvalue =[]
         for esclass in ES.esObsClass[0:3] :
             nval = 0
-            for i in range(self.ilist.lenidx) :
+            for i in range(len(self.ilist.idxlen)) :
                 if self.ilist.idxname[i] == esclass : nval = self.ilist.idxlen[i]
             nvalue.append(nval)
         nvalue.append(self.ilist.setvallen)
@@ -859,7 +896,8 @@ class Observation :
         *Returns*
 
         - **None**        '''
-        self.ilist.sort(order=order, reindex=reindex)
+        
+        self.ilist.sort(order=[self.ilist.idxname.index(num) for num in order], reindex=reindex)
 
     def to_csv(self, file, **kwargs) :
         '''
@@ -932,11 +970,16 @@ class Observation :
 
         - **string or dict** : Json string or dict        '''
         option = self.option | kwargs
-        option2 = option | {'bjson_format': False, 'json_mode' : 'vi'}
+        option2 = option | {'bjson_format': False}
+        #option2 = option | {'bjson_format': option['bjson_bson']}
         dic = { ES.type : ES.obs_classES }
         if self.mAtt[ES.obs_id] != ES.nullAtt: dic[ES.obs_id] = self.mAtt[ES.obs_id]
         dic |= self._jsonAtt(**option2)
         dic |= self.ilist.json(**option2)
+        if self._orderIsDefault(dic['order']): dic.pop('order')
+        """if self._indexIsDefault(dic): 
+            if 'index' in dic: dic.pop('index')
+            if 'default index' in dic: dic.pop('default index')"""
         if option["json_param"] and self.parameter != ES.nullAtt:
             dic[ES.parameter] = self.parameter
         dic |= self._info(**option2)
@@ -1142,6 +1185,12 @@ class Observation :
             box = box.boxUnion(val)
         return box
 
+    """@staticmethod 
+    def _indexIsDefault(dic):
+        return ('index' in dic and 'default index' in dic and dic['index']==[dic['default index']]) or \
+               (not 'index' in dic and 'default index' in dic) or \
+               ('index' in dic and len(dic['index'][0]) <= 1)"""
+    
     def _info(self, **kwargs):
         ''' Create json dict with info datas'''
         option = self.option | kwargs
@@ -1253,6 +1302,12 @@ class Observation :
         if len(listVal) != len(newlistVal) : return
         for i in range(len(listVal)) : listVal[i].setValue(type(listVal[i])(newlistVal[i]))
         return listVal
+
+    @staticmethod 
+    def _orderIsDefault(order):
+        if len(order) == 1: return True
+        return order in [[ES.dat_classES, ES.loc_classES], [ES.dat_classES, ES.prp_classES],
+                         [ES.loc_classES, ES.prp_classES], [ES.dat_classES, ES.loc_classES, ES.prp_classES]]
 
     def _to_tab(self, **kwargs):
         ''' data preparation for view or csv export'''

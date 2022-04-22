@@ -126,7 +126,9 @@ class Test_ilist(unittest.TestCase):
         self.assertEqual( il.setidx, [[0, 2], [30, 12, 20]])
         il = Ilist.Iext(f,l).setfilter([[2], [12, 20, 30]], inplace=False, index=False)
         self.assertEqual( il.setidx, [[2], [12]])
-        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
+        #ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
+        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, 
+                         order=['property', 'datation', 'location'])
         ob.majList(DatationValue, ['name1', 'autre name', 'encore autre name3'], name=True)
         self.assertEqual(ob.ilist._idxfilter('isName', 'setidx', 0, 'name[1-9]'), [0,2])
         self.assertEqual(Ilist._filter(ESValue.isName, ob.ilist.setidx[0], True, 'name[1-9]'), [0,2])
@@ -137,7 +139,8 @@ class Test_ilist(unittest.TestCase):
         self.assertEqual(Ilist._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}), ESValue.getName), 'date1')
         self.assertTrue(Ilist._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}),
                                          ESValue.equals, DatationValue("2021-02-04T12:05:00")))
-        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
+        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, 
+                         order=['property', 'datation', 'location'])
         self.assertEqual(Ilist._filter(ESValue.getName, ob.setDatation, 'date1'), [0])
 
     def test_full(self) :
@@ -306,6 +309,12 @@ class Test_ilist(unittest.TestCase):
         il3.extval=ResultValue.cast(il3.extval)
         self.assertEqual(il.json(bjson_format=False, bjson_bson=True), il3.json(bjson_format=False, bjson_bson=True))        #print(il2)
 
-
+    def test_json(self):
+        il=Ilist.Iext(['er', 'rt', 'er', 'ry'], [[0, 2, 0, 2], [30, 12, 20, 15]])
+        ilf = il.full(axes=[0,1])
+        self.assertEqual(il.sort(order=[0,1], inplace=False), il.from_bjson(il.json()).sort(order=[0,1], inplace=False))
+        self.assertEqual(ilf.sort(order=[0,1], inplace=False), il.from_bjson(ilf.json()))
+        
+        
 if __name__ == '__main__':
     unittest.main(verbosity=2)
