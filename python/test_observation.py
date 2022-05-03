@@ -584,6 +584,37 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         obs.option["json_info_type"] = True
         self.assertEqual(json.loads(obs.to_json())[ES.information]["typeobs"], ES.obsCat[122])
 
+class TestImportExport(unittest.TestCase):
+    '''Unit tests for `ES.ESObservation.Observation` import and export '''
+
+    def test_file(self):
+        res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
+        ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref={'location':'datation'})
+        ob.to_file('test.obs', bjson_bson=True)
+        self.assertEqual(Observation.from_file('test.obs').to_json(bjson_format=False),
+                         ob.to_json(bjson_format=False))
+        ob.to_file('test.obs', bjson_bson=False)
+        self.assertEqual(Observation.from_file('test.obs').to_json(bjson_format=False),
+                         ob.to_json(bjson_format=False))
+    def test_bytes(self):
+        ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), 
+                         idxref={'datation':'location'})        
+        opt = {ES.dat_classES : ['name', 'value'], ES.loc_classES : ['name', 'value'],
+               ES.prp_classES : ['name', 'value'], ES.res_classES : ['uint8']}
+        self.assertEqual(ob.json, Observation.from_bytes(ob.to_bytes(opt)).json)
+        ob = Observation({  'type': 'observation',
+                            'datation': [{'date1': '2021-02-04T12:05:00'},
+                                         '2021-07-04T12:05:00',
+                                         '2021-05-04T12:05:00'],
+                            'location': [{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
+                            'property': [{'prp': 'PM25', 'unit': 'kg/m3'},
+                                         {'prp': 'PM10', 'unit': 'kg/m3'}],
+                            'result': [0, 1, 2, 3, 4, 5],
+                            'index': [[0, 1, 0, 1, 2, 2], [0, 0, 1, 1, 2, 2], 
+                                      [0, 1, 0, 1, 0, 1]]})
+        self.assertEqual(ob.json, Observation.from_bytes(ob.to_bytes(opt)).json)
+
+        
 class TestExports(unittest.TestCase):
     '''Unit tests for `ES.ESObservation.Observation` exports '''
 
@@ -623,6 +654,7 @@ class TestExports(unittest.TestCase):
     def test_xarray(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
         self.assertTrue(ob.to_xarray()[2,1].item() == ResultValue(2))
+        self.assertTrue(ob.to_xarray(numeric=True)[2,1].item() == 2.0)
         self.assertTrue(ob.to_xarray(ind='all')[2,2,1].item() == ResultValue(2))
         ob = Observation(dict((obs_1, dat3, loc3, prop1, _res(3))), idxref={'location':'datation'})
         self.assertTrue(ob.to_xarray()[1].item() == ResultValue(2))
@@ -718,15 +750,37 @@ class TestExports(unittest.TestCase):
                                                  'isName' : 'name'},                                                    # 3
                                        location={'within' : LocationValue.Box((14.5, 41, 18.5, 44))} )), 2)
 
-    def test_file(self):
-        res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
-        ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref={'location':'datation'})
-        ob.to_obs('test.obs', bjson_bson=True)
-        self.assertEqual(Observation.from_obs('test.obs').to_json(bjson_format=False),
-                         ob.to_json(bjson_format=False))
-        ob.to_obs('test.obs', bjson_bson=False)
-        self.assertEqual(Observation.from_obs('test.obs').to_json(bjson_format=False),
-                         ob.to_json(bjson_format=False))
+class TestInterne(unittest.TestCase):
+    '''Unit tests for `ES.ESObservation.Observation` internal '''
 
+    @unittest.skipIf(mongo, "test envoi mongo")
+    def test__list_bytes(self):
+        ob = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(6))), 
+                         idxref={'location':'datation'}, order=['datation', 'property', 'location'])
+        lis  = ob.ilist.setidx[0]
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'datation', 'name'))[1]
+        self.assertEqual(lis[0].name, lis2[0].name)
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'datation', 'namemini'))[1]
+        self.assertEqual(lis[0].name, lis2[0].name)
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'datation', 'value'))[1]
+        self.assertEqual(lis[0].value, lis2[0].value)
+        lis  = ob.ilist.setidx[1]
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'location', 'name'))[1]
+        self.assertEqual(lis[0].name, lis2[0].name)
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'location', 'value'))[1]
+        self.assertEqual(lis[0].value, lis2[0].value)
+        lis  = ob.ilist.setidx[2]
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'property', 'name'))[1]
+        self.assertEqual(lis[0].name, lis2[0].name)
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'property', 'value'))[1]
+        self.assertEqual(lis[0].value, lis2[0].value)
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'property', 'valuemini'))[1]
+        self.assertEqual(lis[0].value, lis2[0].value)
+        lis  = ob.ilist.extval
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'result', 'name'))[1]
+        self.assertEqual(lis[0].name, lis2[0].name)
+        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'result', 'value'))[1]
+        self.assertEqual(lis[0].value, lis2[0].value)
+        
 if __name__ == '__main__':
     unittest.main(verbosity=2)

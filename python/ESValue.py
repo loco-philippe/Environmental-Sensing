@@ -343,18 +343,22 @@ class ESValue:
         if self.name == ES.nullName : return genName
         return self.name
 
-    def _to_strBytes(self, simple = False):
+    def _to_strBytes(self, simple=False, mini=False):
         bval = str.encode(self.name)
-        if simple : return bval
-        return struct.pack('>B', bval.__len__()) + bval
+        if simple and mini : 
+            #form='{:<'+str(ES.miniStr)+'}' 
+            #return str.encode(form.format(self.name[0:ES.miniStr]))
+            return str.encode(self.name[0:ES.miniStr].ljust(ES.miniStr))
+        if simple and not mini : return bval
+        return struct.pack('>B', len(bval)) + bval
 
-    def _from_strBytes(self, byt, simple = False):
+    def _from_strBytes(self, byt, simple=False):
         if simple :
-            siz = byt.__len__()
-            name = bytes.decode(byt)
+            siz = len(byt) - 1
+            name = bytes.decode(byt).rstrip()          
         else :
             siz = struct.unpack('>B', byt[0:1])[0]
-            name = bytes.decode(byt[1: siz + 1])
+            name = bytes.decode(byt[1: siz + 1]).rstrip()
         self._init(name)
         return siz + 1
 
@@ -423,7 +427,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         else: self.EStype = ES.ntypevalue[self.value.stype]
         if self.name != ES.nullName: self.EStype += 100
 
-    def from_bytes(self, byt):
+    def from_bytes(self, byt, mini=False):
         '''
         Complete an empty `DatationValue` with binary data.
 
@@ -435,6 +439,10 @@ class DatationValue(ESValue):   # !!! début ESValue
 
         - **int** : number of bytes used to decode a dateTime = 7
         '''
+        if mini:
+            dt = struct.unpack('<HBB', byt[0:4])
+            self._init(datetime.datetime(dt[0], dt[1], dt[2]))
+            return 4
         dt = struct.unpack('<HBBBBB', byt[0:7])
         self._init(datetime.datetime(dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]))
         return 7
@@ -464,7 +472,7 @@ class DatationValue(ESValue):   # !!! début ESValue
     @staticmethod
     def nullValue() : return TimeSlot(ES.nullDate)
 
-    def to_bytes(self):
+    def to_bytes(self, mini=False):
         '''
         Export in binary format.
 
@@ -472,6 +480,8 @@ class DatationValue(ESValue):   # !!! début ESValue
 
         - **bytes** : binary representation of the `DatationValue` (datetime)
         '''
+        if mini: return struct.pack('<HBB', self.simple.year, self.simple.month,
+                           self.simple.day)
         return struct.pack('<HBBBBB', self.simple.year, self.simple.month,
                            self.simple.day, self.simple.hour,
                            self.simple.minute, self.simple.second)
@@ -610,7 +620,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
         '''list (@property) : vSimple inverse coordinates [vSimple[1], vSimple[0]]'''
         return [self.vSimple()[1], self.vSimple()[0]]
 
-    def from_bytes(self, byt):
+    def from_bytes(self, byt, mini=False):
         '''
         Complete an empty `LocationValue` with binary data (point)
 
@@ -650,7 +660,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @staticmethod
     def nullValue() : return LocationValue._gshape(ES.nullCoor)
 
-    def to_bytes(self):
+    def to_bytes(self, mini=False):
         '''Export in binary format.
 
         *Returns*
@@ -790,7 +800,10 @@ class PropertyValue(ESValue):              # !!! début ESValue
         """lower if string simple value + name is lower"""
         return self.simple + self.name < other.simple + other.name
 
-    def from_bytes(self, byt):
+    def from_bytes(self, byt, mini):
+        if mini: 
+            self.value[ES.prp_type]   = ES.invProp[struct.unpack('<B', byt[0:1])[0]]
+            return 1
         bytl = byt[0:6] + b'\x00' +byt[6:9] + b'\x00' + byt[9:10]
         prp = struct.unpack('<BBBLLB', bytl)
         self.value[ES.prp_type]       = ES.invProp[prp[0]]
@@ -841,7 +854,8 @@ class PropertyValue(ESValue):              # !!! début ESValue
         if string : return json.dumps(simple, cls=ESValueEncoder)
         return simple
 
-    def to_bytes(self):
+    def to_bytes(self, mini):
+        if mini: return struct.pack('<B', ES.prop[self.simple][0])
         if ES.prp_sampling in self.value : sampling = self.value[ES.prp_sampling]
         else : sampling = ES.nullDict
         if ES.prp_appli in self.value    : appli    = self.value[ES.prp_appli]
@@ -932,9 +946,24 @@ class ResultValue (ESValue):               # !!! début ESValue
         if self.value != self.nullValue(): self.EStype = 32
         if self.name != ES.nullName: self.EStype += 100
 
+    def from_bytes(self, byt, forma = ES.nullDict):
+        formaPrp = ES.prop[forma][1]
+        leng = ES.prop[forma][2]
+        dexp = ES.prop[forma][3]
+        bexp = ES.prop[forma][4]        
+        self.__init__(val=struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
+        return leng
+
     @staticmethod
     def nullValue() : return ES.nullVal
 
+    def to_bytes(self, forma = ES.nullDict):
+        formaPrp = ES.prop[forma][1]
+        dexp = ES.prop[forma][3]
+        bexp = ES.prop[forma][4]
+        val = self.value * 10**-dexp * 2**-bexp
+        return struct.pack('<' + formaPrp, val)
+    
     def to_float(self):
         '''converts into a float value '''
         if self.value == None :         return float('nan')

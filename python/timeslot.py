@@ -156,7 +156,7 @@ class TimeSlot:
     @property
     def bounds(self): 
         '''return a tuple with the start and end dates with isoformat string'''
-        return (self.slot[0].start.isoformat(), self.slot[len(self) - 1].end.isoformat())
+        return (TimeSlot.form(self.slot[0].start), TimeSlot.form(self.slot[len(self) - 1].end))
 
     @property
     def centroid(self):
@@ -169,6 +169,11 @@ class TimeSlot:
         duration = datetime.timedelta()
         for interv in self.slot : duration += interv.duration
         return duration
+    
+    @staticmethod 
+    def form(dtime):
+        if dtime.timetuple()[3:6]==(0,0,0): return dtime.date().isoformat()
+        return dtime.isoformat()
     
     @property
     def instant(self): 
@@ -380,7 +385,7 @@ class TimeInterval:    # !!! interval
     @property
     def bounds(self): 
         '''return a tuple with the start and end dates with isoformat string'''
-        return (self.start.isoformat(), self.end.isoformat())
+        return (TimeSlot.form(self.start), TimeSlot.form(self.end))
         
     @property
     def centroid(self):
@@ -416,14 +421,15 @@ class TimeInterval:    # !!! interval
         *Returns* : string or dict'''
         if   self.stype == 'instant' : 
             if bjson_bson:  js = self.start
-            else:           js = self.start.isoformat()
+            else:           
+                js = TimeSlot.form(self.start)
         elif self.stype == 'interval' : 
             if bjson_bson:  js = [self.start, self.end]
-            else:           js = [self.start.isoformat(), self.end.isoformat()]
+            else:           js = [TimeSlot.form(self.start), TimeSlot.form(self.end)]
         if bjson_format and not bjson_bson: return json.dumps(js)
         if bjson_format and bjson_bson: return bson.encode(js)
         return js
-
+    
     def link(self, other):
         '''
         Return the status (string) of the link between two TimeIntervals (self and other).

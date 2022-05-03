@@ -14,7 +14,8 @@ class Es:
     ''' initialization of constant data. '''
 
     def _identity(self, x) : return x
-    def _inv(self, mp)     : return dict(zip(mp.values(), mp.keys()))
+    def _inv(self, mp)     : return {val:key for key,val in mp.items()}
+    #def _inv(self, mp)     : return dict(zip(mp.values(), mp.keys()))
     def _invnum(self, mp)  : return dict(zip([k[0] for k in list(mp.values())], mp.keys()))
 
     def __init__(self):
@@ -135,17 +136,26 @@ class Es:
         ''' Default name for `ES.ESObservation.Observation.score` '''
 
         #'''Bytes initialization (dict) '''
-        self.codeb: Dict = {self.obs_classES  :   5 ,
-                            self.dat_classES  :   2 ,
-                            self.loc_classES  :   1 ,
+        self.codeb: Dict = {self.dat_classES  :   1 ,
+                            self.loc_classES  :   2 ,
                             self.res_classES  :   4 ,
                             self.prp_classES  :   3 ,
-                            self.loc_valName  :   1 ,
-                            self.dat_valName  :   2 ,
-                            self.prp_valName  :   3 }
+                            self.res_value    :   5 ,
+                            self.index        :   6 ,
+                            self.variable     :   7}
+        self.invcodeb: Dict = self._inv(self.codeb)
         ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
         `ES.ESObservation.Observation.to_bytes` '''
-
+        self.codevalue: Dict = {'name': 1,
+                                'value': 2,
+                                'namemini':3,
+                                'valuemini':4}
+        self.invcodevalue: Dict = self._inv(self.codevalue)
+        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
+        `ES.ESObservation.Observation.to_bytes` '''
+        self.minivalue: list = [3,4]
+        self.namevalue: list = [1,3]
+        
         #'''Property initialization (dict)
         #  format : (code_ES, python format, lenght, dexp, bexp, unit)
         self.prop: Dict ={'utf-8'       : (2 ,  '', 0,  0, 0, self.nullDict),
@@ -163,9 +173,13 @@ class Es:
                           'temp'        : (24, 'h', 2, -2, 0, '°C'         ),
                           'Temp'        : (24, 'e', 2,  0, 0, '°C'         ),
                           self.nullDict : (0 , 'e', 2,  0, 0, self.nullDict)}
-        '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
-
         self.invProp: Dict = self._invnum(self.prop)
+        self.bytedict: Dict = {self.dat_classES : ['namemini', 'value'],
+                               self.loc_classES : ['namemini', 'value'],
+                               self.prp_classES : ['valuemini'        ],
+                               self.res_classES : ['namemini', 'sfloat'],
+                               self.variable    : ['namemini', 'value']}
+
         '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
 
         self.sampling: Dict = { self.nullDict       : 0,
@@ -268,6 +282,9 @@ class Es:
             self.prp          ,
             self.res          ,
             self.coordinates  ,
+            self.index        ,
+            self.idxref       ,
+            self.order        ,
 
             self.nul_classES  ,
             self.obs_classES  ,
@@ -334,6 +351,10 @@ class Es:
         self.prp              = "prp"
         self.res              = "res"
         self.coordinates      = "coordinates"
+        self.index            = "index"
+        self.idxref           = "idxref"
+        self.variable         = "variable"
+        self.order            = "order"
 
         self.nul_classES      = "nullClass"
         self.obs_classES      = "observation"
@@ -356,7 +377,8 @@ class Es:
         self.res_dim          = "dim"
         self.res_axes         = "axes"
         self.set_nValue       = "nval"
-
+        self.res_value        = "resvalue"
+        
         self.dat_box            = "datationBox"
         self.loc_box            = "locationBox"
         self.geo_box            = "geobox"
@@ -382,6 +404,7 @@ class Es:
 
     def _initReferenceValue(self):
         ''' Reference value initialization '''
+        self.miniStr          = 10
         self.distRef          = [48.87, 2.35] # coordonnées Paris lat/lon
         self.nullDate         = datetime(1970, 1, 1)
         self.nullCoor         = [-1, -1]

@@ -285,7 +285,7 @@ class Test_ilist(unittest.TestCase):
         cours = Ilist.from_csv('example cours light.csv', delimiter=';')
         coursfull = cours.full(cours.axesmin, fillvalue='-')
         coursfull.to_csv('example cours light full.txt')
-        print('\n', 'taille (bytes) : ', coursfull.to_bytes().__sizeof__(), '\n')  # 2025, csv : 2749, xlsx : 12245
+        print('\n', 'taille (bytes) : ', coursfull.to_obj(bjson_bson=True).__sizeof__(), '\n')  # 2025, csv : 2749, xlsx : 12245
 
     def test_bson(self):
         il = Ilist.Idict({'result':[ResultValue(0), ResultValue(1), ResultValue(2),
@@ -296,25 +296,37 @@ class Test_ilist(unittest.TestCase):
                                       LocationValue(loc3[1][2])],
                           'property':[PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]},
                          idxref=[0,0,2], order=[2,0])
-        il2 = Ilist.from_bytes(il.to_bytes(bjson_format=True, bin_iidx=True))
+        il2 = Ilist.from_obj(il.to_obj(bjson_format=True))
         il2.setidx[0] = DatationValue.cast(il2.setidx[0])
         il2.setidx[1] = LocationValue.cast(il2.setidx[1])
         il2.setidx[2] = PropertyValue.cast(il2.setidx[2])
         il2.extval = ResultValue.cast(il2.extval)
-        self.assertEqual(il.json(bjson_format=False, bjson_bson=True), il2.json(bjson_format=False, bjson_bson=True))
-        il3 = Ilist.from_bytes(il.to_bytes(bjson_format=False, bin_iidx=True))
+        self.assertEqual(il.to_obj(bjson_format=False, bjson_bson=True), 
+                         il2.to_obj(bjson_format=False, bjson_bson=True))
+        il3 = Ilist.from_obj(il.to_obj(bjson_format=False, bin_iidx=True))
         il3.setidx[0] = DatationValue.cast(il3.setidx[0])
         il3.setidx[1] = LocationValue.cast(il3.setidx[1])
         il3.setidx[2] = PropertyValue.cast(il3.setidx[2])
         il3.extval=ResultValue.cast(il3.extval)
-        self.assertEqual(il.json(bjson_format=False, bjson_bson=True), il3.json(bjson_format=False, bjson_bson=True))        #print(il2)
+        self.assertEqual(il.to_obj(bjson_format=False, bjson_bson=True), 
+                         il3.to_obj(bjson_format=False, bjson_bson=True))        #print(il2)
 
     def test_json(self):
-        il=Ilist.Iext(['er', 'rt', 'er', 'ry'], [[0, 2, 0, 2], [30, 12, 20, 15]])
-        ilf = il.full(axes=[0,1])
-        self.assertEqual(il.sort(order=[0,1], inplace=False), il.from_bjson(il.json()).sort(order=[0,1], inplace=False))
-        self.assertEqual(ilf.sort(order=[0,1], inplace=False), il.from_bjson(ilf.json()))
-        
+        il=Ilist.Iext(['er', 'rt', 'er', 'ry'], [[0, 2, 0, 2], [30, 12, 20, 15]]
+                      ).sort(order=[0,1], inplace=False)
+        ilf = il.full(axes=[0,1]).sort(order=[0,1], inplace=False)
+        self.assertEqual(il, il.from_obj(il.json()).sort(order=[0,1], inplace=False))
+        self.assertEqual(ilf, il.from_obj(ilf.json()))
+        il.to_file('test.tst', bjson_bson=True)
+        ilf.to_file('testf.tst', bjson_bson=False)
+        self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
+        self.assertEqual(ilf, il.from_file('testf.tst'))
+    
+    def test_derived_to_coupled(self):
+        il=Ilist.Iext([1,2,3,4,5,6], [['a', 'b', 'b', 'c', 'c', 'a'], 
+         [20,  10,  10,  10,  10,  20], [200, 200, 300, 200, 300, 300]] )
+        il.derived_to_coupled(1,0)
+        self.assertTrue(il.complete)
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)

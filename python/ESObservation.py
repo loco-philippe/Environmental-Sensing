@@ -16,6 +16,7 @@ import json, folium, copy, csv, bson
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
+import struct
 #import os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/iList')
 from ilist import Ilist
@@ -102,12 +103,12 @@ class Observation :
 
     *exports - imports*
 
-    - `Observation.from_obs`
+    - `Observation.from_file`
     - `Observation.to_csv`
     - `Observation.to_dataFrame`
     - `Observation.to_json`
     - `Observation.to_numpy`
-    - `Observation.to_obs`
+    - `Observation.to_file`
     - `Observation.to_xarray`
     - `Observation.to_bytes`              # à voir
     - `Observation.from_bytes`            # à voir
@@ -141,7 +142,16 @@ class Observation :
         self.mAtt[ES.obs_id] = "null"
         self._initObs(*args, **kwargs)
 
-
+    @classmethod
+    def Ilist(cls, ilist, name='', option=None, parameter=None, mAtt=None):
+        obs = cls()
+        obs.ilist = ilist 
+        if name != '': obs.name = name
+        if option: obs.option |= option
+        if parameter: obs.parameter = parameter 
+        if mAtt: obs.mAtt |= mAtt
+        return obs
+    
     def _initObs(self, *args, **kwargs):
         ''' data creation '''
         dic = {}
@@ -168,31 +178,6 @@ class Observation :
             elif type(arg) == tuple :   # creation uniquement d'un jeu de données dat, loc, prp, res
                 self.append(arg[0], arg[1], arg[2], arg[3])
 
-    """def _initDict_old(self, js) :
-        ''' data creation in dict mode'''
-        if ES.obs_id in list(js): self.mAtt[ES.obs_id] = js[ES.obs_id]
-        if ES.obs_attributes in list(js):
-            if type(js[ES.obs_attributes]) == dict: js = js[ES.obs_attributes]
-            else: return
-        dicidx = {}
-        dicres = {}
-        idxref = []
-        order = []
-        for classES in ES.esObsClass[0:3] :
-            if classES in list(js) :
-                dicidx[classES] =  _EsClassValue[classES].cast(js[classES])
-                #dicidx[classES] = ESValue.cast(js[classES], _EsClassValue[classES])
-        if ES.res_classES in list(js) :
-            dicres[ES.res_classES] = js[ES.res_classES]
-            #dicres[ES.res_classES] = ESValue.cast(js[ES.res_classES], ResultValue)
-        if 'order' in list(js) : order = js['order']
-        if 'idxref' in list(js) : idxref = js['idxref']
-        (v, seti, ii, vname, iname) = Ilist._initdict(dicres, dicidx, order, idxref)
-        #res = ESValue.cast(v, ResultValue)
-        res = ResultValue.cast(v)
-        self.ilist = Ilist(res, seti, ii, vname, iname, defaultidx=False)
-        self.addAttributes(js)"""
-
     def _initDict(self, js) :
         ''' data creation in dict mode'''
         if ES.obs_id in list(js): self.mAtt[ES.obs_id] = js[ES.obs_id]
@@ -200,25 +185,18 @@ class Observation :
             if type(js[ES.obs_attributes]) == dict: js = js[ES.obs_attributes]
             else: return
         dicilist = {}
-        #print(js)
-        '''dicidx = {}
-        dicres = {}
-        idxref = []'''
         order = []
         for classES in ES.esObsClass[0:3] :
             if classES in list(js) :
                 dicilist[classES] =  _EsClassValue[classES].cast(js[classES])
                 order.append(classES)
-                #dicidx[classES] = ESValue.cast(js[classES], _EsClassValue[classES])
         if ES.res_classES in list(js) :
             dicilist[ES.res_classES] = ResultValue.cast(js[ES.res_classES])
-            #dicres[ES.res_classES] = ESValue.cast(js[ES.res_classES], ResultValue)
         if 'order' in list(js) and len(js['order'])>0: dicilist['order'] = js['order']
         else: dicilist['order'] = sorted(order)
         if 'idxref' in list(js) : dicilist['idxref'] = js['idxref']
         if 'index' in list(js) : dicilist['index'] = js['index']
-        #print(dicilist)
-        self.ilist = Ilist.from_bjson(dicilist)
+        self.ilist = Ilist.from_obj(dicilist)
         ordern = sorted(self.ilist.idxname)
         if ordern != self.ilist.idxname: 
             self.ilist.swapindex([self.ilist.idxname.index(i) for i in ordern])
@@ -242,12 +220,6 @@ class Observation :
                                  PropertyValue.cast(lis[2])],
                                 ordern, idxrefn, ES.esObsClass[3], ES.esObsClass[0:3],
                                 defaultidx=False)
-        '''self.ilist = Ilist.Iset(ESValue.cast(lis[3], ResultValue),
-                                [ESValue.cast(lis[0], DatationValue),
-                                 ESValue.cast(lis[1], LocationValue),
-                                 ESValue.cast(lis[2], PropertyValue)],
-                                order, idxref, ES.esObsClass[3], ES.esObsClass[0:3],
-                                defaultidx=False)  '''
 
 #%% special
     def __copy__(self):
@@ -650,8 +622,41 @@ class Observation :
         newobs.option    = self.option
         return newobs
 
+    @classmethod    
+    def from_bytes(cls, byt):
+        '''
+        Generate `Observation` object from byte value.
+        
+        *Returns* : `Observation`'''
+        iidx = []
+        iidxref = {}
+        nb_el   =  byt[0] & 0b00001111
+        obsref  = (byt[0] & 0b00010000) >> 4
+        code_el = (byt[0] & 0b11100000) >> 5
+        idx = 1
+        ref_obs = None
+        if obsref: 
+            ref_obs = struct.unpack('<H',byt[1:3])[0]
+            idx += 2
+        dic = {} 
+        nval=-1
+        for i in range(nb_el):
+            tup = cls._list_from_bytes(byt[idx:], nval)
+            if i == 0 : nval = len(tup[1])
+            idx += tup[0]
+            if   tup[2] == ES.index: iidx.append(tup[1])
+            elif tup[2] == ES.idxref: iidxref = tup[1]
+            elif tup[2] not in dic: dic[tup[2]] = tup[1]
+            elif tup[3]: 
+                for i in range(len(tup[1])): dic[tup[2]][i].setName(tup[1][i].name)
+            else: 
+                for i in range(len(tup[1])): dic[tup[2]][i].setValue(tup[1][i].value)
+        if iidx:    dic[ES.index]=iidx
+        if iidxref:  dic[ES.idxref]={ES.invcodeb[k] : ES.invcodeb[v] for k,v in iidxref.items()}
+        return Observation(dic)
+    
     @classmethod
-    def from_obs(cls, file) :
+    def from_file(cls, file) :
         '''
         Generate `Observation` object from file storage.
 
@@ -659,7 +664,7 @@ class Observation :
 
         - **file** : string - file name (with path)
 
-        *Returns* : None'''
+        *Returns* : `Observation`'''
         with open(file, 'rb') as f: btype = f.read(22)
         if btype==bytes('{"' +ES.type+'": "' + ES.obs_classES +'"', 'UTF-8'):
             with open(file, 'r', newline='') as f: bjson = f.read()
@@ -872,11 +877,13 @@ class Observation :
                     obx.plot(size=size)
         elif len(obx.dims) == 3:
             if line :
+                #obx = obx.set_index(prp = "prptyp", loc="locstr")
                 obx = obx.set_index(prp = "prpstr", loc="locstr")
                 obx.sortby(["dat","loc","prp"]
                            ).plot.line(x="dat", col="prp", xticks=list(obx.coords['dat'].values),
                                        col_wrap=2, size=size, marker=marker)
             else :
+                #obx = obx.set_index(prp = "prptyp", loc="locran")
                 obx = obx.set_index(prp = "prpstr", loc="locran")
                 obx.sortby(["dat","loc","prp"]
                            ).plot(x="dat", y="loc", col="prp", col_wrap=2, size=size,
@@ -898,6 +905,37 @@ class Observation :
         - **None**        '''
         
         self.ilist.sort(order=[self.ilist.idxname.index(num) for num in order], reindex=reindex)
+    
+    def to_bytes(self, option=ES.bytedict):
+        '''
+        Export in binary format. 
+        
+        *Returns*
+        
+        - **bytes** : binary representation of the `Observation`
+        '''
+        opt = ES.bytedict | option
+        nb=0 
+        il = self.ilist 
+        index = not il.complete
+        for name in il.idxname: #!!!!
+            #if name in opt: nb += len(opt[name]) + 1
+            if name in opt: nb += len(opt[name]) + index
+        if il.valname in opt: nb += len(opt[il.valname])
+        nb += il.complete
+        byt = struct.pack('<B', 0b11100000 | (self.mAtt[ES.obs_reference] << 4) | nb) 
+        if il.valname in opt: 
+            for typevalue in opt[il.valname]: 
+                byt += self._list_to_bytes(il.extval, il.valname, typevalue)
+        for i in range(il.lenidx):
+            if il.idxname[i] in opt:
+                for typevalue in opt[il.idxname[i]]: 
+                    byt += self._list_to_bytes(il.setidx[i], il.idxname[i], typevalue)
+                if not il.complete: byt += self._list_to_bytes(il.iidx[i], ES.index, ES.index)
+        if il.complete: 
+            iidxref={ES.codeb[k] : ES.codeb[v] for k,v in il.dicidxref.items()}
+            byt += self._list_to_bytes(iidxref, ES.index, ES.idxref)
+        return byt
 
     def to_csv(self, file, **kwargs) :
         '''
@@ -949,6 +987,28 @@ class Observation :
                                   func=func, name=name, ind=ind
                                   ).to_dataframe(name=name)
         else : return None
+
+    def to_file(self, file, **kwargs) :
+        '''
+        Generate obs file to display `Observation` data.
+
+         *Parameters (kwargs)*
+
+        - **file** : string - file name (with path)
+        - **kwargs** : see 'to_json' parameters
+
+        *Returns*
+
+        - **Integer** : file lenght (bytes)  '''
+        option = kwargs | {'bjson_format': True, 'json_res_index': True}
+        data = self.to_json(**option)
+        if kwargs['bjson_bson']:
+            lendata = len(data)
+            with open(file, 'wb') as f: f.write(data)
+        else:
+            lendata = len(bytes(data, 'UTF-8'))
+            with open(file, 'w', newline='') as f: f.write(data)
+        return lendata
 
     def to_json(self, **kwargs):
         '''
@@ -1003,28 +1063,6 @@ class Observation :
 
         - **Numpy array**    '''
         return self.ilist.to_numpy(func=func, ind=ind, fillvalue=fillvalue, **kwargs)
-
-    def to_obs(self, file, **kwargs) :
-        '''
-        Generate obs file to display `Observation` data.
-
-         *Parameters (kwargs)*
-
-        - **file** : string - file name (with path)
-        - **kwargs** : see 'to_json' parameters
-
-        *Returns*
-
-        - **Integer** : file lenght (bytes)  '''
-        option = kwargs | {'bjson_format': True, 'json_res_index': True}
-        data = self.to_json(**option)
-        if kwargs['bjson_bson']:
-            lendata = len(data)
-            with open(file, 'wb') as f: f.write(data)
-        else:
-            lendata = len(bytes(data, 'UTF-8'))
-            with open(file, 'w', newline='') as f: f.write(data)
-        return lendata
 
     def to_xarray(self, info=False, numeric=False, ind='axe', fillvalue='?',
                   name='Observation', maxname=20, func=None, **kwargs):
@@ -1278,6 +1316,82 @@ class Observation :
             else: att[k] = v
         return att
 
+
+    @staticmethod 
+    def _list_from_bytes(byt, nv=-1):
+        lis=[]
+        code_el = (byt[0] & 0b11100000) >> 5
+        unique  = (byt[0] & 0b00010000) >> 4        
+        code_ES =  byt[0] & 0b00001111
+        #if byt[0:1] == struct.pack('<B', 0b11000000):
+        if code_el == 6 and not unique:
+            for i in range(nv):
+                lis.append(struct.unpack('<B',byt[i+1:i+2])[0])
+            return (nv+1, lis, ES.index, True)  
+        if code_el == 6 and unique:
+            dic = {}
+            for i in range(code_ES):
+                dic[struct.unpack('<B',byt[2*i+1:2*i+2])[0]] = struct.unpack('<B',byt[2*i+2:2*i+3])[0]
+            return (2 * code_ES + 1, dic, ES.idxref, True)
+        nameES  = code_ES in ES.namevalue
+        mini    = code_ES in ES.minivalue
+        idx = nval = 1
+        if not unique: 
+            nval = struct.unpack('<H',byt[1:3])[0]
+            idx += 2
+        if code_el in [ES.codeb[ES.res_classES], ES.codeb[ES.res_value]]:
+            code_el = ES.codeb[ES.res_classES]
+        for i in range(nval):
+            esVal = _EsClassValue[ES.invcodeb[code_el]]()
+            if nameES and mini: 
+                n = esVal._from_strBytes(byt[idx:idx+ES.miniStr], simple=True)
+            elif nameES and not mini: 
+                n = esVal._from_strBytes(byt[idx:], simple=False)
+            elif code_el == ES.codeb[ES.res_classES]: 
+                n = esVal.from_bytes(byt[idx:], ES.invProp[code_ES])
+            else: 
+                n = esVal.from_bytes(byt[idx:], mini)
+            lis.append(esVal)
+            idx += n
+        return (idx, lis, ES.invcodeb[code_el], nameES)  
+
+    @staticmethod 
+    def _list_to_bytes(eslist, classES, typevalue):
+        unique = len(eslist) == 1 
+        arg = None
+        if typevalue in ES.prop:        
+            arg = ES.prop[typevalue][0]
+            codeEl = ES.codeb[ES.res_value]
+        elif typevalue in ES.codevalue:   
+            arg = ES.codevalue[typevalue]
+            codeEl = ES.codeb[classES]
+        elif typevalue in [ES.index, ES.idxref]: pass
+        else: return ObservationError("typevalue not consistent")
+        mini = typevalue in ES.codevalue and arg in ES.minivalue
+        name = typevalue in ES.codevalue and arg in ES.namevalue        
+        if typevalue == ES.index: 
+            byt = struct.pack('<B', 0b11000000)
+        elif typevalue == ES.idxref: 
+            byt = struct.pack('<B', (ES.codeb[ES.index] << 5) | ((typevalue == ES.idxref) << 4) | len(eslist))
+        else: 
+            byt = struct.pack('<B', (codeEl << 5) | (unique << 4) | arg)
+            if not unique : byt += struct.pack('<H', len(eslist))
+        if name and mini: 
+            for val in eslist: byt += val._to_strBytes(simple=True, mini=True)
+        elif name and not mini: 
+            for val in eslist: byt += val._to_strBytes(simple=False, mini=False)
+        elif classES == ES.res_classES: 
+            for val in eslist: byt += val.to_bytes(typevalue) 
+        elif typevalue == ES.index:
+            for val in eslist: byt += struct.pack('<B', val)        
+        elif typevalue == ES.idxref:
+            for key, val in eslist.items(): 
+                byt += struct.pack('<B', key)
+                byt += struct.pack('<B', val)
+        else: 
+            for val in eslist: byt += val.to_bytes(mini)
+        return byt
+    
     @staticmethod
     def _majList(listVal, newlistVal, name=False):
         ''' update value or name in a list of `ES.ESValue` '''

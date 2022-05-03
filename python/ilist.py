@@ -168,6 +168,7 @@ class Ilist:
 
     *management - conversion methods*
 
+    - `Ilist.derived_to_coupled`
     - `Ilist.full`
     - `Ilist.reindex`
     - `Ilist.reorder`
@@ -178,12 +179,12 @@ class Ilist:
 
     *exports methods*
 
-    - `Ilist.from_bjson` (classmethod)
+    - `Ilist.from_obj` (classmethod)
     - `Ilist.from_bytes` (classmethod)
     - `Ilist.from_csv` (classmethod)
     - `Ilist.from_file` (classmethod)
     - `Ilist.json`
-    - `Ilist.to_bjson`
+    - `Ilist.to_obj`
     - `Ilist.to_csv`
     - `Ilist.to_file`
     - `Ilist.to_numpy`
@@ -524,10 +525,23 @@ class Ilist:
         tiidx = self.tiidx
         return len(set(self._tuple(tiidx))) == len(self)
 
-    def unconsistent(self, ):
-        tiidx = self.tiidx
-        act = {tuple(self._indtoext(list(it))) for it in Counter(self._tuple(tiidx)).items() if it[1] >1}
-        return dict(self._list(act))
+    @property 
+    def idicidxref(self):
+        dic = {}
+        idxlen = self.idxlen
+        idxref = self.idxref
+        for i in range(len(idxref)):
+            if idxref[i] != i and idxlen[i] > 1: dic[i] = idxref[i]
+        return dic
+
+    @property 
+    def dicidxref(self):
+        dic = {}
+        idxlen = self.idxlen
+        idxref = self.idxref
+        for i in range(len(idxref)):
+            if idxref[i] != i and idxlen[i] > 1: dic[self.idxname[i]] = self.idxname[idxref[i]]
+        return dic
 
     @property
     def dimension(self):
@@ -737,6 +751,22 @@ class Ilist:
         self.iidx = self._transpose(tiidx)
         self.setidx, self.iidx = self._resetidx(self.extidx)
 
+    def derived_to_coupled(self, idxder, idxref):
+        '''
+        Transform a derived index in a coupled index (new setidx).
+
+        *Parameters*
+
+        - **idxder** : number of the derived index.
+        - **idxref** : number of the index to be coupled.
+
+        *Returns* : None'''
+        dic=self._idxlink(self.iidx[idxref], self.iidx[idxder], coupled=False, derived=True)
+        if not dic: raise IlistError("idx is not derived from the other")
+        setidx = [self.setidx[idxder][dic[i]] for i in range(self.idxlen[idxref])]
+        self.setidx[idxder] = setidx
+        self.iidx[idxder] = self.iidx[idxref]
+        
     def extidxtoi(self, extind):
         '''
         convert an extind (value for each extidx) to an intind (value for each iidx).
@@ -752,9 +782,9 @@ class Ilist:
         except : return None
 
     @classmethod
-    def from_bjson(cls, bs):
+    def from_obj(cls, bs):
         '''
-        Generate an Ilist Object from a bytes or json value
+        Generate an Ilist Object from a bytes, json or dict value
 
         *Parameters*
 
@@ -797,7 +827,7 @@ class Ilist:
             iidx = cls._initiidx(len(extval), idxlen, iidxref, list(range(len(idxname))), defaultidx=True)
             return cls(extval, setidx, iidx, valname, idxname)
 
-    @classmethod
+    """@classmethod
     def from_bytes(cls, bs):
         '''
         Generate an Ilist Object from a bytes value
@@ -818,7 +848,7 @@ class Ilist:
         for name in idxname : setidx.append(Ilist._frombytes(dic[name]))
         if isinstance(dic[names[1]], list): iidx = dic[names[1]]
         else: iidx = np.frombuffer(dic[names[1]], dtype='u2').reshape((len(idxname), len(extval))).tolist()
-        return cls(extval, setidx, iidx, valname, idxname)
+        return cls(extval, setidx, iidx, valname, idxname)"""
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', valfirst=False, header=True, dtype=None, **kwargs):
@@ -866,17 +896,22 @@ class Ilist:
         return cls.Iext(extval, extidx, valname, idxname)
 
     @classmethod
-    def from_file(cls, file) :
+    def from_file(cls, file, forcestring=False) :
         '''
         Generate `Ilist` object from file storage.
 
          *Parameters*
 
         - **file** : string - file name (with path)
+        - **forcestring** : boolean (default False) - if True, forces the UTF-8 data format, else the format is calculated
 
         *Returns* : Ilist object'''
-        with open(file, 'rb') as f: bs = f.read()
-        return cls.from_bytes(bs)
+        with open(file, 'rb') as f: btype = f.read(2)
+        if btype==bytes('{"', 'UTF-8') or forcestring:
+            with open(file, 'r', newline='') as f: bjson = f.read()
+        else:
+            with open(file, 'rb') as f: bjson = f.read()
+        return cls.from_obj(bjson)
 
     def full(self, axes=[], fillvalue=None, inplace=False):
         '''
@@ -1005,109 +1040,22 @@ class Ilist:
         if extval in self.extval : return True
         return False
 
-    """def json_old(self, **kwargs):
-        '''
-        Return json string with val (extval or ival) and idx (extidx or iidx or none).
-
-        *Parameters (kwargs)*
-
-        - **bjson_format** : boolean (default False) - choice for return format (string/bytes if True, dict else)
-        - **bjson_bson**  : boolean (default False)- choice for return format (bson if True, json else)
-        - **json_res_index** : default True - if True add the index to the value
-        - **json_mode** : string (default 'vv')
-        - **json_mode[0]** : char - if 'v', value is extval else ival
-        - **json_mode[1]** : char - if 'v', index is extidx else iidx
-
-        *Returns* : string or dict'''
-        option = {'bjson_format': False, 'bjson_bson': False,
-                  'json_res_index':True, 'json_mode':'vv', 'order': []} | kwargs
-        option2 = option | {'bjson_format': False}
-        if not option['order']: option['order'] = list(range(self.lenidx))
-        if option['order'] == list(range(self.lenidx)) or (self.complete and not option['json_res_index']):
-            ils = self.sort(order=option['order'], inplace=False)
-        else: ils = self
-        lis = []
-        textidx = []
-        extidx = ils.extidx
-        ival = ils.ival
-        tiidx = ils.tiidx
-        idxlen = ils.idxlen
-        if   option['json_mode'][1]=='v' and ils.iidx == [] :
-            lis = [ils.valname]
-        elif option['json_mode'][1]=='v' and ils.iidx != []:
-            lis=[[ils.valname, ils.idxname]]
-            textidx = self._transpose(extidx)
-        for i in range(len(ils)):
-            if option['json_mode'][0]=='v' : jval = self._json(ils.extval[i], **option2)
-            else                            : jval = ival[i]
-            if not option['json_res_index'] or tiidx == [] : lis.append(jval)
-            else :
-                lig=[jval]
-                if option['json_mode'][1]=='v':
-                    lig.append([self._json(extind, **option2) for extind in textidx[i]])
-                else: lig.append(tiidx[i])
-                lis.append(lig)
-        if option['json_mode'][1]=='v': js = lis
-        else :
-            js = {}
-            for i in range(len(ils.setidx)) :
-                if idxlen[i] > 0 : js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
-            if len(lis) > 0 : js[ils.valname] = lis
-        if option['bjson_format'] and not option['bjson_bson']: return json.dumps(js, cls=IlistEncoder)
-        if option['bjson_format'] and option['bjson_bson']: return bson.encode(js)
-        return js"""
-
     def json(self, **kwargs):
         '''
-        Return json string with val (extval or ival) and idx (extidx or iidx or none).
+        Return json dict or string.
 
         *Parameters (kwargs)*
 
-        - **bjson_format** : boolean (default False) - choice for return format (string/bytes if True, dict else)
-        - **bjson_bson**  : boolean (default False)- choice for return format (bson if True, json else)
+        - **bjson_format** : boolean (default False) - choice for return format (string if True, dict else)
         - **json_res_index** : default False - if True add the index to the value
         - **order** : default [] - list of ordered index
         - **fast** : boolean (default False). If True, fast operation (reduction controls)
 
         *Returns* : string or dict'''
-        option = {'bjson_format': False, 'bjson_bson': False,  'order': [],
-                  'json_res_index':False, 'fast': False} | kwargs
-        option2 = option | {'bjson_format': False}
-        optidxref = self.complete and not option['json_res_index']
-        nulres = self.valname == 'default value' or not self.extval
-        #print('optidxref nulres ', optidxref, nulres)
-        if not option['order']: option['order'] = list(range(self.lenidx))
-        #if not nulres and (option['order'] == list(range(self.lenidx)) or optidxref):
-        if not nulres and optidxref:
-            ils = self.sort(order=option['order'], inplace=False)
-            ils.swapindex(option['order'])
-        else: ils = self
-        js = {}
-        js['order'] = [ils.idxname[i] for i in option['order']]
-        if option['fast'] :
-            for i in range(len(ils.setidx)): 
-                if ils.idxname[i] != 'default index': js[ils.idxname[i]] = ils.setidx[i]
-                #js[ils.idxname[i]] = ils.setidx[i]
-            if not nulres: js[ils.valname] = ils.extval
-        else:
-            for i in range(len(ils.setidx)):
-                if ils.idxname[i] != 'default index': js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
-                #js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
-            if not nulres: 
-                js[ils.valname] = [self._json(ils.extval[i], **option2) for i in range(len(ils))]
-        if optidxref:
-            idxref = ils.idxref
-            dicidxref = {}
-            for i in range(len(idxref)):
-                if idxref[i] != i: dicidxref[ils.idxname[i]] = ils.idxname[idxref[i]]
-            if dicidxref : js['idxref'] = dicidxref
-        #elif option['bjson_format'] and option['bjson_bson'] and not nulres:
-        elif option['bjson_bson'] and not nulres:
-            js['index'] = np.array(ils.iidx,  dtype='u2').tobytes()
-        elif not nulres: js['index'] = ils.iidx
-        if option['bjson_format'] and not option['bjson_bson']: return json.dumps(js, cls=IlistEncoder)
-        if option['bjson_format'] and option['bjson_bson']: return bson.encode(js)
-        return js
+
+        #option = kwargs | {'bjson_bson': False} 
+        option = {'bjson_bson': False} | kwargs
+        return self.to_obj(**option)
 
     def loc(self, extind):
         '''
@@ -1201,8 +1149,8 @@ class Ilist:
 
         *Parameters*
 
-        - **order** : list (default [])- new order of index to apply.
-        If [], the sort function is applied to extval.
+        - **order** : list (default [])- new order of index to apply. If [], the sort 
+        function is applied to extval.
         - **sort** : list (default [])- new order of resval to apply. If [], the new order
         is calculated.
         - **reindex** : boolean (default True) - if True, the index are reindexed.
@@ -1254,7 +1202,8 @@ class Ilist:
         - **order** : list - new order of index to apply.
 
         *Returns* : none '''
-        if not isinstance(order, list) or len(order) != self.lenidx :
+        #if not isinstance(order, list) or len(order) != self.lenidx :
+        if not isinstance(order, list) or len(order) > self.lenidx :
             raise IlistError("order lenght not correct")
         iidx    = []
         setidx  = []
@@ -1267,7 +1216,7 @@ class Ilist:
         self.setidx = setidx
         self.idxname = idxname
 
-    def to_bytes(self, bjson_format=True, bin_iidx=True):
+    """def to_bytes(self, bjson_format=True, bin_iidx=True):
         '''
         Generate a bytes Object
 
@@ -1284,7 +1233,7 @@ class Ilist:
         for i, name in enumerate(self.idxname) :
             dic[name] = Ilist._tobytes(self.setidx[i], bjson_format=False)
         if not bjson_format : return dic
-        return bson.encode(dic)
+        return bson.encode(dic)"""
 
 
     def to_file(self, file, **kwargs) :
@@ -1294,14 +1243,14 @@ class Ilist:
          *Parameters (kwargs)*
 
         - **file** : string - file name (with path)
-        - **kwargs** : see 'to_bytes' parameters
+        - **kwargs** : see 'to_obj' parameters
 
         *Returns*
 
         - **Integer** : file lenght (bytes)  '''
-        option = kwargs | {'bjson_format': True, 'json_res_index': True}
-        data = self.to_bytes()
-        if True: #kwargs['bjson_bson']:
+        option = {'json_res_index': False} | kwargs | {'bjson_format': True}
+        data = self.to_obj(**option)
+        if option['bjson_bson']:
             lendata = len(data)
             with open(file, 'wb') as f: f.write(data)
         else:
@@ -1381,6 +1330,60 @@ class Ilist:
                     [ilf.setidx[ax] for ax in axes])
         return None
 
+    def to_obj(self, **kwargs):
+        '''
+        Return json string with val (extval or ival) and idx (extidx or iidx or none).
+
+        *Parameters (kwargs)*
+
+        - **bjson_format** : boolean (default False) - choice for return format (string/bytes if True, dict else)
+        - **bjson_bson**  : boolean (default False)- choice for return format (bson if True, json else)
+        - **json_res_index** : default False - if True add the index to the value
+        - **order** : default [] - list of ordered index
+        - **fast** : boolean (default False). If True, fast operation (reduction controls)
+
+        *Returns* : string or dict'''
+        option = {'bjson_format': False, 'bjson_bson': False,  'order': [],
+                  'json_res_index':False, 'fast': False} | kwargs
+        option2 = option | {'bjson_format': False}
+        optidxref = self.complete and not option['json_res_index']
+        nulres = self.valname == 'default value' or not self.extval
+        #print('optidxref nulres ', optidxref, nulres)
+        if not option['order']: option['order'] = list(range(self.lenidx))
+        #if not nulres and (option['order'] == list(range(self.lenidx)) or optidxref):
+        if not nulres and optidxref:
+            ils = self.sort(order=option['order'], inplace=False)
+            ils.swapindex(option['order'])
+        else: ils = self
+        js = {}
+        js['order'] = [ils.idxname[i] for i in option['order']]
+        if option['fast'] :
+            for i in range(len(ils.setidx)): 
+                if ils.idxname[i] != 'default index': js[ils.idxname[i]] = ils.setidx[i]
+                #js[ils.idxname[i]] = ils.setidx[i]
+            if not nulres: js[ils.valname] = ils.extval
+        else:
+            for i in range(len(ils.setidx)):
+                if ils.idxname[i] != 'default index': js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
+                #js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
+            if not nulres: 
+                js[ils.valname] = [self._json(ils.extval[i], **option2) for i in range(len(ils))]
+        if optidxref:
+            '''idxref = ils.idxref
+            idxlen = ils.idxlen
+            dicidxref = {}
+            for i in range(len(idxref)):
+                if idxref[i] != i and idxlen[i] > 1: dicidxref[ils.idxname[i]] = ils.idxname[idxref[i]]'''
+            dicidxref = ils.dicidxref
+            if dicidxref : js['idxref'] = dicidxref
+        #elif option['bjson_format'] and option['bjson_bson'] and not nulres:
+        elif option['bjson_bson'] and not nulres:
+            js['index'] = np.array(ils.iidx,  dtype='u2').tobytes()
+        elif not nulres: js['index'] = ils.iidx
+        if option['bjson_format'] and not option['bjson_bson']: return json.dumps(js, cls=IlistEncoder)
+        if option['bjson_format'] and option['bjson_bson']: return bson.encode(js)
+        return js
+
     def to_xarray(self, info=False, axes=[], fillvalue='?', func=None, ifunc=[],
                   name='Ilist', **kwargs):
         '''
@@ -1410,6 +1413,11 @@ class Ilist:
                             **kwargs).reshape([ilf.idxlen[idx] for idx in axe])
         if info : return xarray.DataArray(data, coord, dims, attrs=ilf._dict(), name=name)
         return xarray.DataArray(data, coord, dims, name=name)
+
+    def unconsistent(self):
+        tiidx = self.tiidx
+        act = {tuple(self._indtoext(list(it))) for it in Counter(self._tuple(tiidx)).items() if it[1] >1}
+        return dict(self._list(act))
 
     def updateidx(self, indval, extind, unique=False):
         '''
@@ -1541,7 +1549,7 @@ class Ilist:
         lisf = Ilist._funclist(lis, func, *args, **kwargs)
         return [i for i in range(len(lis)) if lisf[i] == res]
 
-    @staticmethod
+    '''@staticmethod
     def _frombytes(listbson):
         if not isinstance(listbson, list) :
             raise IlistError("the object to convert is not a list")
@@ -1557,7 +1565,7 @@ class Ilist:
                     dic = bson.decode(bs)
                     listvalue.append(eval(list(dic.keys())[0])(dic[list(dic.keys())[0]]))
                 except : raise IlistError("impossible to decode a bson object")
-        return listvalue
+        return listvalue'''
 
     @staticmethod
     def _funclist(value, func, *args, **kwargs):
@@ -1628,10 +1636,11 @@ class Ilist:
         return iidxfull
 
     @staticmethod
-    def _idxlink(ref, l2, coupled=True):
+    def _idxlink(ref, l2, coupled=True, derived=False):
         ''' return dic ={ref i : l2 i} pour chaque tuple différent'''
         lis = set(Ilist._tuple(Ilist._transpose([ref, l2])))
         if coupled and not len(lis) == len(set(ref)) == len(set(l2)) : return {}
+        if derived and not len(lis) == len(set(ref)) : return {}
         return dict(lis)
 
     @staticmethod
@@ -1704,7 +1713,7 @@ class Ilist:
         except :
             return Ilist._tuple(extv)'''
 
-    @staticmethod
+    '''@staticmethod
     def _tobytes(listvalue, bjson_format=True):
         res = []
         if not isinstance(listvalue, list) :
@@ -1716,7 +1725,7 @@ class Ilist:
                 try : res.append(value.__to_bytes__(bjson_format=bjson_format))
                 except : raise IlistError("impossible to apply __to_bytes__ method to object "
                                           + str(type(value)))
-        return res
+        return res'''
 
     @staticmethod
     def _toint(extv, extset, fast=False):
