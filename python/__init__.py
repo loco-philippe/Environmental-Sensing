@@ -197,12 +197,16 @@ This format is defined in the
 <a href="https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf" 
 target="_blank">ObsJSON document</a>.
 
-This format is extended to the BSON binary format which allows :
+This format is extended to JSON binary format which allows :
     
-- simple integration with NoSQL databases that integrate BSON format(like Mongodb)
 - storage of observation as a file
 - natural representation of dates (datetime)
 - taking into account all types of objects in binary form
+
+Two binary format are available :
+    
+- BSON format (used in NoSQL databases like Mongodb)
+- CBOR format (dedicated to small code size, small message size)
 
 ## Binary sensor interface
 
@@ -212,6 +216,11 @@ and reduce power consumption (for battery operated) devices. For example, the ma
 lenght of the payload is between 51 bytes and 222 bytes for LoRaWAN.
 
 To obtain this maximum length, limitations are imposed.
+
+Two formats are defined : 
+    
+- CBOR format with optimization to insure low payload,
+- internal optimized format for the most simple usages.
 
 <img src="./ES/binary.png" width="800">
 
