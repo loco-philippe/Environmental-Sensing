@@ -79,13 +79,20 @@ The result is a set of values or objects ​​referenced according to the 3 dim
 - spatial,
 - physical (observed property)
 
-In the ES project, the three dimensions are respected. An Observation object consists
-of five components : a Datation Object, a Location Object, a Property Object, a Result Object
-and a Parameter object.
-It can be converted into a 3-dimensional matrix, each result being indexed by 
-temporal, spatial and physical values.
-
 <img src="./ES/structure.png" width="800">
+
+In the ES project, the three dimensions are respected but it is possible to add 
+other dimensions. 
+
+An Observation object consists of five components : 
+    
+- a set of Features (Datation Object, Location Object, Property Object, Variable Object)
+- a Result Object
+- an Index object (link between Result and Axes)
+- a Parameter object
+
+It can be converted into a multi-dimensional matrix (one dimension for each Feature), 
+each result being indexed by Features Values (e.g. temporal, spatial, physical values).
 
 Common properties (indicators) are associated with each Observation. 
 They allow processing to be performed on Observations without having to know 
@@ -96,11 +103,12 @@ their composition (e.g. bounding boxes, type of observation, volume, etc.).
 The implemented data structure respects the principles of the standard. 
 
 An Observation object groups common data (name, options, parameters) and associates
- each of the dimensions 
+ each of the Features 
  
 - spatial (LocationValue objects)
 - temporal (DatingValue objects)
 - properties (PropertyValue objects)
+- others (VariableValue objects)
 
 to results (ResultValue objects).
 
@@ -112,7 +120,6 @@ An Observation can represent both a single measurement and a large historical da
 
 <img src="./ES/index.png" width="800">
 
-In a Observation, the Result is associated with a Datation, a Location and a Property.
 In the usual tabular representations (like Excel or csv) there is one row for each Result
 and a lot of columns for Datation, Location and Property.
 This representation is simple and readable, but it duplicates the information and
@@ -120,7 +127,7 @@ This representation is simple and readable, but it duplicates the information an
  
 In the ES project, we choose the indexed representation suitable for computer 
 processing. Thus, the Result object is made up of its own attributes as well as
- an index to the Datation, Location and Property objects. 
+ an index to the Features objects. 
 
 ## Dimension
 
