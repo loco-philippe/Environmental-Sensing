@@ -14,13 +14,16 @@ from ESValue import ResultValue, LocationValue, DatationValue, \
     PropertyValue, ESValue #, _gshape
 from ESconstante import ES
 #from pprint import pprint
-from datetime import datetime
+import datetime
+from test_observation import dat3, loc3, prop2, _res, lyon, paris, pol1, \
+    pol75, t1, pprop_pm25, t2, s1, t1n, matin, travail, pt1, tnull, pprop_pm10, \
+    prop_pm25, pol2, pol13, aprem
 
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False
 
 # datas-----------------------------------------------------------------------
-def _val(n): return list(i for i in range(n))
+'''def _val(n): return list(i for i in range(n))
 def _res(n): return (ES.res_classES, _val(n))
 with open('C:\\Users\\a179227\\OneDrive - Alliance\\perso Wx\\ES standard\\python ESstandard\\departements-version-simplifiee.geojson') as f:
     dp = f.read()
@@ -91,7 +94,7 @@ loc2 = (ES.loc_classES, [paris, lyon])
 loc3 = (ES.loc_classES, [{'paris' : paris}, lyon, marseille])
 loc3sn = (ES.loc_classES, [paris, lyon, marseille])
 ploc3 = (ES.loc_classES, [pparis, plyon, pmarseille])
-res2 = (ES.res_classES, [[41, [2, 2, 0]], [18, [1, 2, 1]]])
+res2 = (ES.res_classES, [[41, [2, 2, 0]], [18, [1, 2, 1]]])'''
 
 @unittest.skipIf(simple, "test unitaire")
 class TestObsUnitaire(unittest.TestCase):
@@ -129,7 +132,7 @@ class TestObsUnitaire(unittest.TestCase):
     def test_DatationValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(DatationValue(t1), DatationValue(DatationValue(t1)))
-        self.assertEqual(DatationValue(t1).json(bjson_format=False), t1.isoformat())
+        self.assertEqual(DatationValue(t1).json(encoded=False), t1.astimezone(datetime.timezone.utc))
         self.assertTrue(DatationValue(t1) < DatationValue(t2))
         self.assertEqual(DatationValue(json.loads(t1n)).json(), t1n)
         self.opt["json_dat_name"] = True
@@ -162,7 +165,7 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(PropertyValue(PropertyValue.nullValue()).EStype, 0)
 
     def test_nameValue(self):
-        self.assertEqual(DatationValue('recre').json(bjson_format=False), 'recre')
+        self.assertEqual(DatationValue('recre').json(encoded=False), 'recre')
         self.opt["json_prp_name"] = True
         self.assertEqual(PropertyValue(pprop_pm25).json(**self.opt), json.dumps(pprop_pm25))
         self.assertEqual(PropertyValue('test').json(**self.opt), '"test"')
@@ -189,14 +192,14 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(val.simple, t2)
         val.setValue(DatationValue(s1))
         self.assertEqual(val.EStype, 3)
-        self.assertEqual(val.vInterval(False), s1)
+        self.assertEqual(val.vInterval(encoded=False), s1)
         val.setName('truc')
         self.assertEqual(val.name, 'truc')
         self.assertEqual(val.EStype, 103)
 
     def test_link(self):
-        dat = DatationValue(datetime(2005,1,1))
-        dat2 = DatationValue([datetime(2000,1,2), datetime(2006,1,1)])
+        dat = DatationValue(datetime.datetime(2005,1,1))
+        dat2 = DatationValue([datetime.datetime(2000,1,2), datetime.datetime(2006,1,1)])
         self.assertEqual(dat.link(dat2), 'within')
         self.assertTrue(dat.within(dat2))
 
@@ -223,21 +226,21 @@ class TestObsUnitaire(unittest.TestCase):
 
     def test_bjson(self):
         v = DatationValue({"date1": "2021-02-04T12:05:00"})
-        self.assertTrue(v == DatationValue.from_json(v.json(bjson_format=True,  bjson_bson=True))
-                          == DatationValue.from_json(v.json(bjson_format=True,  bjson_bson=False))
-                          == DatationValue.from_json(v.json(bjson_format=False, bjson_bson=False))
-                          == DatationValue.from_json(v.json(bjson_format=False, bjson_bson=False)))
+        self.assertTrue(v == DatationValue.from_json(v.json(encoded=True,  encode_format='bson'))
+                          == DatationValue.from_json(v.json(encoded=True,  encode_format='json'))
+                          == DatationValue.from_json(v.json(encoded=False, encode_format='json'))
+                          == DatationValue.from_json(v.json(encoded=False, encode_format='json')))
         v = LocationValue({"loc1": pol2})
-        self.assertTrue(v == LocationValue.from_json(v.json(bjson_format=True,  bjson_bson=True))
-                          == LocationValue.from_json(v.json(bjson_format=True,  bjson_bson=False))
-                          == LocationValue.from_json(v.json(bjson_format=False, bjson_bson=False))
-                          == LocationValue.from_json(v.json(bjson_format=False, bjson_bson=False)))
+        self.assertTrue(v == LocationValue.from_json(v.json(encoded=True,  encode_format='bson'))
+                          == LocationValue.from_json(v.json(encoded=True,  encode_format='json'))
+                          == LocationValue.from_json(v.json(encoded=False, encode_format='json'))
+                          == LocationValue.from_json(v.json(encoded=False, encode_format='json')))
         v = DatationValue({"date1": "2021-02-04T12:05:00"})
-        self.assertTrue(v == DatationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True)))
-                          == DatationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False))))
+        self.assertTrue(v == DatationValue(ESValue.__from_bytes__(v.__to_bytes__(encoded=True)))
+                          == DatationValue(ESValue.__from_bytes__(v.__to_bytes__(encoded=False))))
         v = LocationValue({"loc1": pol2})
-        self.assertTrue(v == LocationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=True)))
-                          == LocationValue(ESValue.__from_bytes__(v.__to_bytes__(bjson_format=False))))
+        self.assertTrue(v == LocationValue(ESValue.__from_bytes__(v.__to_bytes__(encoded=True)))
+                          == LocationValue(ESValue.__from_bytes__(v.__to_bytes__(encoded=False))))
 
     def test_box_bounds(self):
         v = LocationValue.Box(LocationValue(pol13))

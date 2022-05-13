@@ -6,7 +6,7 @@ Created on Sun Aug  1 13:35:28 2021
 
 This module describes the constants and default values used in other modules.
 """
-from datetime import datetime
+import datetime
 from typing import Dict
 
 
@@ -21,14 +21,14 @@ class Es:
     def __init__(self):
         self._initName()
         self._initReferenceValue()
-
+        self._initByte()
         #'''Application initialization (boolean)'''
         self.debug = False
 
-        #'''Observation initialization (dict) '''
+        #%% option initialization (dict)
         self.mOption : Dict = {
-                      "bjson_format"        : True, # sortie bson/json ou dict
-                      "bjson_bson"          : False, # sortie bson ou json
+                      "encoded"        : True, # sortie bson/json ou dict
+                      "encode_format"       : 'json', # sortie bson ou json
                       "json_res_index"      : True, # affiche index
                       "json_prp_name"       : False, # affiche name ou property
                       "json_dat_name"       : False, # affiche name ou instant/slot
@@ -43,10 +43,12 @@ class Es:
                       #"add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
                       "prp_dict"            : False, # si True, prp_type doit être dans ES.prop
-                      "sort_order"          : 'dlp'
+                      "sort_order"          : 'dlp',
+                      "codif"               : {}   #self.codeb sinon
                       }
         ''' Default options for `ES.ESObservation.Observation`'''
 
+        #%% observation initialization (dict)
         self.vName: Dict = {  self.obs_classES  :   self.obs ,
                         self.dat_classES  :   self.dat ,
                         self.loc_classES  :   self.loc ,
@@ -135,80 +137,7 @@ class Es:
                             }
         ''' Default name for `ES.ESObservation.Observation.score` '''
 
-        #'''Bytes initialization (dict) '''
-        self.codeb: Dict = {self.dat_classES  :   1 ,
-                            self.loc_classES  :   2 ,
-                            self.res_classES  :   4 ,
-                            self.prp_classES  :   3 ,
-                            self.res_value    :   5 ,
-                            self.index        :   6 ,
-                            self.variable     :   7}
-        self.invcodeb: Dict = self._inv(self.codeb)
-        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
-        `ES.ESObservation.Observation.to_bytes` '''
-        self.codevalue: Dict = {'name': 1,
-                                'value': 2,
-                                'namemini':3,
-                                'valuemini':4}
-        self.invcodevalue: Dict = self._inv(self.codevalue)
-        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
-        `ES.ESObservation.Observation.to_bytes` '''
-        self.minivalue: list = [3,4]
-        self.namevalue: list = [1,3]
-        
-        #'''Property initialization (dict)
-        #  format : (code_ES, python format, lenght, dexp, bexp, unit)
-        self.prop: Dict ={'utf-8'       : (2 ,  '', 0,  0, 0, self.nullDict),
-                          'sfloat'      : (15, 'e', 2,  0, 0, self.nullDict),
-                          'uint16'      : (3 , 'H', 2,  0, 0, self.nullDict),
-                          'uint8'       : (7 , 'B', 1,  0, 0, self.nullDict),
-                          'sint24'      : (13, 'l', 3,  0, 0, self.nullDict),
-                          'uint24'      : (14, 'L', 3,  0, 0, self.nullDict),
-                          'sint8'       : (6 , 'b', 1,  0, 0, self.nullDict),
-                          'sint16'      : (8 , 'h', 4,  0, 0, self.nullDict),
-                          'uint32'      : (4 , 'L', 4,  0, 0, self.nullDict),
-                          'PM25'        : (21, 'e', 2,  1, 2, 'kg/m3'      ),
-                          'PM10'        : (22, 'e', 2,  0, 0, 'kg/m3'      ),
-                          'CO2'         : (23, 'H', 2,  0, 0, 'ppm'        ),
-                          'temp'        : (24, 'h', 2, -2, 0, '°C'         ),
-                          'Temp'        : (24, 'e', 2,  0, 0, '°C'         ),
-                          self.nullDict : (0 , 'e', 2,  0, 0, self.nullDict)}
-        self.invProp: Dict = self._invnum(self.prop)
-        self.bytedict: Dict = {self.dat_classES : ['namemini', 'value'],
-                               self.loc_classES : ['namemini', 'value'],
-                               self.prp_classES : ['valuemini'        ],
-                               self.res_classES : ['namemini', 'sfloat'],
-                               self.variable    : ['namemini', 'value']}
-
-        '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
-
-        self.sampling: Dict = { self.nullDict       : 0,
-                               'instantaneous'      : 1,
-                               'arithmetic mean'    : 2,
-                               'RMS'                : 3,
-                               'maximum'            : 4,
-                               'minimum'            : 5,
-                               'accumulated'        : 6,
-                               'count'              : 7}
-        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
-
-        self.invSampling: Dict = self._inv(self.sampling)
-        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
-
-        self.application: Dict = { self.nullDict        : 0,
-                       'air'                            : 1,
-                       'water'                          : 2,
-                       'barometric'                     : 3,
-                       'soil'                           : 4,
-                       'infrared'                       : 5,
-                       'map database'                   : 6,
-                       'barometric elevation source'    : 7}
-        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
-
-        self.invApplication = self._inv(self.application)
-        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
-
-        # Xarray initialization (dict)
+        #%% Xarray initialization (dict)
         self.nax: Dict = {'dat' : 0, 'loc' : 1, 'prp' : 2,
                           'd'   : 0, 'l'   : 1, 'p'   : 2}
         '''Dictionnary for axis Number '''
@@ -231,16 +160,17 @@ class Es:
             'prp' : {                     "standard_name":"property"}}
         '''Dictionnary for Xarray attrs informations '''
 
+        #%% typevalue initialization (dict)
         self.ntypevalue: Dict = {
             'null':             0,
             'name':             100,
-            'instant':          2,
+            'instant':          2,      #datationValue
             'interval':         3,
             'slot':             4,
             'nameinstant':      102,
             'nameinterval':     103,
             'nameslot':         104,
-            'point':            12,
+            'point':            12,     #locationValue
             'polygon':          13,
             'multipoint':       14,
             'multipolygon':     15,
@@ -248,19 +178,23 @@ class Es:
             'namepolygon':      113,
             'namemultipoint':   114,
             'namemultipolygon': 115,
-            'property':         22,
+            'property':         22,     #propertyValue
             'propertydict':     23,
             'multiproperty':    24,
             'nameproperty':     122,
             'namepropertydict': 123,
             'namemultiproperty':124,
-            'result':           32,
+            'standard':         32,     #resultValue
+            'ilist':            33,
+            'observation':      34,
+            'datetime':         35,
             'nameresult':       132
             }
         '''Dictionnary for ESValue types '''
 
         self.invntypevalue: Dict = self._inv(self.ntypevalue)
-
+        
+        #%% reserved
         self.reserved: list = [
             self.json_nval_loc,
             self.json_nval_dat,
@@ -329,7 +263,83 @@ class Es:
             self.prp_valName   ,
             self.res_valName   ]
 
+    def _initByte(self) :
+    #%% init byte
+        ''' Byte initialization (code) '''
+
+        self.codeb: Dict = {self.dat_classES  :   1 ,
+                            self.loc_classES  :   2 ,
+                            self.res_classES  :   4 ,
+                            self.prp_classES  :   3 ,
+                            self.res_value    :   5 ,
+                            self.index        :   6 ,
+                            self.variable     :   7}
+        self.invcodeb: Dict = self._inv(self.codeb)
+        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
+        `ES.ESObservation.Observation.to_bytes` '''
+        self.codevalue: Dict = {'name': 1,
+                                'value': 2,
+                                'namemini':3,
+                                'valuemini':4}
+        self.invcodevalue: Dict = self._inv(self.codevalue)
+        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
+        `ES.ESObservation.Observation.to_bytes` '''
+        self.minivalue: list = [3,4]
+        self.namevalue: list = [1,3]
+        
+        #  format : (code_ES, python format, lenght, dexp, bexp, unit)
+        self.prop: Dict ={'utf-8'       : (2 ,  '', 0,  0, 0, self.nullDict),
+                          'sfloat'      : (15, 'e', 2,  0, 0, self.nullDict),
+                          'uint16'      : (3 , 'H', 2,  0, 0, self.nullDict),
+                          'uint8'       : (7 , 'B', 1,  0, 0, self.nullDict),
+                          'sint24'      : (13, 'l', 3,  0, 0, self.nullDict),
+                          'uint24'      : (14, 'L', 3,  0, 0, self.nullDict),
+                          'sint8'       : (6 , 'b', 1,  0, 0, self.nullDict),
+                          'sint16'      : (8 , 'h', 4,  0, 0, self.nullDict),
+                          'uint32'      : (4 , 'L', 4,  0, 0, self.nullDict),
+                          'PM25'        : (21, 'e', 2,  1, 2, 'kg/m3'      ),
+                          'PM10'        : (22, 'e', 2,  0, 0, 'kg/m3'      ),
+                          'CO2'         : (23, 'H', 2,  0, 0, 'ppm'        ),
+                          'temp'        : (24, 'h', 2, -2, 0, '°C'         ),
+                          'Temp'        : (24, 'e', 2,  0, 0, '°C'         ),
+                          self.nullDict : (0 , 'e', 2,  0, 0, self.nullDict)}
+        self.invProp: Dict = self._invnum(self.prop)
+        self.bytedict: Dict = {self.dat_classES : ['namemini', 'value'],
+                               self.loc_classES : ['namemini', 'value'],
+                               self.prp_classES : ['valuemini'        ],
+                               self.res_classES : ['namemini', 'sfloat'],
+                               self.variable    : ['namemini', 'value']}
+
+        '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
+
+        self.sampling: Dict = { self.nullDict       : 0,
+                               'instantaneous'      : 1,
+                               'arithmetic mean'    : 2,
+                               'RMS'                : 3,
+                               'maximum'            : 4,
+                               'minimum'            : 5,
+                               'accumulated'        : 6,
+                               'count'              : 7}
+        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
+
+        self.invSampling: Dict = self._inv(self.sampling)
+        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
+
+        self.application: Dict = { self.nullDict        : 0,
+                       'air'                            : 1,
+                       'water'                          : 2,
+                       'barometric'                     : 3,
+                       'soil'                           : 4,
+                       'infrared'                       : 5,
+                       'map database'                   : 6,
+                       'barometric elevation source'    : 7}
+        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
+
+        self.invApplication = self._inv(self.application)
+        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
+
     def _initName(self) :
+    #%% init name
         ''' Name initialization (string) '''
         self.json_nval_loc    = "nvalloc"
         self.json_nval_dat    = "nvaldat"
@@ -403,10 +413,12 @@ class Es:
         self.res_valName      = "resvalue"
 
     def _initReferenceValue(self):
+    #%% init reference value
         ''' Reference value initialization '''
         self.miniStr          = 10
         self.distRef          = [48.87, 2.35] # coordonnées Paris lat/lon
-        self.nullDate         = datetime(1970, 1, 1)
+        #self.nullDate         = datetime(1970, 1, 1)
+        self.nullDate         = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
         self.nullCoor         = [-1, -1]
         self.nullInd          = [-1, -1, -1]
         self.nullAtt          = "null"

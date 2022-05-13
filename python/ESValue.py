@@ -54,7 +54,7 @@ class ESValueEncoder(json.JSONEncoder):
     """add a new json encoder for ESValue"""
     def default(self, o) :
         if isinstance(o, datetime.datetime) : return o.isoformat()
-        option = {'bjson_format': False, 'bjson_bson': False}
+        option = {'encoded': False, 'encode_format': 'json'}
         try : return o.json(**option)
         except :
             try : return o.__to_json__()
@@ -108,7 +108,7 @@ class ESValue:
             try: val=json.loads(val)
             except: pass
         self._init(val)
-        if self.name == ES.nullName and type(name) == str and name != ES.nullName : self.name = name
+        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : self.name = name
 
     def __eq__(self, other):
         '''equal if value and name are equal'''
@@ -125,10 +125,10 @@ class ESValue:
 
     def __str__(self):
         '''return json string format'''
-        return self.json(bjson_format=True, bjson_bson=False)
+        return self.json(encoded=True, encode_format='json')
 
     def __repr__(self):
-        return self.__class__.__name__ + f'({self.json(bjson_format=True, bjson_bson=False)})'
+        return self.__class__.__name__ + f'({self.json(encoded=True, encode_format="json")})'
 
     def __copy__(self):
         '''return a new object with the same attributes'''
@@ -138,9 +138,9 @@ class ESValue:
     def __hash__(self): return hash(self.__repr__())
 
     def __to_bytes__(self, **option):
-        #js = {self.__class__.__name__ : self.json(bjson_format=False, bjson_bson=True)}
-        js = self.json(bjson_format=False, bjson_bson=True)
-        if option['bjson_format']: return bson.encode(js)
+        #js = {self.__class__.__name__ : self.json(encoded=False, encode_format='bson')}
+        js = self.json(encoded=False, encode_format='bson')
+        if option['encoded']: return bson.encode(js)
         return js
 
     @staticmethod
@@ -277,18 +277,18 @@ class ESValue:
 
         *Parameters*
 
-        - **bjson_format** : boolean (default True) - choice for return format (string/bytes if True, dict else)
-        - **bjson_bson**    : boolean (default False)- choice for return format (bson if True, json else)
+        - **encoded** : boolean (default True) - choice for return format (string/bytes if True, dict else)
+        - **encode_format**    : string (default 'json')- choice for return format (bson, json, cbor)
         - **json_res_index** : boolean - include index (for ResultValue)
 
         *Returns* :  string or dict '''
         option = ES.mOption | kwargs
-        option2 = option | {'bjson_format': False}
+        option2 = option | {'encoded': False}
         if self.name == ES.nullName :                   js =  self._jsonValue(**option2)
         elif self.value == self.__class__.nullValue() : js =  self.name
         else :                                          js = {self.name : self._jsonValue(**option2)}
-        if option['bjson_format'] and not option['bjson_bson'] : return json.dumps(js, cls=ESValueEncoder)
-        if option['bjson_format'] and option['bjson_bson']: return bson.encode(js)
+        if option['encoded'] and option['encode_format'] != 'bson': return json.dumps(js, cls=ESValueEncoder)
+        if option['encoded'] and option['encode_format'] == 'bson': return bson.encode(js)
         return js
 
     def setName(self, nam):
@@ -363,6 +363,7 @@ class ESValue:
         return siz + 1
 
 class DatationValue(ESValue):   # !!! début ESValue
+#%% dat
     """
     This class represent Time (instant, interval or set of intervals).
 
@@ -486,21 +487,22 @@ class DatationValue(ESValue):   # !!! début ESValue
                            self.simple.day, self.simple.hour,
                            self.simple.minute, self.simple.second)
 
-    def vInterval(self, bjson_bson=True):
+    def vInterval(self, encoded=True, encode_format='json'):
         """[t1, t2] with t1, t2 - Mini, maxi of the TimeSlot (timestamp or datetime).
 
         *Parameters*
 
-        - **bjson_bson** : boolean (default True) - choice for return format (timestamp if True, datetime else)
+        - **encode_format**    : string (default 'json')- choice for return format (bson, json, cbor)
 
         *Returns*
 
         - **JSON with timestamp or list with datetime**
         """
-        if bjson_bson :
-            return json.dumps([self.value.interval[0].isoformat(),
-                               self.value.interval[1].isoformat()], cls=ESValueEncoder)
-        return self.value.interval
+        return self.value.Bounds.json(encoded=encoded, encode_format=encode_format)
+        #if not encoded: return self.value.interval
+        #if encode_format == 'json':
+        #    return json.dumps([self.value.interval[0].isoformat(),
+        #                       self.value.interval[1].isoformat()], cls=ESValueEncoder)
 
     def vSimple(self, string=False) :
         """datetime (@property) : middle of the TimeSlot."""
@@ -526,6 +528,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         return self.value.json(**option)
 
 class LocationValue(ESValue):              # !!! début LocationValue
+#%% loc
     """
     This class represent the Location of an Observation (point, polygon).
 
@@ -729,6 +732,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
         return None
 
 class PropertyValue(ESValue):              # !!! début ESValue
+#%% prp
     """
     This class represents the Property of an Observation.
 
@@ -874,7 +878,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
 
     def _jsonValue(self, **kwargs):
         #return self._jsonDict(False)
-        option = {'bjson_format' : False} | kwargs
+        option = {'encoded' : False} | kwargs
         li = {}
         for k, v in self.value.items() :
             if   k in [ES.prp_type, ES.prp_unit, ES.prp_sampling, ES.prp_appli, ES.prp_EMFId] :
@@ -882,7 +886,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
             elif k in [ES.prp_period, ES.prp_interval, ES.prp_uncertain] :
                 if v != ES.nullVal : li[k] = v
             else : li[k] = v
-        if option['bjson_format']: return json.dumps(li, ensure_ascii=False, cls=ESValueEncoder)
+        if option['encoded']: return json.dumps(li, ensure_ascii=False, cls=ESValueEncoder)
         return li
 
     def _init(self, val={}):
@@ -908,7 +912,8 @@ class PropertyValue(ESValue):              # !!! début ESValue
                 else:                       self.name = val
             except:                         self.name = val'''
 
-class ResultValue (ESValue):               # !!! début ESValue
+class ResultValue (ESValue):               # !!! début ResValue
+#%% res
     '''
     This class represent the Result of an Observation.
 
@@ -993,10 +998,10 @@ class ResultValue (ESValue):               # !!! début ESValue
         '''return a json/bson dict for the value '''
         if type(self.value) in [int, str, float, bool, list, dict, datetime.datetime, type(None), bytes]:
             return self.value
-        if option['bjson_bson']:
-            try : return self.value.__to_bytes__(bjson_format=False)
+        if option['encode_format'] == 'bson':
+            try : return self.value.__to_bytes__(encoded=False)
             except : raise ESValueError("impossible to apply __to_bytes__ method to object " + str(type(self.value)))
-        try: return self.value.to_json(bjson_format=False, bjson_bson=False,
+        try: return self.value.to_json(encoded=False, encode_format='json',
                                     json_info=False, json_res_index=True, json_param=True)
         except : return object.__repr__(self.value)
 

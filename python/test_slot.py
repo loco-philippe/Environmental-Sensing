@@ -44,7 +44,7 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertTrue(s==s1==s2)
         s = TimeSlot('[["2001-02-03T00:00:00","2001-02-01T00:00:00"], ["2001-02-05T00:00:00","2001-02-06T00:00:00"]]')
         self.assertTrue(s.stype == 'slot')
-        self.assertTrue(TimeSlot([matin, aprem]).centroid.bounds[1] == TimeSlot(matin).bounds[1])
+        self.assertTrue(TimeSlot([matin, aprem]).Centroid.bounds[1] == TimeSlot(matin).bounds[1])
         self.assertTrue(TimeSlot([matin, aprem]).bounds == TimeSlot([matin, midi, aprem]).bounds)
 
     def test_union(self):

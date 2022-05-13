@@ -19,8 +19,9 @@ import matplotlib.pyplot as plt
 import struct
 #import os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/iList')
-from ilist import Ilist
+from ilist import Ilist, CborDecoder
 from tabulate import tabulate
+import cbor2
 
 _EsClassValue: dict = {ES.dat_classES : DatationValue,
                        ES.loc_classES : LocationValue,
@@ -158,11 +159,12 @@ class Observation :
         if len(args) == 0 and len(kwargs) == 2 : args = [{}]
         for arg in args :
             if type(arg) == str :       # creation à partir d'un json "key : [liste]"
-                try: arg=json.loads(arg)
+                try: arg=json.loads(arg, object_hook=CborDecoder().codecbor)
                 except: pass
-            elif type(arg) ==bytes:
-                try: arg=bson.decode(arg)
-                except: pass
+            elif isinstance(arg, bytes):
+                if arg[len(arg)-1] != 0x00 and (arg[0] & 0b11100000) == 0b10100000:
+                    dic=cbor2.loads(arg)
+                else: dic = bson.decode(arg)
             if type(arg) == dict :      # creation à partir d'un dict "key : [liste]"
                 for k,v in arg.items() :
                     if k not in dic : dic |= {k:v}
@@ -178,8 +180,12 @@ class Observation :
             elif type(arg) == tuple :   # creation uniquement d'un jeu de données dat, loc, prp, res
                 self.append(arg[0], arg[1], arg[2], arg[3])
 
-    def _initDict(self, js) :
+    def _initDict(self, dic) :
         ''' data creation in dict mode'''
+        js = {}
+        for k,v in dic.items():
+            if k in ES.invcodeb: js[ES.invcodeb[k]] = v
+            else: js[k] = v
         if ES.obs_id in list(js): self.mAtt[ES.obs_id] = js[ES.obs_id]
         if ES.obs_attributes in list(js):
             if type(js[ES.obs_attributes]) == dict: js = js[ES.obs_attributes]
@@ -278,7 +284,7 @@ class Observation :
     def __len__(self): return len(self.ilist)
 
     def __to_bytes__(self, **option):
-        return self.to_json(bjson_format=option['bjson_format'], bjson_bson=True,
+        return self.to_json(encoded=option['encoded'], encode_format='bson',
                             json_info=False, json_res_index=True, json_param=True)
 
 #%% properties
@@ -329,7 +335,7 @@ class Observation :
         '''
         **string (@property)** : JSON Observation (ObsJSON format) whit index
         and whitout informations'''
-        return self.to_json(bjson_format=True, bjson_bson=False,
+        return self.to_json(encoded=True, encode_format='json',
                             json_info=False, json_res_index=True, json_param=True)
 
     @property
@@ -961,9 +967,13 @@ class Observation :
         option = {'json': True, 'name': True, 'dat': True, 'loc': True,
                   'prp': True, 'res': True, 'lenres': 0} | kwargs
         tab = self._to_tab(**option)
+        size = 0
         with open(file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            for lign in tab : writer.writerow(lign)
+            for lign in tab : 
+                writer.writerow(lign)
+                size += len(lign)
+        return size
 
     def to_dataFrame(self, info=False, numeric=False, ind='axe', fillvalue='?', func=ES._identity,
                   name='Observation'):
@@ -1000,9 +1010,9 @@ class Observation :
         *Returns*
 
         - **Integer** : file lenght (bytes)  '''
-        option = kwargs | {'bjson_format': True, 'json_res_index': True}
+        option = kwargs | {'encoded': True, 'json_res_index': True}
         data = self.to_json(**option)
-        if kwargs['bjson_bson']:
+        if kwargs['encode_format'] == 'bson':
             lendata = len(data)
             with open(file, 'wb') as f: f.write(data)
         else:
@@ -1016,8 +1026,8 @@ class Observation :
 
         *Parameters (optional, default value in option attribute)*
 
-        - **bjson_format**   : boolean - choice for return format (string/bytes if True, dict else)
-        - **bjson_bson**     : boolean - choice for return format (bson if True, json else)
+        - **encoded**   : boolean - choice for return format (string/bytes if True, dict else)
+        - **encode_format**  : string - choice for return format (bson, json, cbor)
         - **json_res_index** : Boolean - include index for ResultValue
         - **json_param**     : Boolean - include ESObs Parameter
         - **json_info**      : Boolean - include ESObs Information with all information
@@ -1025,13 +1035,14 @@ class Observation :
         - **json_info_nval** : Boolean - include in ESObs Information the lenght of ESObs
         - **json_info_box**  : Boolean - include in ESObs Information the bounding box
         - **json_info_other**: Boolean - include in ESObs Information the other information
+        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
 
         *Returns*
 
         - **string or dict** : Json string or dict        '''
         option = self.option | kwargs
-        option2 = option | {'bjson_format': False}
-        #option2 = option | {'bjson_format': option['bjson_bson']}
+        option2 = option | {'encoded': False}
+        #option2 = option | {'encoded': option['bjson_bson']}
         dic = { ES.type : ES.obs_classES }
         if self.mAtt[ES.obs_id] != ES.nullAtt: dic[ES.obs_id] = self.mAtt[ES.obs_id]
         dic |= self._jsonAtt(**option2)
@@ -1043,10 +1054,19 @@ class Observation :
         if option["json_param"] and self.parameter != ES.nullAtt:
             dic[ES.parameter] = self.parameter
         dic |= self._info(**option2)
-        if option['bjson_format'] and not option['bjson_bson']:
-            return json.dumps(dic, cls=ESValueEncoder)
-        if option['bjson_format'] and option['bjson_bson']:
-            return bson.encode(dic)
+        if option['codif'] and option['encode_format'] != 'bson':
+            js2 = {}
+            for k,v in dic.items():
+                if k in option['codif']: js2[option['codif'][k]] = v
+                else: js2[k] = v
+        else: js2 = dic
+        if option['encoded'] and option['encode_format'] == 'json':
+            return json.dumps(js2, cls=ESValueEncoder)
+        if option['encoded'] and option['encode_format'] == 'bson':
+            return bson.encode(js2)
+        if option['encoded'] and option['encode_format'] == 'cbor': 
+            return cbor2.dumps(js2, datetime_as_timestamp=True, 
+                               timezone=datetime.timezone.utc, canonical=True)
         return dic
 
     def to_numpy(self, func=None, ind='axe', fillvalue='?', **kwargs):
@@ -1089,13 +1109,16 @@ class Observation :
         ilf = self.ilist.full(axes=axes, fillvalue=fillvalue)
         ilf.sort(order=self.axes)
         xList = self._xlist(maxname=maxname)
-        attrs = ES.xattrs | {'info' : self._info(bjson_format=False, json_info_type=True,
+        attrs = ES.xattrs | {'info' : self._info(encoded=False, json_info_type=True,
                                    json_info_nval  =False, json_info_box =True,
                                    json_info_other =False)["information"]}
         coord = self._xCoord(xList, attrs, ilf.idxref, numeric)
         dims = [ES.vName[ilf.idxname[ax]] for ax in ilf.axes]
-        if numeric : data = ilf._tonumpy(ilf.extval, func = ResultValue.to_float).reshape(ilf.axeslen)
-        else : data = ilf._tonumpy(ilf.extval, func=func, **kwargs).reshape(ilf.axeslen)
+        shape = [ilf.idxlen[axe] for axe in ilf.axes]
+        if numeric : data = ilf._tonumpy(ilf.extval, func = ResultValue.to_float).reshape(shape)
+        else : data = ilf._tonumpy(ilf.extval, func=func, **kwargs).reshape(shape)
+        #if numeric : data = ilf._tonumpy(ilf.extval, func = ResultValue.to_float).reshape(ilf.axeslen)
+        #else : data = ilf._tonumpy(ilf.extval, func=func, **kwargs).reshape(ilf.axeslen)
         if not info : return xr.DataArray(data, coord, dims, name=name)
         else : return xr.DataArray(data, coord, dims, attrs=attrs['info'], name=name)
 
@@ -1245,7 +1268,7 @@ class Observation :
         if len(dcinf) == 0 :    return ""
         return {ES.information : dcinf }
         '''if len(dcinf) != 0 : dcinf = {ES.information : dcinf }
-        if option["bjson_format"] :
+        if option["encoded"] :
             if len(dcinf) == 0 :    return ""
             else :                  return json.dumps(dcinf)
         else: return dcinf'''
@@ -1259,7 +1282,7 @@ class Observation :
         if self.setProperty: dcinf[ES.prp_box] = list(self._boundingBox(self.setProperty).bounds)
         if self.setDatation:
             bound = self._boundingBox(self.setDatation).bounds
-            if option["bjson_bson"] :
+            if option["encode_format"] == 'bson':
                 dcinf[ES.dat_box] = [datetime.datetime.fromisoformat(bound[0]),
                                      datetime.datetime.fromisoformat(bound[1])]
             else : dcinf[ES.dat_box] = list(bound)
@@ -1454,22 +1477,22 @@ class Observation :
             resList = []
             if self.setDatation != None :
                 idat = self.ilist.idxname.index(ES.dat_classES)
-                if json : resList.append(self.setDatation[self.ilist.iidx[idat][i]].json(bjson_format=True, bjson_bson=False))
+                if json : resList.append(self.setDatation[self.ilist.iidx[idat][i]].json(encoded=True, encode_format='json'))
                 if name : resList.append(self.setDatation[self.ilist.iidx[idat][i]].name)
                 if dat  : resList.append(self.setDatation[self.ilist.iidx[idat][i]].vSimple(string=True))
             if self.setLocation != None :
                 iloc = self.ilist.idxname.index(ES.loc_classES)
-                if json : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].json(bjson_format=True, bjson_bson=False))
+                if json : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].json(encoded=True, encode_format='json'))
                 if name : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].name)
                 if loc  : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].vSimple()[0])
                 if loc  : resList.append(self.setLocation[self.ilist.iidx[iloc][i]].vSimple()[1])
             if self.setProperty != None :
                 iprp = self.ilist.idxname.index(ES.prp_classES)
-                if json : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].json(bjson_format=True, bjson_bson=False))
+                if json : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].json(encoded=True, encode_format='json'))
                 if name : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].name)
                 if prp  : resList.append(self.setProperty[self.ilist.iidx[iprp][i]].simple)
             if self.setResult != None :
-                if json : resList.append(self.setResult[i].json(bjson_format=True, bjson_bson=False))
+                if json : resList.append(self.setResult[i].json(encoded=True, encode_format='json'))
                 if name : resList.append(self.setResult[i].name)
                 if res  : resList.append(self.setResult[i].value)
             tab.append(resList)

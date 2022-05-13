@@ -16,6 +16,7 @@ from test_observation import dat3, loc3, prop2, _res
 from ESObservation import Observation
 from ESValue import ResultValue, DatationValue, LocationValue, PropertyValue, ESValue
 from datetime import datetime
+from ESconstante import ES
 
 #import ..\ESValue
 
@@ -35,7 +36,7 @@ dicttest = dict((obs_1, dat3, loc3, prop2, _res(6)))'''
 
 class Test_ilist(unittest.TestCase):
 
-    il = Ilist.Idict({}, {'id1':[0,1,2], 'id2':[3,4,5]})
+    il = Ilist.Iidic({}, {'id1':[0,1,2], 'id2':[3,4,5]})
 
     def test_static(self) :
         self.assertEqual( il._toext(il._toint(f, il._toset(f)), il._toset(f)), f)
@@ -54,19 +55,23 @@ class Test_ilist(unittest.TestCase):
         self.assertEqual(Ilist.Iext(extidx=[[1, 2, 3]]), Ilist.Iext([True, True, True], [1, 2, 3]))
 
     def test_init_dict(self) :
-        il = Ilist.Idict({'resultvalue' : ['a', 'b', 'c', 'd', 'e', 'f']},
+        il = Ilist.Iidic({'resultvalue' : ['a', 'b', 'c', 'd', 'e', 'f']},
                          {'datationvalue' : [10,20,30],
                           'locationvalue' : [100,200,300],
                           'propertyvalue' : [True, False]},
-                         idxref=[0,0,2], order = [0,2])
-        il2 =Ilist.Idict({'resultvalue' :[['a', [0, 0, 0]], ['b', [0, 0, 1]], ['c', [1, 1, 0]], ['d', [1, 1, 1]],
+                          idxref=[0,0,2], order = [0,2])
+        il2 =Ilist.Iidic({'resultvalue' :[['a', [0, 0, 0]], ['b', [0, 0, 1]], ['c', [1, 1, 0]], ['d', [1, 1, 1]],
                                          ['e', [2, 2, 0]], ['f', [2, 2, 1]]]},
                          {'datationvalue' : [10,20,30],
                           'locationvalue' : [100,200,300],
                           'propertyvalue' : [True, False]})
+        il3 =Ilist.Iedic({'resultvalue'   : ["a", "b", "c", "d", "e", "f"]}, 
+                         {'datationvalue' : [10, 10, 20, 20, 30, 30],
+                          'locationvalue' : [100, 100, 200, 200, 300, 300],
+                          'propertyvalue' : [True, False, True, False, True, False]})   
         self.assertEqual(il.iidx[1], [0, 0, 1, 1, 2, 2])
-        self.assertEqual(il, il2)
-        il2 =Ilist.Idict({'resultvalue' :[[{'a':5}, [0, 0, 0]], ['b', [0, 0, 1]], ['c', [1, 1, 0]], ['d', [1, 1, 1]],
+        self.assertEqual(il, il2, il3)
+        il2 =Ilist.Iidic({'resultvalue' :[[{'a':5}, [0, 0, 0]], ['b', [0, 0, 1]], ['c', [1, 1, 0]], ['d', [1, 1, 1]],
                                          ['e', [2, 2, 0]], [['f', 'g'], [2, 2, 1]]]},
                          {'datationvalue' : [[{'a':5}, [0, 0, 0]],20,{'a':5, 'r':'r'}],
                           'locationvalue' : [100,200,300],
@@ -103,8 +108,8 @@ class Test_ilist(unittest.TestCase):
         il=Ilist.Iext(f,l)
         self.assertEqual( il.idxref, [0, 1, 0, 3, 4, 5])
         self.assertEqual( il.idxlen, [2, 3, 2, 2, 1, 3])
-        self.assertEqual( il.dimension, 4)
-        self.assertEqual( il.lencomplete, 36)
+        self.assertEqual( il.dimension, 3)
+        self.assertEqual( il.lencompletefull, 18)
         l = [[0, 2, 0, 0], [30, 12, 20, 20]]
         il=Ilist.Iext(f,l)
         self.assertFalse( il.consistent)
@@ -145,14 +150,14 @@ class Test_ilist(unittest.TestCase):
 
     def test_full(self) :
         f = ['er', 'rt', 'er', 'ry']
-        l = [[0, 2, 0, 2], [30, 12, 20, 15], [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'],[12, 20, 15, 30]]
+        l = [[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'],[12, 20, 20, 12]]
         il=Ilist.Iext(f,l)
         ilc=il.full()
         #ild=il.full(minind=False)
         ild=il.full(axes=list(range(il.lenidx)))
-        self.assertEqual( len(ild), 128)
+        self.assertEqual( len(ild), 48)
         self.assertEqual( ild.idxref,  [0, 1, 2, 3, 4, 5])
-        self.assertEqual( ilc.extidx[1], [30, 12, 20, 15, 30, 12, 12, 20, 15, 15, 30, 30, 12, 20, 20, 15])
+        self.assertEqual( ilc.extidx[1], [30, 12, 20, 30, 30, 12, 12, 20, 30, 12, 20, 20])
         self.assertEqual( ilc.idxcoupled, il.idxcoupled)
         self.assertTrue( ilc.idxlen == il.idxlen == ild.idxlen)
         self.assertEqual( ilc.idxref, il.idxref)
@@ -224,6 +229,19 @@ class Test_ilist(unittest.TestCase):
         il2.addextidx('truc2', ['un', 'de', 'un', 'de', 'un'])
         self.assertEqual(il2.loc([12, 120, "deux", "de"]), '_ry')
 
+    def test_merge(self):
+        il1 = Ilist.Iedic({'notes'     : [10, 11, 12]}, 
+                          {'course'    : ['math', 'english', 'software']})        
+        il2 = Ilist.Iedic({'notes'     : [15, 14, 11]},
+                          {'course'    : ['physic', 'english', 'software'],
+                           'group'     : ['gr1', 'gr1', 'gr2']})
+        il3 = Ilist.Iedic({'list'      : [il1, il2]},
+                          {'name'      : ['philippe white', 'anne white'],
+                           'firstname' : ['philippe', 'anne']})
+        self.assertEqual(il3.merge().loc(["physic", "anne", "gr1", "anne white"]), 15)
+        il3= Ilist.Iext(extval=[il1, il2])
+        self.assertEqual(il3.merge().loc(["english", "gr1"]), 14)
+        
     def test_swap(self):
         il = Ilist.Iset([['a', [0, 0, 0]], ['b', [0, 0, 1]], ['c', [1, 1, 0]],
                          ['d', [1, 1, 1]], ['e', [2, 2, 0]], ['f', [2, 2, 1]]],
@@ -235,14 +253,14 @@ class Test_ilist(unittest.TestCase):
         self.assertEqual(il, il1)
 
     def test_to_numpy(self):
-        il = Ilist.Idict({'result':[10,11,12,13,14,15]}, {'datation':['d0', 'd1', 'd2'],
+        il = Ilist.Iidic({'result':[10,11,12,13,14,15]}, {'datation':['d0', 'd1', 'd2'],
                           'location':['l0', 'l1', 'l2'], 'property':['p0', 'p1']},
                          idxref=[0,0,2], order=[2,0])
         ilnp, setidx = il.to_numpy()
         self.assertEqual(ilnp[setidx[0].index('d1'),setidx[1].index('p1')], 14)
         ilnp, setidx = il.to_numpy(ind='all')
         self.assertEqual(ilnp[setidx[0].index('d1'),setidx[1].index('l1'),setidx[2].index('p0')], 11)
-        il = Ilist.Idict({'result':[ResultValue(0), ResultValue(1), ResultValue(2),
+        il = Ilist.Iidic({'result':[ResultValue(0), ResultValue(1), ResultValue(2),
                                     ResultValue(3), ResultValue(4), ResultValue(5)]},
                          {'datation':[DatationValue(dat3[1][0]), DatationValue(dat3[1][1]),
                                       DatationValue(dat3[1][2])],
@@ -251,7 +269,7 @@ class Test_ilist(unittest.TestCase):
                           'property':[PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]},
                          idxref=[0,0,2], order=[2,0])
         ilnp, setidx = il.to_numpy(func=ResultValue.vSimple, string=False)
-        self.assertEqual(ilnp[setidx[0].index(DatationValue("2021-05-04T12:05:00")),
+        self.assertEqual(ilnp[setidx[0].index(DatationValue("2021-05-04T10:05:00+00:00")),
                               setidx[1].index(PropertyValue({"prp": "PM25", "unit": "kg/m3"}))]
                          , 2.0)
 
@@ -285,10 +303,10 @@ class Test_ilist(unittest.TestCase):
         cours = Ilist.from_csv('example cours light.csv', delimiter=';')
         coursfull = cours.full(cours.axesmin, fillvalue='-')
         coursfull.to_csv('example cours light full.txt')
-        print('\n', 'taille (bytes) : ', coursfull.to_obj(bjson_bson=True).__sizeof__(), '\n')  # 2025, csv : 2749, xlsx : 12245
+        print('\n', 'taille (bytes) : ', coursfull.to_obj(encode_format='bson').__sizeof__(), '\n')  # 2025, csv : 2749, xlsx : 12245
 
-    def test_bson(self):
-        il = Ilist.Idict({'result':[ResultValue(0), ResultValue(1), ResultValue(2),
+    def test_to_obj_file(self):
+        il = Ilist.Iidic({'result':[ResultValue(0), ResultValue(1), ResultValue(2),
                                     ResultValue(3), ResultValue(4), ResultValue(5)]},
                          {'datation':[DatationValue(dat3[1][0]), DatationValue(dat3[1][1]),
                                       DatationValue(dat3[1][2])],
@@ -296,31 +314,31 @@ class Test_ilist(unittest.TestCase):
                                       LocationValue(loc3[1][2])],
                           'property':[PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]},
                          idxref=[0,0,2], order=[2,0])
-        il2 = Ilist.from_obj(il.to_obj(bjson_format=True))
-        il2.setidx[0] = DatationValue.cast(il2.setidx[0])
-        il2.setidx[1] = LocationValue.cast(il2.setidx[1])
-        il2.setidx[2] = PropertyValue.cast(il2.setidx[2])
-        il2.extval = ResultValue.cast(il2.extval)
-        self.assertEqual(il.to_obj(bjson_format=False, bjson_bson=True), 
-                         il2.to_obj(bjson_format=False, bjson_bson=True))
-        il3 = Ilist.from_obj(il.to_obj(bjson_format=False, bin_iidx=True))
+        for forma in ['json', 'bson', 'cbor']:
+            for encoded in [False, True]:
+                for codif in [ES.codeb, {}]:
+                    il2 = Ilist.from_obj(il.to_obj(encoded=encoded, encode_format=forma, codif=codif))
+                    il2.setidx[0] = DatationValue.cast(il2.setidx[0])
+                    il2.setidx[1] = LocationValue.cast(il2.setidx[1])
+                    il2.setidx[2] = PropertyValue.cast(il2.setidx[2])
+                    il2.extval = ResultValue.cast(il2.extval)
+                    self.assertEqual(il.to_obj(encoded=False), il2.to_obj(encoded=False))
+        il3 = Ilist.from_obj(il.to_obj(encoded=False))
         il3.setidx[0] = DatationValue.cast(il3.setidx[0])
         il3.setidx[1] = LocationValue.cast(il3.setidx[1])
         il3.setidx[2] = PropertyValue.cast(il3.setidx[2])
         il3.extval=ResultValue.cast(il3.extval)
-        self.assertEqual(il.to_obj(bjson_format=False, bjson_bson=True), 
-                         il3.to_obj(bjson_format=False, bjson_bson=True))        #print(il2)
-
-    def test_json(self):
+        self.assertEqual(il.to_obj(encoded=False), il3.to_obj(encoded=False))
         il=Ilist.Iext(['er', 'rt', 'er', 'ry'], [[0, 2, 0, 2], [30, 12, 20, 15]]
                       ).sort(order=[0,1], inplace=False)
         ilf = il.full(axes=[0,1]).sort(order=[0,1], inplace=False)
         self.assertEqual(il, il.from_obj(il.json()).sort(order=[0,1], inplace=False))
         self.assertEqual(ilf, il.from_obj(ilf.json()))
-        il.to_file('test.tst', bjson_bson=True)
-        ilf.to_file('testf.tst', bjson_bson=False)
-        self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
-        self.assertEqual(ilf, il.from_file('testf.tst'))
+        for forma in ['json', 'bson', 'cbor']:
+            il.to_file('test.tst', encode_format=forma)
+            ilf.to_file('testf.tst', encode_format=forma)
+            self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
+            self.assertEqual(ilf, il.from_file('testf.tst'))
     
     def test_derived_to_coupled(self):
         il=Ilist.Iext([1,2,3,4,5,6], [['a', 'b', 'b', 'c', 'c', 'a'], 
