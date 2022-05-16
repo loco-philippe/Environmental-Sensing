@@ -609,7 +609,8 @@ class TestImportExport(unittest.TestCase):
                          ob.to_json(encoded=False))
     def test_bytes(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), 
-                         idxref={'datation':'location'})        
+                         idxref={'datation':'location'})
+        ob.mAtt['reference'] = 0
         opt = {ES.dat_classES : ['name', 'value'], ES.loc_classES : ['name', 'value'],
                ES.prp_classES : ['name', 'value'], ES.res_classES : ['uint8']}
         self.assertEqual(ob.json, Observation.from_bytes(ob.to_bytes(opt)).json)
@@ -664,9 +665,13 @@ class TestExports(unittest.TestCase):
 
     def test_xarray(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
-        self.assertTrue(ob.to_xarray()[2,1].item() == ResultValue(2))
-        self.assertTrue(ob.to_xarray(numeric=True)[2,1].item() == 2.0)
-        self.assertTrue(ob.to_xarray(ind='all')[2,2,1].item() == ResultValue(2))
+        d1 = ob.setDatation[1]
+        l1 = ob.setLocation[1]
+        p0 = ob.setProperty[0]
+        r110 = ob.setResult[2]
+        self.assertTrue(ob.to_xarray().loc[d1,p0].item() == r110)
+        self.assertTrue(ob.to_xarray(numeric=True).loc[d1.vSimple(), 1].item() == 2.0)
+        self.assertTrue(ob.to_xarray(ind='all').loc[d1,l1,p0].item() == r110)
         ob = Observation(dict((obs_1, dat3, loc3, prop1, _res(3))), idxref={'location':'datation'})
         self.assertTrue(ob.to_xarray()[1].item() == ResultValue(2))
         ob = Observation(dict((obs_1, dat3, loc3, prop3, _res(3))), idxref={'property':'datation', 'location':'datation'})

@@ -12,7 +12,7 @@ from ESconstante import ES
 from ESValue import LocationValue, DatationValue, PropertyValue, \
     ResultValue, ESValue, ESValueEncoder
 import datetime
-import json, folium, copy, csv, bson
+import json, folium, copy, csv, bson, math
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
@@ -138,9 +138,10 @@ class Observation :
         self.parameter = ES.nullAtt        # json
         self.ilist = Ilist()
         self.mAtt = {}
-        self.mAtt[ES.obs_reference] = 0
-        self.mAtt[ES.obs_resultTime] = "null"
-        self.mAtt[ES.obs_id] = "null"
+        #self.mAtt[ES.obs_reference] = 0
+        self.mAtt[ES.obs_reference] = ES.nullVal
+        self.mAtt[ES.obs_resultTime] = ES.nullAtt
+        self.mAtt[ES.obs_id] = ES.nullAtt
         self._initObs(*args, **kwargs)
 
     @classmethod
@@ -640,11 +641,11 @@ class Observation :
         obsref  = (byt[0] & 0b00010000) >> 4
         code_el = (byt[0] & 0b11100000) >> 5
         idx = 1
-        ref_obs = None
-        if obsref: 
-            ref_obs = struct.unpack('<H',byt[1:3])[0]
-            idx += 2
+        #ref_obs = None
         dic = {} 
+        if obsref: 
+            dic[ES.obs_reference] = struct.unpack('<H',byt[1:3])[0]           
+            idx += 2
         nval=-1
         for i in range(nb_el):
             tup = cls._list_from_bytes(byt[idx:], nval)
@@ -929,7 +930,10 @@ class Observation :
             if name in opt: nb += len(opt[name]) + index
         if il.valname in opt: nb += len(opt[il.valname])
         nb += il.complete
-        byt = struct.pack('<B', 0b11100000 | (self.mAtt[ES.obs_reference] << 4) | nb) 
+        obsref = not math.isnan(self.mAtt[ES.obs_reference])
+        byt = struct.pack('<B', 0b11100000 | (obsref << 4) | nb) 
+        if obsref:
+            byt += struct.pack('<H', self.mAtt[ES.obs_reference])
         if il.valname in opt: 
             for typevalue in opt[il.valname]: 
                 byt += self._list_to_bytes(il.extval, il.valname, typevalue)
@@ -1069,7 +1073,7 @@ class Observation :
                                timezone=datetime.timezone.utc, canonical=True)
         return dic
 
-    def to_numpy(self, func=None, ind='axe', fillvalue='?', **kwargs):
+    def to_numpy(self, func=None, ind='axe', fillvalue=None, **kwargs):
         '''
         Convert `Observation` to Numpy array.
 
@@ -1084,7 +1088,7 @@ class Observation :
         - **Numpy array**    '''
         return self.ilist.to_numpy(func=func, ind=ind, fillvalue=fillvalue, **kwargs)
 
-    def to_xarray(self, info=False, numeric=False, ind='axe', fillvalue='?',
+    def to_xarray(self, info=False, numeric=False, ind='axe', fillvalue=None,
                   name='Observation', maxname=20, func=None, **kwargs):
         '''
         Convert `Observation` to DataArray.
@@ -1108,7 +1112,8 @@ class Observation :
         else : axes = list(range(self.ilist.lenidx))
         ilf = self.ilist.full(axes=axes, fillvalue=fillvalue)
         ilf.sort(order=self.axes)
-        xList = self._xlist(maxname=maxname)
+        #xList = self._xlist_old(maxname=maxname)
+        xList = self._xlist(ilf, maxname=maxname)
         attrs = ES.xattrs | {'info' : self._info(encoded=False, json_info_type=True,
                                    json_info_nval  =False, json_info_box =True,
                                    json_info_other =False)["information"]}
@@ -1498,7 +1503,8 @@ class Observation :
             tab.append(resList)
         return tab
 
-    def _xCoord(self, xList, attrs, idxref, numeric) :
+    @staticmethod
+    def _xCoord(xList, attrs, idxref, numeric) :
         ''' Coords generation for Xarray'''
         coord = {}
         for key, val in xList.items() :
@@ -1513,7 +1519,7 @@ class Observation :
             if 'prp' in coord.keys() : coord['prp'] = (coord['prp'][0], xList['prpran'], coord['prp'][2])
         return coord
 
-    def _xlist(self, maxname=0):
+    """def _xlist_old(self, maxname=0):
         '''list generation for Xarray'''
         xList = {}
         if self.setLocation != None and len(self.setLocation) > 1:
@@ -1534,6 +1540,38 @@ class Observation :
             xList['prpstr'] = self.ilist._tonumpy(self.setProperty, func = PropertyValue.json)
             xList['prptyp'] = self.ilist._tonumpy(self.setProperty, func = PropertyValue.vSimple)
             xList['prpnam'] = self.ilist._tonumpy(self.setProperty, func = PropertyValue.vName)
+            xList['prpran'] = np.arange(len(xList['prp']))
+        if maxname > 0 :
+            for key,lis in xList.items() :
+                if key[3:6] in ['str', 'nam', 'typ']:
+                    for i in range(len(lis)) : lis[i] = lis[i][0:maxname]
+        return xList"""
+
+    @staticmethod 
+    def _xlist(il, maxname=0):
+        '''list generation for Xarray'''
+        xList = {}
+        setLocation = il.setname(ES.loc_classES)
+        if setLocation != None and len(setLocation) > 1:
+            xList['loc']    = il._tonumpy(setLocation)
+            xList['locstr'] = il._tonumpy(setLocation, func = LocationValue.json)
+            xList['loclon'] = il._tonumpy(setLocation, func = LocationValue.vPointX)
+            xList['loclat'] = il._tonumpy(setLocation, func = LocationValue.vPointY)
+            xList['locnam'] = il._tonumpy(setLocation, func = LocationValue.vName)
+            xList['locran'] = np.arange(len(xList['loc']))
+        setDatation = il.setname(ES.dat_classES)
+        if setDatation != None and len(setDatation) > 1:
+            xList['dat']    = il._tonumpy(setDatation)
+            xList['datstr'] = il._tonumpy(setDatation, func = DatationValue.json)
+            xList['datins'] = il._tonumpy(setDatation, func = DatationValue.vSimple)
+            xList['datnam'] = il._tonumpy(setDatation, func = DatationValue.vName)
+            xList['datran'] = np.arange(len(xList['dat']))
+        setProperty = il.setname(ES.prp_classES)
+        if setProperty != None and len(setProperty) > 1:
+            xList['prp']    = il._tonumpy(setProperty)
+            xList['prpstr'] = il._tonumpy(setProperty, func = PropertyValue.json)
+            xList['prptyp'] = il._tonumpy(setProperty, func = PropertyValue.vSimple)
+            xList['prpnam'] = il._tonumpy(setProperty, func = PropertyValue.vName)
             xList['prpran'] = np.arange(len(xList['prp']))
         if maxname > 0 :
             for key,lis in xList.items() :

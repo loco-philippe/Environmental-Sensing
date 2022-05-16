@@ -30,6 +30,141 @@ The data model is as follows :
 
 # Main principles
 
+## Index properties
+
+### Index categories
+
+Indexes can be characterized according to the link between external values and internal keys :
+    
+- complete index : one internal key for one external values
+- unique index : one internal key for all external values 
+- mixte index : index not complete and not unique
+
+<img src="./ilist_index_category.png" width="800">
+
+### Index relationships
+
+An index can also be characterized based on relationships with another index
+
+There are 4 relationships categories :
+
+- coupled : an index is coupled to another if there is a 1-to-1 correspondence between values
+- derived : an index is derived from another if there is a 1-to-n correspondence between values
+- crossed : two indexes are crossed if there is a correspondence between all values
+- linked  : if two indexes are not coupled, derived or crossed
+
+<img src="./ilist_link_category.png" width="800">
+
+If one index is complete, all the indexes are derived from it.
+If one index is unique, it is derived from all indexes.
+If A is derived from B and B is derived from C, A is derived from C.
+If A is coupled from B, all the relationships with other indexes are identical.
+
+The indicated ratio is defined to measure the 'proximity' between to indexes. The value is 
+between 0% (the indexes are dependant - coupled or derived) and 100% (the indexes are independant : 
+crossed or linked).
+
+### Global properties
+
+**Index definition**
+
+- An index is derived if it’s derived from at least one other index
+- An index is coupled if it’s coupled from at least one other index
+- An Index is primary if it’s not coupled, not derived and not unique
+
+**IndexSet definition**
+
+- Dimension : number of primary indexes
+- Full : An indexSet is full if all the primary indexes are crossed with each 
+other primary index
+- Complete : An indexSet is complete if all the non coupled indexes are crossed 
+with each other non coupled index
+
+**Properties**
+
+- The number of values of a full indexset is the product of the primary indexes lenght
+- A full indexSet is complete
+- A full IndexSet can be transformed in a Matrix with the dimension of the indexset
+- A complete Indexset can be expressed in a flat list of values (without detailed indexes)
+
+### Functions
+
+These properties can be used to modify an indexset in particular to transform an 
+Ilist object into a matrix of chosen dimension    
+
+<img src="./ilist_process.png" width="800">
+
+### Example
+
+In the example below, 3 columns are linked (Full name, Course, Examen),
+3 columns are derived (First name, Last name, Group), 1 column is coupled (Surname),
+1 column is unique (Year).
+
+<img src="./ilist_index.png" width="800">
+
+If an index is not primary, index values can be calculated from primary indexes.
+This property is very usefull if new values have to be added to the Ilist, for example,
+if we decide to have all the combinations of independant index.
+
+In this example, the 'full' method generates missing data for all combinations
+of primary indexes fullname, course and examen.
+
+<img src="./ilist_full.png" width="800">
+
+The completed ilist can then be transformed into a 3 dimensions matrix (e.g. Xarray)
+ with one dimension for each primary index.
+If the dimension required is lower than ilist dimension, the function to_xarray 
+merge the indexes with the lowest coupling rate. 
+
+In the example below, a new index 'course-full name' with 'full name' and 'course' is created.
+So 'course' and 'full name' become derived from the new index and the dimension 
+now becomes 2 :
+
+```python
+In [42]: il.to_xarray(fillvalue=math.nan)
+Out[42]: 
+<xarray.DataArray 'Ilist' (full name: 4, course: 3, examen: 3)>
+array([[[nan, 10., 12.],
+        [11., 13., 15.],
+        [nan, nan, nan]],
+
+       [[ 2.,  4., nan],
+        [nan, nan, nan],
+        [nan, 18., 17.]],
+
+       [[ 6., nan, nan],
+        [nan, nan, nan],
+        [nan, nan, 18.]],
+
+       [[nan,  8., nan],
+        [15., nan, nan],
+        [nan, nan, nan]]])
+Coordinates:
+    first name  (full name) <U8 'Anne' 'Camille' 'Philippe' 'Philippe'
+    last name   (full name) <U5 'White' 'Red' 'Black' 'White'
+  * full name   (full name) <U14 'Anne White' 'Camille Red' ... 'Philippe White'
+    surname     (full name) <U10 'skyler' 'saul' 'gus' 'heisenberg'
+    group       (full name) <U3 'gr1' 'gr3' 'gr3' 'gr2'
+  * course      (course) <U8 'english' 'math' 'software'
+  * examen      (examen) <U2 't1' 't2' 't3'
+
+In [43]: il.to_xarray(dimmax=2, fillvalue=math.nan)
+Out[43]: 
+<xarray.DataArray 'Ilist' (examen: 3, ["course", "full name"]: 8)>
+array([[11., 15., nan, nan,  2.,  6., nan, nan],
+       [13., nan, 10.,  8.,  4., nan, 18., nan],
+       [15., nan, 12., nan, nan, nan, 17., 18.]])
+Coordinates:
+    first name               (["course", "full name"]) <U8 'Anne' ... 'Philippe'
+    last name                (["course", "full name"]) <U5 'White' ... 'Black'
+    full name                (["course", "full name"]) <U14 'Anne White' ... ...
+    surname                  (["course", "full name"]) <U10 'skyler' ... 'gus'
+    group                    (["course", "full name"]) <U3 'gr1' 'gr2' ... 'gr3'
+    course                   (["course", "full name"]) <U8 'math' ... 'software'
+  * examen                   (examen) <U2 't1' 't2' 't3'
+  * ["course", "full name"]  (["course", "full name"]) <U6 '(0, 0)' ... '(2, 3)'
+```
+
 ## Ilist size
 
 A list of values (e.g. ['Paul', 'John', 'Marie', 'John']) is represented in an indexed list by :
@@ -42,62 +177,16 @@ This representation is similar to Pandas categorical's type.
 In term of data volume, there is no duplication (gain) but the index is added (loss). 
 The graph below shows the size difference between list and indexed list.
 
-<img src="./ilist_size.png" width="800">
+<img src="./ilist_size2.png" width="800">
 
 If the values are small (e.g. int, float), the indexed list is bigger than list.
 If the unicity ratio (number of different values / number of values) is high (> 90%), 
 the indexed list is bigger than list.
 In the other cases, the indexed list is smaller than a list (general case of csv files)
 
-## Index properties
+## aggregation
 
-### Index categories
-
-There are 4 index categories :
-
-- coupled index : two index are coupled if there is a 1-to-1 correspondence between each value
-- derived index : two index are derived if there is a 1-to-n correspondence between each value
-- unique index : the values of an index are identical
-- independant index : if the index is not unique, not derived, not coupled
-
-In the example below, 3 columns are independant (Full name, Course, Examen),
-3 columns are derived (First name, Last name, Group), 1 column is coupled (Surname),
-1 column is unique (Year).
-
-<img src="./ilist_index.png" width="800">
-
-### Dimension and Matrix
-
-The dimension is the number of independant axes.
-
-If an index is not independant, values can be calculated from independent indexes.
-This property is very usefull if new values have to be added to the Ilist, for example,
-if i decide to have all the combinations of independant index.
-
-In the example, the 'full' method generates missing data for all combinations
-of independent indexes fullname, course and examen.
-
-<img src="./ilist_full.png" width="800">
-
-The completed ilist can then be transformed into a 3 dimensions matrix (e.g. Xarray)
- with one dimension for each independent axis.
-
-<img src="./ilist_xarray2.png" width="800">
-
-### Index ratio
-
-A ratio is defined to measure the 'proximity' between to indexes. The value is 
-between 0% (the indexes are independant) and 100% (the indexes are dependant : 
-coupled or derived).
-
-### Merged index
-
-Two independant indexes can be merged. In the example below, i can create a new 
-index 'name-course' with 'full name' and 'course'.
-So 'course' and 'full name' become dependent on 'name-course' and the dimension 
-now becomes 2.
-
-
+<img src="./ilist_aggregation.png" width="800">
     
 """
 from itertools import product
@@ -230,6 +319,7 @@ class Ilist:
     - `Ilist.isiIndex`
     - `Ilist.isValue`
     - `Ilist.loc`
+    - `Ilist.setname`
     - `Ilist.unconsistent`
 
     *management - conversion methods*
@@ -250,7 +340,6 @@ class Ilist:
     *exports methods*
 
     - `Ilist.from_obj` (classmethod)
-    - `Ilist.from_bytes` (classmethod)
     - `Ilist.from_csv` (classmethod)
     - `Ilist.from_file` (classmethod)
     - `Ilist.json`
@@ -734,7 +823,7 @@ class Ilist:
 
     @property
     def lencompletefull(self):
-        ''' return an integer : number of values if full complete (prod(idxlen,not coupled))'''
+        ''' return an integer : number of values if full complete (prod(idxlen,not coupled, not derived))'''
         axes = self.axesmin    
         return self._mul([self.idxlen[ax] for ax in axes])
 
@@ -901,7 +990,7 @@ class Ilist:
         is returned.
 
         *Returns* : array or None'''
-        mat = [[self._couplingrate(self.iidx[i], self.iidx[j]) 
+        mat = [[self._couplinginfo(self.iidx[i], self.iidx[j])['rate'] 
              for j in range(self.lenidx)] for i in range(self.lenidx)]
         if not file: return mat
         with open(file, 'w', newline='') as f:
@@ -1327,6 +1416,20 @@ class Ilist:
             return None
         return Ilist(extval, setidx, iidx, self.valname, self.idxname)
 
+    def setname(self, name):
+        '''
+        return setidx for the idx define by name
+
+        *Parameters*
+
+        - **name** : str - name of the index in idxname 
+
+        *Returns*
+
+        - **List** : list if name in idxname, None else'''
+        if name in self.idxname : return self.setidx[self.idxname.index(name)]
+        return None
+        
     def setfilter(self, setidxfilt=None, inplace=True, index=True, fast=False):
         '''
         Remove values that does not match the indexes filter.
@@ -1509,7 +1612,7 @@ class Ilist:
                 size += writer.writerow(row)
         return size
 
-    def to_numpy(self, func=None, ind='axe', fillvalue='?', fast=False, **kwargs):
+    def to_numpy(self, func=None, ind='axe', fillvalue=None, fast=False, **kwargs):
         '''
         Complete the Ilist and generate a Numpy array with the dimension define by ind.
 
@@ -1753,15 +1856,20 @@ class Ilist:
         return len(Ilist._idxlink(ref, l2)) == len(set(ref))
 
     @staticmethod
-    def _couplingrate(l1, l2):
-        '''return the coupling rate between two list (1 coupled, 0 independant)'''
+    def _couplinginfo(l1, l2):
+        '''return the coupling info between two list (dict)'''
         set1 = Ilist._toset(l1)
         set2 = Ilist._toset(l2)
-        if min(len(set1), len(set2)) == 1: return 0
-        set3 = Ilist._toset([tuple((v1,v2)) for v1, v2 in zip(l1, l2)])
         x0 = max(len(set1), len(set2))
         x1 = len(set1) * len(set2)
-        return (x1 - len(set3)) / (x1 - x0)
+        if min(len(set1), len(set2)) == 1: 
+            return {'rate': 0, 'distlinked': 0, 'distcrossed': 0,
+                    'distmin': x0, 'distmax': x1}
+        set3 = Ilist._toset([tuple((v1,v2)) for v1, v2 in zip(l1, l2)])
+        return {'rate': (x1 - len(set3)) / (x1 - x0),
+                'distlinked': len(set3) - x0,
+                'distcrossed': x1 - len(set3),
+                'distmin': x0, 'distmax': x1}
 
     @staticmethod
     def _derived(ref, l2):
@@ -1959,7 +2067,8 @@ class Ilist:
 
     @staticmethod
     def _nullValue(Class, fillvalue):
-        if isinstance(fillvalue, Class) : return fillvalue
+        if not fillvalue is None: return fillvalue
+        #if isinstance(fillvalue, Class) : return fillvalue
         if Class == int                 : return 0
         if Class == float               : return float("nan")
         if Class == str                 : return '-'

@@ -6,7 +6,7 @@ Created on Sun Aug  1 13:35:28 2021
 
 This module describes the constants and default values used in other modules.
 """
-import datetime
+import datetime, math
 from typing import Dict
 
 
@@ -425,7 +425,8 @@ class Es:
         self.nullPrp          = {}
         self.nullName         = ""
         self.nullDict         = "-"
-        self.nullVal          = 0
+        self.nullInt          = 0
+        self.nullVal          = math.nan
         self.nullValues = (self.nullDate, self.nullCoor, self.nullInd, self.nullName,
                            self.nullAtt, self.nullDict, self.nullName, self.nullVal, self.nullPrp)
 ES = Es()

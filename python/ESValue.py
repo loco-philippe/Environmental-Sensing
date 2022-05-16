@@ -810,6 +810,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
             return 1
         bytl = byt[0:6] + b'\x00' +byt[6:9] + b'\x00' + byt[9:10]
         prp = struct.unpack('<BBBLLB', bytl)
+        #for i in [3,4,5]:
         self.value[ES.prp_type]       = ES.invProp[prp[0]]
         self.value[ES.prp_unit]       = ES.prop[ES.invProp[prp[0]]][5]
         self.value[ES.prp_sampling]   = ES.invSampling[prp[1]]
@@ -865,11 +866,14 @@ class PropertyValue(ESValue):              # !!! début ESValue
         if ES.prp_appli in self.value    : appli    = self.value[ES.prp_appli]
         else : appli    = ES.nullDict
         if ES.prp_period in self.value   : period   = self.value[ES.prp_period]
-        else : period   = ES.nullVal
+        #else : period   = ES.nullVal
+        else : period   = ES.nullInt
         if ES.prp_interval in self.value : interval = self.value[ES.prp_interval]
-        else : interval = ES.nullVal
+        else : interval = ES.nullInt
+        #else : interval = ES.nullVal
         if ES.prp_uncertain in self.value: uncertain= self.value[ES.prp_uncertain]
-        else : uncertain = ES.nullVal
+        else : uncertain = ES.nullInt
+        #else : uncertain = ES.nullVal
         byt = struct.pack('<BBBLLB', ES.prop[self.simple][0],
                            ES.sampling[sampling],
                            ES.application[appli],
@@ -884,7 +888,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
             if   k in [ES.prp_type, ES.prp_unit, ES.prp_sampling, ES.prp_appli, ES.prp_EMFId] :
                 if v != ES.nullDict: li[k] = v
             elif k in [ES.prp_period, ES.prp_interval, ES.prp_uncertain] :
-                if v != ES.nullVal : li[k] = v
+                if v != ES.nullInt : li[k] = v
             else : li[k] = v
         if option['encoded']: return json.dumps(li, ensure_ascii=False, cls=ESValueEncoder)
         return li

@@ -259,7 +259,8 @@ class Test_ilist(unittest.TestCase):
         ilnp, setidx = il.to_numpy()
         self.assertEqual(ilnp[setidx[0].index('d1'),setidx[1].index('p1')], 14)
         ilnp, setidx = il.to_numpy(ind='all')
-        self.assertEqual(ilnp[setidx[0].index('d1'),setidx[1].index('l1'),setidx[2].index('p0')], 11)
+        self.assertEqual(ilnp[setidx[0].index('d1'),setidx[1].index('l1'),
+                              setidx[2].index('p0')], 11)
         il = Ilist.Iidic({'result':[ResultValue(0), ResultValue(1), ResultValue(2),
                                     ResultValue(3), ResultValue(4), ResultValue(5)]},
                          {'datation':[DatationValue(dat3[1][0]), DatationValue(dat3[1][1]),
