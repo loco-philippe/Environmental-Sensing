@@ -174,19 +174,32 @@ A list of values (e.g. ['Paul', 'John', 'Marie', 'John']) is represented in an i
 
 This representation is similar to Pandas categorical's type.
 
-In term of data volume, there is no duplication (gain) but the index is added (loss). 
-The graph below shows the size difference between list and indexed list.
+In term of data volume, there is no duplication (gain) but the index list is added (loss). 
+The graph below shows the size difference between simple list and indexed list.
 
 <img src="./ilist_size2.png" width="800">
 
-If the values are small (e.g. int, float), the indexed list is bigger than list.
+If the values are small (e.g. int, float), the indexed list is bigger than simple list.
 If the unicity ratio (number of different values / number of values) is high (> 90%), 
-the indexed list is bigger than list.
-In the other cases, the indexed list is smaller than a list (general case of csv files)
+the indexed list is bigger than simple list.
+In the other cases, the indexed list is smaller than a simple list (general case of csv files)
 
 ## aggregation
 
+One of the properties of Ilist object is to be able to index any type of object and 
+in particular Ilist objects. This indexing can be recursive, which makes it possible 
+to preserve the integrity of the data.
+
+A 'merge' method transform the Ilist object thus aggregated 
+into a flat Ilist object.
+
 <img src="./ilist_aggregation.png" width="800">
+
+In the example below, an Ilist object is build for each person.
+These Ilist objects are then assembled into a summary object which can be 
+disassembled by the function 'merge'.
+
+<img src="./ilist_merge.png" width="800">
     
 """
 from itertools import product
@@ -1345,6 +1358,18 @@ class Ilist:
         return self.extval[ival]
 
     def merge(self, valname='merge', fillvalue=None):
+        '''
+        Merge replaces Ilist objects included in extval data into its constituents.
+
+        *Parameters*
+
+        - **valname** : str (default 'merge') - name of the new Ilist object
+        - **fillvalue** : object (default None) - value used for the new data 
+        (e.g. apply a new index to another Ilist)
+
+        *Returns*
+
+        - **Ilist** : merged Ilist '''        
         if not isinstance(self.extval[0], Ilist): return None
         idxname = sorted(list(set(self.idxname + [nam for il in self.extval for nam in il.idxname])))
         if len(idxname) > 1 and 'default index' in idxname: idxname.remove('default index')
@@ -1367,6 +1392,15 @@ class Ilist:
         else: return ilm
 
     def mergeidx(self, listidx):
+        '''
+        Create a new index with tuple built from the indexes in listidx.
+        Append the new index to ilist
+
+        *Parameters*
+
+        - **listidx** : list - list of index row to be merged
+
+        *Returns* : None'''   
         name = json.dumps([self.idxname[i] for i in listidx])
         extidx = self._str(self._tuple(self._transpose([self.iidx[i] for i in listidx])))
         #extidx = self._mergeidx([self.iidx[i] for i in listidx])
@@ -1750,7 +1784,7 @@ class Ilist:
 
     def unconsistent(self):
         ''' return a key/value dict with the number of occurences (value) for each
-        indice-tuple (key) withnmuklti-occurences'''
+        indice-tuple (key) with multi-occurences'''
         tiidx = self.tiidx
         #act = {tuple(self._indtoext(list(it))) for it in Counter(self._tuple(tiidx)).items() if it[1] >1}
         return {tuple((self._indtoext(list(it[0])))): it[1] 
@@ -1867,8 +1901,8 @@ class Ilist:
                     'distmin': x0, 'distmax': x1}
         set3 = Ilist._toset([tuple((v1,v2)) for v1, v2 in zip(l1, l2)])
         return {'rate': (x1 - len(set3)) / (x1 - x0),
-                'distlinked': len(set3) - x0,
-                'distcrossed': x1 - len(set3),
+                'disttomin': len(set3) - x0,
+                'disttomax': x1 - len(set3),
                 'distmin': x0, 'distmax': x1}
 
     @staticmethod
