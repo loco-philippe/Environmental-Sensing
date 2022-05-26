@@ -11,8 +11,8 @@ import unittest
 
 #import os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from ESValue import ResultValue, LocationValue, DatationValue, ESValue,\
-    PropertyValue
+from ESValue import LocationValue, DatationValue, ESValue,\
+    PropertyValue, NamedValue, ExternValue
 from ESObservation import Observation
 from ESconstante import ES
 import json, copy #, shapely
@@ -77,11 +77,16 @@ t1 = datetime.datetime(2021, 2, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
 t1n = json.dumps({'date1' : t1.isoformat()})
 t2 = datetime.datetime(2021, 7, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
 t3 = datetime.datetime(2021, 5, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
-r1 = ResultValue('{"er":2}')
+"""r1 = ResultValue('{"er":2}')
 r2 = ResultValue(23)
 r3 = ResultValue("coucou")
 r4 = ResultValue(41.2)
-r5 = ResultValue(18)
+r5 = ResultValue(18)"""
+r1 = NamedValue('{"er":2}')
+r2 = NamedValue(23)
+r3 = NamedValue("coucou")
+r4 = NamedValue(41.2)
+r5 = NamedValue(18)
 #r6 = ResultValue([41, [2, 2, 0]])
 #r7 = ResultValue([18, [1, 2, 1]])
 s1 = [t1, t2]
@@ -167,17 +172,17 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         ob.append('morning', 'marseille', ' Temp', 'very high')
         #ob.view(True, False, False, False)
         #ob.voxel()
-        ob.majList(ResultValue, [25, 10, 35])
+        ob.majList(ES.res_classES, [25, 10, 35])
         #ob.plot()
         # valeur numériques + choropleth
         #print(ob.setLocation)
         #ob.majList(LocationValue, [lyon, marseille, paris])
-        ob.majList(LocationValue, [paris, lyon, marseille])
+        ob.majList(ES.loc_classES, [paris, lyon, marseille])
         #ob.view(True, False, True, False)
         '''choro = ob.choropleth()'''       # !!! à voir
         #choro.save("test.html")
         print(ob.setLocation)
-        ob.majList(LocationValue, [pol75, pol69, pol13])
+        ob.majList(ES.loc_classES, [pol75, pol69, pol13])
         #ob.view(True, False, True, False)
         '''choro = ob.choropleth()'''       # !!! à voir
         #choro.save("test.html")
@@ -190,9 +195,9 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         # ajout dimension 3 + export dataarray, dataframe
         ob.append('afternoon', 'paris', ' Temp', 28, equal='name')
         ob.append('afternoon', 'lyon', ' Temp', 15, equal='name')
-        ob.majList(LocationValue, [paris, lyon, marseille])   # i.e. paris = [2.35, 48.87]
+        ob.majList(ES.loc_classES, [paris, lyon, marseille])   # i.e. paris = [2.35, 48.87]
         #print(ob.setDatation)
-        ob.majList(DatationValue, ["2021-05-05T10", "2021-05-05T16"])
+        ob.majList(ES.dat_classES, ["2021-05-05T10", "2021-05-05T16"])
         ob.view(prp=False, width=15)
         ob.voxel()
         ob.plot()
@@ -293,11 +298,12 @@ class TestObservation(unittest.TestCase):           # !!! test observation
     def test_obs_loc_iloc_maj(self):
         ob = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, order=['datation', 'property', 'location'])
         self.assertEqual(ob.iLoc(1,1,1), ob.loc(dat3[1][1], loc3[1][1], prop2[1][1]))
-        ob.majValue(LocationValue(loc3[1][1]), loc3[1][2])
+        ob.majValue(LocationValue(loc3[1][1]), loc3[1][2], 'location')
         self.assertEqual(ob.setLocation[1], ob.setLocation[2])
-        self.assertEqual(ob.indexLoc(ResultValue(5), string=False)["full"], 5)
-        self.assertEqual(ob.indexLoc(DatationValue("2021-02-04T11:05:00"), string=False)["value"], 0)
-        self.assertEqual(ob.indexLoc(LocationValue("paris"), string=False)["name"], 0)
+        #self.assertEqual(ob.indexLoc(ResultValue(5), 'result', string=False)["full"], 5)
+        self.assertEqual(ob.indexLoc(NamedValue(5), 'result', string=False)["full"], 5)
+        self.assertEqual(ob.indexLoc(DatationValue("2021-02-04T11:05:00"), 'datation', string=False)["value"], 0)
+        self.assertEqual(ob.indexLoc(LocationValue("paris"), 'location', string=False)["name"], 0)
 
     def test_obs_vList(self):
         ob1 = Observation(dict((truc_mach, dat3, loc3)))
@@ -435,11 +441,11 @@ class TestObservation(unittest.TestCase):           # !!! test observation
 
     def test_obs_majListName_majListValue(self):
         ob1 = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18))))
-        ob1.majList(LocationValue, [pparis, plyon, pmarseille], name=False)
+        ob1.majList(ES.loc_classES, [pparis, plyon, pmarseille], name=False)
         self.assertEqual(ob1.setLocation[2].vSimple(), pmarseille)
-        ob1.majList(DatationValue, [pt1, pt2, pt3], name=False)
+        ob1.majList(ES.dat_classES, [pt1, pt2, pt3], name=False)
         self.assertEqual(ob1.setDatation[2].simple, pt3)
-        ob1.majList(LocationValue, ['paris', 'lyon', 'marseille'], 'name')
+        ob1.majList(ES.loc_classES, ['paris', 'lyon', 'marseille'], 'name')
         self.assertEqual(ob1.setLocation[2].name, 'marseille')
 
     def test_obs_majIndex_iLoc(self):
@@ -461,22 +467,24 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         self.assertEqual(ob1.iLoc(1,1,1)[ES.res_classES], '1')
 
     def test_append_obs(self):
-        ob = Observation(dict((obs_1, dat3, dpt3, prop2, _res(6))), idxref={'location':'datation'})
+        #ob = Observation(dict((obs_1, dat3, dpt3, prop2, _res(6))), idxref={'location':'datation'})
+        ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
         ob1 = copy.copy(ob)
         ind = ob1.appendObs(ob)
-        self.assertEqual(ob1.setResult[ind].value, ob)
+        # !!!!! à traiter externvalue
+        self.assertEqual(ob1.setResult[ind], ExternValue(ob))
         self.assertEqual(ob1.setLocation[ob1.iObsIndex(ind)[1]].value, ob.bounds[1].value) # ordre changeant
         ob1=Observation()
         ob1.appendObs(ob)
-        ob2=Observation(ob1.to_json(encode_format='bson', encoded=False))
-        self.assertEqual(ob2.to_json(encode_format='bson', encoded=False),
-                         ob1.to_json(encode_format='bson', encoded=False))
         ob2=Observation(ob1.to_json(encode_format='json', encoded=False))
         self.assertEqual(ob2.to_json(encode_format='json', encoded=False),
                          ob1.to_json(encode_format='json', encoded=False))
         ob2=Observation(ob1.json)
         self.assertEqual(ob2.to_json(encode_format='json', encoded=True),
                          ob1.to_json(encode_format='json', encoded=True))
+        ob2=Observation(ob1.to_json(encode_format='bson', encoded=False))
+        self.assertEqual(ob2.to_json(encode_format='bson', encoded=False),
+                         ob1.to_json(encode_format='bson', encoded=False))
 
     def test_obs_sort(self):
         dic = {'type': 'observation',
@@ -556,10 +564,12 @@ class TestObservation(unittest.TestCase):           # !!! test observation
                        "property": [{"prp": "PM25", "unit": "kg/m3"}, {"prp": "PM10", "unit": "kg/m3"}], \
                        "result": [0,1,2,3,4,5],\
                        "index": [[0,0,1,1,2,2],[0,0,2,1,1,2],[0,1,0,1,0,1]]}')
-        ob1=ob.full(fillvalue=ResultValue(-1))
+        #ob1=ob.full(fillvalue=ResultValue(-1))
+        ob1=ob.full(fillvalue=NamedValue(-1))
         self.assertEqual(ob.iLoc(1,2,0), ob1.iLoc(1,2,0))
         self.assertEqual(len(ob1), 18)
-        ob.full(fillvalue=ResultValue(-1), inplace=True)
+        #ob.full(fillvalue=ResultValue(-1), inplace=True)
+        ob.full(fillvalue=NamedValue(-1), inplace=True)
         self.assertEqual(ob.json, ob1.json)
 
 
@@ -581,7 +591,8 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         prop1 = PropertyValue(prop_pm25)
         for i in range(6): # simule une boucle de mesure
             obs.append(DatationValue(datetime.datetime(2021, 6, 4+i, 12, 5).isoformat()),
-                       LocationValue([14+i, 40]), prop1, ResultValue(45+i))
+                       LocationValue([14+i, 40]), prop1, 45+i)
+                       #LocationValue([14+i, 40]), prop1, ResultValue(45+i))
         #obs.majType()
         obs.option["json_info_type"] = True
         self.assertEqual(json.loads(obs.to_json())[ES.information]["typeobs"], ES.obsCat[122])
@@ -658,10 +669,13 @@ class TestExports(unittest.TestCase):
 
     def test_to_numpy(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, order=['location', 'property', 'datation'])
-        self.assertEqual(ob.to_numpy(func=ResultValue.vSimple, string=True)[0][1,1], '4.0')
+        '''self.assertEqual(ob.to_numpy(func=ResultValue.vSimple, string=True)[0][1,1], '4.0')
         self.assertEqual(ob.to_numpy(func=ResultValue.vSimple, string=False)[0][1,1], 4.0)
+        self.assertEqual(ob.to_numpy(func=ResultValue.vSimple, string=True, ind='all')[0][2,1,1], '2.0')'''
+        self.assertEqual(ob.to_numpy(func=NamedValue.vSimple, string=True)[0][1,1], '4.0')
+        self.assertEqual(ob.to_numpy(func=NamedValue.vSimple, string=False)[0][1,1], 4.0)
+        self.assertEqual(ob.to_numpy(func=NamedValue.vSimple, string=True, ind='all')[0][2,1,1], '2.0')
         self.assertEqual(ob.to_numpy(func=ESValue.vName, genName='-')[0][1,1], '-')
-        self.assertEqual(ob.to_numpy(func=ResultValue.vSimple, string=True, ind='all')[0][2,1,1], '2.0')
 
     def test_xarray(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
@@ -673,13 +687,20 @@ class TestExports(unittest.TestCase):
         self.assertTrue(ob.to_xarray(numeric=True).loc[d1.vSimple(), 1].item() == 2.0)
         self.assertTrue(ob.to_xarray(ind='all').loc[d1,l1,p0].item() == r110)
         ob = Observation(dict((obs_1, dat3, loc3, prop1, _res(3))), idxref={'location':'datation'})
-        self.assertTrue(ob.to_xarray()[1].item() == ResultValue(2))
+        self.assertTrue(ob.to_xarray()[1].item() == NamedValue(2))
+        ob = Observation(dict((obs_1, dat3, loc3, prop3, _res(3))), idxref={'property':'datation', 'location':'datation'})
+        self.assertTrue(ob.to_xarray()[1].item() == NamedValue(2))
+        ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(18))))
+        self.assertTrue(ob.to_xarray()[2,1,0].item() == NamedValue(9))
+        ob = Observation(dict((obs_1, dat3, loc2, prop1, _res(6))))
+        self.assertTrue(ob.to_xarray()[2,0].item() == NamedValue(2))
+        '''self.assertTrue(ob.to_xarray()[1].item() == ResultValue(2))
         ob = Observation(dict((obs_1, dat3, loc3, prop3, _res(3))), idxref={'property':'datation', 'location':'datation'})
         self.assertTrue(ob.to_xarray()[1].item() == ResultValue(2))
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(18))))
         self.assertTrue(ob.to_xarray()[2,1,0].item() == ResultValue(9))
         ob = Observation(dict((obs_1, dat3, loc2, prop1, _res(6))))
-        self.assertTrue(ob.to_xarray()[2,0].item() == ResultValue(2))
+        self.assertTrue(ob.to_xarray()[2,0].item() == ResultValue(2))'''
 
     '''@unittest.skipIf(plot, "test plot")
     def test_plot(self):
@@ -750,7 +771,7 @@ class TestExports(unittest.TestCase):
                #             '2021-05-09T12:05:00'],
                #'result':   [25, 26, 27, 28, 29, 30]}
         ob = Observation(dic, idxref={'location':'datation'})
-        ob.majList(DatationValue, ['name1', 'autre name', 'encore autre name3', '', '', ''], name=True)
+        ob.majList(ES.dat_classES, ['name1', 'autre name', 'encore autre name3', '', '', ''], name=True)
         self.assertEqual(len(ob.filter(datation={'__lt__' : DatationValue(datetime.datetime(2021,5,8))} )), 4)
         self.assertEqual(len(ob.filter(datation={'equals' : DatationValue(datetime.datetime(2021,5,5,12,5))} )), 1)
         self.assertEqual(len(ob.filter(datation={'within' : DatationValue([datetime.datetime(2021,5,4), datetime.datetime(2021,5,6)])} )), 2)

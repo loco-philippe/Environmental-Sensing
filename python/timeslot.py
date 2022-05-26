@@ -227,7 +227,7 @@ class TimeSlot:
         option = {'encoded' : False, 'encode_format' : 'json'} | kwargs
         if len(self) == 1 : js = self.slot[0].json(encoded=False, encode_format=option['encode_format'])
         else : js = [interv.json(encoded=False, encode_format=option['encode_format']) for interv in self.slot]
-        if option['encoded'] and option['encode_format'] == 'json': return json.dumps(js)
+        if option['encoded'] and option['encode_format'] == 'json': return json.dumps(js, cls=TimeSlotEncoder)
         if option['encoded'] and option['encode_format'] == 'bson': return bson.encode(js)
         return js
 
@@ -298,7 +298,7 @@ class TimeSlot:
         *Returns* : string or dict'''
         if len(self) == 1 : js = self.slot[0].timetuple(index, False)
         else : js = [interv.timetuple(index, False) for interv in self.slot]
-        if encoded : return json.dumps(js)
+        if encoded : return json.dumps(js, cls=TimeSlotEncoder)
         else : return js
     
     def union(self, other):
@@ -443,7 +443,7 @@ class TimeInterval:    # !!! interval
         elif self.stype == 'interval' : 
             if encode_format == 'bson':  js = [self.start, self.end]
             else:           js = [TimeSlot.form(self.start), TimeSlot.form(self.end)]'''
-        if encoded and encode_format == 'json': return json.dumps(js)
+        if encoded and encode_format == 'json': return json.dumps(js, cls=TimeSlotEncoder)
         if encoded and encode_format == 'bson': return bson.encode(js)
         return js
     
@@ -489,7 +489,7 @@ class TimeInterval:    # !!! interval
         if index not in [0,1,2,3,4,5,6,7,8] : return None
         if self.stype == 'instant' : js = self.start.timetuple()[index]
         elif self.stype == 'interval' : js = [self.start.timetuple()[index], self.end.timetuple()[index]]
-        if encoded : return json.dumps(js)
+        if encoded : return json.dumps(js, cls=TimeSlotEncoder)
         else : return js
 
     def union(self, other):

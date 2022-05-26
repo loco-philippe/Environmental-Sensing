@@ -108,9 +108,9 @@ An Observation object groups common data (name, options, parameters) and associa
 - spatial (LocationValue objects)
 - temporal (DatingValue objects)
 - properties (PropertyValue objects)
-- others (VariableValue objects)
+- others (NamedValue, ExternValue objects)
 
-to results (ResultValue objects).
+to results (any objects).
 
 <img src="./ES/ESmodel.png" width="600">
 
@@ -158,7 +158,7 @@ key / value e.g.:
 - local : We may customize the 'name' attribute e.g.:
     - *'datation' : [ { **'first campaign'** : '2021-01-01' } , { **'second campaign'** : ''2021-03-01' } ]
     - 'property' : [ { **'inside'** : 'Temp' } , { **'outside'** : 'Temp' } ]*
-- individual : Each ResultValue may be annotate e.g.:
+- individual : Each Result value may be annotate e.g.:
     - *'result' : { **'first result'** : 'high' }
     - 'result' : {**'https://loco-philippe.github.io/ES.html'** : 'high' }*
 
@@ -170,9 +170,9 @@ Some operations are available for Observation objects
 
 - between two Observation :
     
-    - Addition function : The ResultValues are added
+    - Addition function : The Result values are added
     - Extend function : The axes are added (e.g. template Observation)
-    - Append function : An Observation is included as a ResultValue (e.g. tree structure)
+    - Append function : An Observation is included as a Result value (e.g. tree structure)
 
 <img src="./ES/extension.png" width="800">
 
@@ -180,7 +180,7 @@ Some operations are available for Observation objects
     
     - Sort function : changing the order of data according to the axes order
     - Find function : selecting some data 
-    - Full function : add empty ResultValue to complete an Observation
+    - Full function : add empty Result value to complete an Observation
 
 <img src="./ES/extraction.png" width="800">
 
@@ -295,7 +295,7 @@ The dimension is an important concept to understand (see chapter above).
 
 In this example, we show you Observations with differents dimensions (1 to 3).
 
-We also present how ResultValue without index can be loaded with the 'order' parameter.
+We also present how Result values without index can be loaded with the 'order' parameter.
 
 <a href="./Example/dimension.html" target="_blank">(see the page here)</a> :
     
@@ -370,7 +370,7 @@ Modules contain the following classes:
 - ESValue : 
     
     - `ES.ESValue`(`ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, `ES.ESValue.PropertyValue`,
-    `ES.ESValue.ResultValue`, `ES.ESValue.ESValue`)
+    `ES.ESValue.NamedValue`, `ES.ESValue.ExternValue`, `ES.ESValue.ESValue`)
     
 - Ilist : 
     

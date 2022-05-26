@@ -9,6 +9,45 @@ This module describes the constants and default values used in other modules.
 import datetime, math
 from typing import Dict
 
+def _classval():
+    from ESValue import LocationValue, DatationValue, PropertyValue, \
+        NamedValue, ExternValue
+    from timeslot import TimeSlot
+    from ESObservation import Observation
+    from ilist import Ilist
+    import datetime
+    return {ES.obs_clsName: Observation,
+            ES.dat_clsName: DatationValue,
+            ES.loc_clsName: LocationValue,
+            ES.prp_clsName: PropertyValue,
+            ES.ext_clsName: ExternValue,
+            ES.nam_clsName: NamedValue,
+            ES.ili_clsName: Ilist,
+            #ES.coo_clsName: coordinate,
+            ES.tim_clsName: datetime.datetime,
+            ES.slo_clsName: TimeSlot,
+            ES.dat_classES: DatationValue,
+            ES.loc_classES: LocationValue,
+            ES.prp_classES: PropertyValue,
+            ES.res_classES : NamedValue}
+
+def _classESval():
+    from ESValue import LocationValue, DatationValue, PropertyValue, \
+        NamedValue, ExternValue
+    return {ES.obs_clsName: ExternValue,
+            ES.dat_clsName: DatationValue,
+            ES.loc_clsName: LocationValue,
+            ES.prp_clsName: PropertyValue,
+            ES.ext_clsName: ExternValue,
+            ES.nam_clsName: NamedValue,
+            ES.ili_clsName: ExternValue,
+            #ES.coo_clsName: coordinate,
+            ES.tim_clsName: DatationValue,
+            ES.slo_clsName: DatationValue,
+            ES.dat_classES: DatationValue,
+            ES.loc_classES: LocationValue,
+            ES.prp_classES: PropertyValue,
+            ES.res_classES : NamedValue}
 
 class Es:
     ''' initialization of constant data. '''
@@ -164,13 +203,15 @@ class Es:
         self.ntypevalue: Dict = {
             'null':             0,
             'name':             100,
-            'instant':          2,      #datationValue
+            self.dat_valName:   1,      #datationValue
+            'instant':          2,
             'interval':         3,
             'slot':             4,
             'nameinstant':      102,
             'nameinterval':     103,
             'nameslot':         104,
-            'point':            12,     #locationValue
+            self.loc_valName:   11,     #locationValue
+            'point':            12,     
             'polygon':          13,
             'multipoint':       14,
             'multipolygon':     15,
@@ -178,21 +219,42 @@ class Es:
             'namepolygon':      113,
             'namemultipoint':   114,
             'namemultipolygon': 115,
-            'property':         22,     #propertyValue
+            self.prp_valName:   21,     #propertyValue
+            'propertytype':     22,     
             'propertydict':     23,
             'multiproperty':    24,
-            'nameproperty':     122,
+            'namepropertytype': 122,
             'namepropertydict': 123,
             'namemultiproperty':124,
-            'standard':         32,     #resultValue
-            'ilist':            33,
-            'observation':      34,
-            'datetime':         35,
-            'nameresult':       132
+            self.nam_valName:   31,     #namedValue
+            'jsonvalue':        32,     
+            'namejsonvalue':    132,     
+            self.ext_valName:   41,     #externValue
+            self.ili_valName:   43,
+            self.obs_valName:   44,
+            self.tim_valName:   45,
+            self.coo_valName:   46,
+            'nameIlist':        143,
+            'nameObservation':  144,
+            'namedatetime':     145,
+            'namecoordinates':  146
             }
         '''Dictionnary for ESValue types '''
 
         self.invntypevalue: Dict = self._inv(self.ntypevalue)
+        
+        self.typeName: Dict = {
+            self.obs_valName : self.obs_clsName,
+            self.dat_valName : self.dat_clsName,
+            self.loc_valName : self.loc_clsName,
+            self.prp_valName : self.prp_clsName,
+            self.ext_valName : self.ext_clsName,
+            self.nam_valName : self.nam_clsName,
+            self.ili_valName : self.ili_clsName,
+            self.coo_valName : self.coo_clsName,
+            self.tim_valName : self.tim_clsName,
+            self.slo_valName : self.slo_clsName}
+        self.valname : Dict = self._inv(self.typeName)
         
         #%% reserved
         self.reserved: list = [
@@ -351,6 +413,9 @@ class Es:
         self.json_type_res    = "typeres"
         self.json_type_prp    = "typeprop"
 
+        self.datetime         = "datetime"
+        self.ilist            = 'ilist'
+        self.timeslot         = 'timeslot'
         self.parameter        = "parameter"
         self.information      = "information"
         self.type             = "type"
@@ -407,10 +472,28 @@ class Es:
         self.prp_uncertain      = "uncertainty";
         self.prp_name           = "name";
 
+        self.obs_valName      = "observation"
         self.dat_valName      = "datvalue"
         self.loc_valName      = "locvalue"
         self.prp_valName      = "prpvalue"
+        self.ext_valName      = "extvalue"
+        self.nam_valName      = "namvalue"
         self.res_valName      = "resvalue"
+        self.ili_valName      = "ilist"
+        self.coo_valName      = "coordinate"
+        self.tim_valName      = "datetime"
+        self.slo_valName      = "timeslot"
+
+        self.obs_clsName      = 'Observation'
+        self.dat_clsName      = 'DatationValue'
+        self.loc_clsName      = 'LocationValue'
+        self.prp_clsName      = 'PropertyValue'
+        self.ext_clsName      = 'ExternValue'
+        self.nam_clsName      = 'NamedValue'
+        self.ili_clsName      = 'Ilist'
+        self.coo_clsName      = 'coordinate'
+        self.tim_clsName      = 'datetime'
+        self.slo_clsName      = 'TimeSlot'
 
     def _initReferenceValue(self):
     #%% init reference value

@@ -9,9 +9,9 @@ The `ES.test_esvalue` module contains the unit tests (class unittest) for the
 """
 import unittest, json
 from ilist import Ilist
-
-from ESValue import ResultValue, LocationValue, DatationValue, \
-    PropertyValue, ESValue #, _gshape
+from ESObservation import Observation
+from ESValue import LocationValue, DatationValue, \
+    PropertyValue, NamedValue, ExternValue, ESValue #, _gshape
 from ESconstante import ES
 #from pprint import pprint
 import datetime
@@ -22,93 +22,40 @@ from test_observation import dat3, loc3, prop2, _res, lyon, paris, pol1, \
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False
 
-# datas-----------------------------------------------------------------------
-'''def _val(n): return list(i for i in range(n))
-def _res(n): return (ES.res_classES, _val(n))
-with open('C:\\Users\\a179227\\OneDrive - Alliance\\perso Wx\\ES standard\\python ESstandard\\departements-version-simplifiee.geojson') as f:
-    dp = f.read()
-dpt = json.loads(dp)['features']
-#https://github.com/gregoiredavid/france-geojson
-pol13 = {dpt[12]['properties']['code'] + ' ' + dpt[12]['properties']['nom'] :
-         dpt[12]['geometry']['coordinates']}
-pol69 = {dpt[69]['properties']['code'] + ' ' + dpt[69]['properties']['nom'] :
-         dpt[69]['geometry']['coordinates']}
-pol75 = {dpt[75]['properties']['code'] + ' ' + dpt[75]['properties']['nom'] :
-         dpt[75]['geometry']['coordinates']}
-pol1 = [[[0.0,1.0], [1.0,2.0], [1.0,1.0], [0.0,1.0]]]
-pol1centre = [0.6666666666666666, 1.3333333333333333]
-pol2 = [[[0.0,2.0], [2.0,2.0], [1.0,1.0], [0.0,2.0]]]
-dpt2 = (ES.loc_classES, [pol1, pol2])
-dpt3 = (ES.loc_classES, [pol75, pol69, pol13])
-pparis       = [2.4, 48.9]
-plyon        = [4.8, 45.8]
-pmarseille   = [5.4, 43.3]
-paris       = [2.35, 48.87]
-parisn      = json.dumps({'loca1' : paris})
-lyon        = [4.83, 45.76]
-marseille   = [5.38, 43.3]
-mini_PL     = [2.35, 45.76]
-maxi_PLM    = [5.38, 48.87]
-obs_1       = (ES.type, ES.obs_classES)
-truc_mach   = ("truc", "machin")
-prop_pm25   = dict([(ES.prp_type,"PM25"), (ES.prp_unit, "kg/m3")])
-prop_pm10   = dict([(ES.prp_type,"PM10"), (ES.prp_unit, "kg/m3")])
-prop_co2    = dict([(ES.prp_type,"CO2"), (ES.prp_unit, "kg/m3")])
-pprop_pm25   = dict([(ES.prp_type,"PM25"), (ES.prp_unit, "kg/m3"), (ES.prp_appli, "air")])
-pprop_pm10   = dict([(ES.prp_type,"PM10"), (ES.prp_unit, "kg/m3"), (ES.prp_appli, "air"), ("truc", "machin")])
-matin = [ datetime(2020, 2, 4, 8), datetime(2020, 2, 4, 12)]
-midi  = [ datetime(2020, 2, 4, 12), datetime(2020, 2, 4, 14)]
-aprem  = [ datetime(2020, 2, 4, 14), datetime(2020, 2, 4, 18)]
-travail = [matin, aprem]
-pt1 = datetime(2020, 2, 4, 12, 5, 0)
-pt2 = datetime(2020, 5, 4, 12, 5, 0)
-pt3 = datetime(2020, 7, 4, 12, 5, 0)
-tnull = datetime(1970, 1, 1, 0, 0, 0)
-snull = (tnull.isoformat(), tnull.isoformat())
-t1 = datetime(2021, 2, 4, 12, 5, 0)
-t1n = json.dumps({'date1' : t1.isoformat()})
-t2 = datetime(2021, 7, 4, 12, 5, 0)
-t3 = datetime(2021, 5, 4, 12, 5, 0)
-r1 = ResultValue('{"er":2}')
-r2 = ResultValue(23)
-r3 = ResultValue("coucou")
-r4 = ResultValue(41.2)
-r5 = ResultValue(18)
-#r6 = ResultValue([41, [2, 2, 0]])
-#r7 = ResultValue([18, [1, 2, 1]])
-s1 = [t1, t2]
-dat1 = (ES.dat_classES, {'date1' : t1.isoformat()})
-dat2 = (ES.dat_classES, [t1.isoformat(), t2.isoformat()])
-dat3 = (ES.dat_classES, [{'date1' : t1.isoformat()}, t2.isoformat(), t3.isoformat()])
-dat3ord = (ES.dat_classES, [{'date1' : t1.isoformat()}, t3.isoformat(), t2.isoformat()])
-dat3sn = (ES.dat_classES, [t1.isoformat(), t2.isoformat(), t3.isoformat()])
-pdat3 = (ES.dat_classES, [pt1.isoformat(), pt2.isoformat(), pt3.isoformat()])
-prop1 = (ES.prp_classES, prop_pm10)
-prop2 = (ES.prp_classES, [prop_pm25, prop_pm10])
-prop2ord = (ES.prp_classES, [prop_pm10, prop_pm25])
-prop3 = (ES.prp_classES, [prop_pm25, prop_pm10, prop_co2])
-pprop2 = (ES.prp_classES, [pprop_pm25, pprop_pm10])
-loc1 = (ES.loc_classES, {'paris' : paris})
-loc1sn = (ES.loc_classES, paris)
-loc2 = (ES.loc_classES, [paris, lyon])
-loc3 = (ES.loc_classES, [{'paris' : paris}, lyon, marseille])
-loc3sn = (ES.loc_classES, [paris, lyon, marseille])
-ploc3 = (ES.loc_classES, [pparis, plyon, pmarseille])
-res2 = (ES.res_classES, [[41, [2, 2, 0]], [18, [1, 2, 1]]])'''
-
 @unittest.skipIf(simple, "test unitaire")
 class TestObsUnitaire(unittest.TestCase):
     '''Unit tests for `ES.ESValue`, `ES.ESObs`, `ES.ESElement` '''
     opt = ES.mOption.copy()
 
-    def test_ResultValue(self):
-        self.assertEqual(ResultValue("coucou").json(), '"coucou"')
-        self.assertEqual(ResultValue('{"er":2}').json(), '{"er": 2}')
-        self.assertEqual(ResultValue(21).json(), '21')
-        self.assertEqual(ResultValue(2.1).json(), '2.1')
-        self.assertEqual(ResultValue('{"er":2}').EStype, 132)
-        self.assertEqual(ResultValue(22).EStype, 32)
-        self.assertEqual(ResultValue("coucou").EStype, 32)
+    def test_valClassName(self):
+        self.assertEqual(ESValue.valClassName(21), 'NamedValue')
+        self.assertEqual(ESValue.valClassName('test'), 'NamedValue')
+        self.assertEqual(ESValue.valClassName({"truc": 21}), 'NamedValue')
+        self.assertEqual(ESValue.valClassName({"truc": Ilist()}), 'Ilist')
+        self.assertEqual(ESValue.valClassName(NamedValue("cou")), 'NamedValue')
+        self.assertEqual(ESValue.valClassName(LocationValue("cou")), 'LocationValue')
+        self.assertEqual(ESValue.valClassName(Ilist()), 'Ilist')
+        self.assertEqual(ESValue.valClassName(Observation()), 'Observation')
+        self.assertEqual(ESValue.valClassName(datetime.datetime(2020,1,1)), 'datetime')
+        self.assertEqual(ESValue.valClassName('{"namvalue":{"val":21}}'), 'NamedValue')
+        self.assertEqual(ESValue.valClassName('{"locvalue":{"val":21}}'), 'LocationValue')
+        self.assertEqual(ESValue.valClassName('{"observation":{"val":21}}'), 'Observation')
+        self.assertEqual(ESValue.valClassName('{"truc":{"observation":{}}}'), 'NamedValue')
+        self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'NamedValue')
+        self.assertEqual(ESValue.valClassName({"namvalue":{"val":21}}), 'NamedValue')
+        self.assertEqual(ESValue.valClassName({"locvalue":{"val":21}}), 'LocationValue')
+        self.assertEqual(ESValue.valClassName({"observation":{"val":21}}), 'Observation')
+        self.assertEqual(ESValue.valClassName({"truc": Observation()}), 'Observation')
+        self.assertEqual(ESValue.valClassName({"locvalue":1, "observation":{}}), 'NamedValue')
+        
+    def test_NamedValue(self):
+        self.assertEqual(NamedValue("coucou").json(), '"coucou"')
+        self.assertEqual(NamedValue('{"er":2}').json(), '{"er": 2}')
+        self.assertEqual(NamedValue(21).json(), '21')
+        self.assertEqual(NamedValue(2.1).json(), '2.1')
+        self.assertEqual(NamedValue('{"er":2}').EStype, 132)
+        self.assertEqual(NamedValue(22).EStype, 32)
+        self.assertEqual(NamedValue("coucou").EStype, 32)
 
     def test_locationValue(self):
         self.opt = ES.mOption.copy()
@@ -164,6 +111,25 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(PropertyValue('truc').EStype, 100)
         self.assertEqual(PropertyValue(PropertyValue.nullValue()).EStype, 0)
 
+    def test_externValue(self):
+        il=Ilist()
+        self.assertEqual(ExternValue({'truc':il}).EStype, 143)
+        self.assertEqual(ExternValue(il).EStype, 43)
+        self.assertEqual(ExternValue({'ilist':{'truc':il}}).EStype, 143)
+        self.assertEqual(ExternValue(json.dumps({"ilist":{"truc":il.json()}})).EStype, 143)
+        dic={'observation': {'type': 'observation',
+          'datation': [{'date1': datetime.datetime(2021, 2, 4, 11, 5, tzinfo=datetime.timezone.utc)},
+           datetime.datetime(2021, 7, 4, 10, 5, tzinfo=datetime.timezone.utc),
+           datetime.datetime(2021, 5, 4, 10, 5, tzinfo=datetime.timezone.utc)],
+          'location': [{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
+          'property': [{'prp': 'PM25', 'unit': 'kg/m3'},
+           {'prp': 'PM10', 'unit': 'kg/m3'}],
+          'result': [0, 1, 2, 3, 4, 5],
+          'index': [[0, 0, 1, 1, 2, 2], [0, 0, 1, 1, 2, 2], [0, 1, 0, 1, 0, 1]]}}
+        self.assertEqual(ExternValue(dic).EStype, 44)
+        self.assertEqual(ExternValue(Observation(dict((dat3, loc3, prop2, _res(6))), 
+                                                 idxref={'location':'datation'})).EStype, 44)
+        
     def test_nameValue(self):
         self.assertEqual(DatationValue('recre').json(encoded=False), 'recre')
         self.opt["json_prp_name"] = True

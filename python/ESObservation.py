@@ -8,9 +8,11 @@ The `ES.ESObservation` module contains the main class
 of Environmental Sensing : `Observation` class.
 
 """
-from ESconstante import ES
+from ESconstante import ES, _classval
+#import ESValue
 from ESValue import LocationValue, DatationValue, PropertyValue, \
-    ResultValue, ESValue, ESValueEncoder
+    NamedValue, ExternValue, ESValue, ESValueEncoder
+from timeslot import TimeSlot
 import datetime
 import json, folium, copy, csv, bson, math
 import numpy as np
@@ -20,14 +22,11 @@ import struct
 #import os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/iList')
 from ilist import Ilist, CborDecoder
+#import ilist
 from tabulate import tabulate
 import cbor2
 
-_EsClassValue: dict = {ES.dat_classES : DatationValue,
-                       ES.loc_classES : LocationValue,
-                       ES.prp_classES : PropertyValue,
-                       ES.res_classES : ResultValue}
-'''dict classES : ESValue class '''
+#from ESValue import _EsClassValue
 
 class Observation :
     """
@@ -115,6 +114,7 @@ class Observation :
     - `Observation.from_bytes`            # à voir
 
     """
+
 #%% constructor
     def __init__(self, *args, order = [], idxref = {}, **kwargs):
         '''
@@ -169,6 +169,7 @@ class Observation :
             if type(arg) == dict :      # creation à partir d'un dict "key : [liste]"
                 for k,v in arg.items() :
                     if k not in dic : dic |= {k:v}
+        if len(dic) == 1 and list(dic.keys())[0] == ES.obs_valName : dic = dic[ES.obs_valName] #!!!
         if dic != {} or len(args) == 0 or args == [{}] :
             for k,v in kwargs.items() :
                 if k not in dic : dic |= {k:v}
@@ -195,10 +196,10 @@ class Observation :
         order = []
         for classES in ES.esObsClass[0:3] :
             if classES in list(js) :
-                dicilist[classES] =  _EsClassValue[classES].cast(js[classES])
+                dicilist[classES] =  js[classES]
                 order.append(classES)
         if ES.res_classES in list(js) :
-            dicilist[ES.res_classES] = ResultValue.cast(js[ES.res_classES])
+            dicilist[ES.res_classES] = js[ES.res_classES]
         if 'order' in list(js) and len(js['order'])>0: dicilist['order'] = js['order']
         else: dicilist['order'] = sorted(order)
         if 'idxref' in list(js) : dicilist['idxref'] = js['idxref']
@@ -221,12 +222,10 @@ class Observation :
             keyn = order.index(key)
             valn = order.index(val)
             idxrefn[max(keyn, valn)] = min(keyn, valn)
-        self.ilist = Ilist.Iset(ResultValue.cast(lis[3]),
-                                [DatationValue.cast(lis[0]),
-                                 LocationValue.cast(lis[1]),
-                                 PropertyValue.cast(lis[2])],
-                                ordern, idxrefn, ES.esObsClass[3], ES.esObsClass[0:3],
-                                defaultidx=False)
+        self.ilist = Ilist.Iset(valiidx=lis[3],
+                                setidx=[lis[0], lis[1], lis[2]], 
+                                order=ordern, idxref=idxrefn, valname=ES.esObsClass[3], 
+                                idxname=ES.esObsClass[0:3], defaultidx=False)
 
 #%% special
     def __copy__(self):
@@ -284,6 +283,9 @@ class Observation :
 
     def __len__(self): return len(self.ilist)
 
+    def __repr__(self):
+        return self.__class__.__name__ + '[' + str(len(self)) + ', ' + str(self.ilist.lenidx) + ']'
+
     def __to_bytes__(self, **option):
         return self.to_json(encoded=option['encoded'], encode_format='bson',
                             json_info=False, json_res_index=True, json_param=True)
@@ -315,8 +317,8 @@ class Observation :
     @property
     def complet(self):
         '''
-        **boolean (@property)** : True if self.ilist is complete (if the number of ResultValue is consistent with
-        the number of LocationValue, DatationValue and PropertyValue)'''
+        **boolean (@property)** : True if self.ilist is complete (if the number of 
+        values is consistent with the number of index values)'''
         return self.ilist.complete
 
     @property
@@ -465,12 +467,12 @@ class Observation :
 
     def append(self, dat, loc, prp, res, unique=False, equal='full', fast=False) :
         '''
-        Add a new `ES.ESValue.ResultValue`
+        Add a new `ES.ESValue` to Result
 
         *Parameters*
 
         - **dat, loc, prp** : compatible Value for an existing or new `ES.ESValue`
-        - **res** : compatible existing or new `ES.ESValue.ResultValue`
+        - **res** : compatible existing or new result `ES.ESValue`
         - **unique** : boolean (default False), if False, duplicate index is allowed
         - **equal** : string (default 'full'), if 'full', two ESValue are equal
             if all the attributes are equal, if 'name', two ESValue are equal if only the names are equal.
@@ -484,36 +486,38 @@ class Observation :
         if fast :
             self.ilist.append(res, [dat, loc, prp], unique=unique, fast=fast)
             return 0
+        if res.__class__.__name__ in _classval(): resvalue = res
+        else: resvalue = _classval()[ESValue.valClassName(res)](res)
+        datv = DatationValue(dat)
+        locv = LocationValue(loc)
+        prpv = PropertyValue(prp)
         if equal == 'full':
-            self.ilist.append(ResultValue(res),
-                          [DatationValue(dat), LocationValue(loc), PropertyValue(prp)],
-                          unique=unique, fast=fast)
+            #self.ilist.append(ReesultValue(res),
+            self.ilist.append(resvalue, [datv, locv, prpv], unique=unique, fast=fast)
         elif equal == 'name':
-            datv = DatationValue(dat)
             for val in self.setDatation :
-                if ESValue.isEqual(val, DatationValue(dat), name=True, value=False):
+                if ESValue.isEqual(val, datv, name=True, value=False):
                     datv = val
                     break
-            locv = LocationValue(loc)
             for val in self.setLocation :
-                if ESValue.isEqual(val, LocationValue(loc), name=True, value=False):
+                if ESValue.isEqual(val, locv, name=True, value=False):
                     locv = val
                     break
-            prpv = PropertyValue(prp)
             for val in self.setProperty :
-                if ESValue.isEqual(val, PropertyValue(prp), name=True, value=False):
+                if ESValue.isEqual(val, prpv, name=True, value=False):
                     prpv = val
                     break
-            self.ilist.append(ResultValue(res), [datv,locv, prpv], unique=unique, fast=fast)
+            #self.ilist.append(ReesultValue(res), [datv,locv, prpv], unique=unique, fast=fast)
+            self.ilist.append(resvalue, [datv,locv, prpv], unique=unique, fast=fast)
         return len(self.ilist) - 1
 
     def appendList(self, listDat, listLoc, listPrp, listVal, unique=False, equal='full'):
         '''
-        Add a list of new `ES.ESValue.ResultValue`
+        Add a list of new `ES.ESValue` to Result
 
         *Parameters*
 
-        - **listVal** : list of ES.ESValue.ResultValue compatible type
+        - **listVal** : list of ES.ESValue compatible type
         - **listDat, listLoc, listPrp** : list of index or Value to define a `ES.ESValue`
         - **unique** : boolean (default False), if False, duplicate index is allowed
         - **equal** : string (default 'full'), if 'full', two ESValue are equal if all the attributes are equal,
@@ -528,7 +532,7 @@ class Observation :
 
     def appendObs(self, obs, unique=False, equal='full') :
         '''
-        Add an `Observation` as a new `ES.ESValue.ResultValue` with bounding box for the other `ES.ESValue`
+        Add an `Observation` as a new Result `ES.ESValue` with bounding box for the Index `ES.ESValue`
 
         *Parameters*
 
@@ -538,7 +542,8 @@ class Observation :
 
         - **int** : last index in the `Observation`
         '''
-        return self.append(obs.bounds[0], obs.bounds[1], obs.bounds[2], obs, unique=unique, equal=equal)
+        #return self.append(obs.bounds[0], obs.bounds[1], obs.bounds[2], obs, unique=unique, equal=equal)
+        return self.append(obs.bounds[0], obs.bounds[1], obs.bounds[2], ExternValue(obs), unique=unique, equal=equal)
 
     def choropleth(self, name="choropleth"):
         '''
@@ -593,7 +598,7 @@ class Observation :
 
     def filter(self, inplace=False, **filterdic):
         '''
-        Remove `ES.ESValue.ResultValue` that does not match the indexes filter.
+        Remove `ES.ESValue` from Result that does not match the indexes filter.
         The filter is a list of tests of the form : "indexvalue.method(parameter) is True"
         where keyword "method : parameter" are given in the dictionnary. Filters are cumulatives.
 
@@ -660,6 +665,7 @@ class Observation :
                 for i in range(len(tup[1])): dic[tup[2]][i].setValue(tup[1][i].value)
         if iidx:    dic[ES.index]=iidx
         if iidxref:  dic[ES.idxref]={ES.invcodeb[k] : ES.invcodeb[v] for k,v in iidxref.items()}
+        #print('dic : ', dic)
         return Observation(dic)
     
     @classmethod
@@ -681,7 +687,7 @@ class Observation :
 
     def full(self, minind=True, fillvalue=None, inplace=False) :
         '''
-        Add empty `ES.ESValue.ResultValue` to have a 'complete' `Observation`
+        Add empty Result `ES.ESValue` to have a 'complete' `Observation`
 
         *Parameters*
 
@@ -695,7 +701,7 @@ class Observation :
 
         - **Observation** : new observation if not inplace, else None.
         '''
-        if fillvalue is None : fillvalue = ResultValue.nullValue()
+        if fillvalue is None : fillvalue = ES.nullVal #ReesultValue.nullValue()
         if minind == True : axes = self.ilist.axes
         else : axes = list(range(self.ilist.lenidx))
         if inplace :
@@ -733,13 +739,14 @@ class Observation :
         else    : dic[ES.res_classES] = res
         return dic
 
-    def indexLoc(self, esValue, string=True):
+    def indexLoc(self, esValue, name, string=True):
         '''
-        Return the index of a `ES.ESValue` in a `ES.ilist.Ilist` index
+        Return the index of a `ES.ESValue` in a `ES.ilist.Ilist` index or result
 
         *Parameters*
 
         - **esValue** : `ES.ESValue`,
+        - **name** : index or result name
         - **string** : Boolean (default True) - Return type (JSON if True, dict if False)
 
         *Returns*
@@ -748,11 +755,16 @@ class Observation :
             - indFull : integer for the first index value with name and value equality
             - indName : integer for the first index value with name equality
             - indFull : integer for the first index value with value equality  '''
-        if   type(esValue)== PropertyValue : lis = self.setProperty
+        if   name == ES.prp_classES:     lis = self.setProperty
+        elif name == ES.loc_classES:     lis = self.setLocation
+        elif name == ES.dat_classES:     lis = self.setDatation
+        elif name == self.ilist.valname: lis = self.setResult
+        else : return None
+        '''if   type(esValue)== PropertyValue : lis = self.setProperty
         elif type(esValue)== LocationValue : lis = self.setLocation
         elif type(esValue)== DatationValue : lis = self.setDatation
-        elif type(esValue)== ResultValue   : lis = self.setResult
-        else: return None
+        elif type(esValue)== ReesultValue   : lis = self.setResult
+        else: return None'''
         ind = {'full' : -1, 'name' : -1, 'value' : -1}
         for i in range(len(lis)):
             if lis[i].isEqual(esValue, name=True, value=True):
@@ -767,11 +779,11 @@ class Observation :
 
     def iObsIndex(self, ind):
         '''
-        Return the `ES.ESValue` index values for an Observation index.
+        Return the `ES.ESValue` index values for an Observation row.
 
         *Parameters*
 
-        - **ind** : index Observation (equivalent `ES.ESValue.ResultValue`
+        - **ind** : row Observation (equivalent to Result row)
         - **json** : Boolean (default True) - Return JSON string if True
 
         *Returns*
@@ -794,20 +806,33 @@ class Observation :
         index = self.ilist.extidxtoi([DatationValue(valDat),LocationValue(valLoc),PropertyValue(valPrp)])
         return self.iLoc(index[0], index[1], index[2])
 
-    def majList(self, ValueClass, listVal, name=False):
+    def majList(self, axename, listVal, name=False):
         '''
         Modify an attribute (name or value) in an axis list.
 
         *Parameters*
 
-        - **ValueClass** : class ES.ESValue
+        - **axename** : index or result name
         - **listVal** : new list of values
         - **name** : boolean (default True) - True for 'name' and False for 'value'
 
         *Returns*
 
         - **None**  '''
-        if ValueClass == DatationValue and self.setDatation != None :
+        if axename == ES.dat_classES and self.setDatation != None :
+            newlistVal = Observation._majList(self.setDatation, listVal, name)
+            self.ilist.setidx[self.ilist.idxname.index(ES.dat_classES)] = newlistVal
+        elif axename == ES.loc_classES and self.setLocation != None :
+            newlistVal = Observation._majList(self.setLocation, listVal, name)
+            self.ilist.setidx[self.ilist.idxname.index(ES.loc_classES)] = newlistVal
+        elif axename == ES.prp_classES and self.setProperty != None :
+            newlistVal = Observation._majList(self.setProperty, listVal, name)
+            self.ilist.setidx[self.ilist.idxname.index(ES.prp_classES)] = newlistVal
+        elif axename == ES.res_classES and self.setResult != None :
+            newlistVal = Observation._majList(self.setResult, listVal, name)
+            self.ilist.extval = newlistVal
+
+        '''if ValueClass == DatationValue and self.setDatation != None :
             newlistVal = Observation._majList(self.setDatation, listVal, name)
             self.ilist.setidx[self.ilist.idxname.index(ES.dat_classES)] = newlistVal
         elif ValueClass == LocationValue and self.setLocation != None :
@@ -816,11 +841,11 @@ class Observation :
         elif ValueClass == PropertyValue and self.setProperty != None :
             newlistVal = Observation._majList(self.setProperty, listVal, name)
             self.ilist.setidx[self.ilist.idxname.index(ES.prp_classES)] = newlistVal
-        elif ValueClass == ResultValue and self.setResult != None :
+        elif ValueClass == ReesultValue and self.setResult != None :
             newlistVal = Observation._majList(self.setResult, listVal, name)
-            self.ilist.extval = newlistVal
+            self.ilist.extval = newlistVal'''
 
-    def majValue(self, esValue, newEsValue, equal="full"):
+    def majValue(self, esValue, newEsValue, name, equal="full"):
         '''
         Update the value of an existing `ES.ESValue` by a new `ES.ESValue`
 
@@ -828,17 +853,25 @@ class Observation :
 
         - **esValue** : ESValue to update
         - **newEsValue** : new ESValue
+        - **name** : index or result name
         - **equal** : criteria used to compare ESValue ('full', 'name', 'value')
 
         *Returns*
 
         - **Int** : index in the ESSet valueList.  '''
-        index = self.indexLoc(esValue)[equal]
+        index = self.indexLoc(esValue, name)[equal]
+        if   name == ES.prp_classES:     setClass = self.setProperty
+        elif name == ES.loc_classES:     setClass = self.setLocation
+        elif name == ES.dat_classES:     setClass = self.setDatation
+        elif name == self.ilist.valname: setClass = self.setResult
+        else : setClass = None
+        
+        '''index = self.indexLoc(esValue)[equal]
         if   type(esValue) == PropertyValue : setClass = self.setProperty
         elif type(esValue) == LocationValue : setClass = self.setLocation
         elif type(esValue) == DatationValue : setClass = self.setDatation
-        elif type(esValue) == ResultValue   : setClass = self.setResult
-        else : setClass = None
+        elif type(esValue) == ReesultValue   : setClass = self.setResult
+        else : setClass = None'''
         if  setClass != None and index != None: setClass[index].setValue(newEsValue)
         return index
 
@@ -962,7 +995,7 @@ class Observation :
         - **dat**  : boolean (default True) - Display value for `ES.ESValue.DatationValue`
         - **loc**  : boolean (default True) - Display value for `ES.ESValue.LocationValue`
         - **prp**  : boolean (default True) - Display value for `ES.ESValue.PropertyValue`
-        - **res**  : boolean (default True) - Display value for `ES.ESValue.ResultValue`
+        - **res**  : boolean (default True) - Display value for Result `ES.ESValue`
         - **lenres** : int (default 0) - Number of raws (all if 0)
 
         *Returns*
@@ -1032,7 +1065,7 @@ class Observation :
 
         - **encoded**   : boolean - choice for return format (string/bytes if True, dict else)
         - **encode_format**  : string - choice for return format (bson, json, cbor)
-        - **json_res_index** : Boolean - include index for ResultValue
+        - **json_res_index** : Boolean - include index for Result
         - **json_param**     : Boolean - include ESObs Parameter
         - **json_info**      : Boolean - include ESObs Information with all information
         - **json_info_type** : Boolean - include in ESObs Information the type of ESObs
@@ -1098,7 +1131,7 @@ class Observation :
         - **info** : Boolean (default False) - Generate a specific Coords with Observation characteristics.
         - **ind** : String (default 'axe') - 'axe' only independant axes, 'all' : all the axes, 'flat' : one dimension
         - **fillvalue** : Object (default '?') used to complete result
-        - **func** : String (default function identity) - Name of the function applied to each `ES.ESValue.ResultValue`
+        - **func** : String (default function identity) - Name of the function applied to each Result `ES.ESValue`
         - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
         - **name** : String (default 'Observation') - Name of the xArray
         - **maxname** : String (default 20) - maximum length for string
@@ -1120,9 +1153,9 @@ class Observation :
         coord = self._xCoord(xList, attrs, ilf.idxref, numeric)
         dims = [ES.vName[ilf.idxname[ax]] for ax in ilf.axes]
         shape = [ilf.idxlen[axe] for axe in ilf.axes]
-        if numeric : data = ilf._tonumpy(ilf.extval, func = ResultValue.to_float).reshape(shape)
+        if numeric : data = ilf._tonumpy(ilf.extval, func = ESValue.to_float).reshape(shape)
         else : data = ilf._tonumpy(ilf.extval, func=func, **kwargs).reshape(shape)
-        #if numeric : data = ilf._tonumpy(ilf.extval, func = ResultValue.to_float).reshape(ilf.axeslen)
+        #if numeric : data = ilf._tonumpy(ilf.extval, func = ReesultValue.to_float).reshape(ilf.axeslen)
         #else : data = ilf._tonumpy(ilf.extval, func=func, **kwargs).reshape(ilf.axeslen)
         if not info : return xr.DataArray(data, coord, dims, name=name)
         else : return xr.DataArray(data, coord, dims, attrs=attrs['info'], name=name)
@@ -1217,7 +1250,7 @@ class Observation :
 
     def voxel(self, sort=False):
         '''
-        Visualize `ES.ESValue.ResultValue` in a cube with voxels.
+        Visualize Result `ES.ESValue` in a cube with voxels.
 
         *Parameters*
 
@@ -1231,7 +1264,8 @@ class Observation :
         obc = copy.deepcopy(self)
         if sort : obc.sort()
         obc.ilist.full()
-        obx = obc.to_xarray(numeric = False, func=ResultValue.isNotNull)
+        #obx = obc.to_xarray(numeric = False, func=ReesultValue.isNotNull)
+        obx = obc.to_xarray(numeric = False, func=ESValue.isNotNull)
         obp = obx #>=0
         obp.set_index(loc='locran', dat='datran', prp='prpran')
         ax = plt.figure().add_subplot(projection='3d')
@@ -1360,7 +1394,7 @@ class Observation :
             dic = {}
             for i in range(code_ES):
                 dic[struct.unpack('<B',byt[2*i+1:2*i+2])[0]] = struct.unpack('<B',byt[2*i+2:2*i+3])[0]
-            return (2 * code_ES + 1, dic, ES.idxref, True)
+            return (2 * code_ES + 1, dic, ES.idxref,    True)
         nameES  = code_ES in ES.namevalue
         mini    = code_ES in ES.minivalue
         idx = nval = 1
@@ -1370,7 +1404,7 @@ class Observation :
         if code_el in [ES.codeb[ES.res_classES], ES.codeb[ES.res_value]]:
             code_el = ES.codeb[ES.res_classES]
         for i in range(nval):
-            esVal = _EsClassValue[ES.invcodeb[code_el]]()
+            esVal = _classval()[ES.invcodeb[code_el]]()
             if nameES and mini: 
                 n = esVal._from_strBytes(byt[idx:idx+ES.miniStr], simple=True)
             elif nameES and not mini: 
@@ -1581,3 +1615,15 @@ class Observation :
 
 class ObservationError(Exception) :
     pass
+
+'''_classValue: dict = {        
+        ES.obs_clsName: Observation,
+        ES.dat_clsName: DatationValue,
+        ES.loc_clsName: LocationValue,
+        ES.prp_clsName: PropertyValue,
+        ES.ext_clsName: ExternValue,
+        ES.nam_clsName: NamedValue,
+        ES.ili_clsName: Ilist,
+        #ES.coo_clsName: coordinate,
+        ES.tim_clsName: datetime.datetime,
+        ES.slo_clsName: TimeSlot}        '''                             

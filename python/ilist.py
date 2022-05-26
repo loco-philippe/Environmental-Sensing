@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#%% docstring
 """
 Created on Sun Jan  2 18:30:14 2022
 
@@ -253,6 +254,7 @@ The graph below shows the size difference between simple list and indexed list.
 
 --- 
 """
+#%% declarations
 from itertools import product
 from copy import copy, deepcopy
 import datetime, cbor2
@@ -264,12 +266,17 @@ import pandas as pd
 import xarray
 #from bson import decode, encode
 import bson
-from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue
+#import ESValue
+from ESValue import LocationValue, DatationValue, PropertyValue, NamedValue #, ReesultValue
+from ESValue import ESValue, ExternValue
 import math
 from collections import Counter
-from ESconstante import ES
-
+from ESconstante import ES, _classval, _classESval
+from timeslot import TimeSlot
+#import ESObservation
+#from ESObservation import _classValue
 #from time import time
+#from ESObservation import Observation
 
 def identity(*args, **kwargs):
     '''return the same value as args or kwargs'''
@@ -280,9 +287,12 @@ def identity(*args, **kwargs):
 class IlistEncoder(json.JSONEncoder):
     """add a new json encoder for Ilist"""
     def default(self, o) :
-        if isinstance(o, datetime.datetime) : return o.isoformat()
+        if isinstance(o, datetime.datetime): return o.isoformat()
         option = {'encoded': False, 'encode_format': 'json'}
-        try : return o.json(**option)
+        if isinstance(o, (Ilist, TimeSlot)): return o.json(**option)
+        #if isinstance(o, Observation): return o.to_json(**option)
+        if issubclass(o.__class__, ESValue): return o.json(**option)
+        try : return o.to_json(**option)
         except :
             try : return o.__to_json__()
             except : return json.JSONEncoder.default(self, o)
@@ -417,7 +427,18 @@ class Ilist:
     __slots__ = 'extval', 'iidx', 'setidx', 'valname', 'idxname'
     _c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
     _c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
-
+    _castfunc = {'datvalue':        DatationValue,
+                 'locvalue':        LocationValue,
+                 'prpvalue':        PropertyValue,
+                 'namvalue':        NamedValue,
+                 'extvalue':        ExternValue,
+                 'slot':            TimeSlot,
+                 #'ilist':           Ilist.from_obj,
+                 #'observation':     Observation,
+                 'datetime':        datetime.datetime.fromisoformat,
+                 'coordinates':     LocationValue._gshape}
+    _invcastfunc = {val:key for key,val in _castfunc.items()}
+    
 #%% constructor
     @classmethod     # !!! class methods
     def Iidic(cls, dictvaliidx, dictsetidx, order=[], idxref=[], defaultidx=True):
@@ -560,7 +581,7 @@ class Ilist:
         - **extval** : list (default []) - indexed list (see data model)
         - **setidx** :  list (default []) - external different values of index (see data model)
         - **iidx** :  list (default [])  - integer value of index (see data model)
-        - **valname** : string (default 'value') - name of indexed list (see data model)
+        - **valname** : string (default 'default value') - name of indexed list (see data model)
         - **idxname** : list of string (default []) - name of index list (see data model)
         - **defaultidx** : boolean (default True) - If True, a generic index
         is generated if no index is defined
@@ -581,15 +602,36 @@ class Ilist:
                                                     extvalue = [True for idx in iindex[0]]
                                                     valname = 'default value'
         else :                                      extvalue = extval
+        idxnamedef = ['idx' + str(i) for i in range(max(len(iindex), len(setindex)))]
+        if type(idxname) == list :
+            for i in range(len(idxname)) :
+                if type(idxname[i]) == str : idxnamedef[i] = idxname[i]
+        
+        
+        #!!!!
+        #print(idxnamedef, setidx)
+        for i in range(len(setidx)):
+            setidx[i] = Ilist._castobj(idxnamedef[i], setidx[i])
+        extvalue = Ilist._castobj(valname, extvalue)
+
+        '''for classES in ES.esObsClass[0:3] :
+            if classES in idxname :
+                setindex[idxname.index(classES)] =  \
+                    _EsClassValue[classES].cast(setindex[idxname.index(classES)])
+        if ES.res_classES == valname :
+            extvalue = ReesultValue.cast(extvalue)
+        '''
         self.extval  = extvalue
         self.iidx    = iindex
         self.setidx  = setindex
         self.valname = valname
-        self.idxname = ['idx' + str(i) for i in range(max(len(iindex), len(setindex)))]
+        self.idxname = idxnamedef
+        '''self.idxname = ['idx' + str(i) for i in range(max(len(iindex), len(setindex)))]
         if type(idxname) == list :
             for i in range(len(idxname)) :
-                if type(idxname[i]) == str : self.idxname[i] = idxname[i]
+                if type(idxname[i]) == str : self.idxname[i] = idxname[i]'''
 
+        
     @staticmethod
     def _initdict(dictvaliidx, dictsetidx, order=[], idxref=[]):
         ''' generate extval, setidx, iidx, valname and idxname'''
@@ -656,18 +698,36 @@ class Ilist:
 
 #%% special
     def __repr__(self):
-        ''' return ival and iidx'''
-        texLis = ''
-        for idx in self.iidx : texLis += '\n' + json.dumps(idx)
-        return json.dumps(self.ival) + '\n' + texLis
+        return self.__class__.__name__ + '[' + str(len(self)) + ', ' + str(self.lenidx) + ']'
 
-    def __str__(self):
+    def _stri(self):
+        ''' return ival and iidx'''
+        texLis = json.dumps(self.ival) + '\n'
+        for idx in self.iidx : texLis += '\n' + json.dumps(idx)
+        print(texLis)
+
+    def _stre(self):
         ''' return valname, extval, idxname and extidx'''
-        texLis = ''
-        option = {'encoded': True, 'encode_format': 'json'}
+        option = {'encoded': False, 'encode_format': 'json', 'typevalue': True}
+        texLis = json.dumps({self.valname: [self._json(val, **option) for val in self.extval]},
+                            cls=IlistEncoder)+ '\n'
         for (idx, nam) in zip(self.extidx, self.idxname) :
+            option |= {'typevalue': not nam in ES.esObsClass}
+            texLis += '\n' + json.dumps({nam: [self._json(i, **option) for i in idx]}, 
+                                        cls=IlistEncoder)
+        return texLis
+   
+    def __str__(self):
+        texlis = self.valname + ' : ' + self.extval.__repr__() + '\n'
+        for (idx, nam) in zip(self.extidx, self.idxname):
+            texlis += '\n' + nam + ' : ' + idx.__repr__()
+        return texlis
+        """option = {'encoded': True, 'encode_format': 'json'}
+        for (idx, nam) in zip(self.extidx, self.idxname) :
+        #    texLis += '\n' + nam + ' : ' + str(idx)
+        #return self.valname + ' : ' + str(self.extval) + '\n' + texLis
             texLis += '\n' + nam + ' : ' + self._json(idx, **option)
-        return self.valname + ' : ' + self._json(self.extval, **option) + '\n' + texLis
+        return self.valname + ' : ' + self._json(self.extval, **option) + '\n' + texLis"""
 
     def __eq__(self, other):
         ''' equal if extval and extidx are equal'''
@@ -1095,7 +1155,7 @@ class Ilist:
         except : return None
 
     @classmethod
-    def from_obj(cls, bs):
+    def from_obj(cls, bs=None):
         '''
         Generate an Ilist Object from a bytes, json or dict value
 
@@ -1104,6 +1164,7 @@ class Ilist:
         - **bs** : bytes or string data to convert
 
         *Returns* : Ilist '''
+        if not bs: bs = {} 
         setidx = []
         extval = []
         if isinstance(bs, bytes):
@@ -1121,6 +1182,7 @@ class Ilist:
         if 'order' in dic and len(dic['order'])>0: 
             idxname = dic['order']
             setidx = list(range(len(idxname)))
+            setidx[0] = []
         else: 
             idxname = []
             setidx = []
@@ -1156,6 +1218,7 @@ class Ilist:
                 iidxref[max(keyn, valn)] = min(keyn, valn)
             iidx = cls._initiidx(len(extval), idxlen, iidxref, 
                                  list(range(len(idxname))), defaultidx=True)
+            #print(extval, setidx, iidx, valname, idxname)
             return cls(extval, setidx, iidx, valname, idxname)
 
     """@classmethod
@@ -1408,7 +1471,7 @@ class Ilist:
             raise IlistError('index not found')
         return self.extval[ival]
 
-    def merge(self, valname='merge', fillvalue=None):
+    def merge(self, valname='merge', fillvalue=math.nan):
         '''
         Merge replaces Ilist objects included in extval data into its constituents.
 
@@ -1747,7 +1810,7 @@ class Ilist:
         *Returns* : string, bytes or dict'''
         option = {'encoded': False, 'encode_format': 'json',  'order': [],
                   'json_res_index':False, 'fast': False, 'codif': {}} | kwargs
-        option2 = option | {'encoded': False}
+        option2 = option | {'encoded': False, 'typevalue': False}
         optidxref = self.complete and not option['json_res_index']
         nulres = self.valname == 'default value' or not self.extval
         #print('optidxref nulres ', optidxref, nulres)
@@ -1766,8 +1829,11 @@ class Ilist:
             if not nulres: js[ils.valname] = ils.extval
         else:
             for i in range(len(ils.setidx)):
-                if ils.idxname[i] != 'default index': js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
-                #js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
+                if ils.idxname[i] != 'default index': 
+                    option2 |= {'typevalue': not ils.idxname[i] in ES.esObsClass}
+                    js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
+                    #js[ils.idxname[i]] = [self._json(idx, **option2) for idx in ils.setidx[i]]
+            option2 |= {'typevalue': False}
             if not nulres: 
                 js[ils.valname] = [self._json(ils.extval[i], **option2) for i in range(len(ils))]
         if optidxref:
@@ -1796,7 +1862,7 @@ class Ilist:
         return js2
 
     def to_xarray(self, info=False, axes=[], dimmax=-1, fillvalue='?', func=None, 
-                  ifunc=[], name='Ilist', **kwargs):
+                  ifunc=[], name='', **kwargs):
         '''
         Complete the Ilist and generate a Xarray DataArray with the dimension define by ind.
 
@@ -1810,12 +1876,13 @@ class Ilist:
         - **func** : function (default none) - function to apply to extval before export
         - **ifunc** : list of function (default []) - function to apply to
         extidx before export
-        - **name** : string (default 'Ilist') - DataArray name
+        - **name** : string (default valname) - DataArray name
         - **kwargs** : parameter for func and ifunc
 
         *Returns* : none '''
         if not self.consistent : raise IlistError("Ilist not consistent")
         lenidx = self.lenidx
+        idxunique = self.idxunique
         if axes==[] : 
             axe = self.axesmin
             coup = len(axe) - dimmax + 1
@@ -1830,8 +1897,13 @@ class Ilist:
         dims = [ilf.idxname[ax] for ax in axe]
         data = ilf._tonumpy(ilf.extval, func=func,
                             **kwargs).reshape([ilf.idxlen[idx] for idx in axe])
-        if info : return xarray.DataArray(data, coord, dims, attrs=ilf._dict(), name=name)
-        return xarray.DataArray(data, coord, dims, name=name)
+        if not name: name = self.valname
+        attrs={}
+        for i in range(lenidx):
+            if idxunique[i]: attrs[self.idxname[i]] = self.setidx[i][0]
+        if info: attrs |= ilf._dict()
+        #if info : return xarray.DataArray(data, coord, dims, attrs=ilf._dict(), name=name)
+        return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
 
     def unconsistent(self):
         ''' return a key/value dict with the number of occurences (value) for each
@@ -1921,6 +1993,32 @@ class Ilist:
             else : return [-1, -1]
         raise IlistError("dtype : " + dtype + " inconsistent with data")
 
+    @staticmethod
+    def _castobj(name, index):
+        if not index: return index
+        #if name in ES.esObsClass[0:3]: return _EsClassValue[name].cast(index)
+        if name in ES.esObsClass[0:3]: return _classval()[name].cast(index)
+        if name != ES.res_classES and name[0:2] != 'ES': 
+            idx = copy(index)
+            for i in range(len(idx)):
+                if ESValue.valClassName(idx[i]) != ES.nam_clsName and \
+                idx[i].__class__.__name__ not in _classval(): 
+                    idx[i] = _classval()[ESValue.valClassName(idx[i])](idx[i])            
+        else:
+            idx = copy(index)
+            for i in range(len(idx)):
+                if idx[i].__class__.__name__ not in _classval(): 
+                    idx[i] = _classESval()[ESValue.valClassName(idx[i])](idx[i])            
+        #for iidx in idx:
+        #    if iidx.__class__.__name__ not in _classValue: 
+        #        iidx = _classValue[ESValue.valClassName(iidx)](iidx)            
+            
+        '''for i in range(len(idx)):
+            if isinstance(idx[i], dict) and len(idx[i]) == 1 and \
+            list(idx[i].keys())[0] in Ilist._castfunc:
+                idx[i] = Ilist._castfunc[list(idx[i].keys())[0]](list(idx[i].values())[0])'''
+        return idx
+            
     def _checkidxlist(self, listidx, idx):
         ''' check if listidx and idx are consistent and return a list for each'''
         # idx=-1 -> val
@@ -2131,15 +2229,27 @@ class Ilist:
 
     @staticmethod
     def _json(val, **option):
-        '''return the json format of val (if function json() or to_json() exists'''
+        '''return the dict format of val (if function json() or to_json() exists)'''
+        if isinstance(val, (str, int, float, bool, tuple, list, type(None), bytes)): 
+            return val
+        if isinstance(val, datetime.datetime): 
+            return {ES.datetime: val}
+        if isinstance(val, tuple(Ilist._invcastfunc.keys())[0:5]):      #ESValue
+            if not option['typevalue']: return val.json(**option)
+            else: return {Ilist._invcastfunc[val.__class__]: val.json(**option)} 
+        if isinstance(val, Ilist): return {ES.ili_valName: val.json(**option)}
+        if val.__class__.__name__ == 'Observation': return {ES.obs_valName: val.to_json(**option)}
+        """
         try :
-            if option['encoded'] and option['encode_format'] == 'json': return json.dumps(val, cls=IlistEncoder)
-            if option['encoded'] and option['encode_format'] == 'bson': return bson.encode(val)
-            if isinstance(val, (str, int, float, bool, tuple, list, datetime.datetime, type(None), bytes)) : return val
-            else : return val.json(**option)
+            #if option['encoded'] and option['encode_format'] == 'json': return json.dumps(val, cls=IlistEncoder)
+            #if option['encoded'] and option['encode_format'] == 'bson': return bson.encode(val)
+            if isinstance(val, (str, int, float, bool, tuple, list, datetime.datetime,
+                                type(None), bytes)) : return val
+            #return val
+            else: return val.json(**option) #ESValue, Ilist
         except:
             try     : return val.json(**option)
-            except  : return val.to_json(**option)
+            except  : return val.to_json(**option) #Observation"""
 
     @staticmethod
     def _list(idx): return list(map(list, idx))
@@ -2251,12 +2361,6 @@ class Ilist:
         return list(map(list, setext))'''
 
     @staticmethod
-    def _transpose(idx):
-        if type(idx) != list : raise IlistError('index not transposable')
-        if idx == [] : return []
-        return [[ix[ind] for ix in idx] for ind in range(len(idx[0]))]
-
-    @staticmethod
     def _tuple(idx): 
         return [val if not isinstance(val, list) else tuple(val) for val in idx]
     #def _tuple(idx): return list(map(tuple, idx))
@@ -2314,3 +2418,15 @@ class Ilist:
 class IlistError(Exception):
     ''' Ilist Exception'''
     #pass
+
+'''_classValue: dict = {        
+        #ES.obs_clsName: Observation,
+        ES.dat_clsName: DatationValue,
+        ES.loc_clsName: LocationValue,
+        ES.prp_clsName: PropertyValue,
+        ES.ext_clsName: ExternValue,
+        ES.nam_clsName: NamedValue,
+        ES.ili_clsName: Ilist,
+        #ES.coo_clsName: coordinate,
+        ES.tim_clsName: datetime.datetime,
+        ES.slo_clsName: TimeSlot}   '''
