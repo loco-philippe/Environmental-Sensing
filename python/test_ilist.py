@@ -352,6 +352,23 @@ class Test_ilist(unittest.TestCase):
          [20,  10,  10,  10,  10,  20], [200, 200, 300, 200, 300, 300]] )
         il.derived_to_coupled(1,0)
         self.assertTrue(il.complete)
+
+    def test_axes(self):
+        l = [[0, 2, 0, 2], [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'],[12, 12, 15, 30]]
+        il=Ilist.Iext(f,l)
+        self.assertEqual(il.axesmin, [0, 1, 5])
+        l = [[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'],[12, 20, 20, 12]]
+        il=Ilist.Iext(f,l)
+        self.assertEqual(il.axesmin, [0, 1, 3])
+        il1 = Ilist.Iedic({'notes'     : [10, 11, 12]}, 
+                          {'course'    : ['math', 'english', 'software']})        
+        il2 = Ilist.Iedic({'notes'     : [15, 14, 11]},
+                          {'course'    : ['physic', 'english', 'software'],
+                           'group'     : ['gr1', 'gr1', 'gr2']})
+        il3 = Ilist.Iedic({'list'      : [il1, il2]},
+                          {'name'      : ['philippe white', 'anne white'],
+                           'firstname' : ['philippe', 'anne']})        
+        self.assertEqual(il3.merge().axesmin, [0, 2])
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)

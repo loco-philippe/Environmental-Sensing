@@ -253,8 +253,14 @@ class Es:
             self.ili_valName : self.ili_clsName,
             self.coo_valName : self.coo_clsName,
             self.tim_valName : self.tim_clsName,
-            self.slo_valName : self.slo_clsName}
+            self.slo_valName : self.slo_clsName,
+            self.dat_classES : self.dat_clsName,
+            self.loc_classES : self.loc_clsName,
+            self.prp_classES : self.prp_clsName,
+            self.res_classES : self.ES_clsName,
+            }
         self.valname : Dict = self._inv(self.typeName)
+        self.className : list = list(self.typeName.values())
         
         #%% reserved
         self.reserved: list = [
@@ -494,6 +500,7 @@ class Es:
         self.coo_clsName      = 'coordinate'
         self.tim_clsName      = 'datetime'
         self.slo_clsName      = 'TimeSlot'
+        self.ES_clsName       = 'ESValue'
 
     def _initReferenceValue(self):
     #%% init reference value

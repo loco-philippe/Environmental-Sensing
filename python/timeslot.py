@@ -171,6 +171,26 @@ class TimeSlot:
         '''return a tuple with the start and end dates with isoformat string'''
         return (TimeSlot.form(self.slot[0].start), TimeSlot.form(self.slot[len(self) - 1].end))
 
+    @classmethod
+    def cast(cls, value):
+        '''
+        tranform a value (unique or list) in a list of `TimeSlot`
+
+        *Parameters*
+
+        - **value** : value to transform
+
+        *Returns*
+
+        - **list** : list of `TimeSlot`
+        '''
+        if isinstance(value, list):
+            try :
+                return [cls(val) for val in value]
+            except :
+                return [cls(value)]
+        else : return  [cls(value)]
+
     @property
     def Centroid(self):
         '''return a TimeSlot with the date corresponding to the middle of the duration'''

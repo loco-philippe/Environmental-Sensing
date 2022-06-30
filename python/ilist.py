@@ -255,6 +255,7 @@ The graph below shows the size difference between simple list and indexed list.
 --- 
 """
 #%% declarations
+from collections import Counter
 from itertools import product
 from copy import copy, deepcopy
 import datetime, cbor2
@@ -270,7 +271,6 @@ import bson
 from ESValue import LocationValue, DatationValue, PropertyValue, NamedValue #, ReesultValue
 from ESValue import ESValue, ExternValue
 import math
-from collections import Counter
 from ESconstante import ES, _classval, _classESval
 from timeslot import TimeSlot
 #import ESObservation
@@ -2359,6 +2359,12 @@ class Ilist:
         setext = list(set(ext))
         if setext == [] or not isinstance(setext[0], tuple): return setext
         return list(map(list, setext))'''
+
+    @staticmethod
+    def _transpose(idx):
+        if type(idx) != list : raise IlistError('index not transposable')
+        if idx == [] : return []
+        return [[ix[ind] for ix in idx] for ind in range(len(idx[0]))]
 
     @staticmethod
     def _tuple(idx): 

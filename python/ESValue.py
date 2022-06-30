@@ -114,6 +114,7 @@ class ESValue:
 
     def __eq__(self, other):
         '''equal if value and name are equal'''
+        if not issubclass(other.__class__, ESValue): return False
         if self.EStype != other.EStype: return False
         if self.EStype == 0:            return True
         if self.EStype == 100:          return self.name == other.name
@@ -353,7 +354,7 @@ class ESValue:
             try: dic = json.loads(val)
             except: dic = val  
         else: dic = val
-        if isinstance(dic, (int, float, bool, list, str)): 
+        if isinstance(dic, (int, float, bool, list, str, tuple)): 
             return ES.nam_clsName
         if isinstance(dic, dict) and len(dic) != 1: 
             return ES.nam_clsName
@@ -363,7 +364,8 @@ class ESValue:
             if isinstance(list(dic.values())[0], (int, float, bool, list, str, dict)): 
                 return ES.nam_clsName
             return ESValue.valClassName(list(dic.values())[0])
-        return None
+        return ES.nam_clsName
+        #return None
 
     def vName(self, genName=ES.nullName):
         '''
@@ -1108,101 +1110,7 @@ class ExternValue (ESValue):               # !!! début ResValue
                                     json_info=False, json_res_index=True, json_param=True)
         except : return object.__repr__(self.value)
 
-"""class ResultValue (ESValue):               # !!! début ResValue
-#%% res
-    '''
-    This class represent the Result of an Observation.
-
-    *Attributes (for @property see methods)* :
-
-    - **value** : any kind of object
-    - **name** : String
-
-    The methods defined in this class are :
-
-    *getters*
-
-    - `vSimple`
-
-    *exports - imports*
-
-    - `to_float`
-
-    '''
-    valName     = ES.res_valName
-
-    def __init__(self, val = ES.nullVal, name=ES.nullName):
-        '''
-        Several ResultValue creation modes :
-
-        - ResultValue({name : value})
-        - ResultValue(value)
-        - ResultValue(resval)
-        - ResultValue(value, ind=ind, name=name)
-
-        where 'resval' is a ResultValue(copy), 'value' is a 'result' or ['result', 'ind'],
-        'result' is an Object, 'ind' is a list with three integer and 'name' is a string.
-        '''
-        ESValue.__init__(self, val, name)
-        if self.value != self.nullValue(): self.EStype = 32
-        if self.name != ES.nullName: self.EStype += 100
-
-    def from_bytes(self, byt, forma = ES.nullDict):
-        formaPrp = ES.prop[forma][1]
-        leng = ES.prop[forma][2]
-        dexp = ES.prop[forma][3]
-        bexp = ES.prop[forma][4]        
-        self.__init__(val=struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
-        return leng
-
-    @staticmethod
-    def nullValue() : return ES.nullVal
-
-    def to_bytes(self, forma = ES.nullDict):
-        formaPrp = ES.prop[forma][1]
-        dexp = ES.prop[forma][3]
-        bexp = ES.prop[forma][4]
-        val = self.value * 10**-dexp * 2**-bexp
-        return struct.pack('<' + formaPrp, val)
-    
-    def vSimple(self, string=False) :
-        '''float value'''
-        if string : return str(self.to_float())
-        return self.to_float()
-
-    def _init(self, val = None):
-        try :
-            self.name = val.name
-            self.value = val.value
-        except :
-            if type(val) == dict :
-                self.name, val = list(val.items())[0]
-            if type(val) == str :
-                self.value = val
-            else: self.value = val
-
-    def _jsonValue(self, **option) :
-        '''return a json/bson dict for the value '''
-        if type(self.value) in [int, str, float, bool, list, dict, datetime.datetime, type(None), bytes]:
-            return self.value
-        '''if option['encode_format'] == 'bson':
-            try : return self.value.__to_bytes__(encoded=False)
-            except : raise ESValueError("impossible to apply __to_bytes__ method to object " + str(type(self.value)))
-        '''
-        try: return self.value.to_json(encoded=False, encode_format='json',
-                                    json_info=False, json_res_index=True, json_param=True)
-        except : return object.__repr__(self.value)"""
 
 class ESValueError(Exception):
 #%% ES except
     ''' ESValue Exception'''
-
-"""_EsClassValue: dict = {ES.dat_classES : DatationValue,
-                       ES.loc_classES : LocationValue,
-                       ES.prp_classES : PropertyValue,
-                       #ES.nam_classES : NamedValue,
-                       #ES.ext_classES : ExternValue,
-                       #ES.res_classES : ReesultValue}
-                       ES.res_classES : NamedValue}
-                       #ES.timeslot    : TimeSlot}
-'''dict classES : ESValue class '''"""
