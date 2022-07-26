@@ -14,7 +14,7 @@ def _classval():
         NamedValue, ExternValue
     from timeslot import TimeSlot
     from ESObservation import Observation
-    from ilist import Ilist
+    from ilist3 import Ilist3
     import datetime
     return {ES.obs_clsName: Observation,
             ES.dat_clsName: DatationValue,
@@ -22,14 +22,14 @@ def _classval():
             ES.prp_clsName: PropertyValue,
             ES.ext_clsName: ExternValue,
             ES.nam_clsName: NamedValue,
-            ES.ili_clsName: Ilist,
+            ES.ili_clsName: Ilist3,
             #ES.coo_clsName: coordinate,
             ES.tim_clsName: datetime.datetime,
             ES.slo_clsName: TimeSlot,
             ES.dat_classES: DatationValue,
             ES.loc_classES: LocationValue,
             ES.prp_classES: PropertyValue,
-            ES.res_classES : NamedValue}
+            ES.res_classES: NamedValue}
 
 def _classESval():
     from ESValue import LocationValue, DatationValue, PropertyValue, \
@@ -60,13 +60,17 @@ class Es:
     def __init__(self):
         self._initName()
         self._initReferenceValue()
+        self._initStruct()
         self._initByte()
         #'''Application initialization (boolean)'''
         self.debug = False
+        self._initDefaultValue()
 
+    def _initStruct(self) :
         #%% option initialization (dict)
         self.mOption : Dict = {
-                      "encoded"        : True, # sortie bson/json ou dict
+                      "untyped"             : False, # pas de type dans le json
+                      "encoded"             : True, # sortie bson/json ou dict
                       "encode_format"       : 'json', # sortie bson ou json
                       "json_res_index"      : True, # affiche index
                       "json_prp_name"       : False, # affiche name ou property
@@ -203,31 +207,38 @@ class Es:
         self.ntypevalue: Dict = {
             'null':             0,
             'name':             100,
+            self.dat_classES:   1,      #datationValue
             self.dat_valName:   1,      #datationValue
             'instant':          2,
             'interval':         3,
             'slot':             4,
+            'namedatvalue':     101,
             'nameinstant':      102,
             'nameinterval':     103,
             'nameslot':         104,
+            self.loc_classES:   11,     #locationValue
             self.loc_valName:   11,     #locationValue
             'point':            12,     
             'polygon':          13,
             'multipoint':       14,
             'multipolygon':     15,
+            'namelocvalue':     111,
             'namepoint':        112,
             'namepolygon':      113,
             'namemultipoint':   114,
             'namemultipolygon': 115,
+            self.prp_classES:   21,     #propertyValue
             self.prp_valName:   21,     #propertyValue
             'propertytype':     22,     
             'propertydict':     23,
             'multiproperty':    24,
+            'nameprpvalue':     121,
             'namepropertytype': 122,
             'namepropertydict': 123,
             'namemultiproperty':124,
             self.nam_valName:   31,     #namedValue
             'jsonvalue':        32,     
+            'namevalue':        131,     
             'namejsonvalue':    132,     
             self.ext_valName:   41,     #externValue
             self.ili_valName:   43,
@@ -261,6 +272,16 @@ class Es:
             }
         self.valname : Dict = self._inv(self.typeName)
         self.className : list = list(self.typeName.values())
+
+        self.EStypeName: Dict = {
+            self.dat_valName : self.dat_clsName,
+            self.loc_valName : self.loc_clsName,
+            self.prp_valName : self.prp_clsName,
+            self.ext_valName : self.ext_clsName,
+            self.nam_valName : self.nam_clsName,
+            }
+        self.ESvalName : Dict = self._inv(self.EStypeName)
+        self.ESclassName : list = list(self.EStypeName.values())
         
         #%% reserved
         self.reserved: list = [
@@ -496,15 +517,19 @@ class Es:
         self.prp_clsName      = 'PropertyValue'
         self.ext_clsName      = 'ExternValue'
         self.nam_clsName      = 'NamedValue'
-        self.ili_clsName      = 'Ilist'
+        self.ili_clsName      = 'Ilist3'
         self.coo_clsName      = 'coordinate'
         self.tim_clsName      = 'datetime'
         self.slo_clsName      = 'TimeSlot'
         self.ES_clsName       = 'ESValue'
-
+        
+        self.filter           = '$filter'
+        
     def _initReferenceValue(self):
     #%% init reference value
         ''' Reference value initialization '''
+        self.variable         = -1
+        self.nullparent       = -2
         self.miniStr          = 10
         self.distRef          = [48.87, 2.35] # coordonnées Paris lat/lon
         #self.nullDate         = datetime(1970, 1, 1)
@@ -519,4 +544,13 @@ class Es:
         self.nullVal          = math.nan
         self.nullValues = (self.nullDate, self.nullCoor, self.nullInd, self.nullName,
                            self.nullAtt, self.nullDict, self.nullName, self.nullVal, self.nullPrp)
+        
+    def _initDefaultValue(self):
+    #%% init reference value
+        ''' Default value initialization '''
+        self.def_clsName      = None
+        #self.def_clsName      = self.nam_clsName
+        if self.def_clsName: self.def_dtype = self.valname[self.def_clsName]
+        else: self.def_dtype = None
+
 ES = Es()

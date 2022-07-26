@@ -159,7 +159,9 @@ class TimeSlot:
         '''compare the earliest dates'''
         return self.slot[0] < other.slot[0]
 
-    def __hash__(self): return hash(self.json(True))
+    def __hash__(self): 
+        return sum(hash(interv) for interv in self.slot)
+        #return hash(self.json(True))
  
     @property
     def Bounds(self):
@@ -240,7 +242,7 @@ class TimeSlot:
 
         *Parameters*
         
-        - **encoded** : defaut False - if True return dict, else return json string/bson bytes
+        - **encoded** : defaut False - if False return dict, else return json string/bson bytes
         - **encode_format** : defaut 'json' - return json, bson or cbor format
                 
         *Returns* : string or dict'''
@@ -415,7 +417,9 @@ class TimeInterval:    # !!! interval
         '''compare the earliest dates (start)'''
         return self.start < other.start
 
-    def __hash__(self): return hash(self.json(True))
+    def __hash__(self): 
+        return hash(self.start) + hash(self.end)
+        #return hash(self.json(True))
         
     @property
     def bounds(self): 

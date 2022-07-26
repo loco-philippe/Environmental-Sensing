@@ -24,9 +24,9 @@ from pymongo import MongoClient
 
 
 # couverture tests (True if non passed)----------------------------------------
-simple  = False  # False
+simple  = True  # False
 plot    = True  # True
-mongo   = True  # True
+mongo   = False  # True
 
 # datas-----------------------------------------------------------------------
 def _val(n): return list(i for i in range(n))
