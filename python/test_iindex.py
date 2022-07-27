@@ -9,7 +9,7 @@ The `ES.test_iindex` module contains the unit tests (class unittest) for the
 """
 import unittest
 from iindex import Iindex, util
-from ilist3 import Ilist3
+from ilist import Ilist
 from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 from test_observation import dat3, loc3, prop2, _res
@@ -57,12 +57,12 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx == idx2 == idx3)
         self.assertTrue(isinstance(idx.codec[0], DatationValue))
         self.assertTrue(idx.values[3] == DatationValue(name='ty'))
-        idx = Iindex(['er', 'rt', Ilist3()], 'result', [0,1,2,2])
-        idx2 = Iindex.Iext(['er', 'rt', Ilist3(), Ilist3()], 'result', fast=False)
-        idx3 = Iindex.Idic({'result': ['er', 'rt', Ilist3(), Ilist3()]}, fast=False)
+        idx = Iindex(['er', 'rt', Ilist()], 'result', [0,1,2,2])
+        idx2 = Iindex.Iext(['er', 'rt', Ilist(), Ilist()], 'result', fast=False)
+        idx3 = Iindex.Idic({'result': ['er', 'rt', Ilist(), Ilist()]}, fast=False)
         self.assertTrue(idx == idx2 == idx3)
         if ES.def_clsName: self.assertTrue(isinstance(idx.codec[0], NamedValue))
-        self.assertTrue(idx.values[3] == Ilist3())
+        self.assertTrue(idx.values[3] == Ilist())
         self.assertTrue(Iindex.from_obj([1,2,3])[1] == Iindex([1,2,3]))
         self.assertTrue(Iindex(codec=[True], lendefault=3).val == [True, True, True])
     
@@ -119,11 +119,9 @@ class Test_iindex(unittest.TestCase):
         idx.reorder(order, fast=True)
         self.assertEqual(idx.val, [2, tlis, 'er', 'er'])
         idx.sort(fast=True)
-        if ES.def_clsName: self.assertEqual(idx.val, ['er', 'er', 2, tlis]) #!!! ko si pas namedvalue       
-        else:              self.assertEqual(idx.val, [tlis, 2, 'er', 'er'])      
+        self.assertEqual(idx.val, [tlis, 2, 'er', 'er'])      
         idxs = idx.sort(inplace=False, reverse=True, fast=True)
-        if ES.def_clsName: self.assertEqual(idxs.val, [tlis, 2, 'er', 'er'])  #!!! ko si pas namedvalue 
-        else:              self.assertEqual(idxs.val, ['er', 'er', 2, tlis])      
+        self.assertEqual(idxs.val, ['er', 'er', 2, tlis])      
         idx = Iindex.Iext([1,3,3,2,5,3,4]).sort(inplace=False)
         self.assertEqual(idx.val, [1, 2, 3, 3, 3, 4, 5])
         self.assertEqual(idx.cod,  [1, 2, 3, 4, 5])
@@ -288,8 +286,8 @@ class Test_iindex(unittest.TestCase):
                ['{"namvalue":{"val":21}}',   None,              str],
                ['{"locvalue":{"val":21}}',   'LocationValue',   LocationValue],
                ['{"observation":{"val":21}}','Observation',     Observation],
-               [Observation(),               'Observation',     Observation],
-               [Observation(),               None,              Observation],
+               #[Observation(),               'Observation',     Observation],
+               #[Observation(),               None,              Observation],
                [datetime.datetime(2020,1,1), 'DatationValue',   DatationValue],
                [datetime.datetime(2020,1,1), 'TimeSlot',        TimeSlot],
                [datetime.datetime(2020,1,1), None,              datetime.datetime]]

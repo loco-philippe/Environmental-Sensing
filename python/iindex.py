@@ -15,7 +15,7 @@ import re
 import numpy as np
 from ESValue import LocationValue, DatationValue, PropertyValue, NamedValue
 from ESValue import ESValue, ExternValue
-from ilist import Ilist, IlistEncoder, CborDecoder
+#from ilist import CborDecoder
 import math
 from time import time
 from ESconstante import ES, _classval
@@ -25,6 +25,33 @@ def identity(*args, **kwargs):
     if len(args) > 0 : return args[0]
     if len(kwargs) > 0 : return kwargs[list(kwargs.keys())[0]]
     return None
+
+class CborDecoder(json.JSONDecoder):
+    def __init__(self):
+        json.JSONDecoder.__init__(self,
+        object_hook=self.codecbor)
+        
+    def codecbor(self, dic):
+        dic2 = {}
+        for k, v in dic.items(): 
+            try: k2 = int(k)
+            except: k2 = k
+            dic2[k2] = v 
+        return dic2
+    
+class IindexEncoder(json.JSONEncoder):
+    """add a new json encoder for Ilist"""
+    def default(self, o) :
+        if isinstance(o, datetime.datetime): return o.isoformat()
+        option = {'encoded': False, 'encode_format': 'json'}
+        if o.__class__.__name__ in ('Ilist', 'TimeSlot'): return o.json(**option)
+        #if isinstance(o, (Ilist, TimeSlot)): return o.json(**option)
+        #if isinstance(o, Observation): return o.to_json(**option)
+        if issubclass(o.__class__, ESValue): return o.json(**option)
+        try : return o.to_json(**option)
+        except :
+            try : return o.__to_json__()
+            except : return json.JSONEncoder.default(self, o)
 
 class Iindex:
 #%% intro
@@ -624,11 +651,13 @@ class Iindex:
         
         *Returns* : None'''
         if inplace:
+            #self.reindex(codec=sorted(self.codec, reverse=reverse, key=ESValue.jsonstr), fast=fast)
             self.reindex(codec=sorted(self.codec, reverse=reverse, key=str), fast=fast)
             self.keys.sort()
             return None
         oldcodec    = self.codec
         codec       = sorted(oldcodec, reverse=reverse, key=str)
+        #codec       = sorted(oldcodec, reverse=reverse, key=ESValue.jsonstr)
         return Iindex(name=self.name, codec=codec,
                       keys=sorted(util.reindex(self.keys, oldcodec, codec, fast=fast)),
                       fast=fast)
@@ -936,7 +965,7 @@ class util:
         elif keyslist:                  js.append(keyslist)      
         if len(js) == 1:                js = js[0]
         if option['encoded'] and option['encode_format'] == 'json': 
-            return json.dumps( js, cls=IlistEncoder)
+            return json.dumps( js, cls=IindexEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor': 
             return cbor2.dumps(js, datetime_as_timestamp=True, 
                                timezone=datetime.timezone.utc, canonical=True)
@@ -1008,7 +1037,7 @@ class util:
         if isinstance(val, tuple(Iindex._invcastfunc.keys())[0:5]):      #ESValue
             if not option['typevalue']: return val.json(**option)
             else: return {Iindex._invcastfunc[val.__class__]: val.json(**option)} 
-        if isinstance(val, Ilist): return {ES.ili_valName: val.json(**option)}
+        if val.__class__.__name__ == 'Ilist': return {ES.ili_valName: val.json(**option)}
         if val.__class__.__name__ == 'Observation': return {ES.obs_valName: val.to_json(**option)}
 
 
@@ -1122,6 +1151,7 @@ class util:
     def tuple(idx):
         '''transform a list of list in a list of tuple'''
         return [val if not isinstance(val, list) else tuple(val) for val in idx]
+
 
 class IindexError(Exception):
     ''' Ilist Exception'''

@@ -14,7 +14,7 @@ def _classval():
         NamedValue, ExternValue
     from timeslot import TimeSlot
     from ESObservation import Observation
-    from ilist3 import Ilist3
+    from ilist import Ilist
     import datetime
     return {ES.obs_clsName: Observation,
             ES.dat_clsName: DatationValue,
@@ -22,7 +22,7 @@ def _classval():
             ES.prp_clsName: PropertyValue,
             ES.ext_clsName: ExternValue,
             ES.nam_clsName: NamedValue,
-            ES.ili_clsName: Ilist3,
+            ES.ili_clsName: Ilist,
             #ES.coo_clsName: coordinate,
             ES.tim_clsName: datetime.datetime,
             ES.slo_clsName: TimeSlot,
@@ -517,7 +517,7 @@ class Es:
         self.prp_clsName      = 'PropertyValue'
         self.ext_clsName      = 'ExternValue'
         self.nam_clsName      = 'NamedValue'
-        self.ili_clsName      = 'Ilist3'
+        self.ili_clsName      = 'Ilist'
         self.coo_clsName      = 'coordinate'
         self.tim_clsName      = 'datetime'
         self.slo_clsName      = 'TimeSlot'
