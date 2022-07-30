@@ -33,8 +33,8 @@ class Test_iindex(unittest.TestCase):
     def test_init(self) :
 
         idx = Iindex(codec=['er', 2, lis], name='test', keys=[0,1,2,1])
-        idx2 = Iindex.Iext(['er', 2, lis, 2], 'test', fast=True)
-        idx3 = Iindex.Idic({'test': ['er', 2, lis, 2]}, fast=True)
+        idx2 = Iindex.Iext(['er', 2, lis, 2], 'test')
+        idx3 = Iindex.Idic({'test': ['er', 2, lis, 2]})
         idx4 = Iindex.Idic({'test': ['er', 2, lis, 2]}, fullcodec=True)
         idx5 = Iindex.Iext(['er', 2, lis, 2], 'test', fullcodec=True)
         self.assertTrue(Iindex(idx) == Iindex.Iext(idx) == Iindex.Idic(idx) == idx)
@@ -52,14 +52,14 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx.name == 'default index' and idx.cod == [0,1,2] and idx.keys == [0,1,2])
         self.assertTrue(idx.val == [0,1,2])
         idx = Iindex(['er', 'rt', 'ty'], 'datation', [0,1,2,2])
-        idx2 = Iindex.Iext(['er', 'rt', 'ty', 'ty'], 'datation', fast=True)
-        idx3 = Iindex.Idic({'datation': ['er', 'rt', 'ty', 'ty']}, fast=True)
+        idx2 = Iindex.Iext(['er', 'rt', 'ty', 'ty'], 'datation')
+        idx3 = Iindex.Idic({'datation': ['er', 'rt', 'ty', 'ty']})
         self.assertTrue(idx == idx2 == idx3)
         self.assertTrue(isinstance(idx.codec[0], DatationValue))
         self.assertTrue(idx.values[3] == DatationValue(name='ty'))
         idx = Iindex(['er', 'rt', Ilist()], 'result', [0,1,2,2])
-        idx2 = Iindex.Iext(['er', 'rt', Ilist(), Ilist()], 'result', fast=False)
-        idx3 = Iindex.Idic({'result': ['er', 'rt', Ilist(), Ilist()]}, fast=False)
+        idx2 = Iindex.Iext(['er', 'rt', Ilist(), Ilist()], 'result')
+        idx3 = Iindex.Idic({'result': ['er', 'rt', Ilist(), Ilist()]})
         self.assertTrue(idx == idx2 == idx3)
         if ES.def_clsName: self.assertTrue(isinstance(idx.codec[0], NamedValue))
         self.assertTrue(idx.values[3] == Ilist())
@@ -67,10 +67,10 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(Iindex(codec=[True], lendefault=3).val == [True, True, True])
     
     def test_infos(self) :
-        idx = Iindex.Iext(['er', 2, lis], fast=True)
+        idx = Iindex.Iext(['er', 2, lis])
         self.assertTrue(idx.infos == {'lencodec': 3, 'typeindex': 'complete',
          'rate': 0.0, 'disttomin': 2, 'disttomax': 0})
-        #idx2 = Iindex.Iext(['er', Ilist(), Ilist()], 'result', fast=False) #!!! à remettre
+        #idx2 = Iindex.Iext(['er', Ilist(), Ilist()], 'result') #!!! à remettre
         #self.assertTrue(idx2.infos == {'lencodec': 2, 'typeindex': 'mixte',
         # 'rate': 0.5, 'disttomin': 1, 'disttomax': 1})
         idx2 = Iindex()
@@ -78,25 +78,25 @@ class Test_iindex(unittest.TestCase):
          'rate': 0.0, 'disttomin': 0, 'disttomax': 0})
         
     def test_append(self) :
-        idx = Iindex.Iext(['er', 2, lis], fast=True)
+        idx = Iindex.Iext(['er', 2, lis])
         self.assertTrue(idx.append(8)==3)
         self.assertTrue(idx.append(8)==3)
         self.assertTrue(idx.append(8, unique=False)==4)
         
     def test_loc_keyval(self):
-        idx = Iindex.Iext(['er', 2, lis], fast=True)
+        idx = Iindex.Iext(['er', 2, lis])
         self.assertTrue(idx.keytoval(idx.valtokey(lis)) == tlis)
         self.assertTrue(idx.isvalue(tlis))
 
     def test_setvalue_setname(self):
-        idx = Iindex.Iext(['er', 2, lis], fast=True)
+        idx = Iindex.Iext(['er', 2, lis])
         idx[1] = 'er'
         self.assertTrue(idx.val == ['er', 'er', tlis])
         idx.setcodecvalue('er', 'ez')
         self.assertTrue(idx.val == ['ez', 'ez', tlis])        
         idx[1] = 3
         self.assertTrue(idx.val == ['ez', 3, tlis])
-        idx.setvalue(0, 'ez', dtype='datvalue', fast=True)
+        idx.setvalue(0, 'ez', dtype='datvalue')
         if ES.def_clsName: self.assertTrue(idx.val == ['ez', 3, tlis])
         self.assertTrue(idx.values[0] == DatationValue(name='ez'))
         idx.setlistvalue([3, (3,4), 'ee'])
@@ -109,18 +109,18 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual([ia[i] for i in ia.recordfromvalue('paul')], ['paul', 'paul'])
 
     def test_reset_reorder_sort(self):
-        idx = Iindex.Iext(['er', 2, 'er', lis], fast=True)
+        idx = Iindex.Iext(['er', 2, 'er', lis])
         cod = copy(idx.codec)
         idx.codec.append('ez')
         #idx.resetkeys()
-        idx.reorder(fast=True)
+        idx.reorder()
         self.assertEqual(cod, idx.codec)
         order=[1,3,0,2]
-        idx.reorder(order, fast=True)
+        idx.reorder(order)
         self.assertEqual(idx.val, [2, tlis, 'er', 'er'])
-        idx.sort(fast=True)
-        self.assertEqual(idx.val, [tlis, 2, 'er', 'er'])      
-        idxs = idx.sort(inplace=False, reverse=True, fast=True)
+        #idx.sort()
+        self.assertEqual(idx.sort().val, [tlis, 2, 'er', 'er'])      
+        idxs = idx.sort(inplace=False, reverse=True)
         self.assertEqual(idxs.val, ['er', 'er', 2, tlis])      
         idx = Iindex.Iext([1,3,3,2,5,3,4]).sort(inplace=False)
         self.assertEqual(idx.val, [1, 2, 3, 3, 3, 4, 5])
@@ -162,13 +162,13 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(ia.iscrossed(ib))
 
     def test_vlist(self):
-        testidx = [Iindex(), Iindex.Iext(['er', 2, 'er', lis], fast=True)]
+        testidx = [Iindex(), Iindex.Iext(['er', 2, 'er', lis])]
         residx  = [[], ['er', '2', 'er', str(tlis)]]
         for idx, res in zip(testidx, residx):
             self.assertEqual(idx.vlist(str), res)
 
     def test_numpy(self):
-        idx = Iindex.Iext(['er', 2, 'er', lis], fast=True)
+        idx = Iindex.Iext(['er', 2, 'er', lis])
         self.assertEqual(len(idx.to_numpy(func=str)), len(idx)) 
 
     def test_coupled_extendvalues(self):
@@ -184,7 +184,7 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual(ib.val, [25, 25, 12, 12, 25, 12])
         self.assertTrue(ib.cod, [25, 12] and ib.isderived(ia))
         
-    def test_crossed(self):
+    '''def test_crossed(self):
         ia = Iindex.Iext(['anne', 'paul', 'anne', 'lea'])
         ib = Iindex.Iext([25,25,12,12])
         Iindex.tocrossed([ia,ib])
@@ -193,14 +193,14 @@ class Test_iindex(unittest.TestCase):
         ib = Iindex.Iext([25,25,12,12])
         ic = Iindex.Iext(['White', 'Grey', 'White', 'Grey'])
         Iindex.tocrossed([ia,ib, ic])
-        self.assertTrue(ib.iscrossed(ia) and ib.iscrossed(ic))
+        self.assertTrue(ib.iscrossed(ia) and ib.iscrossed(ic))'''
 
-    def test_tocodec(self):
+    '''def test_tocodec(self):
         v = [10,10,10,10,30,10,20,20,20]        
         k = [1, 1, 1, 2, 3, 2, 0, 0, 0 ]
-        self.assertEqual(util.tocodec(v, k, True), util.tocodec(v, k, False))
-        self.assertEqual(sorted(util.tocodec(v, fast=True)), 
-                         sorted(util.tocodec(v, fast=False)))
+        self.assertEqual(util.tocodec(v, k), util.tocodec(v, k))
+        self.assertEqual(sorted(util.tocodec(v ), 
+                         sorted(util.tocodec(v)))'''
 
     def test_to_std(self):   
         idx = Iindex.Iext(['d1', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6'])
@@ -294,11 +294,11 @@ class Test_iindex(unittest.TestCase):
         '''for t in lis:
             print(type(util.castobj([t[0]], t[1])[0]))
             self.assertTrue(isinstance(util.castobj([t[0]], t[1])[0], t[2]))'''
-        idx = Iindex.Idic({'datation': ['er', 'rt', 'ty', 'ty']}, fast=True)
+        idx = Iindex.Idic({'datation': ['er', 'rt', 'ty', 'ty']})
         self.assertTrue(isinstance(idx.values[0], DatationValue))
-        idx = Iindex.Idic({'ESdatation': ['er', 'rt', 'ty', 'ty']}, fast=True)
+        idx = Iindex.Idic({'ESdatation': ['er', 'rt', 'ty', 'ty']})
         self.assertTrue(isinstance(idx.values[0], NamedValue))
-        idx = Iindex.Idic({'dates': ['er', 'rt', 'ty', 'ty']}, fast=True)
+        idx = Iindex.Idic({'dates': ['er', 'rt', 'ty', 'ty']})
         if not ES.def_clsName: self.assertTrue(isinstance(idx.values[0], str))
         else: self.assertTrue(isinstance(idx.values[0], NamedValue))
 
@@ -315,7 +315,7 @@ class Test_iindex(unittest.TestCase):
         idx3 = Iindex.from_obj(['property', [PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]])[1]
     
     def test_iadd(self):            
-        idx = Iindex.Iext(['er', 2, lis], fast=True)
+        idx = Iindex.Iext(['er', 2, lis])
         idx2 = idx + idx
         self.assertEqual(idx2.val, idx.val + idx.val)
         self.assertEqual(len(idx2), 2 * len(idx))

@@ -54,9 +54,6 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(NamedValue.from_obj('{"er":2}').json(), '{"er": 2}')
         self.assertEqual(NamedValue(21).json(), '21')
         self.assertEqual(NamedValue(2.1).json(), '2.1')
-        self.assertEqual(NamedValue.from_obj('{"er":2}').EStype, 132)
-        self.assertEqual(NamedValue(22).EStype, 32)
-        self.assertEqual(NamedValue("coucou").EStype, 32)
 
     def test_locationValue(self):
         self.opt = ES.mOption.copy()
@@ -70,11 +67,9 @@ class TestObsUnitaire(unittest.TestCase):
                         LocationValue(name='paris', val=LocationValue._gshape(paris)).name)
         self.assertEqual(LocationValue.Box(LocationValue(paris).bounds).bounds,
                          LocationValue.from_obj({'box':paris}).bounds)
-        self.assertEqual(LocationValue(lyon).EStype, 12)
-        self.assertEqual(LocationValue(pol1).EStype, 13)
-        self.assertEqual(LocationValue.from_obj(pol75).EStype, 113)
-        self.assertEqual(LocationValue(name='pol75').EStype, 100)
-        self.assertEqual(LocationValue(LocationValue.nullValue()).EStype, 0)
+        self.assertEqual(LocationValue.from_obj(pol75).name, '75 Paris')
+        self.assertEqual(LocationValue(name='pol75').simple, ES.nullCoor)
+        self.assertEqual(LocationValue().simple, ES.nullCoor)
         self.assertTrue(LocationValue.from_obj('{"paris":[2,3]}') == LocationValue.from_obj({"paris":[2,3]}))
         
 
@@ -91,12 +86,14 @@ class TestObsUnitaire(unittest.TestCase):
                         DatationValue(name='t1', val=t1).value)
         self.assertTrue(DatationValue(name='t1').name == DatationValue.from_obj({'t1':t1}).name ==
                         DatationValue(name='t1', val=t1).name)
-        self.assertEqual(DatationValue(matin).EStype, 3)
-        self.assertEqual(DatationValue(travail).EStype, 4)
-        self.assertEqual(DatationValue(pt1).EStype, 2)
-        self.assertEqual(DatationValue(tnull).EStype, 0)
-        self.assertEqual(DatationValue.from_obj(t1n).EStype, 102)
-        self.assertEqual(DatationValue(name='t1n').EStype, 100)
+        self.assertEqual(DatationValue(matin).simple,
+                        datetime.datetime(2020, 2, 4, 10, 0, tzinfo=datetime.timezone.utc))
+        self.assertEqual(DatationValue(travail).simple,
+                        datetime.datetime(2020, 2, 4, 12, 0, tzinfo=datetime.timezone.utc))
+        self.assertEqual(DatationValue(pt1).simple, pt1)
+        self.assertEqual(DatationValue(tnull).simple, tnull)
+        self.assertEqual(DatationValue.from_obj(t1n).json(), t1n)
+        self.assertEqual(DatationValue(name='t1n').name, 't1n')
 
 
     def test_propertyValue(self):
@@ -107,19 +104,19 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(PropertyValue({ES.prp_type : "PM25"}).json(**self.opt),
                          '{"'+ES.prp_type+'": "PM25"}')
         self.assertEqual(PropertyValue(pprop_pm10).json(**self.opt), json.dumps(pprop_pm10))
-        self.assertEqual(PropertyValue(prop_pm25).EStype, 22)
-        self.assertEqual(PropertyValue(pprop_pm25).EStype, 23)
-        self.assertEqual(PropertyValue({'truc':2}).EStype, 23)
-        self.assertEqual(PropertyValue({'machin':{'truc':2}}).EStype, 123)
-        self.assertEqual(PropertyValue('truc').EStype, 100)
-        self.assertEqual(PropertyValue(PropertyValue.nullValue()).EStype, 0)
+        self.assertTrue(PropertyValue(prop_pm25).simple == 'PM25' == 
+                        PropertyValue(pprop_pm25).simple)
+        self.assertEqual(PropertyValue({'truc':2}).json(), '{"truc": 2}')
+        self.assertEqual(PropertyValue({'machin':{'truc':2}}).json(), '{"machin": {"truc": 2}}')
+        self.assertEqual(PropertyValue('truc').name, 'truc')
+        self.assertEqual(PropertyValue(PropertyValue.nullValue()), PropertyValue())
 
     def test_externValue(self):
         il=Ilist()
-        self.assertEqual(ExternValue.from_obj({'truc':il}).EStype, 143)
-        self.assertEqual(ExternValue(il).EStype, 43)
-        self.assertEqual(ExternValue.from_obj({'ilist':{'truc':il}}).EStype, 143)
-        self.assertEqual(ExternValue.from_obj(json.dumps({"ilist":{"truc":il.json()}})).EStype, 131)
+        self.assertTrue(ExternValue.from_obj({'truc':il}).value == il == 
+                        ExternValue(il).value == 
+                        ExternValue.from_obj({'ilist':{'truc':il}}).value ==
+                        ExternValue.from_obj(json.dumps({"ilist":{"truc":il.json()}})).value)
         """dic={'observation': {'type': 'observation',
           'datation': [{'date1': datetime.datetime(2021, 2, 4, 11, 5, tzinfo=datetime.timezone.utc)},
            datetime.datetime(2021, 7, 4, 10, 5, tzinfo=datetime.timezone.utc),
@@ -146,25 +143,19 @@ class TestObsUnitaire(unittest.TestCase):
         val = LocationValue(lyon)
         val.setValue(LocationValue([4,5]))
         self.assertEqual(val.vSimple(), [4,5])
-        self.assertEqual(val.EStype, 12)
         val.setValue(LocationValue([[6,7], [7,8], [8,6]]))
-        self.assertEqual(val.EStype, 14)
         self.assertEqual(val.value, LocationValue._gshape([[6,7], [7,8], [8,6]]))
         val.setValue(LocationValue([[[6,7], [7,8], [8,6]]]))
-        self.assertEqual(val.EStype, 13)
         self.assertEqual(val.value, LocationValue._gshape([[[6,7], [7,8], [8,6]]]))
         val.setName('truc')
         self.assertEqual(val.name, 'truc')
-        self.assertEqual(val.EStype, 113)
         val = DatationValue(t1)
         val.setValue(t2)
         self.assertEqual(val.simple, t2)
         val.setValue(DatationValue(s1))
-        self.assertEqual(val.EStype, 3)
         self.assertEqual(val.vInterval(encoded=False), s1)
         val.setName('truc')
         self.assertEqual(val.name, 'truc')
-        self.assertEqual(val.EStype, 103)
 
     def test_link(self):
         dat = DatationValue(datetime.datetime(2005,1,1))

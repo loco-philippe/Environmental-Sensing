@@ -302,18 +302,17 @@ class Test_Ilist(unittest.TestCase):
         format      = ['json', 'cbor']
         fullcodec   = [True, False]
         defaultcodec= [False, False]
-        fast        = [True, False]
-        test = list(product(encoded, format, fullcodec, defaultcodec, fast))
+        test = list(product(encoded, format, fullcodec, defaultcodec))
         for ts in test:
             opt = {'encoded': ts[0], 'encode_format': ts[1], 'fullcodec': ts[2],
-                   'defaultcodec': ts[3], 'fast': ts[4]}
+                   'defaultcodec': ts[3]}
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)
         ilm = Ilist.Iext([[6, 7, 8, 9, 9, 11, 12],
                               ['s', 's', 's', 'n', 'd', 'd', 'd' ]])
         ilm.coupling()
         for ts in test:
             opt = {'encoded': ts[0], 'encode_format': ts[1], 'fullcodec': ts[2],
-                   'defaultcodec': ts[3], 'fast': ts[4]}
+                   'defaultcodec': ts[3]}
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)
         
     def test_to_obj_variable(self):

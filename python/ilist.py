@@ -261,29 +261,28 @@ import json
 import csv
 import math
 from ESconstante import ES
-from iindex import Iindex, util, IindexEncoder, CborDecoder
+from iindex import Iindex
+from util import util, IindexEncoder, CborDecoder
 
 class Ilist:
 #%% intro
     @classmethod
-    def Idic(cls, idxdic=None, typevalue=ES.def_clsName, fast=True, fullcodec=False, var=None):
+    def Idic(cls, idxdic=None, typevalue=ES.def_clsName, fullcodec=False, var=None):
         '''
         Ilist constructor (external dictionnary).
 
         *Parameters*
 
         - **idxdic** : {name : values}  (see data model)
-        - **fullcodec** : boolean (default False) - full codec if True
-        - **fast** : boolean (default False). If True, fast operation (reduction controls)
-        is generated if no index is defined'''
+        - **fullcodec** : boolean (default False) - full codec if True'''
         if not idxdic: return cls.Iext(idxval=None, idxname=None, typevalue=typevalue, 
-                                          fast=fast, fullcodec=fullcodec, var=var)
+                                          fullcodec=fullcodec, var=var)
         if isinstance(idxdic, Ilist): return idxdic
         if not isinstance(idxdic, dict): raise IlistError("idxdic not dict")
-        return cls.Iext(list(idxdic.values()), list(idxdic.keys()), typevalue, fast, fullcodec, var)
+        return cls.Iext(list(idxdic.values()), list(idxdic.keys()), typevalue, fullcodec, var)
 
     @classmethod
-    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, fast=True, fullcodec=False, var=None):
+    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, fullcodec=False, var=None):
         '''
         Ilist constructor (external index).
 
@@ -291,8 +290,7 @@ class Ilist:
 
         - **extidx** : index list (see data model)
         - **idxname** : list of string (default None) - name of index list (see data model)
-        - **fast** : boolean (default False). If True, fast operation (reduction controls)
-
+        
         *Returns* : Ilist'''
         #print('debut iext')
         #t0 = time()
@@ -306,12 +304,10 @@ class Ilist:
         for i in range(len(idxname)): 
             if isinstance(idxname[i], str): name[i] = idxname[i]
         #print('fin init iext', time()-t0)
-        lidx = [Iindex.Iext(idx, name, typevalue, fast, fullcodec) 
+        lidx = [Iindex.Iext(idx, name, typevalue, fullcodec) 
                     for idx, name in zip(val, name)]
         #print('fin lidx iext', time()-t0)
-        return cls(lidx, fast=fast, var=var)
-        #return cls([Iindex.Iext(idx, name, typevalue, fast, fullcodec) 
-        #            for idx, name in zip(val, name)], fast=fast)
+        return cls(lidx, var=var)
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', var=None, header=True, 
@@ -349,7 +345,7 @@ class Ilist:
         return cls.Iext(idxval, idxname, typevalue=None, var=var)
             
     @classmethod
-    def from_obj(cls, bs=None, fast=True, reindex=True):
+    def from_obj(cls, bs=None, reindex=True):
         '''
         Generate an Ilist Object from a bytes, json or dict value
 
@@ -363,9 +359,9 @@ class Ilist:
         elif isinstance(bs, str)  : lis = json.loads(bs, object_hook=CborDecoder().codecbor)
         elif isinstance(bs, list) : lis = bs
         else: raise IlistError("the type of parameter is not available")
-        return cls(lis, fast=fast, reindex=reindex)
+        return cls(lis, reindex=reindex)
 
-    def __init__(self, listidx=None, length=None, fast=True, var=None, 
+    def __init__(self, listidx=None, length=None, var=None, 
                  reindex=True, typevalue=ES.def_clsName):
         '''
         Ilist constructor.
@@ -389,7 +385,7 @@ class Ilist:
         if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)): 
             listidx = [listidx]
         if len(listidx) == 1:
-            code, idx = Iindex.from_obj(listidx[0], typevalue=typevalue, fast=fast)
+            code, idx = Iindex.from_obj(listidx[0], typevalue=typevalue)
             if idx.name is None or idx.name == 'default index': idx.name = 'i0'
             self.lindex = [idx]
             self.lvarname = [idx.name]
@@ -399,7 +395,7 @@ class Ilist:
         if       isinstance(var, list): idxvar = var
         elif not isinstance(var, int) or var < 0: idxvar = []
         else: idxvar = [var]
-        codind = [Iindex.from_obj(idx, typevalue=typevalue, fast=fast) for idx in listidx]
+        codind = [Iindex.from_obj(idx, typevalue=typevalue) for idx in listidx]
         for ii, (code, idx) in zip(range(len(codind)), codind):
             if idx.name is None or idx.name == 'default index': idx.name = 'i'+str(ii)
             if code == ES.variable and not idxvar: idxvar = [ii]
@@ -434,25 +430,25 @@ class Ilist:
                 iidx.keys = [0] * length
                 self.lindex[lidx[ii]] = iidx
             elif code >=0 and isinstance(self.lindex[lidx[ii]], int): 
-                self._addiidx(lidx[ii], code, iidx, codind, fast)
+                self._addiidx(lidx[ii], code, iidx, codind)
             elif code < 0 and isinstance(self.lindex[lidx[ii]], int): 
                 raise IlistError('Ilist not canonical')
         #print('fin secondary', time()-t0)
         #init variable
         for i in idxvar: self.lindex[i] = codind[i][1]
         self.lvarname = [codind[i][1].name for i in idxvar]
-        if reindex: self.reindex(fast)
+        if reindex: self.reindex()
         return None
                 
-    def _addiidx(self, rang, code, iidx, codind, fast):
+    def _addiidx(self, rang, code, iidx, codind):
         if isinstance(self.lindex[code], int): 
-            self._addiidx(code, codind[code][0], codind[code][1], codind, fast)
+            self._addiidx(code, codind[code][0], codind[code][1], codind)
         if iidx.keys == list(range(len(iidx.codec))): #coupled format
-            self.lindex[rang] = Iindex(iidx.codec, iidx.name, self.lindex[code].keys, fast=fast)
+            self.lindex[rang] = Iindex(iidx.codec, iidx.name, self.lindex[code].keys)
         else:
             self.lindex[rang] = Iindex(iidx.codec, iidx.name, 
                                       Iindex.keysfromderkeys(self.lindex[code].keys, 
-                                                            codind[rang][1].keys), fast=fast)
+                                                            codind[rang][1].keys))
 
 #%% special
     def __str__(self):
@@ -689,7 +685,6 @@ class Ilist:
 
         - **listval** :  list - new index values to add to Ilist
         - **unique** :  boolean (default False) - If True and value present
-        - **fast** : boolean (default False) - Update whithout reindex
 
         *Returns* : list of keys '''
         if dtype and not isinstance(dtype, list): dtype = [dtype] * len(listval)
@@ -709,7 +704,7 @@ class Ilist:
         self.delindex(ES.filter)
         self.reindex()
 
-    def couplingmatrix(self, default=False, file=None, att='rate', fast=True):
+    def couplingmatrix(self, default=False, file=None, att='rate'):
         '''return a matrix with coupling infos between each indexes.
         One info can be stored in a file (csv format).
 
@@ -725,7 +720,7 @@ class Ilist:
         mat = [[None for i in range(lenidx)] for i in range(lenidx)]
         for i in range(lenidx):
             for j  in range(i, lenidx): 
-                mat[i][j] = self.lidx[i].couplinginfos(self.lidx[j], default=default, fast=fast)
+                mat[i][j] = self.lidx[i].couplinginfos(self.lidx[j], default=default)
             for j  in range(i): 
                 mat[i][j] = copy(mat[j][i])
                 if   mat[i][j]['typecoupl'] == 'derived': mat[i][j]['typecoupl'] = 'derive'
@@ -741,7 +736,7 @@ class Ilist:
                 writer.writerow(self.idxlen)
         return mat
 
-    def coupling(self, mat=None, fast=True, derived=True, rate=0.1):  
+    def coupling(self, mat=None, derived=True, rate=0.1):  
         '''Transform indexes with low rate in coupled or derived indexes (codec extension).
 
         *Parameters*
@@ -751,7 +746,7 @@ class Ilist:
         - **derived** : boolean (default : True).If True, indexes are derived, else coupled.
 
         *Returns* : None'''
-        infos = self.indexinfos(mat=mat, fast=fast)  
+        infos = self.indexinfos(mat=mat)  
         coupl = True
         while coupl:
             coupl = False
@@ -759,9 +754,9 @@ class Ilist:
                 if infos[i]['typecoupl'] != 'coupled' and (infos[i]['typecoupl'] 
                     not in ('derived', 'unique') or not derived) and infos[i]['linkrate'] < rate: 
                     #if (infos[i]['linkrate'] > 0.0 or not derived) and infos[i]['linkrate'] < rate: 
-                    self.lidx[infos[i]['parent']].coupling(self.lidx[i], derived=derived, fast=fast)
+                    self.lidx[infos[i]['parent']].coupling(self.lidx[i], derived=derived)
                     coupl = True
-            infos = self.indexinfos(fast=fast)  
+            infos = self.indexinfos()  
         return infos
         
     def delrecord(self, record, extern=True):
@@ -789,11 +784,11 @@ class Ilist:
         *Returns* : none '''      
         self.lindex.pop(self.lname.index(indexname))
 
-    def full(self, fast=True, reindex=False, indexname=None, fillvalue='-'):
+    def full(self, reindex=False, indexname=None, fillvalue='-'):
         if not indexname: primary = self.primary
         else: primary = [self.idxname.index(name) for name in indexname]
         secondary = [idx for idx in range(len(self.lidx)) if idx not in primary]
-        if reindex: self.reindex(fast=fast)
+        if reindex: self.reindex()
         keysadd = util.idxfull([self.lidx[i] for i in primary])
         if not keysadd or len(keysadd) == 0: return
         leninit = len(self)
@@ -804,8 +799,7 @@ class Ilist:
             else:   self.lidx[i].keys += keysadd[j]
         for i in secondary:
             if      inf[i]['cat'] == 'unique': self.lidx[i].keys += [0] * lenadd
-            else:   self.lidx[i].tocoupled(self.lidx[inf[i]['parent']], coupling=False, 
-                                         fast=fast)  
+            else:   self.lidx[i].tocoupled(self.lidx[inf[i]['parent']], coupling=False)  
         for i in range(len(self.lidx)):
             if len(self.lidx[i].keys) != leninit + lenadd:
                 raise IlistError('primary indexes have to be present')
@@ -830,7 +824,7 @@ class Ilist:
         '''return index array from record'''
         return [record[self.lidxrow[i]] for i in range(len(self.lidxrow))]
     
-    def indexinfos(self, keys=None, mat=None, default=False, base=False, fast=True):
+    def indexinfos(self, keys=None, mat=None, default=False, base=False):
         '''return an array with infos of each index.
 
         *Parameters*
@@ -842,7 +836,7 @@ class Ilist:
 
         *Returns* : array'''
         infos = [{} for i in range(self.lenidx)]
-        if not mat: mat = self.couplingmatrix(default=default, fast=fast)
+        if not mat: mat = self.couplingmatrix(default=default)
         for i in range(self.lenidx):
             infos[i]['num']  = i
             infos[i]['name'] = self.idxname[i]
@@ -919,7 +913,6 @@ class Ilist:
         - **encode_format** : string (default 'json') - choice for return format (json, bson or cbor)
         - **json_res_index** : default False - if True add the index to the value
         - **order** : default [] - list of ordered index
-        - **fast** : boolean (default False). If True, fast operation (reduction controls)
         - **codif** : dict (default {}). Numerical value for string in CBOR encoder
 
         *Returns* : string or dict'''
@@ -1022,9 +1015,9 @@ class Ilist:
         if extern: return [idx.val[row] for idx in self.lidx]
         return [idx.values[row] for idx in self.lidx]
 
-    def reindex(self, fast=True):
+    def reindex(self):
         '''Calculate a new default codec for each index (Return self)'''
-        for idx in self.lindex: idx.reindex(fast=fast)
+        for idx in self.lindex: idx.reindex()
         return self       
 
     def setfilter(self, filt=None, first=False, merge=False, update=False):
@@ -1075,24 +1068,17 @@ class Ilist:
         self.lindex=[self.lindex[order[i]] for i in range(len(order))]
 
 
-    def tostdcodec(self, inplace=False, fast=True, full=True):
+    def tostdcodec(self, inplace=False, full=True):
         '''
         Transform all codec in full or default codec.
 
         *Return* : self or Ilist'''
-        '''lidx = [idx.tostdcodec(inplace=False, fast=fast, full=full) for idx in self.lidx]
-        if inplace:
-            self.lidx = lidx
-            return self
-        else: 
-            return Ilist(lidx, fast=fast)'''
-
-        lindex = [idx.tostdcodec(inplace=False, fast=fast, full=full) for idx in self.lindex]
+        lindex = [idx.tostdcodec(inplace=False, full=full) for idx in self.lindex]
         if inplace:
             self.lindex = lindex
             return self
         else: 
-            return Ilist(lindex, fast=fast, var=self.lvarrow[0])
+            return Ilist(lindex, var=self.lvarrow[0])
         
     def to_csv(self, filename='ilist.csv', ifunc=None, header=True, 
                optcsv={'quoting': csv.QUOTE_NONNUMERIC}, **kwargs):
@@ -1142,7 +1128,6 @@ class Ilist:
 
         - **encoded** : boolean (default False) - choice for return format (string/bytes if True, dict else)
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
-        - **fast** : boolean (default False). If True, fast operation (reduction controls)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **keys** : boolean (default False) - if True, primary keys is included
         - **fullcodec** : boolean (default False) - if True, each index is with a full codec
@@ -1152,14 +1137,14 @@ class Ilist:
         *Returns* : string, bytes or dict'''
         option = {'fullcodec': False, 'defaultcodec': False, 'keys': False, 
                   'typevalue': None, 'encoded': False, 'encode_format': 'json',
-                  'fast': True, 'codif': ES.codeb} | kwargs
-        option2 = {'encoded': False, 'encode_format': 'json', 'fast': option['fast'], 'codif': option['codif']}
+                  'codif': ES.codeb} | kwargs
+        option2 = {'encoded': False, 'encode_format': 'json', 'codif': option['codif']}
         lis = []
         if option['fullcodec'] or option['defaultcodec']: 
             for idx in self.lidx: lis.append(idx.tostdcodec(full=not option['defaultcodec'])
                                              .to_obj(keys=not option['fullcodec'], **option2))
         else:
-            if not indexinfos: indexinfos=self.indexinfos(default=False, fast=option['fast'])
+            if not indexinfos: indexinfos=self.indexinfos(default=False)
             notkeyscrd = True 
             if self.iskeyscrossed: notkeyscrd = None
             for idx, inf in zip(self.lidx, indexinfos):

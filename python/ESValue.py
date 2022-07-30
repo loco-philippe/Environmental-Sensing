@@ -69,7 +69,6 @@ class ESValue:
 
     - **name**  : name  of `ESValue.ESValue` objects
     - **value** : value of `ESValue.ESValue` objects
-    - **EStype** : type of `ESValue.ESValue` objects
     - `bounds` (@property) : boundary  of `ESValue.ESValue` objects
     - `simple` (@property) : simplified value of `ESValue.ESValue` objects
 
@@ -77,30 +76,30 @@ class ESValue:
 
     **binary predicates**
 
-    - `contains`
-    - `equals`
-    - `intersects`
-    - `within`
-    - `disjoint`
-    - `isEqual`
-    - `isNotNull`
-    - `isName`
+    - `ESValue.contains`
+    - `ESValue.equals`
+    - `ESValue.intersects`
+    - `ESValue.within`
+    - `ESValue.disjoint`
+    - `ESValue.isEqual`
+    - `ESValue.isNotNull`
+    - `ESValue.isName`
 
     **other methods**
 
-    - `from_obj` (@classmethod)
-    - `bounds`
-    - `boxUnion`
-    - `getValue`
-    - `getName`
-    - `json`
-    - `setName`
-    - `setValue`
-    - `simple`
-    - `to_float`
-    - `vClassName`
-    - `vName`
-    - `vSimple`
+    - `ESValue.from_obj` (@classmethod)
+    - `ESValue.bounds`
+    - `ESValue.boxUnion`
+    - `ESValue.getValue`
+    - `ESValue.getName`
+    - `ESValue.json`
+    - `ESValue.setName`
+    - `ESValue.setValue`
+    - `ESValue.simple`
+    - `ESValue.to_float`
+    - `ESValue.vClassName`
+    - `ESValue.vName`
+    - `ESValue.vSimple`
     """
 #%% constructor               
     @staticmethod
@@ -137,7 +136,6 @@ class ESValue:
         '''Initialize 'name' and 'value' attribute'''
         self.name = ES.nullName
         self.value = self.nullValue()
-        self.EStype = 0
 
 #%% special
     def __eq__(self, other):
@@ -298,10 +296,6 @@ class ESValue:
 
         *Returns* : None'''
         self.name = nam
-        if nam != ES.nullName :
-            if self.EStype < 100: self.EStype += 100
-        else:
-            if self.EStype >= 100: self.EStype -= 100
 
     def setValue(self, val):
         '''
@@ -314,7 +308,6 @@ class ESValue:
         *Returns* : None'''
         ESval = self.__class__(val)
         self.value  = ESval.value
-        self.EStype = ESval.EStype
 
     @property
     def simple(self):
@@ -413,23 +406,18 @@ class DatationValue(ESValue):   # !!! début ESValue
 
     *constructor (@classmethod)*
 
-    - `Simple`  (instant)
-    - `Box`     (interval)
-    - `from_obj`(see  `ESValue.from_obj`)
+    - `DatationValue.Simple`  (instant)
+    - `DatationValue.Box`     (interval)
+    - `DatationValue.from_obj`(see  `ESValue.from_obj`)
         
 
     *getters*
 
-    - `getInstant`
-    - `getInterval`
-    - `vSimple`
-    - `vInterval`
-    - `link`
-    
-    *conversion (static method)*
-
-    - `link`
-    
+    - `DatationValue.getInstant`
+    - `DatationValue.getInterval`
+    - `DatationValue.vSimple`
+    - `DatationValue.vInterval`
+    - `DatationValue.link`    
     """
     @classmethod
     def Simple(cls, instant):
@@ -468,9 +456,6 @@ class DatationValue(ESValue):   # !!! début ESValue
             elif not value and name: raise ESValueError('name and val inconsistent')
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
-        if self.value == TimeSlot(ES.nullDate): self.EStype = 0
-        else: self.EStype = ES.ntypevalue[self.value.stype]
-        if self.name != ES.nullName: self.EStype += 100
 
     def getInstant(self) :
         '''return datetime if 'instant', none else'''
@@ -534,27 +519,24 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     *constructor (@classmethod)*
 
-    - `Simple`   (point)
-    - `Box`
-    - `from_obj` (see  `ESValue.from_obj`)
+    - `LocationValue.Simple`   (point)
+    - `LocationValue.Box`
+    - `LocationValue.from_obj` (see  `ESValue.from_obj`)
     
     *getters (@property)*
 
-    - `coords`
-    - `coorInv`
+    - `LocationValue.coords`
+    - `LocationValue.coorInv`
 
     *getters*
 
-    - `getPoint`
-    - `vSimple`
-    - `vPointInv`
-    - `vPointX`
-    - `vPointY`
-    - `vCodePlus`
-
-    *conversion (static method)*
-
-    - `link`
+    - `LocationValue.getPoint`
+    - `LocationValue.vSimple`
+    - `LocationValue.vPointInv`
+    - `LocationValue.vPointX`
+    - `LocationValue.vPointY`
+    - `LocationValue.vCodePlus`
+    - `LocationValue.link`
     """
     @classmethod
     def Simple(cls, coord):
@@ -598,9 +580,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
             elif not value and name: raise ESValueError('name and val inconsistent')
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
-        if self.value and self.value != self.nullValue():
-            self.EStype = ES.ntypevalue[self.value.geom_type.lower()]
-        if self.name != ES.nullName: self.EStype += 100
 
     def __lt__(self, other):
         ''' return minimal distance between a fixed point'''
@@ -710,17 +689,14 @@ class PropertyValue(ESValue):              # !!! début ESValue
 
     *constructor (@classmethod)*
 
-    - `Simple`   (property type)
-    - `Box`      (set of property type)
-    - `from_obj` (see  `ESValue.from_obj`)
+    - `PropertyValue.Simple`   (property type)
+    - `PropertyValue.Box`      (set of property type)
+    - `PropertyValue.from_obj` (see  `ESValue.from_obj`)
     
     *getters*
 
-    - `vSimple`
-
-    *functions*
-
-    - `link`
+    - `PropertyValue.vSimple`
+    - `PropertyValue.link`
     """
     @classmethod
     def Simple(cls, prp, name='simple', prp_dict=False):
@@ -761,18 +737,10 @@ class PropertyValue(ESValue):              # !!! début ESValue
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
         if not ES.prp_type in self.value: raise ESValueError("type property not defined")
-        if isinstance(self.value[ES.prp_type], list):
-            self.EStype = 24
-        else:
+        if not isinstance(self.value[ES.prp_type], list):
             if prp_dict and not self.value[ES.prp_type] in ES.prop:
                 raise ESValueError("property not present in standard dictionnary")
-            if self.value == PropertyValue.nullValue(): self.EStype = 0
-            elif len(self.value) == 0: self.EStype = 0
-            elif len(self.value) == 1: self.EStype = 22
-            elif len(self.value) == 2 and ES.prp_unit in self.value: self.EStype = 22
-            else: self.EStype = 23
             if prp_dict : self.value[ES.prp_unit] = ES.prop[self.value[ES.prp_type]][5]
-        if self.name != ES.nullName: self.EStype += 100
 
     def __lt__(self, other):
         """lower if string simple value + name is lower"""
@@ -826,23 +794,6 @@ class PropertyValue(ESValue):              # !!! début ESValue
         if option['encoded']: return json.dumps(li, ensure_ascii=False, cls=ESValueEncoder)
         return li
 
-    def _init(self, val={}, className=None):
-        if isinstance(val, str) :
-            try:  val = json.loads(val)
-            except:
-                self.name = val
-                return
-        if isinstance(val, dict):
-            if len(val) > 0 and isinstance(val[list(val.keys())[0]], dict):
-                                            self.name = list(val.keys())[0]
-                                            self.value |= val[list(val.keys())[0]]
-            else:                           self.value |= val
-        elif isinstance(val, PropertyValue) :
-            self.value = val.value
-            self.name  = val.name
-        else: raise ESValueError('type data not compatible with PropertyValue')
-        return
-
     @staticmethod
     def _setprp(val):
         if isinstance(val, list): return set(val)
@@ -862,11 +813,11 @@ class NamedValue (ESValue):               # !!! début ResValue
 
     *constructor*
 
-    - `from_obj` (see  `ESValue.from_obj`)
+    - `NamedValue.from_obj` (see  `ESValue.from_obj`)
     
     *getters*
 
-    - `vSimple`
+    - `NamedValue.vSimple`
     '''
     @classmethod 
     def from_obj(cls, bs): 
@@ -896,8 +847,6 @@ class NamedValue (ESValue):               # !!! début ResValue
             self.value = val
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
-        if self.value != self.nullValue(): self.EStype = 32
-        if self.name != ES.nullName: self.EStype += 100
 
     @staticmethod
     def nullValue() : 
@@ -928,11 +877,11 @@ class ExternValue (ESValue):               # !!! début ResValue
 
     *constructor*
 
-    - `from_obj` (see  `ESValue.from_obj`)
+    - `ExternValue.from_obj` (see  `ESValue.from_obj`)
     
     *getters*
 
-    - `vSimple`
+    - `ExternValue.vSimple`
     '''
     @classmethod 
     def from_obj(cls, bs):
@@ -941,7 +890,7 @@ class ExternValue (ESValue):               # !!! début ResValue
     
     def __init__(self, val = ES.nullVal, name=ES.nullName, className=ES.nullName):
         '''
-        NamedValue constructor.
+        ExternValue constructor.
 
         *Parameters*
 
@@ -959,8 +908,6 @@ class ExternValue (ESValue):               # !!! début ResValue
             self.value = _classval()[className](val)
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
-        self.EStype = ES.ntypevalue[ES.valname[ESValue.valClassName(val)]]
-        if self.name != ES.nullName: self.EStype += 100
 
     @staticmethod
     def nullValue() : 
@@ -986,195 +933,4 @@ class ExternValue (ESValue):               # !!! début ResValue
 class ESValueError(Exception):
 #%% ES except
     ''' ESValue Exception'''
-
-
-"""@classmethod
-    def cast(cls, value):
-        '''
-        tranform a value (unique or list) in a list of `ESValue`
-
-        *Parameters*
-
-        - **value** : value to transform
-
-        *Returns*
-
-        - **list** : list of `ESValue`
-        '''
-        ValueClass = cls
-        if isinstance(value, list):
-            try :
-                return [ValueClass(val) for val in value]
-            except :
-                return [ValueClass(value)]
-        else : return  [ValueClass(value)]"""
-        
-"""        def __to_bytes__(self, **option):
-            js = self.json(encoded=False, encode_format='cbor')
-            if option['encoded']: return bson.encode(js)
-            return js
-
-        @staticmethod
-        def __from_bytes__(bs):
-            if not isinstance(bs, (bytes, dict)): raise ESValueError("parameter is not dict or bytes")
-            if isinstance(bs, bytes): dic = cbor2.loads(bs)
-            else: dic = bs
-            return dic"""
-        
-"""def _to_strBytes(self, simple=False, mini=False):
-            '''not available'''
-            bval = str.encode(self.name)
-            if simple and mini : 
-                #form='{:<'+str(ES.miniStr)+'}' 
-                #return str.encode(form.format(self.name[0:ES.miniStr]))
-                return str.encode(self.name[0:ES.miniStr].ljust(ES.miniStr))
-            if simple and not mini : return bval
-            return struct.pack('>B', len(bval)) + bval
-
-        def _from_strBytes(self, byt, simple=False):
-            '''not available'''
-            if simple :
-                siz = len(byt) - 1
-                name = bytes.decode(byt).rstrip()          
-            else :
-                siz = struct.unpack('>B', byt[0:1])[0]
-                name = bytes.decode(byt[1: siz + 1]).rstrip()
-            self._init(name)
-            return siz + 1"""
-        
-"""        def from_bytes(self, byt, mini=False):
-            '''
-            Complete an empty `DatationValue` with binary data.
-
-            *Parameters*
-
-            - **byt** : binary representation of a DatationValue (datetime)
-
-            *Returns*
-
-            - **int** : number of bytes used to decode a dateTime = 7
-            '''
-            if mini:
-                dt = struct.unpack('<HBB', byt[0:4])
-                self._init(datetime.datetime(dt[0], dt[1], dt[2]))
-                return 4
-            dt = struct.unpack('<HBBBBB', byt[0:7])
-            self._init(datetime.datetime(dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]))
-            return 7"""
-"""    def to_bytes(self, mini=False):
-        '''
-        Export in binary format.
-
-        *Returns*
-
-        - **bytes** : binary representation of the `DatationValue` (datetime)
-        '''
-        if mini: return struct.pack('<HBB', self.simple.year, self.simple.month,
-                           self.simple.day)
-        return struct.pack('<HBBBBB', self.simple.year, self.simple.month,
-                           self.simple.day, self.simple.hour,
-                           self.simple.minute, self.simple.second)"""
-"""    def from_bytes(self, byt, mini=False):
-        '''
-        Complete an empty `LocationValue` with binary data (point)
-
-        *Parameters*
-
-        - **byt** : binary representation of a DatationValue (point)
-
-        *Returns*
-
-        - **int** : number of bytes used to decode a point = 8
-        '''
-        pt = list(struct.unpack('<ll', byt[0:8]))
-        self._init(list((pt[0] *10**-7, pt[1] *10**-7)))
-        return 8
-
-    def to_bytes(self, mini=False):
-        '''Export in binary format.
-
-        *Returns*
-
-        - **bytes** : binary representation of the `LocationValue` (point coordinates)
-        '''
-        return struct.pack('<ll',round(self.vSimple()[0]*10**7), round(self.vSimple()[1]*10**7))
-
-    def from_bytes(self, byt, mini):
-        if mini: 
-            self.value[ES.prp_type]   = ES.invProp[struct.unpack('<B', byt[0:1])[0]]
-            return 1
-        bytl = byt[0:6] + b'\x00' +byt[6:9] + b'\x00' + byt[9:10]
-        prp = struct.unpack('<BBBLLB', bytl)
-        #for i in [3,4,5]:
-        self.value[ES.prp_type]       = ES.invProp[prp[0]]
-        self.value[ES.prp_unit]       = ES.prop[ES.invProp[prp[0]]][5]
-        self.value[ES.prp_sampling]   = ES.invSampling[prp[1]]
-        self.value[ES.prp_appli]      = ES.invApplication[prp[2]]
-        self.value[ES.prp_period]     = prp[3]
-        self.value[ES.prp_interval]   = prp[4]
-        self.value[ES.prp_uncertain]  = prp[5] // 2
-        return 10
-
-    def to_bytes(self, mini):
-        if mini: return struct.pack('<B', ES.prop[self.simple][0])
-        if ES.prp_sampling in self.value : sampling = self.value[ES.prp_sampling]
-        else : sampling = ES.nullDict
-        if ES.prp_appli in self.value    : appli    = self.value[ES.prp_appli]
-        else : appli    = ES.nullDict
-        if ES.prp_period in self.value   : period   = self.value[ES.prp_period]
-        #else : period   = ES.nullVal
-        else : period   = ES.nullInt
-        if ES.prp_interval in self.value : interval = self.value[ES.prp_interval]
-        else : interval = ES.nullInt
-        #else : interval = ES.nullVal
-        if ES.prp_uncertain in self.value: uncertain= self.value[ES.prp_uncertain]
-        else : uncertain = ES.nullInt
-        #else : uncertain = ES.nullVal
-        byt = struct.pack('<BBBLLB', ES.prop[self.simple][0],
-                           ES.sampling[sampling],
-                           ES.application[appli],
-                           period, interval, uncertain * 2 )
-        return byt[0:6] +byt[7:10] + byt[11:12]
-    
-    def from_bytes(self, byt, forma = ES.nullDict):
-        formaPrp = ES.prop[forma][1]
-        leng = ES.prop[forma][2]
-        dexp = ES.prop[forma][3]
-        bexp = ES.prop[forma][4]        
-        self.__init__(val=struct.unpack('<'+ formaPrp, byt[0:leng])[0] * 10**dexp * 2**bexp)
-        return leng
-    
-    def to_bytes(self, forma = ES.nullDict):
-        formaPrp = ES.prop[forma][1]
-        dexp = ES.prop[forma][3]
-        bexp = ES.prop[forma][4]
-        val = self.value * 10**-dexp * 2**-bexp
-        return struct.pack('<' + formaPrp, val)
-    
-    def _init(self, val=None, className=None):
-        '''if isinstance(val, dict) :
-            self.name, val = list(val.items())[0]'''
-        if   isinstance(val, (int, str, float, bool, tuple, datetime.datetime, type(None), bytes)) :
-            self.value = val
-        elif isinstance(val, list) :
-            self.value = tuple(val)
-        elif isinstance(val, dict) :
-            self.value = json.dumps(val)
-        else: 
-            try:
-                self.name = val.name
-                self.value = val.value
-            except:
-                self.value = val
-
-    def _init(self, val=None, className=None):
-        if isinstance(val, ExternValue):
-            self.name = val.name
-            self.value = val.value
-        else:
-            if type(val) == dict and len(val) == 1:
-                self.name, val = list(val.items())[0]
-            #self.value = _classval()[ESValue.valClassName(val)](val)
-            self.value = _classval()[className](val)
-
-"""
+    pass

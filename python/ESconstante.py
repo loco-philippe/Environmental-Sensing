@@ -57,14 +57,14 @@ class Es:
     #def _inv(self, mp)     : return dict(zip(mp.values(), mp.keys()))
     def _invnum(self, mp)  : return dict(zip([k[0] for k in list(mp.values())], mp.keys()))
 
-    def __init__(self):
+    def __init__(self, defnone=True):
         self._initName()
         self._initReferenceValue()
         self._initStruct()
         self._initByte()
         #'''Application initialization (boolean)'''
         self.debug = False
-        self._initDefaultValue()
+        self._initDefaultValue(defnone)
 
     def _initStruct(self) :
         #%% option initialization (dict)
@@ -545,12 +545,12 @@ class Es:
         self.nullValues = (self.nullDate, self.nullCoor, self.nullInd, self.nullName,
                            self.nullAtt, self.nullDict, self.nullName, self.nullVal, self.nullPrp)
         
-    def _initDefaultValue(self):
-    #%% init reference value
+    def _initDefaultValue(self, defnone=True):
+    #%% init default value
         ''' Default value initialization '''
-        self.def_clsName      = None
-        #self.def_clsName      = self.nam_clsName
+        if defnone : self.def_clsName      = None
+        else: self.def_clsName      = self.nam_clsName
         if self.def_clsName: self.def_dtype = self.valname[self.def_clsName]
         else: self.def_dtype = None
 
-ES = Es()
+ES = Es(True)
