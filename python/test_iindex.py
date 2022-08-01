@@ -231,6 +231,12 @@ class Test_iindex(unittest.TestCase):
         idxcalc = Iindex.from_parent(idx.codec, parent=parent)
         self.assertTrue(idxcalc.values == idx.values == values)
 
+    def test_duplicates(self):
+        il = Iindex(['a', 'b', 'c', 'a', 'b', 'c', 'a', 'e', 'f', 'b', 'd', 'a', 'b', 'c',
+         'c', 'a', 'a', 'a', 'b', 'c', 'a', 'e', 'f', 'b', 'd'])
+        il.setkeys([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 1, 2, 2, 3, 3, 3, 4, 5, 6, 7, 8, 9, 10])
+        self.assertEqual(set([il.val[item] for item in il.getduplicates()]), set(['a', 'b', 'c']))
+        
     def test_derkeys(self):
         parent = Iindex.Iext(['j', 'j', 'f', 'f', 'm', 's', 's'])
         fils = Iindex.Iext(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
@@ -243,12 +249,16 @@ class Test_iindex(unittest.TestCase):
         fils.coupling(petitfils)
         pere.coupling(fils)
         grandpere.coupling(pere)
-        self.assertTrue(petitfils.isderived(fils)==fils.isderived(pere)==pere.isderived(grandpere))
-        idx = Iindex(petitfils.codec, keys=Iindex.keysfromderkeys(fils.keys, petitfils.derkeys(fils))) 
+        self.assertTrue(petitfils.isderived(fils)==fils.isderived(pere)
+                        ==pere.isderived(grandpere))
+        idx = Iindex(petitfils.codec, 
+                     keys=Iindex.keysfromderkeys(fils.keys, petitfils.derkeys(fils))) 
         self.assertEqual(idx, petitfils)
-        idx = Iindex(fils.codec, keys=Iindex.keysfromderkeys(pere.keys, fils.derkeys(pere))) 
+        idx = Iindex(fils.codec, 
+                     keys=Iindex.keysfromderkeys(pere.keys, fils.derkeys(pere))) 
         self.assertEqual(idx, fils)
-        idx = Iindex(pere.codec, keys=Iindex.keysfromderkeys(grandpere.keys, pere.derkeys(grandpere))) 
+        idx = Iindex(pere.codec, 
+                     keys=Iindex.keysfromderkeys(grandpere.keys, pere.derkeys(grandpere))) 
         self.assertEqual(idx, pere)
 
 

@@ -11,7 +11,7 @@ import datetime
 import numpy as np
 from ESconstante import ES
 from util import identity
-
+from collections import defaultdict, Counter
 
 class Iindex:
 #%% intro
@@ -53,12 +53,10 @@ class Iindex:
     *transform methods*
 
     - `Iindex.coupling`
-    - `Iindex.toextendcodec`
     - `Iindex.extendkeys`
     - `Iindex.reindex`
     - `Iindex.reorder`
     - `Iindex.sort`
-    - `Iindex.tocrossed`
     - `Iindex.tocoupled`
     - `Iindex.tostdcodec`
     
@@ -66,6 +64,7 @@ class Iindex:
 
     - `Iindex.couplinginfos`
     - `Iindex.derkeys`
+    - `Iindex.getduplicates`
     - `Iindex.iscrossed`
     - `Iindex.iscoupled`
     - `Iindex.isderived`
@@ -324,7 +323,7 @@ class Iindex:
 
         *Parameters*
 
-        - **idx** : index to be coupled or derived.
+        - **idx** : single Iindex or list of Iindex to be coupled or derived.
         - **derived** : boolean (default : True)
 
         *Returns* : None'''
@@ -387,34 +386,6 @@ class Iindex:
         if min(derkey) < 0:
             raise IindexError("parent is not a derive Iindex")
         return derkey
-    
-    @staticmethod
-    def keysfromderkeys(parentkeys, derkeys):
-        '''return keys from parent keys and derkeys
-        
-        *Parameters*
-
-        - **parentkeys** : list of keys from parent
-        - **derkeys** : list of derived keys
-
-        *Returns* : list of keys'''
-        return [derkeys[parentkeys[i]] for i in range(len(parentkeys))]
-    
-    def setkeys(self, keys, inplace=True):
-        '''apply new keys (replace codec with extended codec from parent keys)
-
-        *Parameters*
-
-        - **keys** : list of keys to apply
-        - **inplace** : if True, update self data, else create a new Iindex
-
-        *Returns* : self or new Iindex'''
-        codec = util.tocodec(self.values, keys)
-        if inplace:
-            self.codec = codec
-            self.keys  = keys
-            return self
-        return Iindex(codec=codec, name=self.name, keys=keys)
 
     def extendkeys(self, keys):
         '''add keys to the Iindex
@@ -427,6 +398,19 @@ class Iindex:
         if min(keys) < 0 or max(keys) > len(self.codec) - 1: 
             raise IindexError('keys not consistent with codec')
         self.keys += keys
+    
+    def getduplicates(self):
+        ''' return list of items with duplicate codec'''
+        co = Counter(self.codec)
+        defcodec = list(co - Counter(list(co)))       
+        dkeys  = defaultdict(list)
+        for l,i in zip(self.keys, list(range(len(self)))): dkeys[l].append(i)
+        dcodec = defaultdict(list)
+        for l,i in zip(self.codec, list(range(len(self.codec)))): dcodec[l].append(i)       
+        duplicates = []
+        for item in defcodec: 
+            for codecitem in dcodec[item]: duplicates += dkeys[codecitem]    
+        return duplicates
     
     def iscrossed(self, other):
         '''return True if self is crossed to other'''
@@ -459,12 +443,12 @@ class Iindex:
         return value in self.values
 
     def keytoval(self, key, extern=True):
-        ''' return the first value of a key
+        ''' return the value of a key
         
         *Parameters*
 
         - **key** : key to convert into values
-        - **extern** : if True, return strin representation else, internal value
+        - **extern** : if True, return string representation else, internal value
         
         *Returns*
 
@@ -473,6 +457,18 @@ class Iindex:
         if extern: return self.cod[key]
         return self.codec[key]
 
+    @staticmethod
+    def keysfromderkeys(parentkeys, derkeys):
+        '''return keys from parent keys and derkeys
+        
+        *Parameters*
+
+        - **parentkeys** : list of keys from parent
+        - **derkeys** : list of derived keys
+
+        *Returns* : list of keys'''
+        return [derkeys[parentkeys[i]] for i in range(len(parentkeys))]
+    
     def recordfromvalue(self, value, extern=True):
         '''return a list of record number with value
         
@@ -548,6 +544,22 @@ class Iindex:
                 rank = i
         return rank
     
+    def setkeys(self, keys, inplace=True):
+        '''apply new keys (replace codec with extended codec from parent keys)
+
+        *Parameters*
+
+        - **keys** : list of keys to apply
+        - **inplace** : if True, update self data, else create a new Iindex
+
+        *Returns* : self or new Iindex'''
+        codec = util.tocodec(self.values, keys)
+        if inplace:
+            self.codec = codec
+            self.keys  = keys
+            return self
+        return Iindex(codec=codec, name=self.name, keys=keys)
+
     def setname(self, name):
         '''update the Iindex name 
         

@@ -343,6 +343,20 @@ class Test_Ilist(unittest.TestCase):
         il.coupling()
         self.assertTrue(il.indexinfos()[1]['typecoupl'] == 'derived')
 
+    def test_duplicates(self):
+        ilx = Ilist.Iext([['a', 'b', 'b', 'c', 'c', 'a'], 
+                          [20,  10,  10,  10,  10,  20], [200, 200, 400, 200, 300, 300], 
+                          [1,1,2,2,3,3] ] )
+        ilx.coupling(derived=False, rate=0.6)
+        ilx.getduplicates(['i2'], 'test')
+        self.assertEqual(ilx.lindex[4].values, [False, False, True, False, False, False])
+        ilx = Ilist.Iext([['a', 'b', 'b', 'c', 'c', 'a'], 
+                          [20,  10,  10,  10,  10,  20], [200, 200, 200, 300, 300, 200], 
+                          [1,1,1,2,3,1] ] )
+        ilx.coupling(rate=0.2)
+        ilx.getduplicates(newindex='test')
+        self.assertEqual(ilx.lindex[4].values, [True, True, True, False, False, True])
+        
     def test_full(self):
         ilm = Ilist.Iext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0], 
                               ['info', 'info', 'info', 'info'],[12, 20, 20, 12]])
@@ -351,6 +365,20 @@ class Test_Ilist(unittest.TestCase):
         self.assertTrue(ilm.lidx[0].iscrossed(ilm.lidx[1])==ilm.lidx[0].iscrossed(ilm.lidx[3])
                         ==ilm.lidx[1].iscrossed(ilm.lidx[3])==True)
         self.assertTrue(ilm.complete)
+        il=Ilist.Iext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30], 
+                       [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'],
+                       [12, 20, 20, 12]], var=0)
+        ilc=il.full()
+        #ild=il.full(minind=False)
+        '''ild=il.full(axes=list(range(il.lenidx)))
+        self.assertEqual( len(ild), 48)
+        self.assertEqual( ild.idxref,  [0, 1, 2, 3, 4, 5])
+        self.assertEqual( ilc.extidx[1], [30, 12, 20, 30, 30, 12, 12, 20, 30, 12, 20, 20])
+        self.assertEqual( ilc.idxcoupled, il.idxcoupled)
+        self.assertTrue( ilc.idxlen == il.idxlen == ild.idxlen)
+        self.assertEqual( ilc.idxref, il.idxref)
+        self.assertTrue( ilc.idxunique == il.idxunique == ild.idxunique)'''
+
 
     def test_valtokey(self):
         ilm = Ilist.Iext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0], 
@@ -457,21 +485,6 @@ class Test_Ilist(unittest.TestCase):
         ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, 
                          order=['property', 'datation', 'location'])
         self.assertEqual(Ilist._filter(ESValue.getName, ob.setDatation, 'date1'), [0])        '''
-
-    def test_full(self) :
-        il=Ilist.Iext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30], 
-                       [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'],
-                       [12, 20, 20, 12]], var=0)
-        ilc=il.full()
-        #ild=il.full(minind=False)
-        '''ild=il.full(axes=list(range(il.lenidx)))
-        self.assertEqual( len(ild), 48)
-        self.assertEqual( ild.idxref,  [0, 1, 2, 3, 4, 5])
-        self.assertEqual( ilc.extidx[1], [30, 12, 20, 30, 30, 12, 12, 20, 30, 12, 20, 20])
-        self.assertEqual( ilc.idxcoupled, il.idxcoupled)
-        self.assertTrue( ilc.idxlen == il.idxlen == ild.idxlen)
-        self.assertEqual( ilc.idxref, il.idxref)
-        self.assertTrue( ilc.idxunique == il.idxunique == ild.idxunique)'''
 
     def test_to_numpy(self):
         '''à faire''' #!!!

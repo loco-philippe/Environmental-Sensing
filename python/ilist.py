@@ -266,6 +266,113 @@ from util import util, IindexEncoder, CborDecoder
 
 class Ilist:
 #%% intro
+    '''
+    An `Ilist` is a representation of an indexed list.
+
+    *Attributes (for @property see methods)* :
+
+    - **lindex** : list of index
+    - **lvarname** : variable name (list of string)
+
+    The methods defined in this class are :
+
+    *constructor (classmethod))*
+
+    - `Ilist.Idic`
+    - `Ilist.Iext`
+
+    *dynamic value property (getters)*
+
+    - `Ilist.extidx`
+    - `Ilist.extidxext`
+    - `Ilist.idxname`
+    - `Ilist.idxref`
+    - `Ilist.idxlen`
+    - `Ilist.iidx`
+    - `Ilist.iidx`
+    - `Ilist.iidx`
+    - `Ilist.iidx`
+    - `Ilist.iidx`
+
+    *global property (getters)*
+
+    - `Ilist.axes`
+    - `Ilist.axesall`
+    - `Ilist.axesmin`
+    - `Ilist.axesmono`
+    - `Ilist.axesmulti`
+    - `Ilist.complete`
+    - `Ilist.completefull`
+    - `Ilist.consistent`
+    - `Ilist.dimension`
+    - `Ilist.lencomplete`
+    - `Ilist.lencompletefull`
+    - `Ilist.rate`
+    - `Ilist.setvallen`
+    - `Ilist.zip`
+
+    *idx property (getters)*
+
+    - `Ilist.dicidxref`
+    - `Ilist.idxcoupled`
+    - `Ilist.idxderived`
+    - `Ilist.idxder`
+    - `Ilist.idxlen`
+    - `Ilist.idxref`
+    - `Ilist.idxunique`
+    - `Ilist.ind`
+    - `Ilist.lenidx`
+    - `Ilist.minMaxIndex`
+
+    *add - update methods*
+
+    - `Ilist.addextidx`
+    - `Ilist.addlistidx`
+    - `Ilist.append`
+    - `Ilist.appendi`
+    - `Ilist.updateidx`
+    - `Ilist.updatelist`
+
+    *selecting methods*
+
+    - `Ilist.extidxtoi`
+    - `Ilist.iidxtoext`
+    - `Ilist.iloc`
+    - `Ilist.iseIndex`
+    - `Ilist.isiIndex`
+    - `Ilist.isValue`
+    - `Ilist.loc`
+    - `Ilist.setname`
+    - `Ilist.unconsistent`
+
+    *management - conversion methods*
+
+    - `Ilist.axescoupling`
+    - `Ilist.couplingmatrix`
+    - `Ilist.derived_to_coupled`
+    - `Ilist.full`
+    - `Ilist.merge`
+    - `Ilist.mergeidx`
+    - `Ilist.reindex`
+    - `Ilist.reorder`
+    - `Ilist.setfilter`
+    - `Ilist.sort`
+    - `Ilist.sortidx`
+    - `Ilist.swapindex`
+
+    *exports methods*
+
+    - `Ilist.from_obj` (classmethod)
+    - `Ilist.from_csv` (classmethod)
+    - `Ilist.from_file` (classmethod)
+    - `Ilist.json`
+    - `Ilist.to_obj`
+    - `Ilist.to_csv`
+    - `Ilist.to_file`
+    - `Ilist.to_numpy`
+    - `Ilist.to_xarray`
+    - `Ilist.vlist`
+    '''
     @classmethod
     def Idic(cls, idxdic=None, typevalue=ES.def_clsName, fullcodec=False, var=None):
         '''
@@ -274,7 +381,9 @@ class Ilist:
         *Parameters*
 
         - **idxdic** : {name : values}  (see data model)
-        - **fullcodec** : boolean (default False) - full codec if True'''
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
+        - **fullcodec** : boolean (default False) - full codec if True
+        - **var** :  int (default None) - row of the variable'''
         if not idxdic: return cls.Iext(idxval=None, idxname=None, typevalue=typevalue, 
                                           fullcodec=fullcodec, var=var)
         if isinstance(idxdic, Ilist): return idxdic
@@ -282,16 +391,18 @@ class Ilist:
         return cls.Iext(list(idxdic.values()), list(idxdic.keys()), typevalue, fullcodec, var)
 
     @classmethod
-    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, fullcodec=False, var=None):
+    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, 
+             fullcodec=False, var=None):
         '''
         Ilist constructor (external index).
 
         *Parameters*
 
-        - **extidx** : index list (see data model)
+        - **idxval** : list of values (see data model)
         - **idxname** : list of string (default None) - name of index list (see data model)
-        
-        *Returns* : Ilist'''
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
+        - **fullcodec** : boolean (default False) - full codec if True
+        - **var** :  int (default None) - row of the variable'''
         #print('debut iext')
         #t0 = time()
         if not idxname: idxname=[]
@@ -311,7 +422,7 @@ class Ilist:
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', var=None, header=True, 
-                 optcsv = {'quoting': csv.QUOTE_NONNUMERIC}, dtype=ES.def_dtype, **kwargs):
+                 optcsv = {'quoting': csv.QUOTE_NONNUMERIC}, dtype=ES.def_dtype):
         '''
         Ilist constructor (from a csv file). Each column represents index values.
 
@@ -321,11 +432,8 @@ class Ilist:
         - **var** : integer (default None). column row for variable data
         - **header** : boolean (default True). If True, the first raw is dedicated to names
         - **dtype** : list of string (default None) - data type for each column (default str)
-        - **kwargs** : see csv.reader options
-
-        *Returns* : Ilist'''
+        - **optcsv** : dict (default : quoting) - see csv.reader options'''
         if not optcsv: optcsv = {}
-        #optcsv = {'quoting': csv.QUOTE_NONNUMERIC} | optcsv
         with open(filename, newline='') as f:
             reader = csv.reader(f, **optcsv)
             first=True
@@ -334,8 +442,7 @@ class Ilist:
                     if dtype and not isinstance(dtype, list): dtype = [dtype] * len(row)
                     idxval  = [[] for i in range(len(row))]
                     idxname = None
-                if first and header:
-                    idxname = row
+                if first and header:  idxname = row
                 else:
                     if not dtype: 
                         for i in range(len(row)) : idxval[i].append(row[i])
@@ -347,13 +454,12 @@ class Ilist:
     @classmethod
     def from_obj(cls, bs=None, reindex=True):
         '''
-        Generate an Ilist Object from a bytes, json or dict value
+        Generate an Ilist Object from a bytes, string or list value
 
         *Parameters*
 
-        - **bs** : bytes or string data to convert
-
-        *Returns* : Ilist '''
+        - **bs** : bytes, string or list data to convert
+        - **reindex** : boolean (default True) - if True, default codec for each index'''
         if not bs: bs = []
         if   isinstance(bs, bytes): lis = cbor2.loads(bs)
         elif isinstance(bs, str)  : lis = json.loads(bs, object_hook=CborDecoder().codecbor)
@@ -368,9 +474,11 @@ class Ilist:
 
         *Parameters*
 
-        - **listidx** :  list (default None) - list of compatible Iindex
+        - **listidx** :  list (default None) - list of compatible Iindex data
         - **var** :  int (default None) - row of the variable
-        - **length** :  int (default None)  - len of each Iindex'''
+        - **length** :  int (default None)  - len of each Iindex
+        - **reindex** : boolean (default True) - if True, default codec for each index
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
         #init self.lidx
         #print('debut')
         #t0 = time()
@@ -441,6 +549,7 @@ class Ilist:
         return None
                 
     def _addiidx(self, rang, code, iidx, codind):
+        '''creation Iindex and update lindex'''
         if isinstance(self.lindex[code], int): 
             self._addiidx(code, codind[code][0], codind[code][1], codind)
         if iidx.keys == list(range(len(iidx.codec))): #coupled format
@@ -653,6 +762,7 @@ class Ilist:
         '''return a zip format for textidx : tuple(tuple(idx)'''
         textidx = self.textidx
         return tuple(tuple(idx) for idx in textidx)
+    
     #%% methods
     def addindex(self, index, first=False, merge=False, update=False):
         '''add a new index.
@@ -807,7 +917,18 @@ class Ilist:
             self.lvar[0].keys += [len(self.lvar[0].codec)] * len(keysadd[0])
             self.lvar[0].codec.append(util.cast(fillvalue, ES.def_dtype))
         return None
-        
+
+    def getduplicates(self, indexname=None, newindex=None):
+        if not indexname: primary = self.primary
+        else: primary = [self.idxname.index(name) for name in indexname]
+        duplicates = []
+        for idx in primary: duplicates += self.lidx[idx].getduplicates()
+        if newindex and isinstance(newindex, str):
+            newidx = Iindex([True for i in list(range(len(self)))], name=newindex)
+            for item in duplicates: newidx[item] = False
+            self.addindex(newidx)
+        return duplicates
+            
     def isvaluesindex(self, listval, extern=True):
         '''
         Return True if listval is a valid record.

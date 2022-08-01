@@ -35,7 +35,7 @@ ESValue is build around two attributes :
     - DatationValue : value is a TimeSlot Object which represent a set of time intervals
     - LocationValue : value is a Shapely Geometry which represent a set of polygons
     - PropertyValue : value is a simple dictionary which specifies all the characteristics of a property
-    - NamedValue    : value can be any Json value
+    - NamedValue    : value can be any simple value
     - ExternValue   : value can be any object
 
 <img src="./ESValue_class.png" width="800">
@@ -69,8 +69,8 @@ class ESValue:
 
     - **name**  : name  of `ESValue.ESValue` objects
     - **value** : value of `ESValue.ESValue` objects
-    - `bounds` (@property) : boundary  of `ESValue.ESValue` objects
-    - `simple` (@property) : simplified value of `ESValue.ESValue` objects
+    - `ESValue.bounds` (@property) : boundary  of `ESValue.ESValue` objects
+    - `ESValue.simple` (@property) : simplified value of `ESValue.ESValue` objects
 
     The methods defined in this class are :
 
@@ -97,7 +97,7 @@ class ESValue:
     - `ESValue.setValue`
     - `ESValue.simple`
     - `ESValue.to_float`
-    - `ESValue.vClassName`
+    - `ESValue.valClassName`
     - `ESValue.vName`
     - `ESValue.vSimple`
     """
@@ -226,10 +226,10 @@ class ESValue:
     @property
     def bounds(self):
         '''list or tuple (@property)
-            DatationValue : boundingBox (tmin, tmax)
-            LocationValue : boundingBox (minx, miny, maxx, maxy)
-            PropertyValue : boundingBox (list of type property)
-            Other ESValue : () '''
+        - DatationValue : boundingBox (tmin, tmax)
+        - LocationValue : boundingBox (minx, miny, maxx, maxy)
+        - PropertyValue : boundingBox (list of type property)
+        - Other ESValue : () '''
         try :
             if isinstance(self, PropertyValue): return tuple(self.value[ES.prp_type])
             return self.value.bounds
@@ -237,11 +237,9 @@ class ESValue:
             return ()
 
     def boxUnion(self, other, name=''):
-        '''
-        return a new `ESValue` with :
-            name : parameters
-            value : union between box(self) and box(other)
-        '''
+        '''return a new `ESValue` with :
+        - name : parameters
+        - value : union between box(self) and box(other)  '''
         if self.__class__ == PropertyValue :
             return PropertyValue.Box(sorted(list(self._setprp(self.value[ES.prp_type]) |
                                           self._setprp(other.value[ES.prp_type]))),
