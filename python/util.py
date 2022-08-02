@@ -50,7 +50,7 @@ class CborDecoder(json.JSONDecoder):
         return dic2
 
 class IindexEncoder(json.JSONEncoder):
-    """add a new json encoder for Iindex and Ilist"""
+    """new json encoder for Iindex and Ilist"""
     def default(self, o) :
         if isinstance(o, datetime.datetime): return o.isoformat()
         option = {'encoded': False, 'encode_format': 'json'}
@@ -63,7 +63,7 @@ class IindexEncoder(json.JSONEncoder):
             except : return json.JSONEncoder.default(self, o)
     
 class util:
-    ''' functions for Iindex and Ilist class'''
+    ''' common functions for Iindex and Ilist class'''
 #%% util
     c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
     c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
@@ -299,7 +299,7 @@ class util:
 
 
     @staticmethod
-    def keyscrossed(lenidx): 
+    def canonorder(lenidx): 
         '''return a list of crossed keys from a list of number of values'''
         listrange = [range(lidx) for lidx in lenidx] 
         return util.transpose(util.list(list(product(*listrange))))

@@ -18,23 +18,22 @@ class Iindex:
     '''
     An `Iindex` is a representation of an index list .
 
-    *Attributes (for @property see methods)* :
+    *Attributes (for dynamic attributes see @property methods)* :
 
-    - **values** : list of data to be indexed (dynamic value)
-    - **name** : name of the list
+    - **name** : name of the Iindex
     - **codec** : list of values for each key
     - **keys** : list of code values
 
     The methods defined in this class are :
 
-    *constructor (classmethod))*
+    *constructor (@classmethod)*
 
     - `Iindex.Idic`
     - `Iindex.Iext`
     - `Iindex.from_parent`
     - `Iindex.from_obj`
 
-    *dynamic value property (getters)*
+    *dynamic value (getters @property)*
 
     - `Iindex.values`
     - `Iindex.val`
@@ -60,7 +59,7 @@ class Iindex:
     - `Iindex.tocoupled`
     - `Iindex.tostdcodec`
     
-    *idx property (getters)*
+    *getters methods*
 
     - `Iindex.couplinginfos`
     - `Iindex.derkeys`
@@ -75,7 +74,7 @@ class Iindex:
     - `Iindex.recordfromvalue`   
     - `Iindex.valtokey`   
 
-    *export function*
+    *export methods*
     
     - `Iindex.to_obj`
     - `Iindex.to_numpy`   
@@ -256,8 +255,8 @@ class Iindex:
         return self
 
     def __copy__(self):
-        ''' Copy all the data (deepcopy)'''
-        return deepcopy(self)
+        ''' Copy all the data '''
+        return Iindex([copy(cod) for cod in self.codec], copy(self.name), copy(self.keys))
 
 #%% property
     @property

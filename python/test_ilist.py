@@ -144,13 +144,13 @@ class Test_Ilist(unittest.TestCase):
         del(il[1])
         self.assertEqual( len(il), 3) 
         
-    def test_keyscrossed(self):
+    def test_canonorder(self):
         il = Ilist.Iext([[0,1,2,3,4,5], 
                           ['j','j','f','f','a','a'],
                           [100,100,200,200,300,300], 
                           [True, False, True, False, True, False]], var=0)
-        il.to_keyscrossed()
-        self.assertTrue(il.iskeyscrossed)
+        il.setcanonorder()
+        self.assertTrue(il.iscanonorder())
         
     def test_addindex(self):
         iidx=Ilist([['a', 'b', 'c'], [1,2,2], [4,5,5]])
@@ -321,7 +321,7 @@ class Test_Ilist(unittest.TestCase):
                           [100,100,200,200,300,300], 
                           [True, False, True, False, True, False]], var=0)
         self.assertEqual(Ilist.from_obj(il.to_obj()), il)
-        il.to_keyscrossed()
+        il.setcanonorder()
         self.assertEqual(Ilist.from_obj(il.to_obj()), il)
         self.assertEqual(Ilist.from_obj(), Ilist())
         
@@ -354,7 +354,7 @@ class Test_Ilist(unittest.TestCase):
                           [20,  10,  10,  10,  10,  20], [200, 200, 200, 300, 300, 200], 
                           [1,1,1,2,3,1] ] )
         ilx.coupling(rate=0.2)
-        ilx.getduplicates(newindex='test')
+        ilx.getduplicates(resindex='test')
         self.assertEqual(ilx.lindex[4].values, [True, True, True, False, False, True])
         
     def test_full(self):
@@ -394,12 +394,12 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il.vlist(func=datetime.isoformat,timespec='hours', sep='-'),
                          ['2010-01-02-00', '2012-01-02-00'])
         il =Ilist([[['aer', 'e', 'h'], -1], [1,2,3], ['a', 'efg', 'h'], [0,1,0]])
-        self.assertEqual(il.vlist(func=len, idx=2), [1, 3, 1])
+        self.assertEqual(il.vlist(func=len, index=2), [1, 3, 1])
         il=Ilist([[[1,2,3,4], -1], [DatationValue(name='morning'), DatationValue(name='afternoon')],
                              [LocationValue(name='paris'), LocationValue([4.1, 42.8])]])
-        self.assertEqual(il.vlist(func=ESValue.vName, extern=False, idx=1), 
+        self.assertEqual(il.vlist(func=ESValue.vName, extern=False, index=1), 
                          ['morning', 'morning', 'afternoon', 'afternoon'])
-        self.assertEqual(il.vlist(func=ESValue.vName, extern=False, idx=2, default='ici'), 
+        self.assertEqual(il.vlist(func=ESValue.vName, extern=False, index=2, default='ici'), 
                          ['paris', 'ici', 'paris', 'ici'])
 
     def test_merge(self):
@@ -412,10 +412,10 @@ class Test_Ilist(unittest.TestCase):
                            'name'      : ['philippe white', 'anne white'],
                            'firstname' : ['philippe', 'anne'],
                            'group'     : ['gr1', 'gr2']}, var=0)
-        self.assertEqual(il3.merge(merge=True, update=True).loc(["anne white", "anne", "gr1", "english" ]), 14)
-        self.assertEqual(il3.merge(merge=True, update=False).loc(["anne white", "anne", "gr2", "english" ]), 14)
+        self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["anne white", "anne", "gr1", "english" ]), 14)
+        self.assertEqual(il3.merge(mergeidx=True, updateidx=False).loc(["anne white", "anne", "gr2", "english" ]), 14)
         il3 = Ilist([il1, il2], typevalue=None)
-        self.assertEqual(il3.merge(merge=True, update=True).loc(["english", "gr1"]), 14)
+        self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["english", "gr1"]), 14)
 
     def test_csv(self):
         il=Ilist([[['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 20, 15]])
@@ -442,7 +442,7 @@ class Test_Ilist(unittest.TestCase):
         il3 = Ilist.Idic({'list'      : [il1, il2],
                            'name'      : ['philippe white', 'anne white'],
                            'firstname' : ['philippe', 'anne']}, var=0)        
-        self.assertEqual(il3.merge(merge=True, update=False).primary, [2, 3])
+        self.assertEqual(il3.merge(mergeidx=True, updateidx=False).primary, [2, 3])
         
     def test_sort(self) :
         il=Ilist.Iext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 15]], var=0)
