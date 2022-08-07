@@ -9,7 +9,7 @@ from collections import Counter
 from itertools import product
 from copy import copy
 import datetime, cbor2
-from timeslot import TimeSlot
+from timeslot import TimeSlot, TimeInterval
 import json
 import re
 import numpy as np
@@ -17,6 +17,8 @@ from ESValue import LocationValue, DatationValue, PropertyValue, NamedValue
 from ESValue import ESValue, ExternValue
 import math
 from ESconstante import ES, _classval
+from json import JSONDecodeError 
+
 
 def identity(*args, **kwargs):
     '''return the same value as args or kwargs'''
@@ -69,14 +71,20 @@ class util:
     c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
 
     @staticmethod
-    def cast(val, dtype):
+    def cast(val, dtype=None, string=True):
         ''' convert val in the type defined by the string dtype'''
         typeval = val.__class__.__name__
+        if dtype == 'simple':
+            if typeval in ES.className: return val.vSimple(string=string)
+            else: return val
+        if dtype == 'json':
+            if typeval in ES.className: return val.json()
+            else: return val
+        if dtype == 'obj':
+            if typeval in ES.className: return val.to_obj(encoded=False)
+            else: return val
         if typeval in ES.ESclassName: return val
-        if not dtype :
-            if typeval == 'list': return tuple(val)
-            if typeval == 'dict': return val
-            return val
+        if not dtype : return ESValue._castsimple(val)
         if dtype == 'str':  return str(val)
         if dtype == 'int':
             try : return int(val.lstrip())
@@ -85,8 +93,8 @@ class util:
             try : return float(val.lstrip())
             except : return math.nan
         if dtype == 'datetime':
-            try : return datetime.datetime.fromisoformat(val)
-            except : return datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+            try : return  TimeInterval._dattz(datetime.datetime.fromisoformat(val))
+            except ValueError: return datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
         if dtype == 'coord':
             if util.c1.search(val) and util.c2.search(val) :
                 return [float(util.c1.search(val)[0][:-1]), float(util.c2.search(val)[0][1:])]
@@ -96,19 +104,29 @@ class util:
         raise utilError("dtype : " + dtype + " inconsistent with data")
         
     @staticmethod
-    def castobj(lis, classvalue):
+    def castobj(lis, classvalue=None):
         ''' convert a list of values in the ESValue defined by the string classvalue'''
         if not lis: return lis
+        return [util.castval(val, classvalue) for val in lis]
+            
+    @staticmethod
+    def castval(val, classvalue=None):
+        ''' convert a value in the ESValue defined by the string classvalue'''
+        classn, name, value = ESValue._decodevalue(val)
+        if classn: 
+            classvalue = classn
         if classvalue is None: dtype = None
         else: dtype = ES.valname[classvalue]
-        if classvalue in ES.ESclassName or dtype is None:
-            return [util.cast(ESValue.from_obj(val, classvalue), dtype) for val in lis] # ESValue.cast()
-        idx = copy(lis) # si typevalue pas dans les ESValue et si pas déja casté : cast auto
-        for i in range(len(idx)):
-            if classvalue == ES.ES_clsName: 
-                idx[i] = _classval()[ESValue.valClassName(idx[i])](idx[i]) #cast auto ESValue 
-        return idx
-            
+        if dtype is None: 
+            return util.cast(val)
+        if classvalue in ES.ESclassName: # or dtype is None:
+            return util.cast(ESValue.from_obj(val, classvalue), dtype) # ESValue.cast()
+        if classvalue == ES.ES_clsName: 
+            return _classval()[ESValue.valClassName(val)](val) #cast auto ESValue 
+        if classvalue in ES.className: 
+            return _classval()[classvalue](value)
+        return val
+
     @staticmethod
     def couplinginfos(l1, l2):
         '''return a dict with the coupling info between two list'''
@@ -194,8 +212,33 @@ class util:
         if isinstance(keys, list) and len(keys) > 1: return (ES.nullparent, keys)
         raise utilError('parent or keys is unconsistent')
 
+    """@staticmethod
+    def _decodevalue(bs):
+        ''' return tuple (class, name, val). If single value, it's val'''
+        bs2 =       None
+        name =      None
+        classname = None
+        val =       None
+        if isinstance(bs, bytes): bs = cbor2.loads(bs)
+        if isinstance(bs, str) and bs.lstrip() and bs.lstrip()[0] in ('{', '[', '('): 
+            try: bs = json.loads(bs)
+            except JSONDecodeError: pass
+        if not isinstance(bs, dict): val = bs
+        elif isinstance(bs, dict) and len(bs) > 1: val = bs
+        elif list(bs.keys())[0] in ES.typeName:
+            classname = ES.typeName[list(bs.keys())[0]]
+            bs2 = bs[list(bs.keys())[0]]
+        else: bs2 = bs
+        if bs2: 
+            if not isinstance(bs2, dict): val=bs2
+            elif isinstance(bs2, dict) and len(bs2) > 1: val = bs2
+            else: 
+                name = str(list(bs2.keys())[0])
+                val  = list(bs2.values())[0]
+        return (classname, name, val)"""
+    
     @staticmethod
-    def encodeobj(codeclist, keyslist=None, name=None, typevalue=None, 
+    def encodeobj(codeclist, keyslist=None, name=None, simpleval=False, typevalue=None, 
                   parent=ES.nullparent, **kwargs):
         '''
         Return a formatted object with values, keys and codec.
@@ -214,19 +257,23 @@ class util:
         - **encoded** : boolean (default False) - choice for return format (string/bytes if True, dict else)
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
+        - **untyped** : boolean (default False) - include dtype in the json if True
 
         *Returns* : string, bytes or dict'''
-        option = {'encoded': False, 'encode_format': 'json', 
+        option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
                   'codif': {}, 'typevalue': typevalue} | kwargs
         js = []
-        if name and typevalue:          js.append({name: typevalue})
-        elif name:                      js.append(name)
-        elif typevalue:                 js.append(typevalue)
-        js.append([util.json(cc, encoded=False, typevalue=None) for cc in codeclist])
-        if parent >= 0 and keyslist:    js.append([parent, keyslist])
-        elif parent != ES.nullparent:   js.append(parent)
-        elif keyslist:                  js.append(keyslist)      
-        if len(js) == 1:                js = js[0]
+        if not simpleval:
+            if name and typevalue:          js.append({name: typevalue})
+            elif name:                      js.append(name)
+            elif typevalue:                 js.append(typevalue)
+        js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, untyped=option['untyped']) 
+                   for cc in codeclist])
+        if not simpleval: 
+            if parent >= 0 and keyslist:    js.append([parent, keyslist])
+            elif parent != ES.nullparent:   js.append(parent)
+            elif keyslist:                  js.append(keyslist)      
+        if len(js) == 1:                    js = js[0]
         if option['encoded'] and option['encode_format'] == 'json': 
             return json.dumps( js, cls=IindexEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor': 
@@ -287,14 +334,23 @@ class util:
     @staticmethod
     def json(val, **option):
         '''return the json object format of val (if function json() or to_json() exists)'''
-        if isinstance(val, (str, int, float, bool, tuple, list, type(None), bytes)): 
-            return val
+        '''if isinstance(val, (str, int, float, bool, list, tuple, type(None), bytes)): 
+            return val '''       
+        if isinstance(val, (str, int, float, bool, list, type(None), bytes)): 
+            return val        
+        if isinstance(val, tuple): 
+            return list(val)
         if isinstance(val, datetime.datetime): 
+            if option['simpleval']: return val 
+            return val #!!!
             return {ES.datetime: val}
-        if isinstance(val, tuple(_invcastfunc.keys())[0:5]):      #ESValue
+        #if isinstance(val, tuple(_invcastfunc.keys())[0:5]):      #ESValue
+        if option['simpleval']: return val.json(**option)
+        if val.__class__.__name__ in ES.ESclassName:      #ESValue
             if not option['typevalue']: return val.json(**option)
             else: return {_invcastfunc[val.__class__]: val.json(**option)} 
-        if val.__class__.__name__ == 'Ilist': return {ES.ili_valName: val.json(**option)}
+        if val.__class__.__name__ == 'Ilist':       return {ES.ili_valName: val.json(**option)}
+        if val.__class__.__name__ == 'Iindex':      return {ES.iin_valName: val.json(**option)}
         if val.__class__.__name__ == 'Observation': return {ES.obs_valName: val.to_json(**option)}
 
 

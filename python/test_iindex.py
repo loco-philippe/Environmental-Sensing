@@ -20,36 +20,27 @@ from ESconstante import ES
 from itertools import product
 from timeslot import TimeSlot
 
-
-'''f = ['er', 'rt', 'er', 'ry']
-l = [30, 12, 20, 15]
-il=Ilist.Iext(f,l)'''
-tlis = (1,2) 
-if ES.def_clsName: lis = [1,2]
-else:              lis = (1,2)
-
 class Test_iindex(unittest.TestCase):
 
     def test_init(self) :
-
-        idx = Iindex(codec=['er', 2, lis], name='test', keys=[0,1,2,1])
-        idx2 = Iindex.Iext(['er', 2, lis, 2], 'test')
-        idx3 = Iindex.Idic({'test': ['er', 2, lis, 2]})
-        idx4 = Iindex.Idic({'test': ['er', 2, lis, 2]}, fullcodec=True)
-        idx5 = Iindex.Iext(['er', 2, lis, 2], 'test', fullcodec=True)
+        idx = Iindex(codec=['er', 2,[1,2]], name='test', keys=[0,1,2,1])
+        idx2 = Iindex.Iext(['er', 2,[1,2], 2], 'test')
+        idx3 = Iindex.Idic({'test': ['er', 2,[1,2], 2]})
+        idx4 = Iindex.Idic({'test': ['er', 2,[1,2], 2]}, fullcodec=True)
+        idx5 = Iindex.Iext(['er', 2,[1,2], 2], 'test', fullcodec=True)
         self.assertTrue(Iindex(idx) == Iindex.Iext(idx) == Iindex.Idic(idx) == idx)
-        self.assertTrue(idx.name == 'test' and idx.cod == ['er', 2, tlis] and idx.keys == [0,1,2,1])
+        self.assertTrue(idx.name == 'test' and idx.cod == ['er', 2, [1,2]] and idx.keys == [0,1,2,1])
         self.assertTrue(idx == idx2 == idx3)
-        self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, tlis, 2] 
+        self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1,2], 2] 
                         == idx5.val == idx5.cod and len(idx) == 4)
         idx = Iindex() 
         idx2 = Iindex.Iext()
         idx3 = Iindex.Idic()
         self.assertTrue(idx == idx2 == idx3 == Iindex(idx))
-        self.assertTrue(idx.name == 'default index' and idx.codec == [] and idx.keys == [])
+        self.assertTrue(idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
         self.assertTrue(idx.values == [])
         idx = Iindex(lendefault=3) 
-        self.assertTrue(idx.name == 'default index' and idx.cod == [0,1,2] and idx.keys == [0,1,2])
+        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [0,1,2] and idx.keys == [0,1,2])
         self.assertTrue(idx.val == [0,1,2])
         idx = Iindex(['er', 'rt', 'ty'], 'datation', [0,1,2,2])
         idx2 = Iindex.Iext(['er', 'rt', 'ty', 'ty'], 'datation')
@@ -62,45 +53,45 @@ class Test_iindex(unittest.TestCase):
         idx3 = Iindex.Idic({'result': ['er', 'rt', Ilist(), Ilist()]})
         self.assertTrue(idx == idx2 == idx3)
         if ES.def_clsName: self.assertTrue(isinstance(idx.codec[0], NamedValue))
-        self.assertTrue(idx.values[3] == Ilist())
-        self.assertTrue(Iindex.from_obj([1,2,3])[1] == Iindex([1,2,3]))
+        self.assertTrue(idx.values[3].value == Ilist())
+        self.assertTrue(Iindex.Iobj([1,2,3], typevalue=None) == Iindex([1,2,3]))
         self.assertTrue(Iindex(codec=[True], lendefault=3).val == [True, True, True])
     
     def test_infos(self) :
-        idx = Iindex.Iext(['er', 2, lis])
+        idx = Iindex.Iext(['er', 2,[1,2]])
         self.assertTrue(idx.infos == {'lencodec': 3, 'typeindex': 'complete',
          'rate': 0.0, 'disttomin': 2, 'disttomax': 0})
-        #idx2 = Iindex.Iext(['er', Ilist(), Ilist()], 'result') #!!! à remettre
-        #self.assertTrue(idx2.infos == {'lencodec': 2, 'typeindex': 'mixte',
-        # 'rate': 0.5, 'disttomin': 1, 'disttomax': 1})
+        idx2 = Iindex.Iext(['er', Ilist(), Ilist()], 'result')
+        self.assertTrue(idx2.infos == {'lencodec': 2, 'typeindex': 'mixte',
+                                       'rate': 0.5, 'disttomin': 1, 'disttomax': 1})
         idx2 = Iindex()
         self.assertTrue(idx2.infos == {'lencodec': 0, 'typeindex': 'null',
          'rate': 0.0, 'disttomin': 0, 'disttomax': 0})
         
     def test_append(self) :
-        idx = Iindex.Iext(['er', 2, lis])
+        idx = Iindex.Iext(['er', 2,[1,2]])
         self.assertTrue(idx.append(8)==3)
         self.assertTrue(idx.append(8)==3)
         self.assertTrue(idx.append(8, unique=False)==4)
         
     def test_loc_keyval(self):
-        idx = Iindex.Iext(['er', 2, lis])
-        self.assertTrue(idx.keytoval(idx.valtokey(lis)) == tlis)
-        self.assertTrue(idx.isvalue(tlis))
+        idx = Iindex.Iext(['er', 2,[1,2]])
+        self.assertTrue(idx.keytoval(idx.valtokey([1,2])) == [1,2])
+        self.assertTrue(idx.isvalue([1,2]))
 
     def test_setvalue_setname(self):
-        idx = Iindex.Iext(['er', 2, lis])
+        idx = Iindex.Iext(['er', 2,[1,2]])
         idx[1] = 'er'
-        self.assertTrue(idx.val == ['er', 'er', tlis])
+        self.assertTrue(idx.val == ['er', 'er', [1,2]])
         idx.setcodecvalue('er', 'ez')
-        self.assertTrue(idx.val == ['ez', 'ez', tlis])        
+        self.assertTrue(idx.val == ['ez', 'ez', [1,2]])        
         idx[1] = 3
-        self.assertTrue(idx.val == ['ez', 3, tlis])
+        self.assertTrue(idx.val == ['ez', 3, [1,2]])
         idx.setvalue(0, 'ez', dtype='datvalue')
-        if ES.def_clsName: self.assertTrue(idx.val == ['ez', 3, tlis])
+        if ES.def_clsName: self.assertTrue(idx.val == ['ez', 3, [1,2]])
         self.assertTrue(idx.values[0] == DatationValue(name='ez'))
         idx.setlistvalue([3, (3,4), 'ee'])
-        self.assertTrue(idx.val == [3, (3,4), 'ee'])
+        self.assertTrue(idx.val == [3, [3,4], 'ee'])
         idx.setname('truc')
         self.assertEqual(idx.name, 'truc')
 
@@ -109,7 +100,7 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual([ia[i] for i in ia.recordfromvalue('paul')], ['paul', 'paul'])
 
     def test_reset_reorder_sort(self):
-        idx = Iindex.Iext(['er', 2, 'er', lis])
+        idx = Iindex.Iext(['er', 2, 'er',[1,2]])
         cod = copy(idx.codec)
         idx.codec.append('ez')
         #idx.resetkeys()
@@ -117,11 +108,11 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual(cod, idx.codec)
         order=[1,3,0,2]
         idx.reorder(order)
-        self.assertEqual(idx.val, [2, tlis, 'er', 'er'])
+        self.assertEqual(idx.val, [2, [1,2], 'er', 'er'])
         #idx.sort()
-        self.assertEqual(idx.sort().val, [tlis, 2, 'er', 'er'])      
+        self.assertEqual(idx.sort().val, [[1,2], 2, 'er', 'er'])      
         idxs = idx.sort(inplace=False, reverse=True)
-        self.assertEqual(idxs.val, ['er', 'er', 2, tlis])      
+        self.assertEqual(idxs.val, ['er', 'er', 2, [1,2]])      
         idx = Iindex.Iext([1,3,3,2,5,3,4]).sort(inplace=False)
         self.assertEqual(idx.val, [1, 2, 3, 3, 3, 4, 5])
         self.assertEqual(idx.cod,  [1, 2, 3, 4, 5])
@@ -162,13 +153,13 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(ia.iscrossed(ib))
 
     def test_vlist(self):
-        testidx = [Iindex(), Iindex.Iext(['er', 2, 'er', lis])]
-        residx  = [[], ['er', '2', 'er', str(tlis)]]
+        testidx = [Iindex(), Iindex.Iext(['er', 2, 'er',[1,2]])]
+        residx  = [[], ['er', '2', 'er', str([1,2])]]
         for idx, res in zip(testidx, residx):
             self.assertEqual(idx.vlist(str), res)
 
     def test_numpy(self):
-        idx = Iindex.Iext(['er', 2, 'er', lis])
+        idx = Iindex.Iext(['er', 2, 'er',[1,2]])
         self.assertEqual(len(idx.to_numpy(func=str)), len(idx)) 
 
     def test_coupled_extendvalues(self):
@@ -263,9 +254,9 @@ class Test_iindex(unittest.TestCase):
 
 
     def test_json(self):
-        self.assertTrue(Iindex.from_obj(Iindex(['a']).to_obj())[1].to_obj()==Iindex(['a']).to_obj()==['a'])
-        self.assertTrue(Iindex.from_obj(Iindex([0]).to_obj())[1].to_obj()==Iindex([0]).to_obj()==[0])
-        self.assertTrue(Iindex.from_obj(Iindex().to_obj())[1].to_obj()==Iindex().to_obj()==[])
+        self.assertTrue(Iindex.Iobj(Iindex(['a']).to_obj()).to_obj()==Iindex(['a']).to_obj()==['a'])
+        self.assertTrue(Iindex.Iobj(Iindex([0]).to_obj()).to_obj()==Iindex([0]).to_obj()==[0])
+        self.assertTrue(Iindex.Iobj(Iindex().to_obj()).to_obj()==Iindex().to_obj()==[])
         parent = Iindex.Iext(['j', 'j', 'f', 'f', 'm', 's', 's'])
         fils = Iindex.Iext(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
         js=fils.tostdcodec().to_obj(parent=-1)
@@ -281,29 +272,32 @@ class Test_iindex(unittest.TestCase):
         test = list(product(encoded, format))
         for ts in test:
             option = {'encoded': ts[0], 'encode_format': ts[1]}
-            idx2=Iindex.from_obj(idx.to_obj(keys=True, **option))[1]
+            idx2=Iindex.Iobj(idx.to_obj(keys=True, **option))
             self.assertEqual(idx.values, idx2.values)
-            idx2=Iindex.from_obj(idx.tostdcodec().to_obj(**option))[1] # full format
+            idx2=Iindex.Iobj(idx.tostdcodec().to_obj(**option)) # full format
             self.assertEqual(idx.values, idx2.values)
-            idx2=Iindex.from_obj(idx.to_obj(keys=fils.derkeys(parent), parent=1, **option), 
-                                 extkeys=parent.keys)[1] # default format
+            idx2=Iindex.Iobj(idx.to_obj(keys=fils.derkeys(parent), parent=1, **option), 
+                                 extkeys=parent.keys) # default format
             self.assertEqual(idx.values, idx2.values)
 
     def test_castobj(self): #!!!
-        lis = [['{"namvalue":{"val":21}}',   'ESValue',         NamedValue],
-               [{"val":21},                  'ESValue',         NamedValue],
-               [{"val":21},                  None,              dict],
-               ['{"namvalue":{"val":21}}',   None,              str],
-               ['{"locvalue":{"val":21}}',   'LocationValue',   LocationValue],
-               ['{"observation":{"val":21}}','Observation',     Observation],
-               #[Observation(),               'Observation',     Observation],
-               #[Observation(),               None,              Observation],
-               [datetime.datetime(2020,1,1), 'DatationValue',   DatationValue],
-               [datetime.datetime(2020,1,1), 'TimeSlot',        TimeSlot],
-               [datetime.datetime(2020,1,1), None,              datetime.datetime]]
-        '''for t in lis:
-            print(type(util.castobj([t[0]], t[1])[0]))
-            self.assertTrue(isinstance(util.castobj([t[0]], t[1])[0], t[2]))'''
+        liste = [['{"namvalue":{"val":21}}',    'ESValue',         NamedValue],
+               [{"val":21},                     'ESValue',         NamedValue],
+               [{"val":21},                     None,              str],
+               #[{"val":21},                     None,              NamedValue],
+               ['{"namvalue":{"val":21}}',      None,              NamedValue],
+               ['{"locvalue":{"val":[2, 1]}}',  'LocationValue',   LocationValue],
+               ['{"locvalue":{"val":[2, 1]}}',  None,              LocationValue],
+               #['{"observation":{"val":21}}',  'Observation',     Observation],
+               #[Observation(),                 'Observation',     Observation],
+               #[Observation(),                  None,             Observation],
+               [datetime.datetime(2020,1,1),    'DatationValue',   DatationValue],
+               #[datetime.datetime(2020,1,1),   'TimeSlot',        TimeSlot],
+               [datetime.datetime(2020,1,1),    None,              datetime.datetime]]
+        for t in liste:
+            #print(t[0], t[1])
+            #print(type(util.castobj([t[0]], t[1])[0]))
+            self.assertTrue(isinstance(util.castobj([t[0]], t[1])[0], t[2]))
         idx = Iindex.Idic({'datation': ['er', 'rt', 'ty', 'ty']})
         self.assertTrue(isinstance(idx.values[0], DatationValue))
         idx = Iindex.Idic({'ESdatation': ['er', 'rt', 'ty', 'ty']})
@@ -313,19 +307,19 @@ class Test_iindex(unittest.TestCase):
         else: self.assertTrue(isinstance(idx.values[0], NamedValue))
 
     def test_to_from_obj(self):          #!!!  
-        idx = Iindex.Iext([[1,2], [2,3]], fullcodec=True)
-        self.assertEqual(Iindex.from_obj(idx.to_obj(encoded=False))[1], idx)
-        self.assertEqual(Iindex.from_obj(idx.to_obj(encoded=True, keys=True))[1], idx)
-        idx  = Iindex.from_obj(['datation', [DatationValue.from_obj(dat3[1][0]), 
-                                             DatationValue.from_obj(dat3[1][1]),
-                                             DatationValue.from_obj(dat3[1][2])]])[1]
-        idx2 = Iindex.from_obj(['location', [LocationValue.from_obj(loc3[1][0]), 
-                                             LocationValue.from_obj(loc3[1][1]),
-                                             LocationValue.from_obj(loc3[1][2])], 0])[1]
-        idx3 = Iindex.from_obj(['property', [PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]])[1]
+        idx = Iindex.Iext([[1,2], [2,3], [3,4]], fullcodec=True)
+        self.assertEqual(Iindex.Iobj(idx.to_obj(encoded=False)), idx)
+        self.assertEqual(Iindex.Iobj(idx.to_obj(encoded=True, keys=True)), idx)
+        idx  = Iindex.Iobj(['datation', [DatationValue.from_obj(dat3[1][0]), 
+                                         DatationValue.from_obj(dat3[1][1]),
+                                         DatationValue.from_obj(dat3[1][2])]])
+        idx2 = Iindex.Iobj(['location', [LocationValue.from_obj(loc3[1][0]), 
+                                         LocationValue.from_obj(loc3[1][1]),
+                                         LocationValue.from_obj(loc3[1][2])], 0])
+        idx3 = Iindex.Iobj(['property', [PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]])
     
     def test_iadd(self):            
-        idx = Iindex.Iext(['er', 2, lis])
+        idx = Iindex.Iext(['er', 2,[1,2]])
         idx2 = idx + idx
         self.assertEqual(idx2.val, idx.val + idx.val)
         self.assertEqual(len(idx2), 2 * len(idx))

@@ -482,7 +482,7 @@ class Ilist:
             listidx = [listidx]
         if len(listidx) == 1:
             code, idx = Iindex.from_obj(listidx[0], typevalue=typevalue)
-            if idx.name is None or idx.name == 'default index': idx.name = 'i0'
+            if idx.name is None or idx.name == ES.defaultindex: idx.name = 'i0'
             self.lindex = [idx]
             self.lvarname = [idx.name]
             return            
@@ -493,7 +493,7 @@ class Ilist:
         else: idxvar = [var]
         codind = [Iindex.from_obj(idx, typevalue=typevalue) for idx in listidx]
         for ii, (code, idx) in zip(range(len(codind)), codind):
-            if idx.name is None or idx.name == 'default index': idx.name = 'i'+str(ii)
+            if idx.name is None or idx.name == ES.defaultindex: idx.name = 'i'+str(ii)
             if code == ES.variable and not idxvar: idxvar = [ii]
         self.lindex = list(range(len(codind)))    
         lcodind = [codind[i] for i in range(len(codind)) if i not in idxvar]
@@ -521,7 +521,7 @@ class Ilist:
         #print('fin primary', time()-t0)
         #init secondary               
         for ii, (code, iidx) in zip(range(len(lcodind)), lcodind):
-            if iidx.name is None or iidx.name == 'default index': iidx.name = 'i'+str(ii)
+            if iidx.name is None or iidx.name == ES.defaultindex: iidx.name = 'i'+str(ii)
             if len(iidx.codec) == 1: 
                 iidx.keys = [0] * length
                 self.lindex[lidx[ii]] = iidx
@@ -625,7 +625,8 @@ class Ilist:
 
     def __copy__(self):
         ''' Copy all the data '''
-        return Ilist([copy(idx) for idx in self.lindex], var=self.lvarrow)
+        #return Ilist([copy(idx) for idx in self.lindex], var=self.lvarrow)
+        return Ilist(self)
 
 #%% property
     @property

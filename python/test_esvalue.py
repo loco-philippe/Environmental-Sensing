@@ -19,6 +19,7 @@ from test_observation import dat3, loc3, prop2, _res, lyon, paris, pol1, \
     pol75, t1, pprop_pm25, t2, s1, t1n, matin, travail, pt1, tnull, pprop_pm10, \
     prop_pm25, pol2, pol13, aprem
 from itertools import product
+from util import util
 
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False
@@ -32,35 +33,38 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ESValue.valClassName(21), 'NamedValue')
         self.assertEqual(ESValue.valClassName('test'), 'NamedValue')
         self.assertEqual(ESValue.valClassName({"truc": 21}), 'NamedValue')
-        self.assertEqual(ESValue.valClassName({"truc": Ilist()}), 'Ilist')
+        self.assertEqual(ESValue.valClassName({"truc": Ilist()}), 'ExternValue')
         self.assertEqual(ESValue.valClassName(NamedValue("cou")), 'NamedValue')
         self.assertEqual(ESValue.valClassName(LocationValue(name="cou")), 'LocationValue')
-        self.assertEqual(ESValue.valClassName(Ilist()), 'Ilist')
+        self.assertEqual(ESValue.valClassName(Ilist()), 'ExternValue')
         #self.assertEqual(ESValue.valClassName(Observation()), 'Observation')
-        self.assertEqual(ESValue.valClassName(datetime.datetime(2020,1,1)), 'datetime')
+        #self.assertEqual(ESValue.valClassName(datetime.datetime(2020,1,1)), 'datetime')
+        self.assertEqual(ESValue.valClassName(datetime.datetime(2020,1,1)), 'DatationValue')
         self.assertEqual(ESValue.valClassName('{"namvalue":{"val":21}}'), 'NamedValue')
         self.assertEqual(ESValue.valClassName('{"locvalue":{"val":21}}'), 'LocationValue')
         self.assertEqual(ESValue.valClassName('{"observation":{"val":21}}'), 'Observation')
         self.assertEqual(ESValue.valClassName('{"truc":{"observation":{}}}'), 'NamedValue')
-        self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'NamedValue')
+       # self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'NamedValue')
+        self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'PropertyValue')
         self.assertEqual(ESValue.valClassName({"namvalue":{"val":21}}), 'NamedValue')
         self.assertEqual(ESValue.valClassName({"locvalue":{"val":21}}), 'LocationValue')
         self.assertEqual(ESValue.valClassName({"observation":{"val":21}}), 'Observation')
         #self.assertEqual(ESValue.valClassName({"truc": Observation()}), 'Observation')
-        self.assertEqual(ESValue.valClassName({"locvalue":1, "observation":{}}), 'NamedValue')
+        #self.assertEqual(ESValue.valClassName({"locvalue":1, "observation":{}}), 'NamedValue')
+        self.assertEqual(ESValue.valClassName({"locvalue":1, "observation":{}}), 'PropertyValue')
         
     def test_NamedValue(self):
-        self.assertEqual(NamedValue("coucou").json(), '"coucou"')
+        self.assertEqual(NamedValue("coucou").to_obj(), '"coucou"')
         self.assertEqual(NamedValue.from_obj('{"er":2}').json(), '{"er": 2}')
         self.assertEqual(NamedValue(21).json(), '21')
         self.assertEqual(NamedValue(2.1).json(), '2.1')
 
     def test_locationValue(self):
         self.opt = ES.mOption.copy()
-        self.assertEqual(LocationValue(lyon).json(**self.opt), json.dumps(lyon))
+        self.assertEqual(LocationValue(lyon).json(), json.dumps(lyon))
         self.assertEqual(LocationValue(lyon), LocationValue(LocationValue(lyon)))
         self.assertTrue(LocationValue(lyon) > LocationValue(paris))
-        self.assertEqual(LocationValue(pol1).json(**self.opt), json.dumps(pol1))
+        self.assertEqual(LocationValue(pol1).json(), json.dumps(pol1))
         self.assertTrue(LocationValue(paris).value == LocationValue.from_obj({'paris':paris}).value ==
                         LocationValue(name='paris', val=LocationValue._gshape(paris)).value)
         self.assertTrue(LocationValue(name='paris').name == LocationValue.from_obj({'paris':paris}).name ==
@@ -77,11 +81,11 @@ class TestObsUnitaire(unittest.TestCase):
     def test_DatationValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(DatationValue(t1), DatationValue(DatationValue(t1)))
-        self.assertEqual(DatationValue(t1).json(encoded=False), t1.astimezone(datetime.timezone.utc))
+        self.assertEqual(DatationValue(t1).to_obj(encoded=False), t1.astimezone(datetime.timezone.utc))
         self.assertTrue(DatationValue(t1) < DatationValue(t2))
         self.assertEqual(DatationValue.from_obj(json.loads(t1n)).json(), t1n)
         self.opt["json_dat_name"] = True
-        self.assertEqual(DatationValue.from_obj(json.loads(t1n)).json(**self.opt), t1n)
+        self.assertEqual(DatationValue.from_obj(json.loads(t1n)).json(), t1n)
         self.assertTrue(DatationValue(t1).value == DatationValue.from_obj({'t1':t1}).value ==
                         DatationValue(name='t1', val=t1).value)
         self.assertTrue(DatationValue(name='t1').name == DatationValue.from_obj({'t1':t1}).name ==
@@ -98,12 +102,12 @@ class TestObsUnitaire(unittest.TestCase):
 
     def test_propertyValue(self):
         self.opt = ES.mOption.copy()
-        self.assertEqual(PropertyValue().json(**self.opt), '{}')
-        self.assertEqual(PropertyValue({ES.prp_type : "PM25"}, prp_dict=True).json(**self.opt),
+        self.assertEqual(PropertyValue().json(), '{}')
+        self.assertEqual(PropertyValue({ES.prp_type : "PM25"}, prp_dict=True).json(),
                          '{"'+ES.prp_type+'": "PM25", "unit": "kg/m3"}')
-        self.assertEqual(PropertyValue({ES.prp_type : "PM25"}).json(**self.opt),
+        self.assertEqual(PropertyValue({ES.prp_type : "PM25"}).json(),
                          '{"'+ES.prp_type+'": "PM25"}')
-        self.assertEqual(PropertyValue(pprop_pm10).json(**self.opt), json.dumps(pprop_pm10))
+        self.assertEqual(PropertyValue(pprop_pm10).json(), json.dumps(pprop_pm10))
         self.assertTrue(PropertyValue(prop_pm25).simple == 'PM25' == 
                         PropertyValue(pprop_pm25).simple)
         self.assertEqual(PropertyValue({'truc':2}).json(), '{"truc": 2}')
@@ -133,11 +137,11 @@ class TestObsUnitaire(unittest.TestCase):
     def test_nameValue(self):
         self.assertEqual(DatationValue(name='recre').json(encoded=False), 'recre')
         self.opt["json_prp_name"] = True
-        self.assertEqual(PropertyValue(pprop_pm25).json(**self.opt), json.dumps(pprop_pm25))
-        self.assertEqual(PropertyValue('test').json(**self.opt), '"test"')
+        self.assertEqual(PropertyValue(pprop_pm25).json(), json.dumps(pprop_pm25))
+        self.assertEqual(PropertyValue('test').json(), '"test"')
         self.opt["json_loc_name"] = True
-        self.assertEqual(LocationValue(lyon).json(**self.opt), json.dumps(lyon))
-        self.assertEqual(LocationValue(name='test').json(**self.opt), '"test"')
+        self.assertEqual(LocationValue(lyon).json(), json.dumps(lyon))
+        self.assertEqual(LocationValue(name='test').json(), '"test"')
 
     def test_setValue_setName(self):
         val = LocationValue(lyon)
@@ -184,22 +188,56 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(prp25.link(prp25bis), 'intersects')
         self.assertEqual(prp25.link(prp25ter), 'within')
 
+    def test_cast(self):
+        data=[[ESValue.from_obj({'pos':[1.2, 3.4]}, 'LocationValue'), [1.2, 3.4], {'pos':[1.2, 3.4]}],
+              [ESValue.from_obj({'datvalue':'date1'}), 
+               datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), 'date1'],
+              [{'pos': [1.2, 3.4]}, {'pos': [1.2, 3.4]}, {'pos': [1.2, 3.4]}], 
+              [[1.2, 3.4], [1.2, 3.4], [1.2, 3.4]],
+              [{'tes':3, 'tr':1}, {'tes':3, 'tr':1}, {'tes':3, 'tr':1}]]             
+        for dat in data:
+            self.assertEqual(util.cast(dat[0], 'obj'),    dat[2])
+            self.assertEqual(util.cast(dat[0], 'simple', string=False), dat[1])
+        #data = [[{'pos':[1.2, 3.4]},                        'NamedValue'],
+        data = [[{'pos':[1.2, 3.4]},                        'str'],
+                [{'datvalue': datetime.datetime(2020,1,1)}, 'DatationValue'],
+                [{'truc': 25, 'dict':[1,2]},                'str'],
+                #[{'truc': 25, 'dict':[1,2]},                'PropertyValue'],
+                [21,                                        'int'],
+                #[21,                                        'NamedValue'],
+                [datetime.datetime(2020,1,1),               'datetime'],
+                ['2021-01-01',                              'datetime'],
+                #[datetime.datetime(2020,1,1),               'DatationValue'],
+                #['2021-01-01',                              'DatationValue'],
+                ['{"namvalue":{"val":21}}',                 'NamedValue'],
+                ['{"locvalue":{"val":[2,1]}}',              'LocationValue'],
+                #['{"observation":{"val":21}}',              'Observation'],
+                ['{"truc":{"observation":{}}}',             'str'],
+                #['{"truc":{"observation":{}}}',             'NamedValue'],
+                ['{"locvalue":1, "observation":{}}',        'str'],
+                #['{"locvalue":1, "observation":{}}',        'PropertyValue'],
+                [{"iindex": ["simple", [{"truc": 25}, 21]]},'Iindex']
+                ]     
+        for dat in data: 
+            #print(dat[0])
+            self.assertEqual(util.castval(dat[0]).__class__.__name__, dat[1])
+
     def test_json(self):
-        self.assertEqual(ESValue.from_obj(21).json(encoded=False), 21)
-        self.assertEqual(ESValue.from_obj('test').json(encoded=False), 'test')
-        self.assertEqual(ESValue.from_obj({"truc": 21}).json(encoded=False), {"truc": 21})
-        self.assertEqual(ESValue.from_obj({"truc": Ilist()}).value.__class__.__name__, 'Ilist')
+        self.assertEqual(ESValue.from_obj(21, simple=False).json(encoded=False), 21)
+        self.assertEqual(ESValue.from_obj('test', simple=False).json(encoded=False), 'test')
+        self.assertEqual(ESValue.from_obj({"truc": 21}, simple=False).json(encoded=False), {"truc": 21})
+        self.assertEqual(ESValue.from_obj({"truc": Ilist()}, simple=False).value.__class__.__name__, 'Ilist')
         #self.assertEqual(ESValue.from_obj(Ilist()).value.__class__.__name__, 'Ilist')
         self.assertEqual(ESValue.from_obj('test', 'NamedValue'), NamedValue('test'))
         self.assertEqual(ESValue.from_obj('test', 'LocationValue'), LocationValue(name='test'))
         #self.assertEqual(ESValue.from_obj(Observation()).value.__class__.__name__, 'Observation')
-        self.assertEqual(ESValue.from_obj(datetime.datetime(2020,1,1)).json(encoded=False), datetime.datetime(2020, 1, 1, 0, 0))
+        #self.assertEqual(ESValue.from_obj(datetime.datetime(2020,1,1)).json(encoded=False), datetime.datetime(2020, 1, 1, 0, 0, tzinfo=datetime.timezone.utc))
         self.assertEqual(ESValue.from_obj('{"namvalue":{"val":21}}').json(encoded=False), {"val":21})
         self.assertEqual(ESValue.from_obj('{"locvalue":{"val":[2,1]}}').json(encoded=False), {"val":[2,1]})
         self.assertEqual(ESValue.from_obj({"locvalue":{"val":[2,1]}}).json(encoded=False), {"val":[2,1]})
         self.assertEqual(ESValue.from_obj('{"observation":{"val":21}}').__class__.__name__, 'Observation')
         self.assertEqual(ESValue.from_obj({"observation":{"val":21}}).__class__.__name__, 'Observation')
-        self.assertEqual(ESValue.from_obj('{"truc":{"observation":{}}}').json(encoded=False), {"truc":'{"observation": {}}'})
+        #self.assertEqual(ESValue.from_obj('{"truc":{"observation":{}}}').json(encoded=False), {"truc":'{"observation": {}}'})
         #self.assertEqual(ESValue.from_obj({"truc": Observation()}).json(encoded=False), {"truc":{"type":"observation"}})
         #self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'NamedValue')
         self.assertEqual(ESValue.from_obj({"namvalue":{"val":21}}).json(encoded=False), {"val": 21})

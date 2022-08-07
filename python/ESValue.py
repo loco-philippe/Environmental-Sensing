@@ -46,9 +46,10 @@ import datetime
 from json import JSONDecodeError 
 from ESconstante import ES, _classval
 from geopy import distance
-from timeslot import TimeSlot
+from timeslot import TimeSlot, TimeInterval
 from openlocationcode import encode
 import cbor2
+#from util import util
 
 class ESValueEncoder(json.JSONEncoder):
     """add a new json encoder for ESValue"""
@@ -97,13 +98,15 @@ class ESValue:
     - `ESValue.setValue`
     - `ESValue.simple`
     - `ESValue.to_float`
+    - `ESValue.to_obj`
     - `ESValue.valClassName`
     - `ESValue.vName`
     - `ESValue.vSimple`
     """
 #%% constructor               
     @staticmethod
-    def from_obj(bs, classname=ES.nam_clsName):
+    #def from_obj(bs, classname=ES.nam_clsName):
+    def from_obj(bs, classname=None, simple=True):
         '''Generate an ESValue Object from a bytes, json or dict object
         Several configurations for bs parameters (name and type are string) :
             - {name : value}
@@ -118,21 +121,23 @@ class ESValue:
         - **bs** : bytes, string or dict data to convert
 
         *Returns* :  ESValue object '''        
+        if classname: simple=False
         classn, name, val = ESValue._decodevalue(bs)
-        if val.__class__.__name__ in ES.ESclassName: return val
-        if not classn and val.__class__.__name__ == ES.ili_clsName: 
-            classn = ES.ili_clsName
-        if classn == ES.ili_clsName and (name or classname == ES.ext_clsName):
-            return ExternValue(val, name, classn)
-        if not classn: classn = classname
-        if not classn and name: classn = ES.nam_clsName
-        if classn in ES.ESvalName: 
-            return _classval()[classn](val, name)
-        if classn in ES.valname:   
-            return _classval()[classn](val)
-        return val 
+        if classname == ES.ext_clsName and classn: val = _classval()[classn](val)          
+        if val.__class__.__name__ in ES.ESclassName:  return val
+        if not simple and classn in [ES.ili_clsName, ES.iin_clsName, ES.obs_clsName]: 
+            classn = ES.ext_clsName
+        if not classn and classname != ES.ES_clsName: classn = classname
+        '''if not simple and not classn:
+            classESval = ESValue._decodeclass(val)
+            if classESval == ES.ili_clsName and name:
+                classn = ES.ext_clsName'''
+        if not simple and not classn: classn = ESValue.valClassName(val)
+        if classn in ES.ESvalName:      return _classval()[classn](val, name)
+        if classn in ES.valname:        return _classval()[classn](val)
+        return ESValue._castsimple(val)
     
-    def __init__(self, val, name=None, className=None):
+    def __init__(self, val=None, name=None, className=None):
         '''Initialize 'name' and 'value' attribute'''
         self.name = ES.nullName
         self.value = self.nullValue()
@@ -150,8 +155,9 @@ class ESValue:
 
     def __str__(self):
         '''return json string format'''
-        js = self.json(encoded=False)
-        if not isinstance(js, str): return str(js)
+        js = self.json(encoded=True)
+        #js = self.json(encoded=False)
+        #if not isinstance(js, str): return str(js)
         return js
 
     def __repr__(self):
@@ -269,20 +275,10 @@ class ESValue:
         - **untyped** : boolean (default False) - include dtype in the json if True
         - **encoded** : boolean (default True) - choice for return format (string/bytes if True, dict else)
         - **encode_format**    : string (default 'json')- choice for return format (json, cbor)
+        - **simpleval** : boolean (default False) - if True, only value is included
 
         *Returns* :  string or dict '''
-        option = ES.mOption | kwargs
-        option2 = option | {'encoded': False}
-        if not self.name or self.name == ES.nullName :  
-            js =  self._jsonValue(**option2)
-        elif not self.value or self.value == self.__class__.nullValue() : 
-            js =  self.name
-        else :                                          
-            js = {self.name : self._jsonValue(**option2)}
-        if option['untyped']: js = {ES.valname[self.__class__.__name__]: js}
-        if option['encoded'] and option['encode_format'] != 'cbor': return json.dumps(js, cls=ESValueEncoder)
-        if option['encoded'] and option['encode_format'] == 'cbor': return cbor2.dumps(js)
-        return js
+        return self.to_obj(**kwargs)
 
     def setName(self, nam):
         '''
@@ -315,11 +311,39 @@ class ESValue:
     def to_float(self):
         '''return a converted float value or nan'''
         if self.value == None :         return float('nan')
-        if type(self.value)==str:
+        if isinstance(self.value, str):
             if self.value == ES.nullAtt:return float('nan')
             try:                        return float(self.value)
             except:                     return float('nan')
         return float(self.value)
+
+    def to_obj(self, **kwargs):
+        '''
+        Export in json/cbor format (string or dict).
+
+        *Parameters*
+
+        - **untyped** : boolean (default False) - include dtype in the json if True
+        - **encoded** : boolean (default True) - choice for return format (string/bytes if True, dict else)
+        - **encode_format** : string (default 'json')- choice for return format (json, cbor)
+        - **simpleval** : boolean (default False)- if True only value
+
+        *Returns* :  string or dict '''
+        option = {'untyped': False, 'encoded': True, 'encode_format': 'json', 
+                  'simpleval': False} | kwargs
+        option2 = option | {'encoded': False}
+        if option['simpleval']: js =  self._jsonValue(**option2)
+        else:
+            if not self.name or self.name == ES.nullName :  
+                js =  self._jsonValue(**option2)
+            elif not self.value or self.value == self.__class__.nullValue() : 
+                js =  self.name
+            else :                                          
+                js = {self.name : self._jsonValue(**option2)}
+        if option['untyped']: js = {ES.valname[self.__class__.__name__]: js}
+        if option['encoded'] and option['encode_format'] != 'cbor': return json.dumps(js, cls=ESValueEncoder)
+        if option['encoded'] and option['encode_format'] == 'cbor': return cbor2.dumps(js)
+        return js
 
     def vSimple(self, string=False):
         ''' Return the vSimple of the `ESValue` (string or object) '''
@@ -332,8 +356,12 @@ class ESValue:
         if isinstance(val,(DatationValue, LocationValue, PropertyValue, NamedValue, 
                            ExternValue, TimeSlot)):
             return val.__class__.__name__
-        if val.__class__.__name__ in [ES.obs_clsName, ES.ili_clsName, ES.tim_clsName]:
-            return val.__class__.__name__
+        #if val.__class__.__name__ in [ES.obs_clsName, ES.ili_clsName, ES.tim_clsName]:
+        #    return val.__class__.__name__
+        if val.__class__.__name__ in [ES.obs_clsName, ES.ili_clsName]:
+            return ES.ext_clsName
+            #return val.__class__.__name__
+        if val.__class__.__name__ == ES.tim_clsName: return ES.dat_clsName
         if isinstance(val, str):
             try: dic = json.loads(val)
             except: dic = val  
@@ -341,7 +369,8 @@ class ESValue:
         if isinstance(dic, (int, float, bool, list, str, tuple)): 
             return ES.nam_clsName
         if isinstance(dic, dict) and len(dic) != 1: 
-            return ES.nam_clsName
+            #return ES.nam_clsName
+            return ES.prp_clsName
         if isinstance(dic, dict) and len(dic) == 1 and list(dic.keys())[0] in ES.typeName.keys(): 
             return ES.typeName[list(dic.keys())[0]]
         if isinstance(dic, dict) and len(dic) == 1 and not list(dic.keys())[0] in ES.typeName.keys(): 
@@ -366,6 +395,44 @@ class ESValue:
         return self.name
 
     @staticmethod
+    def _castsimple(val):
+        ''' convert val in hashable val'''
+        typeval = val.__class__.__name__
+        if typeval == 'list': return tuple(val)
+        #if typeval == 'dict' and len(val) <= 1: return val
+        #if typeval == 'dict' and len(val) > 1: return str(val)
+        #if typeval == 'dict': return str(val)
+        if typeval == 'dict': return json.dumps(val)
+        if typeval == 'str':
+            try: return TimeInterval._dattz(datetime.datetime.fromisoformat(val))
+            except ValueError: return val
+        return val
+        '''if isinstance(val, (int, str, float, bool, tuple, datetime.datetime, type(None), bytes)) :
+            return val
+        raise ESValueError('val is not simple value')'''
+
+    @staticmethod
+    def _decodeclass(val):
+        ''' return ESclassname of val'''
+        clss = val.__class__.__name__
+        if clss in ['bool', 'int', 'float']: return 'NamedValue'
+        if clss == 'dict': return 'PropertyValue'
+        if clss == 'str' and not (val.lstrip() and val.lstrip()[0] in ('{', '[', '(')): 
+            return 'NamedValue'
+        try:
+            v = DatationValue(val)
+            return 'DatationValue'
+        except:
+            try:
+                v = LocationValue(val)
+                return 'LocationValue'
+            except:  
+                try:
+                    v = NamedValue(val)
+                    return 'NamedValue'
+                except: return clss
+            
+    @staticmethod
     def _decodevalue(bs):
         ''' return tuple (class, name, val). If single value, it's val'''
         bs2 =       None
@@ -382,12 +449,12 @@ class ESValue:
             classname = ES.typeName[list(bs.keys())[0]]
             bs2 = bs[list(bs.keys())[0]]
         else: bs2 = bs
-        if bs2: 
+        if not bs2 is None: 
             if not isinstance(bs2, dict): val=bs2
             elif isinstance(bs2, dict) and len(bs2) > 1: val = bs2
             else: 
-                name = list(bs2.keys())[0]
-                val  = bs2[name]
+                name = str(list(bs2.keys())[0])
+                val  = list(bs2.values())[0]
         return (classname, name, val)
     
 class DatationValue(ESValue):   # !!! début ESValue
@@ -432,7 +499,7 @@ class DatationValue(ESValue):   # !!! début ESValue
     @classmethod 
     def from_obj(cls, bs): 
         ''' ESValue function (see ESValue.from_obj)'''
-        return ESValue.from_obj(bs, ES.dat_clsName)
+        return ESValue.from_obj(bs, ES.dat_clsName, simple=False)
     
     def __init__(self, val=ES.nullDate, name=ES.nullName):
         '''
@@ -443,11 +510,12 @@ class DatationValue(ESValue):   # !!! début ESValue
         - **val** :  compatible Timeslot Value (default nullDate)
         - **name** :  string (default nullName)
         '''
-        ESValue.__init__(self, val, name)
+        ESValue.__init__(self)
         if isinstance(val, self.__class__):
             self.name = val.name
             self.value = val.value
-        elif val: 
+            return
+        if not val is None: 
             value = TimeSlot(val)
             if value: self.value = value 
             elif not value and not name: name = val
@@ -494,9 +562,9 @@ class DatationValue(ESValue):   # !!! début ESValue
         """
         return self.value.Bounds.json(encoded=encoded, encode_format=encode_format)
 
-    def vSimple(self, string=False) :
+    def vSimple(self, string=False, **kwargs) :
         """return a datetime : middle of the TimeSlot."""
-        if string : return self.value.instant.isoformat()
+        if string : return self.value.instant.isoformat(**kwargs)
         return self.value.instant
 
     def _jsonValue(self, **option):
@@ -551,7 +619,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @classmethod 
     def from_obj(cls, bs): 
         ''' ESValue function (see ESValue.from_obj)'''
-        return ESValue.from_obj(bs, ES.loc_clsName)
+        return ESValue.from_obj(bs, ES.loc_clsName, simple=False)
     
     def __init__(self, val=ES.nullCoor, name=ES.nullName):
         '''
@@ -562,20 +630,24 @@ class LocationValue(ESValue):              # !!! début LocationValue
         - **val** :  compatible shapely.geometry.Point (or Polygon) Value (default nullCoor)
         - **name** :  string (default nullName)
         '''        
-        ESValue.__init__(self, val, name)
+        ESValue.__init__(self)
         if isinstance(val, self.__class__):
             self.name = val.name
             self.value = val.value
-        elif isinstance(val, (shapely.geometry.multipoint.MultiPoint, 
+            return
+        if isinstance(val, (shapely.geometry.multipoint.MultiPoint, 
                               shapely.geometry.point.Point,
                               shapely.geometry.polygon.Polygon, 
                               shapely.geometry.multipolygon.MultiPolygon)):
             self.value = val
-        elif val: 
-            value = self._gshape(val)
-            if value: self.value = value 
-            elif not value and not name: name = val
-            elif not value and name: raise ESValueError('name and val inconsistent')
+        elif not val is None: 
+            if isinstance(val, str) and not name: name = val
+            else: self.value = self._gshape(val)
+            #value = self._gshape(val)
+            #if value: self.value = value 
+            #else: raise ESValueError('val inconsistent')
+            #elif not value and not name: name = val
+            #elif not value and name: raise ESValueError('name and val inconsistent')
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
 
@@ -638,8 +710,8 @@ class LocationValue(ESValue):              # !!! début LocationValue
         ''' return simple value (centroid coordinates for the shape : 
             [x, y]) in a string format or in a object format'''
         if string :
-            return json.dumps([self.value.centroid.x, self.value.centroid.y], cls=ESValueEncoder)
-        return [self.value.centroid.x, self.value.centroid.y]
+            return json.dumps([round(self.value.centroid.x, 5), round(self.value.centroid.y,5)], cls=ESValueEncoder)
+        return [round(self.value.centroid.x, 5), round(self.value.centroid.y, 5)]
 
     def vPointInv(self, string=False):
         ''' return point (property) with inversed vSimple coordinates in a string format or
@@ -671,6 +743,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
             try:
                 return shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))
             except: pass
+        raise ESValueError('coordinates unconsistent')
         return None
 
 class PropertyValue(ESValue):              # !!! début ESValue
@@ -709,7 +782,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
     @classmethod 
     def from_obj(cls, bs):
         ''' ESValue function (see ESValue.from_obj)'''
-        return ESValue.from_json(bs, ES.prp_clsName)
+        return ESValue.from_obj(bs, ES.prp_clsName, simple=False)
     
     def __init__(self, val=ES.nullPrp, name=ES.nullName, prp_dict=False):
         '''
@@ -721,11 +794,12 @@ class PropertyValue(ESValue):              # !!! début ESValue
         - **name** :  string (default nullName)
         - **prp_dict** : boolean(default False) - if True type property has to be in the type dictionary
         '''
-        ESValue.__init__(self, val, name)
+        ESValue.__init__(self)
         if isinstance(val, self.__class__):
             self.name = val.name
             self.value = val.value
-        elif isinstance(val, dict):
+            return
+        if isinstance(val, dict):
             if len(val) > 0 and isinstance(list(val.values())[0], dict):
                     self.name = list(val.keys())[0]
                     self.value |= val[list(val.keys())[0]]
@@ -820,7 +894,7 @@ class NamedValue (ESValue):               # !!! début ResValue
     @classmethod 
     def from_obj(cls, bs): 
         ''' ESValue function (see ESValue.from_obj)'''
-        return ESValue.from_obj(bs, ES.nam_clsName)
+        return ESValue.from_obj(bs, ES.nam_clsName, simple=False)
     
     def __init__(self, val = ES.nullVal, name=ES.nullName):
         '''
@@ -831,18 +905,21 @@ class NamedValue (ESValue):               # !!! début ResValue
         - **val** :  any simple object (default nullVal)
         - **name** : string (default nullName)
         '''
-        ESValue.__init__(self, val, name)
+        ESValue.__init__(self)
         if isinstance(val, self.__class__):
             self.name = val.name
             self.value = val.value
-        elif isinstance(val, (int, str, float, bool, tuple, datetime.datetime, type(None), bytes)) :
+            return
+        self.value = ESValue._castsimple(val)
+        '''elif isinstance(val, (int, str, float, bool, tuple, datetime.datetime, type(None), bytes)) :
             self.value = val
         elif isinstance(val, list) :
             self.value = tuple(val)
         elif isinstance(val, dict) :
             self.value = json.dumps(val)
         else: 
-            self.value = val
+            #self.value = val
+            raise ESValueError('incosistent value for NamedValue object')'''
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
 
@@ -853,13 +930,16 @@ class NamedValue (ESValue):               # !!! début ResValue
 
     def vSimple(self, string=False) :
         '''return float value in string or object format'''
-        if string : return str(self.to_float())
-        return self.to_float()
+        from util import util
+        if string : return str(util.cast(self.value, dtype='simple'))
+        return util.cast(self.value, dtype='simple')
 
     def _jsonValue(self, **option) :
         '''return the value '''
-        if type(self.value) in [int, str, float, bool, list, tuple, dict, datetime.datetime, type(None), bytes]:
+        if isinstance(self.value, (int, str, float, bool, list, dict, 
+                                   datetime.datetime, type(None), bytes)):
             return self.value
+        if isinstance(self.value, tuple): return list(self.value)
 
 
 class ExternValue (ESValue):               # !!! début ResValue
@@ -884,9 +964,9 @@ class ExternValue (ESValue):               # !!! début ResValue
     @classmethod 
     def from_obj(cls, bs):
         ''' ESValue function (see ESValue.from_obj)'''
-        return ESValue.from_obj(bs, ES.ext_clsName)
+        return ESValue.from_obj(bs, ES.ext_clsName, simple=False)
     
-    def __init__(self, val = ES.nullVal, name=ES.nullName, className=ES.nullName):
+    def __init__(self, val = ES.nullExternVal, name=ES.nullName, className=None):
         '''
         ExternValue constructor.
 
@@ -896,29 +976,35 @@ class ExternValue (ESValue):               # !!! début ResValue
         - **name** : string (default nullName)
 
         '''
-        ESValue.__init__(self, val, name, className)
+        ESValue.__init__(self)
         if isinstance(val, ExternValue):
             self.name = val.name
             self.value = val.value
-        else:
-            if not className and val.__class__.__name__ == ES.ili_clsName: 
-                className = ES.ili_clsName
+            return
+        #self.value = ESValue.from_obj(val, classname=className)
+        if val == ES.nullExternVal and name == ES.nullName: return
+        if not className : className = val.__class__.__name__ 
+        if className in _classval():
             self.value = _classval()[className](val)
+        else: raise ESValueError('class name inconsistent with ExternValue')
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
 
     @staticmethod
     def nullValue() : 
         ''' return nullVal value'''
-        return ES.nullVal
+        return ES.nullExternVal
 
     def vSimple(self, string=False) :
         '''return conversion from value to float'''
-        if string : return str(self.to_float())
-        return self.to_float()
+        from util import util
+        if string : return str(util.cast(self.value, dtype='simple'))
+        return util.cast(self.value, dtype='simple')
 
     def _jsonValue(self, **option) :
         '''return a json object for the value '''
+        if self.value.__class__.__name__ in ['Iindex', 'Ilist']: 
+            return self.value.json(encoded=False, encode_format='json')
         if isinstance(self.value, (int, str, float, bool, list, tuple, dict, datetime.datetime, type(None), bytes)):
             return self.value
         if isinstance(self.value, (DatationValue, LocationValue, PropertyValue, NamedValue, ExternValue)):

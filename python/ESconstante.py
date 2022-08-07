@@ -15,6 +15,7 @@ def _classval():
     from timeslot import TimeSlot
     from ESObservation import Observation
     from ilist import Ilist
+    from iindex import Iindex
     import datetime
     return {ES.obs_clsName: Observation,
             ES.dat_clsName: DatationValue,
@@ -23,6 +24,7 @@ def _classval():
             ES.ext_clsName: ExternValue,
             ES.nam_clsName: NamedValue,
             ES.ili_clsName: Ilist,
+            ES.iin_clsName: Iindex,
             #ES.coo_clsName: coordinate,
             ES.tim_clsName: datetime.datetime,
             ES.slo_clsName: TimeSlot,
@@ -69,9 +71,10 @@ class Es:
     def _initStruct(self) :
         #%% option initialization (dict)
         self.mOption : Dict = {
-                      "untyped"             : False, # pas de type dans le json
+                      "untyped"             : True, # pas de type dans le json
                       "encoded"             : True, # sortie bson/json ou dict
                       "encode_format"       : 'json', # sortie bson ou json
+                      "simpleval"           : False, #only value in json
                       "json_res_index"      : True, # affiche index
                       "json_prp_name"       : False, # affiche name ou property
                       "json_dat_name"       : False, # affiche name ou instant/slot
@@ -203,57 +206,7 @@ class Es:
             'prp' : {                     "standard_name":"property"}}
         '''Dictionnary for Xarray attrs informations '''
 
-        #%% typevalue initialization (dict)
-        self.ntypevalue: Dict = {
-            'null':             0,
-            'name':             100,
-            self.dat_classES:   1,      #datationValue
-            self.dat_valName:   1,      #datationValue
-            'instant':          2,
-            'interval':         3,
-            'slot':             4,
-            'namedatvalue':     101,
-            'nameinstant':      102,
-            'nameinterval':     103,
-            'nameslot':         104,
-            self.loc_classES:   11,     #locationValue
-            self.loc_valName:   11,     #locationValue
-            'point':            12,     
-            'polygon':          13,
-            'multipoint':       14,
-            'multipolygon':     15,
-            'namelocvalue':     111,
-            'namepoint':        112,
-            'namepolygon':      113,
-            'namemultipoint':   114,
-            'namemultipolygon': 115,
-            self.prp_classES:   21,     #propertyValue
-            self.prp_valName:   21,     #propertyValue
-            'propertytype':     22,     
-            'propertydict':     23,
-            'multiproperty':    24,
-            'nameprpvalue':     121,
-            'namepropertytype': 122,
-            'namepropertydict': 123,
-            'namemultiproperty':124,
-            self.nam_valName:   31,     #namedValue
-            'jsonvalue':        32,     
-            'namevalue':        131,     
-            'namejsonvalue':    132,     
-            self.ext_valName:   41,     #externValue
-            self.ili_valName:   43,
-            self.obs_valName:   44,
-            self.tim_valName:   45,
-            self.coo_valName:   46,
-            'nameIlist':        143,
-            'nameObservation':  144,
-            'namedatetime':     145,
-            'namecoordinates':  146
-            }
-        '''Dictionnary for ESValue types '''
-
-        self.invntypevalue: Dict = self._inv(self.ntypevalue)
-        
+        #%% typevalue initialization (dict)        
         self.typeName: Dict = {
             self.obs_valName : self.obs_clsName,
             self.dat_valName : self.dat_clsName,
@@ -262,15 +215,17 @@ class Es:
             self.ext_valName : self.ext_clsName,
             self.nam_valName : self.nam_clsName,
             self.ili_valName : self.ili_clsName,
-            self.coo_valName : self.coo_clsName,
-            self.tim_valName : self.tim_clsName,
+            self.iin_valName : self.iin_clsName,
             self.slo_valName : self.slo_clsName,
+            #self.coo_valName : self.coo_clsName,
+            #self.tim_valName : self.tim_clsName,
+            self.res_classES : self.ES_clsName,
             self.dat_classES : self.dat_clsName,
             self.loc_classES : self.loc_clsName,
             self.prp_classES : self.prp_clsName,
-            self.res_classES : self.ES_clsName,
             }
-        self.valname : Dict = self._inv(self.typeName)
+        self.valname : Dict = dict(zip(list(self.typeName.values())[:10], 
+                                       list(self.typeName.keys())[:10]))
         self.className : list = list(self.typeName.values())
 
         self.EStypeName: Dict = {
@@ -507,6 +462,7 @@ class Es:
         self.nam_valName      = "namvalue"
         self.res_valName      = "resvalue"
         self.ili_valName      = "ilist"
+        self.iin_valName      = "iindex"
         self.coo_valName      = "coordinate"
         self.tim_valName      = "datetime"
         self.slo_valName      = "timeslot"
@@ -518,6 +474,7 @@ class Es:
         self.ext_clsName      = 'ExternValue'
         self.nam_clsName      = 'NamedValue'
         self.ili_clsName      = 'Ilist'
+        self.iin_clsName      = 'Iindex'
         self.coo_clsName      = 'coordinate'
         self.tim_clsName      = 'datetime'
         self.slo_clsName      = 'TimeSlot'
@@ -528,6 +485,7 @@ class Es:
     def _initReferenceValue(self):
     #%% init reference value
         ''' Reference value initialization '''
+        self.defaultindex     = '$default'
         self.variable         = -1
         self.nullparent       = -2
         self.miniStr          = 10
@@ -537,13 +495,16 @@ class Es:
         self.nullCoor         = [-1, -1]
         self.nullInd          = [-1, -1, -1]
         self.nullAtt          = "null"
-        self.nullPrp          = {}
+        #self.nullPrp          = {}
+        self.nullPrp          = {'prp':'-'}
         self.nullName         = ""
         self.nullDict         = "-"
         self.nullInt          = 0
         self.nullVal          = math.nan
+        self.nullExternVal    = None
         self.nullValues = (self.nullDate, self.nullCoor, self.nullInd, self.nullName,
-                           self.nullAtt, self.nullDict, self.nullName, self.nullVal, self.nullPrp)
+                           self.nullAtt, self.nullDict, self.nullName, self.nullVal, 
+                           self.nullPrp)
         
     def _initDefaultValue(self, defnone=True):
     #%% init default value
@@ -553,4 +514,4 @@ class Es:
         if self.def_clsName: self.def_dtype = self.valname[self.def_clsName]
         else: self.def_dtype = None
 
-ES = Es(True)
+ES = Es(defnone=True)
