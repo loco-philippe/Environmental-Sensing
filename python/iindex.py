@@ -56,6 +56,7 @@ class Iindex:
 
     - `Iindex.coupling`
     - `Iindex.extendkeys`
+    - `Iindex.full`
     - `Iindex.reindex`
     - `Iindex.reorder`
     - `Iindex.sort`
@@ -245,6 +246,7 @@ class Iindex:
     def __getitem__(self, ind):
         ''' return val item (value conversion)'''
         #return self.val[ind]
+        if isinstance(ind, tuple): return [copy(self.values[i]) for i in ind]
         return copy(self.values[ind])
 
     def __setitem__(self, ind, value):
@@ -301,23 +303,23 @@ class Iindex:
         
     @property
     def infos(self):
-        '''return dict with lencodec, typeindex, rate, disttomin, disttomax'''
+        '''return dict with lencodec, typecodec, rate, disttomin, disttomax'''
         M = len(self)
+        m = len(set(self.codec))
         x = len(self.codec)
-        typeindex = 'mixte'
-        if   M == 0: 
-            typeindex = 'null'
-            rate = 0.0
-            disttomin = disttomax = 0
-        else:
-            if M == 1: rate = 0.0
-            else:      rate = (M - x) / (M - 1)
-            if x == 1:   typeindex = 'unique' 
-            elif x == M: typeindex = 'complete' 
-            disttomin = x - 1
-            disttomax = M - x
-        return {'lencodec': x, 'typeindex': typeindex, 'rate': rate, 
-                'disttomin': disttomin, 'disttomax': disttomax}
+        rate = 0.0
+        if   M == 0: typecodec = 'null'
+        elif m == 1: typecodec = 'unique'
+        elif m == M: typecodec = 'complete'
+        elif x == M: typecodec = 'full'
+        else: 
+            rate = (M - x) / (M - m)
+            if x == m:  typecodec = 'default'
+            else:       typecodec = 'mixed'
+        disttomin = x - m
+        disttomax = M - x
+        return {'lencodec': x, 'min': m, 'max': M, 'typecodec': typecodec, 
+                'rate': rate, 'disttomin': disttomin, 'disttomax': disttomax}
 
 #%% methods
     def append(self, value,  typevalue=ES.def_clsName, unique=True):
@@ -351,7 +353,7 @@ class Iindex:
         - **idx** : single Iindex or list of Iindex to be coupled or derived.
         - **derived** : boolean (default : True)
 
-        *Returns* : None'''
+        *Returns* : tuple with duplicate records (errors)'''
         if not isinstance(idx, list): index = [idx]
         else: index = idx
         idxzip = Iindex.Iext(list(zip(*([self.keys] + [ix.keys for ix in index]))), 
@@ -359,7 +361,8 @@ class Iindex:
         self.tocoupled(idxzip)
         if not derived: 
             for ix in index: ix.tocoupled(idxzip)
-        return len(self.codec)
+        #return len(self.codec)
+        return self.getduplicates()
     
     def couplinginfos(self, other, default=False):
         '''return a dict with the coupling info between other (lencoupling, rate, 
@@ -424,8 +427,25 @@ class Iindex:
             raise IindexError('keys not consistent with codec')
         self.keys += keys
     
+    @staticmethod
+    def full(listidx):
+        '''tranform a list of indexes in crossed indexes (value extension).
+
+        *Parameters*
+
+        - **listidx** : list of Iindex to transform
+
+        *Returns* : tuple of records added '''     
+        idx1 = listidx[0]
+        for idx in listidx: 
+            if len(idx) != len(idx): return
+        leninit = len(idx1)
+        keysadd = util.idxfull(listidx)
+        for idx, keys in zip(listidx, keysadd): idx.keys += keys
+        return tuple(range(leninit, len(idx1)))
+        
     def getduplicates(self):
-        ''' return list of items with duplicate codec'''
+        ''' return tuple of items with duplicate codec'''
         co = Counter(self.codec)
         defcodec = list(co - Counter(list(co)))       
         dkeys  = defaultdict(list)
@@ -435,7 +455,7 @@ class Iindex:
         duplicates = []
         for item in defcodec: 
             for codecitem in dcodec[item]: duplicates += dkeys[codecitem]    
-        return duplicates
+        return tuple(duplicates)
     
     def iscrossed(self, other):
         '''return True if self is crossed to other'''
@@ -641,6 +661,7 @@ class Iindex:
             else: dtype = ES.def_dtype
         values = self.values
         values[ind] = util.cast(value, dtype)
+        #values[ind] = ESValue._castsimple(value, dtype)
         self.codec, self.keys = util.resetidx(values)
 
     def setlistvalue(self, listvalue, extern=True, typevalue=None):
@@ -771,7 +792,7 @@ class Iindex:
         else:                               codeclist = self.codec
         if typevalue:                       dtype = ES.valname[typevalue]
         else:                               dtype = None
-        return util.encodeobj(codeclist, keyslist, idxname, simpleval, dtype, parent, **kwargs)    
+        return util.encodeobj(codeclist, keyslist, idxname, fullcodec, simpleval, dtype, parent, **kwargs)    
     
     def valtokey(self, value, extern=True):
         '''convert a value to a key 
@@ -804,7 +825,13 @@ class Iindex:
 
     def vSimple(self, string=False):
         '''
-        Apply a vSimple function to values and return the result.'''
+        Apply a vSimple function to values and return the result.
+
+        *Parameters*
+
+        - **string** : boolean(default False) - if True the values returned are string
+
+        *Returns* : list of vSimple values (string or not)'''
         if string: return json.dumps([util.cast(val, 'simple', string=string) for val in self.values],
                                    cls=ESValueEncoder)    
         return [util.cast(val, 'simple', string=string) for val in self.values]

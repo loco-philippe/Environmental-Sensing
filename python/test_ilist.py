@@ -391,7 +391,7 @@ class Test_Ilist(unittest.TestCase):
         il = Ilist(['er', 'ar', 'ty'])
         self.assertEqual(il.vlist(func=len), [2, 2, 2])
         il = Ilist([datetime(2010, 1,2), datetime(2012, 1,2)])
-        self.assertEqual(il.vlist(func=datetime.isoformat,timespec='hours', sep='-'), #!!!
+        self.assertEqual(il.vlist(func=datetime.isoformat,timespec='hours', sep='-', extern=False), #!!!
                          ['2010-01-02-00', '2012-01-02-00'])
         il =Ilist([[['aer', 'e', 'h'], -1], [1,2,3], ['a', 'efg', 'h'], [0,1,0]])
         self.assertEqual(il.vlist(func=len, index=2), [1, 3, 1])

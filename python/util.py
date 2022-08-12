@@ -151,7 +151,8 @@ class util:
         elif dic['rate'] == 0 and ls < lo:          dic['typecoupl'] = 'derived'
         elif dic['rate'] == 0 and ls > lo:          dic['typecoupl'] = 'derive'
         elif dic['rate'] == 1:                      dic['typecoupl'] = 'crossed'
-        else:                                       dic['typecoupl'] = 'linked'
+        elif ls < lo:                               dic['typecoupl'] = 'linked'
+        else:                                       dic['typecoupl'] = 'link'
         return dic
 
     @staticmethod 
@@ -238,7 +239,7 @@ class util:
         return (classname, name, val)"""
     
     @staticmethod
-    def encodeobj(codeclist, keyslist=None, name=None, simpleval=False, typevalue=None, 
+    def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False, typevalue=None, 
                   parent=ES.nullparent, **kwargs):
         '''
         Return a formatted object with values, keys and codec.
@@ -249,6 +250,7 @@ class util:
         - **codeclist** : list of codec ESValue to encode
         - **keyslist** : list (default = None) - int keys to encode, None if no keys 
         - **name** : string (default = None) - name to encode, None if no name 
+        - **fullcodec** : boolean (default False) - if True, use a full codec
         - **typevalue** : string (default None) - type to convert values
         - **parent** : int (default ES.nullparent) - Ilist index linked to
 
@@ -267,7 +269,8 @@ class util:
             if name and typevalue:          js.append({name: typevalue})
             elif name:                      js.append(name)
             elif typevalue:                 js.append(typevalue)
-        js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, untyped=option['untyped']) 
+        js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
+                             fullcodec=fullcodec, untyped=option['untyped']) 
                    for cc in codeclist])
         if not simpleval: 
             if parent >= 0 and keyslist:    js.append([parent, keyslist])
@@ -336,14 +339,17 @@ class util:
         '''return the json object format of val (if function json() or to_json() exists)'''
         '''if isinstance(val, (str, int, float, bool, list, tuple, type(None), bytes)): 
             return val '''       
-        if isinstance(val, (str, int, float, bool, list, type(None), bytes)): 
+        val = ESValue._uncastsimple(val)
+        if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes)): 
+            return val        
+        '''if isinstance(val, (str, int, float, bool, list, type(None), bytes)): 
             return val        
         if isinstance(val, tuple): 
             return list(val)
         if isinstance(val, datetime.datetime): 
             if option['simpleval']: return val 
             return val #!!!
-            return {ES.datetime: val}
+            return {ES.datetime: val}'''
         #if isinstance(val, tuple(_invcastfunc.keys())[0:5]):      #ESValue
         if option['simpleval']: return val.json(**option)
         if val.__class__.__name__ in ES.ESclassName:      #ESValue

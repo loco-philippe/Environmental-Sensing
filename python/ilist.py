@@ -1008,7 +1008,7 @@ class Ilist:
                             disttomin = mat[i][j]['disttomin']
                             minrate = mat[i][j]['rate']
                             minparent = j
-            if self.lidx[i].infos['typeindex'] == 'unique':
+            if self.lidx[i].infos['typecodec'] == 'unique':
                 infos[i]['cat']           = 'unique'
                 infos[i]['typecoupl']     = 'unique'
                 infos[i]['parent']        = i    

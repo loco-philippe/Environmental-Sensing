@@ -59,14 +59,17 @@ class Test_iindex(unittest.TestCase):
     
     def test_infos(self) :
         idx = Iindex.Iext(['er', 2,[1,2]])
-        self.assertTrue(idx.infos == {'lencodec': 3, 'typeindex': 'complete',
-         'rate': 0.0, 'disttomin': 2, 'disttomax': 0})
+        self.assertTrue(idx.infos == {'lencodec': 3, 'min': 3, 'max': 3,
+                                      'typecodec': 'complete', 'rate': 0.0, 
+                                      'disttomin': 0, 'disttomax': 0})
         idx2 = Iindex.Iext(['er', Ilist(), Ilist()], 'result')
-        self.assertTrue(idx2.infos == {'lencodec': 2, 'typeindex': 'mixte',
-                                       'rate': 0.5, 'disttomin': 1, 'disttomax': 1})
+        self.assertTrue(idx2.infos == {'lencodec': 2, 'min': 2, 'max': 3,
+                                       'typecodec': 'default', 'rate': 1.0, 
+                                       'disttomin': 0, 'disttomax': 1})
         idx2 = Iindex()
-        self.assertTrue(idx2.infos == {'lencodec': 0, 'typeindex': 'null',
-         'rate': 0.0, 'disttomin': 0, 'disttomax': 0})
+        self.assertTrue(idx2.infos == {'lencodec': 0, 'min': 0, 'max': 0,
+                                       'typecodec': 'null', 'rate': 0.0,
+                                       'disttomin': 0, 'disttomax': 0})
         
     def test_append(self) :
         idx = Iindex.Iext(['er', 2,[1,2]])

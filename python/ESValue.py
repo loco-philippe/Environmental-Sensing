@@ -135,7 +135,8 @@ class ESValue:
         if not simple and not classn: classn = ESValue.valClassName(val)
         if classn in ES.ESvalName:      return _classval()[classn](val, name)
         if classn in ES.valname:        return _classval()[classn](val)
-        return ESValue._castsimple(val)
+        #return ESValue._castsimple(val)
+        return ESValue._castsimple(bs)
     
     def __init__(self, val=None, name=None, className=None):
         '''Initialize 'name' and 'value' attribute'''
@@ -402,7 +403,7 @@ class ESValue:
         #if typeval == 'dict' and len(val) <= 1: return val
         #if typeval == 'dict' and len(val) > 1: return str(val)
         #if typeval == 'dict': return str(val)
-        if typeval == 'dict': return json.dumps(val)
+        if typeval == 'dict': return json.dumps(val, cls=ESValueEncoder)
         if typeval == 'str':
             try: return TimeInterval._dattz(datetime.datetime.fromisoformat(val))
             except ValueError: return val
@@ -410,6 +411,15 @@ class ESValue:
         '''if isinstance(val, (int, str, float, bool, tuple, datetime.datetime, type(None), bytes)) :
             return val
         raise ESValueError('val is not simple value')'''
+
+    @staticmethod
+    def _uncastsimple(val):
+        ''' convert val in hashable val'''
+        typeval = val.__class__.__name__
+        if typeval == 'tuple': return list(val)
+        if typeval == 'str' and val[0] == '{': return json.loads(val)
+        if typeval == 'datetime': return val.isoformat()
+        return val
 
     @staticmethod
     def _decodeclass(val):
