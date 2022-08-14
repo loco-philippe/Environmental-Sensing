@@ -245,7 +245,6 @@ class Iindex:
 
     def __getitem__(self, ind):
         ''' return val item (value conversion)'''
-        #return self.val[ind]
         if isinstance(ind, tuple): return [copy(self.values[i]) for i in ind]
         return copy(self.values[ind])
 
@@ -678,7 +677,7 @@ class Iindex:
         values = util.castobj(listvalue, typevalue)
         self.codec, self.keys = util.resetidx(values)
         
-    def sort(self, reverse=False, inplace=True):
+    def sort(self, reverse=False, inplace=True, func=str):
         '''Define sorted index with ordered codec.
 
         *Parameters*
@@ -686,12 +685,13 @@ class Iindex:
         - **reverse** : boolean (defaut False) - codec is sorted with reverse order
         - **inplace** : boolean (default True) - if True, new order is apply to self,
         if False a new Iindex is created.
+        - **func**    : function (default str) - key used in the sorted function
 
         *Return*
         
         - **Iindex** : self if inplace, new Iindex if not inplace'''
         if inplace:
-            self.reindex(codec=sorted(self.codec, reverse=reverse, key=str))
+            self.reindex(codec=sorted(self.codec, reverse=reverse, key=func))
             self.keys.sort()
             return self
         oldcodec    = self.codec
@@ -793,6 +793,19 @@ class Iindex:
         if typevalue:                       dtype = ES.valname[typevalue]
         else:                               dtype = None
         return util.encodeobj(codeclist, keyslist, idxname, fullcodec, simpleval, dtype, parent, **kwargs)    
+    
+    def valrow(self, row):
+        ''' return val for a record
+        
+        *Parameters*
+
+        - **row** : record to obtain val
+        
+        *Returns* : val[row]'''
+        cc = ESValue._uncastsimple(self.codec[self.keys[row]])
+        if isinstance(cc, (str, int, float, bool, list, dict, type(None), bytes)): 
+            return cc        
+        return cc.json(encoded=False) 
     
     def valtokey(self, value, extern=True):
         '''convert a value to a key 

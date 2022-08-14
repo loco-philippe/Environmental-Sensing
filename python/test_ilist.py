@@ -446,11 +446,11 @@ class Test_Ilist(unittest.TestCase):
         
     def test_sort(self) :
         il=Ilist.Iext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 15]], var=0)
-        il.sortkeys()
+        il.sort()
         self.assertEqual( il.lindex[0].keys,   sorted(il.lindex[0].keys))
-        il.sortkeys([2,1,0], reverse=True)
+        il.sort([2,1,0], reverse=True)
         self.assertEqual( il.lindex[2].keys,   [3, 2, 1, 0])
-        il.sortkeys([1,0,2])
+        il.sort([1,0,2])
         self.assertEqual( il.lindex[1].keys,   [0, 0, 1, 1])
 
     def test_filter(self):

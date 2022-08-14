@@ -417,7 +417,7 @@ class ESValue:
         ''' convert val in hashable val'''
         typeval = val.__class__.__name__
         if typeval == 'tuple': return list(val)
-        if typeval == 'str' and val[0] == '{': return json.loads(val)
+        if typeval == 'str' and len(val) > 0 and val[0] == '{': return json.loads(val)
         if typeval == 'datetime': return val.isoformat()
         return val
 

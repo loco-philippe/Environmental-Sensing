@@ -292,6 +292,7 @@ class Ilist:
     - `Ilist.idxref`
     - `Ilist.idxlen`
     - `Ilist.iidx`
+    - `Ilist.keys`
     - `Ilist.lenindex`
     - `Ilist.lenidx`
     - `Ilist.lidx`
@@ -324,7 +325,8 @@ class Ilist:
     - `Ilist.keytoval`
     - `Ilist.loc`
     - `Ilist.record`
-    - `Ilist.rec`
+    - `Ilist.recidx`
+    - `Ilist.recvar`
     - `Ilist.valtokey`
 
     *add - update methods*
@@ -337,7 +339,7 @@ class Ilist:
     - `Ilist.setvar`
     - `Ilist.updateindex`    
     
-    *management - conversion methods*
+    *structure management - methods*
 
     - `Ilist.applyfilter`
     - `Ilist.coupling`
@@ -346,7 +348,7 @@ class Ilist:
     - `Ilist.merge`
     - `Ilist.reindex`
     - `Ilist.setfilter`
-    - `Ilist.sortkeys`
+    - `Ilist.sort`
     - `Ilist.swapindex`
     - `Ilist.setcanonorder`
     - `Ilist.tostdcodec`
@@ -386,7 +388,7 @@ class Ilist:
 
         *Parameters*
 
-        - **idxval** : list of values (see data model)
+        - **idxval** : list of Iindex or list of values (see data model)
         - **idxname** : list of string (default None) - list of Iindex name (see data model)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **fullcodec** : boolean (default False) - full codec if True
@@ -667,14 +669,24 @@ class Ilist:
     
     @property    
     def idxlen(self):
-        ''' list of idx length'''
+        ''' list of idx codec length'''
         return [len(idx.codec) for idx in self.lidx]
+
+    @property    
+    def indexlen(self):
+        ''' list of index codec length'''
+        return [len(idx.codec) for idx in self.lindex]
 
     @property 
     def iidx(self):
         ''' list of keys for each idx'''
         return [idx.keys for idx in self.lidx]
     
+    @property 
+    def keys(self):
+        ''' list of keys for each index'''
+        return [idx.keys for idx in self.lindex]
+
     @property
     def lencomplete(self):
         '''number of values if complete (prod(idxlen primary))'''
@@ -716,6 +728,11 @@ class Ilist:
         ''' list of index name'''
         return [idx.name for idx in self.lindex]
 
+    def nindex(self, name):
+        ''' index with name equal to attribute name'''
+        if name in self.lname: return self.lindex[self.lname.index(name)]
+        return None
+    
     @property    
     def primary(self):
         ''' list of primary idx'''
@@ -803,8 +820,9 @@ class Ilist:
         if not ES.filter in self.lname: return False
         ifilt = self.lname.index(ES.filter)
         order = [ifilt] + [i for i in range(len(self.lindex)) if i != ifilt]
-        invers = self.lindex[ifilt].keys[0]==self.lindex[ifilt].val[0]
-        self.sortkeys(order, reverse=invers is not reverse)
+        #invers = self.lindex[ifilt].keys[0]==self.lindex[ifilt].val[0]
+        invers = self.lindex[ifilt].keys[0]==self.lindex[ifilt].valrow(0)
+        self.sort(order, reverse=invers is not reverse)
         minind = min(self.lindex[ifilt].recordfromvalue(reverse))
         for idx in self.lindex: del(idx.keys[minind:])
         self.delindex(ES.filter)
@@ -941,7 +959,7 @@ class Ilist:
             newidx = Iindex([True for i in list(range(len(self)))], name=resindex)
             for item in duplicates: newidx[item] = False
             self.addindex(newidx)
-        return set(duplicates)
+        return tuple(set(duplicates))
             
     def iscanonorder(self):
         '''return True if primary indexes have canonical ordered keys'''
@@ -963,7 +981,7 @@ class Ilist:
         return record in self.textidx
     
     def idxrecord(self, record):
-        '''return rec array from complete record (without variable)'''
+        '''return rec array (without variable) from complete record (with variable)'''
         return [record[self.lidxrow[i]] for i in range(len(self.lidxrow))]
     
     def indexinfos(self, keys=None, mat=None, default=False, base=False):
@@ -1102,20 +1120,6 @@ class Ilist:
         except: return None
         return self.lvar[0][row]
 
-    def record(self, row, extern=True):
-        '''return the record at the row
-           
-        *Parameters*
-
-        - **row** : int - row of the record
-        - **extern** : boolean (default True) - if True, return val record else value record
-
-        *Returns*
-
-        - **list** : val record or value record'''
-        if extern: return [idx.val[row] for idx in self.lindex]
-        return [idx.values[row] for idx in self.lindex]
-    
     def merge(self, name='merge', fillvalue=math.nan, mergeidx=False, updateidx=False):
         '''
         Merge method replaces Ilist objects included in variable data into its constituents.
@@ -1141,7 +1145,7 @@ class Ilist:
                 find = True
                 il = ilm.lvar[0].values[i].merge()
                 ilname = il.idxname
-                record = ilm.rec(i, extern=False)
+                record = ilm.recidx(i, extern=False)
                 for val, j in zip(reversed(record), reversed(range(len(record)))): # Ilist pere
                     nameidx = ilm.lidx[j].name
                     updidx = nameidx in nameinit and not updateidx
@@ -1156,14 +1160,22 @@ class Ilist:
                 break
         return ilm
 
-    def renameindex(self, oldname, newname):
-        '''replace an index name 'oldname' by a new one 'newname'. '''
-        for i in range(len(self.lindex)):
-            if self.lname[i] == oldname: self.lindex[i].setname(newname)
-        for i in range(len(self.lvarname)):
-            if self.lvarname[i] == oldname: self.lvarname[i] = newname
+    def record(self, row, extern=True):
+        '''return the record at the row
+           
+        *Parameters*
 
-    def rec(self, row, extern=True):
+        - **row** : int - row of the record
+        - **extern** : boolean (default True) - if True, return val record else value record
+
+        *Returns*
+
+        - **list** : val record or value record'''
+        if extern: return [idx.valrow(row) for idx in self.lindex]
+        #if extern: return [idx.val[row] for idx in self.lindex]
+        return [idx.values[row] for idx in self.lindex]
+    
+    def recidx(self, row, extern=True):
         '''return the list of idx val or values at the row
            
         *Parameters*
@@ -1173,14 +1185,37 @@ class Ilist:
 
         *Returns*
 
-        - **list** : val rec or value rec'''
-        if extern: return [idx.val[row] for idx in self.lidx]
+        - **list** : val or value for idx'''
+        #if extern: return [idx.val[row] for idx in self.lidx]
+        if extern: return [idx.valrow(row) for idx in self.lidx]
         return [idx.values[row] for idx in self.lidx]
+
+    def recvar(self, row, extern=True):
+        '''return the list of var val or values at the row
+           
+        *Parameters*
+
+        - **row** : int - row of the record
+        - **extern** : boolean (default True) - if True, return val rec else value rec
+
+        *Returns*
+
+        - **list** : val or value for var'''
+        #if extern: return [idx.val[row] for idx in self.lidx]
+        if extern: return [idx.valrow(row) for idx in self.lvar]
+        return [idx.values[row] for idx in self.lvar]
 
     def reindex(self):
         '''Calculate a new default codec for each index (Return self)'''
         for idx in self.lindex: idx.reindex()
         return self       
+
+    def renameindex(self, oldname, newname):
+        '''replace an index name 'oldname' by a new one 'newname'. '''
+        for i in range(len(self.lindex)):
+            if self.lname[i] == oldname: self.lindex[i].setname(newname)
+        for i in range(len(self.lvarname)):
+            if self.lvarname[i] == oldname: self.lvarname[i] = newname
 
     def setfilter(self, filt=None, first=False):
         '''Add a filter index with boolean values
@@ -1206,17 +1241,20 @@ class Ilist:
             self.lvarname = [var]
         else: raise IlistError('var is not consistent with Ilist')
 
-    def sortkeys(self, order=None, reverse=False):
+    def sort(self, order=None, reverse=False, func=str):
         '''Sort data following the index order and apply the ascending or descending 
-        sort function to keys.
+        sort function to values.
         
         *Parameters*
 
         - **order** : list (default None)- new order of index to apply. If None or [], 
         the sort function is applied to the existing order of indexes.
         - **reverse** : boolean (default False)- ascending if True, descending if False
+        - **func**    : function (default str) - key used in the sorted function
 
         *Returns* : None'''
+        for idx in self.lindex:
+            idx.reindex(codec=sorted(idx.codec, key=func))
         if not order: order = list(range(len(self.lindex)))
         newidx = util.transpose(sorted(util.transpose(
             [self.lindex[order[i]].keys for i in range(len(self.lindex))]), 
@@ -1290,7 +1328,7 @@ class Ilist:
             if not i in order: order.append(i)
         for i in self.lvarrow: order.append(i)
         self.swapindex(order)
-        self.sortkeys()
+        self.sort()
         
     def to_obj(self, indexinfos=None, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict). 

@@ -335,22 +335,10 @@ class util:
         return dict(lis)
 
     @staticmethod
-    def json(val, **option):
-        '''return the json object format of val (if function json() or to_json() exists)'''
-        '''if isinstance(val, (str, int, float, bool, list, tuple, type(None), bytes)): 
-            return val '''       
+    def json(val, **option):      
         val = ESValue._uncastsimple(val)
         if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes)): 
             return val        
-        '''if isinstance(val, (str, int, float, bool, list, type(None), bytes)): 
-            return val        
-        if isinstance(val, tuple): 
-            return list(val)
-        if isinstance(val, datetime.datetime): 
-            if option['simpleval']: return val 
-            return val #!!!
-            return {ES.datetime: val}'''
-        #if isinstance(val, tuple(_invcastfunc.keys())[0:5]):      #ESValue
         if option['simpleval']: return val.json(**option)
         if val.__class__.__name__ in ES.ESclassName:      #ESValue
             if not option['typevalue']: return val.json(**option)
