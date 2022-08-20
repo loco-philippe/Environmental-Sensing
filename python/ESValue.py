@@ -673,11 +673,11 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @property
     def coords(self):
         ''' return geoJson coordinates (list)'''
-        if type(self.value) == shapely.geometry.polygon.Polygon:
+        if isinstance(self.value, shapely.geometry.polygon.Polygon):
             coords = [list(self.value.exterior.coords)]
-        elif type(self.value) == shapely.geometry.point.Point:
+        elif isinstance(self.value, shapely.geometry.point.Point):
             coords = list(self.value.coords)[0]
-        elif type(self.value) == shapely.geometry.linestring.LineString:
+        elif isinstance(self.value, shapely.geometry.linestring.LineString):
             coords = list(self.value.coords)
         else : coords = ES.nullCoor
         return json.loads(json.dumps(coords, cls=ESValueEncoder))
@@ -689,7 +689,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     def getPoint(self) :
         ''' return a list with point coordinates [x, y] if the shape is a point, else none'''
-        if type(self.value) == shapely.geometry.point.Point : return [self.value.x, self.value.y]
+        if isinstance(self.value, shapely.geometry.point.Point) : return [self.value.x, self.value.y]
         return None
 
     def link(self, other):
@@ -746,8 +746,8 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @staticmethod
     def _gshape(coord):
         ''' transform a GeoJSON coordinates (list) into a shapely geometry'''
-        if type(coord) == list:  coor = json.dumps(coord, cls=ESValueEncoder)
-        elif type(coord) == str: coor = coord
+        if   isinstance(coord, list): coor = json.dumps(coord, cls=ESValueEncoder)
+        elif isinstance(coord, str) : coor = coord
         else: coor = coord.__copy__()
         for tpe in ["Point", "MultiPoint", "Polygon", "MultiPolygon"]:
             try:
@@ -921,15 +921,6 @@ class NamedValue (ESValue):               # !!! début ResValue
             self.value = val.value
             return
         self.value = ESValue._castsimple(val)
-        '''elif isinstance(val, (int, str, float, bool, tuple, datetime.datetime, type(None), bytes)) :
-            self.value = val
-        elif isinstance(val, list) :
-            self.value = tuple(val)
-        elif isinstance(val, dict) :
-            self.value = json.dumps(val)
-        else: 
-            #self.value = val
-            raise ESValueError('incosistent value for NamedValue object')'''
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
 

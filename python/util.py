@@ -164,11 +164,14 @@ class util:
         - **bs** : bytes, string or dict data to convert
 
         *Returns* : tuple - name, typevaluedec, codec, parent, keys'''
-        if not bs: return (None, None, [], ES.nullparent, None)
+        if bs is None: return (None, None, [], ES.nullparent, None)
         if   isinstance(bs, bytes): lis = cbor2.loads(bs)
-        elif isinstance(bs, str):   lis = json.loads(bs, object_hook=CborDecoder().codecbor)
+        #elif isinstance(bs, str): lis = json.loads(bs, object_hook=CborDecoder().codecbor)
+        elif isinstance(bs, str) and bs[0] in ['{', '[']:
+            lis = json.loads(bs, object_hook=CborDecoder().codecbor)
         elif isinstance(bs, list):  lis = bs
-        else: raise utilError("the type of parameter is not available")
+        else: lis = [bs]
+        #else: raise utilError("the type of parameter is not available")
         if not isinstance(lis, list): raise utilError("the parameter has to be a list")
         if not lis:
             return (None, None, [], ES.nullparent, None)
@@ -198,7 +201,7 @@ class util:
             if isinstance(name, str) and isinstance(dtype, str) and dtype in ES.typeName.keys():  
                 return (name, ES.typename[dtype])
             raise utilError('name or typevalue is unconsistent')
-        if context in ES.typeName.keys(): return (None, ES.typeName[context])
+        if context in ES.typeName.keys(): return (context, ES.typeName[context])
         if isinstance(context, str): return (context, None)
         raise utilError('name or typevalue is unconsistent')
 
@@ -212,35 +215,10 @@ class util:
             and isinstance(keys[1], list): return (keys[0], keys[1])
         if isinstance(keys, list) and len(keys) > 1: return (ES.nullparent, keys)
         raise utilError('parent or keys is unconsistent')
-
-    """@staticmethod
-    def _decodevalue(bs):
-        ''' return tuple (class, name, val). If single value, it's val'''
-        bs2 =       None
-        name =      None
-        classname = None
-        val =       None
-        if isinstance(bs, bytes): bs = cbor2.loads(bs)
-        if isinstance(bs, str) and bs.lstrip() and bs.lstrip()[0] in ('{', '[', '('): 
-            try: bs = json.loads(bs)
-            except JSONDecodeError: pass
-        if not isinstance(bs, dict): val = bs
-        elif isinstance(bs, dict) and len(bs) > 1: val = bs
-        elif list(bs.keys())[0] in ES.typeName:
-            classname = ES.typeName[list(bs.keys())[0]]
-            bs2 = bs[list(bs.keys())[0]]
-        else: bs2 = bs
-        if bs2: 
-            if not isinstance(bs2, dict): val=bs2
-            elif isinstance(bs2, dict) and len(bs2) > 1: val = bs2
-            else: 
-                name = str(list(bs2.keys())[0])
-                val  = list(bs2.values())[0]
-        return (classname, name, val)"""
     
     @staticmethod
     def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False, typevalue=None, 
-                  parent=ES.nullparent, **kwargs):
+                  parent=ES.nullparent, listunic=False, **kwargs):
         '''
         Return a formatted object with values, keys and codec.
         - Format can be json, bson or cbor
@@ -253,6 +231,7 @@ class util:
         - **fullcodec** : boolean (default False) - if True, use a full codec
         - **typevalue** : string (default None) - type to convert values
         - **parent** : int (default ES.nullparent) - Ilist index linked to
+        - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
 
         *Parameters (kwargs)*
 
@@ -269,9 +248,14 @@ class util:
             if name and typevalue:          js.append({name: typevalue})
             elif name:                      js.append(name)
             elif typevalue:                 js.append(typevalue)
-        js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
+        codlis = [util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
+                            fullcodec=fullcodec, untyped=option['untyped']) for cc in codeclist]
+        if len(js) == 1 and isinstance(js[0], str): listunic = True
+        if len(codlis) == 1 and not listunic : codlis = codlis[0]
+        js.append(codlis)
+        '''js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
                              fullcodec=fullcodec, untyped=option['untyped']) 
-                   for cc in codeclist])
+                   for cc in codeclist])'''
         if not simpleval: 
             if parent >= 0 and keyslist:    js.append([parent, keyslist])
             elif parent != ES.nullparent:   js.append(parent)
@@ -387,6 +371,16 @@ class util:
         return (codec, util.tokeys(values, codec))
 
     @staticmethod
+    def pparent(row, infos): 
+        '''return field 'pparent' '''  
+        field =infos[row]
+        if field['pparent'] != 0: return field['pparent']
+        if   field['cat'] == 'primary': field['pparent'] = field['num']
+        elif field['cat'] == 'unique' : field['pparent'] = -1
+        else: field['pparent'] = util.pparent(field['parent'], infos)
+        return field['pparent']
+
+    @staticmethod
     def str(listvalues): 
         '''return a list with values in the str format'''
         return [str(val) for val in listvalues]
@@ -415,11 +409,11 @@ class util:
         if func is None : func = identity
         if func == 'index' : return np.array(list(range(len(valuelist))))
         valList = util.funclist(valuelist, func, **kwargs)
-        if type(valList[0]) == str :
+        if isinstance(valList[0], str):
             try : datetime.datetime.fromisoformat(valList[0])
             except : return np.array(valList)
             return np.array(valList, dtype=np.datetime64)
-        if type(valList[0]) == datetime.datetime : return np.array(valList, dtype=np.datetime64)
+        if isinstance(valList[0], datetime.datetime): return np.array(valList, dtype=np.datetime64)
         return np.array(valList)
 
     @staticmethod

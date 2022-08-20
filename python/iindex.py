@@ -101,12 +101,13 @@ class Iindex:
         #print(name)
         #t0=time()
         if isinstance(codec, Iindex):
-            self.keys  = codec.keys
-            self.codec = codec.codec
-            self.name  = codec.name     
+            self.keys  = copy(codec.keys)
+            self.codec = deepcopy(codec.codec)
+            self.name  = copy(codec.name)
             return
-        if not keys: keys = []
-        if not codec: codec =[]
+        if keys is None : keys  = []
+        if codec is None: codec = []
+        if not isinstance(codec, list): codec = [codec]
         leng = lendefault
         if codec and len(codec) >= 1 and not leng: leng = len(codec)
         if keys : leng = len(keys)
@@ -244,7 +245,7 @@ class Iindex:
         return item in self.values
 
     def __getitem__(self, ind):
-        ''' return val item (value conversion)'''
+        ''' return value item (value conversion)'''
         if isinstance(ind, tuple): return [copy(self.values[i]) for i in ind]
         return copy(self.values[ind])
 
@@ -296,7 +297,7 @@ class Iindex:
     @property
     def cod(self):
         '''return codec conversion to string '''
-        return self.to_obj(fullcodec=False, simpleval=True, encoded=False)
+        return self.to_obj(fullcodec=False, simpleval=True, encoded=False, listunic=True)
         #if ES.def_clsName: return [cod.json(encoded=False) for cod in self.codec]
         #return self.codec
         
@@ -341,6 +342,20 @@ class Iindex:
         self.keys.append(key)
         return key
         
+    @staticmethod
+    def merging(listidx, name=None):
+        '''Create a new Iindex with values are tuples of listidx Iindex values
+        
+        *Parameters*
+
+        - **listidx** : list of Iindex to be merged.
+        - **name** : string (default : None) - Name of the new Iindex
+
+        *Returns* : new Iindex'''        
+        if not name: name = str(list(set([idx.name for idx in listidx])))
+        values = util.tuple(util.transpose([idx.values for idx in listidx]))
+        return Iindex.Iext(values, name)
+    
     def coupling(self, idx, derived=True):
         '''
         Transform indexes in coupled or derived indexes (codec extension).
@@ -448,9 +463,9 @@ class Iindex:
         co = Counter(self.codec)
         defcodec = list(co - Counter(list(co)))       
         dkeys  = defaultdict(list)
-        for l,i in zip(self.keys, list(range(len(self)))): dkeys[l].append(i)
+        for l,i in zip(self.keys, range(len(self))): dkeys[l].append(i)
         dcodec = defaultdict(list)
-        for l,i in zip(self.codec, list(range(len(self.codec)))): dcodec[l].append(i)       
+        for l,i in zip(self.codec, range(len(self.codec))): dcodec[l].append(i)       
         duplicates = []
         for item in defcodec: 
             for codecitem in dcodec[item]: duplicates += dkeys[codecitem]    
@@ -554,7 +569,7 @@ class Iindex:
         if extern: value = util.cast(value, ES.def_dtype)
         if not value in self.codec: raise IndexError('value not present')
         code = [cod for cod, val in zip(range(len(self.codec)), self.codec) if val == value]
-        return [rec for rec, key in zip(range(len(self.keys )), self.keys ) if key in code ]
+        return [rec for rec, key in zip(range(len(self)), self.keys ) if key in code ]
     
     def reindex(self, codec=None):
         '''apply a reordered codec. If None, a new default codec is apply. 
@@ -740,7 +755,7 @@ class Iindex:
             return self
         return Iindex(codec=codec, name=self.name, keys=keys)
     
-    def to_numpy(self, func=None, **kwargs):
+    def to_numpy(self, func=None, codec=False, **kwargs):
         '''
         Transform Iindex in a Numpy array.
 
@@ -753,8 +768,9 @@ class Iindex:
         *Returns* : Numpy Array'''
         if len(self) == 0: raise IindexError("Ilist is empty")
         if func is None : func = identity
-        if func == 'index' : return np.array(list(range(len(self.values))))
-        values = util.funclist(self.values, func, **kwargs)
+        if func == 'index' : return np.array(list(range(len(self))))
+        if not codec: values = util.funclist(self.values, func, **kwargs)
+        else:  values = util.funclist(self.codec, func, **kwargs)
         if isinstance(values[0], str):
             try : datetime.datetime.fromisoformat(values[0])
             except : return np.array(values)
@@ -764,7 +780,7 @@ class Iindex:
         return np.array(values)
 
     def to_obj(self, keys=None, typevalue=None, fullcodec=False, simpleval=False, 
-               parent=ES.nullparent, **kwargs):
+               parent=ES.nullparent, name=True, listunic=False, **kwargs):
         '''Return a formatted object (string, bytes or dict) for the Iindex
 
         *Parameters*
@@ -772,7 +788,9 @@ class Iindex:
         - **keys** : list (default None) - list: List of keys to include - None: no list - else: Iindex keys
         - **typevalue** : string (default None) - type to convert values
         - **fullcodec** : boolean (default False) - if True, use a full codec
+        - **name** : boolean (default True) - if False, name is not included
         - **simpleval** : boolean (default False) - if True, only codec is included
+        - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
         - **parent** : integer (default None) - index number of the parent in indexset
 
         *Parameters (kwargs)*
@@ -786,13 +804,17 @@ class Iindex:
         if   keys and     isinstance(keys, list):   keyslist = keys
         elif keys and not isinstance(keys, list):   keyslist = self.keys
         else:                                       keyslist = None
-        if self.name == ES.defaultindex:    idxname = None
-        else:                               idxname = self.name
-        if fullcodec:                       codeclist = self.values 
-        else:                               codeclist = self.codec
-        if typevalue:                       dtype = ES.valname[typevalue]
-        else:                               dtype = None
-        return util.encodeobj(codeclist, keyslist, idxname, fullcodec, simpleval, dtype, parent, **kwargs)    
+        if not name or self.name == ES.defaultindex:    idxname     = None
+        else:                                           idxname     = self.name
+        if fullcodec:                       
+                                            codeclist   = self.values 
+                                            keyslist    = None 
+                                            parent      = ES.nullparent
+        else:                               codeclist   = self.codec
+        if typevalue:                       dtype       = ES.valname[typevalue]
+        else:                               dtype       = None
+        return util.encodeobj(codeclist, keyslist, idxname, fullcodec, simpleval, 
+                              dtype, parent, listunic, **kwargs)    
     
     def valrow(self, row):
         ''' return val for a record

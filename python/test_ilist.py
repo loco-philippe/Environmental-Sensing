@@ -29,6 +29,15 @@ defv = 'default value'
 i1 = 'i1'
 class Test_Ilist(unittest.TestCase):
 
+    def test_creation_unique(self):
+        self.assertTrue(Ilist().to_obj() == [])
+        self.assertTrue(Ilist([1,2,3]).to_obj() == [1,2,3])
+        self.assertTrue(Ilist(['er', 'er', 'er']).to_obj() == ['er', 'er', 'er'])
+        self.assertTrue(Ilist.from_obj([1,2,3]).to_obj() == [1,2,3])
+        self.assertTrue(Ilist.from_obj(['er', 'er', 'er']).to_obj() == ['er', 'er', 'er'])        
+        self.assertTrue(Ilist.Iext([1,2,3]).to_obj() == [1,2,3])
+        self.assertTrue(Ilist.Iext(['er', 'er', 'er']).to_obj() == ['er', 'er', 'er'])
+        
     def test_creation_simple(self) :
         iidx = Ilist([['datationvalue', [10,20,30]],
                           ['locationvalue', [100,200,300], 0],
@@ -49,7 +58,6 @@ class Test_Ilist(unittest.TestCase):
         self.assertTrue(iidx.lidx[2].values  == iidx3.lidx[2].values == 
                         iidx2.lidx[2].values == iidx4.lidx[2].values ==
                         iidx1.lidx[2].values)
-        self.assertTrue(Ilist().to_obj() == [])
         self.assertEqual(Ilist(Ilist([[0, 2, 0, 2, 0], [10,0,20,20,15]])), 
                          Ilist([[0, 2, 0, 2, 0], [10,0,20,20,15]]))
         
@@ -90,11 +98,11 @@ class Test_Ilist(unittest.TestCase):
                      ['locationvalue', [100, 100, 200, 200, 300, 300]],
                      ['propertyvalue', [True, False, True, False, True, False]]])
         il2.setvar(0)
-        self.assertEqual(il2.lvarname, ['i0'])
+        self.assertEqual(il2.lvarname, ['namvalue'])
         il2.setvar()
         self.assertEqual(il2.lvarname, [])
-        il2.setvar('i0')
-        self.assertEqual(il2.lvarname, ['i0'])
+        il2.setvar('namvalue')
+        self.assertEqual(il2.lvarname, ['namvalue'])
 
     def test_creation_idic_iext_variable(self) :
         iidx = Ilist.Idic({'varvalue'     : ['a', 'b', 'c', 'd', 'e', 'f'],
@@ -169,7 +177,7 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(iidx.lindex[2].val, [6,7,8])
 
     def test_add_update_list(self) :
-        il=Ilist([1, 2, 3])
+        il=Ilist([[1, 2, 3]])
         il.addindex(['test', [0, 1, 1]])
         self.assertEqual(il.lidx[0].val, [0, 1, 1])
         il.updateindex([0, 2, 2], 1)
@@ -203,7 +211,7 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il, il1)
 
     def test_list(self):
-        il = Ilist([1,2,3,4,5,6])
+        il = Ilist([[1,2,3,4,5,6]])
         self.assertEqual(il[1], 2)
         il[1] = 3
         self.assertEqual(il[1], 3)
@@ -216,7 +224,7 @@ class Test_Ilist(unittest.TestCase):
                       [110,10,120,120,115]])
         il3 = il1 | il2
         self.assertEqual(il3.lenidx, il1.lenidx + il2.lenidx)
-        il  = Ilist(['er', 'rt', 'er', 'ry', 'ab', 'ert'])
+        il  = Ilist([['er', 'rt', 'er', 'ry', 'ab', 'ert']])
         ilx = Ilist([[0,0,0,1,1,1], [0,1,2,3,4,1]])
         il2 = il | ilx
         self.assertEqual(il2.lidx, ilx.lidx)
@@ -307,6 +315,8 @@ class Test_Ilist(unittest.TestCase):
             opt = {'encoded': ts[0], 'encode_format': ts[1], 'fullcodec': ts[2],
                    'defaultcodec': ts[3]}
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)
+            ilm.to_file('test.il', **opt)
+            self.assertEqual(Ilist.from_file('test.il'), ilm)
         ilm = Ilist.Iext([[6, 7, 8, 9, 9, 11, 12],
                               ['s', 's', 's', 'n', 'd', 'd', 'd' ]])
         ilm.coupling()
@@ -357,13 +367,19 @@ class Test_Ilist(unittest.TestCase):
         ilx.getduplicates(resindex='test')
         self.assertEqual(ilx.lindex[4].values, [True, True, True, False, False, True])
         
+    def test_name(self):
+        ilm = Ilist.Iext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0], 
+                              ['info', 'info', 'info', 'info'],[12, 20, 20, 12]])
+        ilm.full()
+        self.assertTrue(ilm.from_obj(ilm.to_obj())==ilm)
+        
     def test_full(self):
         ilm = Ilist.Iext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0], 
                               ['info', 'info', 'info', 'info'],[12, 20, 20, 12]])
         self.assertFalse(ilm.complete)
         ilm.full()
-        self.assertTrue(ilm.lidx[0].iscrossed(ilm.lidx[1])==ilm.lidx[0].iscrossed(ilm.lidx[3])
-                        ==ilm.lidx[1].iscrossed(ilm.lidx[3])==True)
+        self.assertTrue(ilm.lidx[0].iscrossed(ilm.lidx[1])==ilm.lidx[0].iscrossed(ilm.lidx[2])
+                        ==ilm.lidx[1].iscrossed(ilm.lidx[2])==True)
         self.assertTrue(ilm.complete)
         il=Ilist.Iext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30], 
                        [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'],
@@ -386,11 +402,11 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(ilm.keytoval(ilm.valtokey([2,12,0, 2, 'info', 20])), [2,12,0, 2, 'info', 20])
 
     def test_vlist(self) :
-        il = Ilist([1,2,3])
+        il = Ilist([[1,2,3]])
         self.assertEqual(il.vlist(2, func=pow), [1, 4, 9])
-        il = Ilist(['er', 'ar', 'ty'])
+        il = Ilist([['er', 'ar', 'ty']])
         self.assertEqual(il.vlist(func=len), [2, 2, 2])
-        il = Ilist([datetime(2010, 1,2), datetime(2012, 1,2)])
+        il = Ilist([[datetime(2010, 1,2), datetime(2012, 1,2)]])
         self.assertEqual(il.vlist(func=datetime.isoformat,timespec='hours', sep='-', extern=False), #!!!
                          ['2010-01-02-00', '2012-01-02-00'])
         il =Ilist([[['aer', 'e', 'h'], -1], [1,2,3], ['a', 'efg', 'h'], [0,1,0]])
@@ -414,7 +430,7 @@ class Test_Ilist(unittest.TestCase):
                            'group'     : ['gr1', 'gr2']}, var=0)
         self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["anne white", "anne", "gr1", "english" ]), 14)
         self.assertEqual(il3.merge(mergeidx=True, updateidx=False).loc(["anne white", "anne", "gr2", "english" ]), 14)
-        il3 = Ilist([il1, il2], typevalue=None)
+        il3 = Ilist([[il1, il2]], typevalue=None)
         self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["english", "gr1"]), 14)
 
     def test_csv(self):
@@ -455,7 +471,6 @@ class Test_Ilist(unittest.TestCase):
 
     def test_filter(self):
         il=Ilist.Iext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 15]])
-        il.setfilter([True, False, True, False])
         il.setfilter([True, False, True, False])
         il.applyfilter()
         self.assertEqual( il.lindex[1].val,   [0, 0])

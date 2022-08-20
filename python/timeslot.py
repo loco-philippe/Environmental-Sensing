@@ -92,7 +92,7 @@ class TimeSlot:
         
         *Returns* : None'''          
         slot = []
-        if type(val) == str:
+        if isinstance(val, str):
             try:        val = json.loads(val)   
             except:
                 try:    val = TimeInterval._dattz(datetime.datetime.fromisoformat(val))
@@ -100,18 +100,18 @@ class TimeSlot:
         if val == None : 
             self.slot = slot
             return
-        if type(val) == tuple: val = list(val)
-        if type(val) == list and len(val) == 2 and type(val[0]) != TimeInterval:  
+        if isinstance(val, tuple): val = list(val)
+        if isinstance(val, list) and len(val) == 2 and not isinstance(val[0], TimeInterval):  
             try :                           slot.append(TimeInterval(val))
             except :
                 for interv in val :         slot.append(TimeInterval(interv))
-        elif type(val) == list:  
+        elif isinstance(val, list):  
             try :
                 for interv in val :         slot.append(TimeInterval(interv))
             except :                        slot.append(TimeInterval(val))
-        elif type(val) == datetime.datetime:slot.append(TimeInterval(val))
-        elif type(val) == TimeSlot :        slot = val.slot
-        elif type(val) == TimeInterval :    slot.append(val)
+        elif isinstance(val, datetime.datetime): slot.append(TimeInterval(val))
+        elif isinstance(val, TimeSlot):     slot = val.slot
+        elif isinstance(val, TimeInterval): slot.append(val)
         else :                              slot.append(TimeInterval(val))
         self.slot= TimeSlot._reduced(slot)
         
@@ -330,7 +330,7 @@ class TimeSlot:
     @staticmethod    
     def _reduced(listinterv):
         ''' return an ordered and non-overlapping list of TimeInterval from any TimeInterval list'''
-        if type(listinterv) != list or len(listinterv) == 0 : return []
+        if not isinstance(listinterv, list) or len(listinterv) == 0 : return []
         union = []
         slot = sorted(listinterv)
         interv = slot[0]
@@ -385,7 +385,7 @@ class TimeInterval:    # !!! interval
         
         *Returns* : None'''          
         self.start = self.end = ES.nullDate
-        if type(val) == str:
+        if isinstance(val, str):
             try:
                 sl = TimeInterval._dattz(datetime.datetime.fromisoformat(val))
                 if sl != None : self.start = self.end = sl
@@ -393,8 +393,8 @@ class TimeInterval:    # !!! interval
             except:
                 try:     val = json.loads(val)
                 except:  val = ES.nullDate    
-        if   type(val) == list : self._initInterval(val)
-        elif type(val) == TimeInterval :  self.start, self.end = val.start, val.end
+        if   isinstance(val, list) : self._initInterval(val)
+        elif isinstance(val, TimeInterval) :  self.start, self.end = val.start, val.end
         else : 
             dat = self._initDat(val)
             if dat != None : self.start = self.end = dat
@@ -532,17 +532,17 @@ class TimeInterval:    # !!! interval
     def _initDat(self, val):
         '''initialization of start and end dates from a unique value 
         (datetime, string, numpy.datetime64, pandas Timestamp)'''
-        if   type(val) == datetime.datetime:
+        if   isinstance(val, datetime.datetime):
             res = val
             '''if val.tzinfo is None or val.tzinfo.utcoffset(val) is None:
                 res = val.astimezone(datetime.timezone.utc)
             else: res = val'''
-        elif type(val) == str:
+        elif isinstance(val, str):
             try : res = datetime.datetime.fromisoformat(val)
             except: res = ES.nullDate
-        elif type(val) == numpy.datetime64 :
+        elif isinstance(val, numpy.datetime64):
             res = pandas.Timestamp(val).to_pydatetime()
-        elif type(val) == pandas._libs.tslibs.timestamps.Timestamp :
+        elif isinstance(val, pandas._libs.tslibs.timestamps.Timestamp):
             res = val.to_pydatetime()
         else : raise TimeSlotError("impossible to convert in a date")
         return TimeInterval._dattz(res)

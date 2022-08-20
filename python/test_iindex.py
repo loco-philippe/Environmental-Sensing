@@ -22,6 +22,19 @@ from timeslot import TimeSlot
 
 class Test_iindex(unittest.TestCase):
 
+    def test_init_unitaire(self):
+        idx = Iindex() 
+        idx2 = Iindex.Iext()
+        idx3 = Iindex.Idic()
+        self.assertTrue(idx == idx2 == idx3 == Iindex(idx))
+        self.assertTrue(idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
+        self.assertTrue(idx.values == [])
+        idx = Iindex(lendefault=3) 
+        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [0,1,2] and idx.keys == [0,1,2])
+        self.assertTrue(idx.val == [0,1,2])
+        self.assertTrue(Iindex(1) == Iindex([1]))
+        self.assertTrue(Iindex('trux') == Iindex(['trux']))
+        
     def test_init(self) :
         idx = Iindex(codec=['er', 2,[1,2]], name='test', keys=[0,1,2,1])
         idx2 = Iindex.Iext(['er', 2,[1,2], 2], 'test')
@@ -33,15 +46,6 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx == idx2 == idx3)
         self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1,2], 2] 
                         == idx5.val == idx5.cod and len(idx) == 4)
-        idx = Iindex() 
-        idx2 = Iindex.Iext()
-        idx3 = Iindex.Idic()
-        self.assertTrue(idx == idx2 == idx3 == Iindex(idx))
-        self.assertTrue(idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
-        self.assertTrue(idx.values == [])
-        idx = Iindex(lendefault=3) 
-        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [0,1,2] and idx.keys == [0,1,2])
-        self.assertTrue(idx.val == [0,1,2])
         idx = Iindex(['er', 'rt', 'ty'], 'datation', [0,1,2,2])
         idx2 = Iindex.Iext(['er', 'rt', 'ty', 'ty'], 'datation')
         idx3 = Iindex.Idic({'datation': ['er', 'rt', 'ty', 'ty']})
@@ -57,6 +61,20 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(Iindex.Iobj([1,2,3], typevalue=None) == Iindex([1,2,3]))
         self.assertTrue(Iindex(codec=[True], lendefault=3).val == [True, True, True])
     
+    def test_obj(self):
+        listval = [ ['name', ['value']], 'value', ['value'], ['value', 'value2']]
+        for val in listval:
+            self.assertTrue(Iindex.Iobj(val).values[0] == 'value')
+            self.assertTrue(Iindex.Iobj(Iindex.Iobj(val).to_obj()) == Iindex.Iobj(val))
+        val = ['namvalue', ['value']]
+        self.assertTrue(Iindex.Iobj(val).name == val[0])
+        self.assertTrue(Iindex.Iobj(val).values[0].value == 'value')
+        self.assertTrue(Iindex.Iobj(val).to_obj() == val)
+        val = ['datation', ['name']]
+        self.assertTrue(Iindex.Iobj(val).name == val[0])
+        self.assertTrue(Iindex.Iobj(val).values[0].name == 'name')
+        self.assertTrue(Iindex.Iobj(val).to_obj() == val)
+                            
     def test_infos(self) :
         idx = Iindex.Iext(['er', 2,[1,2]])
         self.assertTrue(idx.infos == {'lencodec': 3, 'min': 3, 'max': 3,
@@ -160,6 +178,10 @@ class Test_iindex(unittest.TestCase):
         residx  = [[], ['er', '2', 'er', str([1,2])]]
         for idx, res in zip(testidx, residx):
             self.assertEqual(idx.vlist(str), res)
+        il = Ilist.Idic({"i0": ["er", "er"],"i1": [0, 0], "i2": [30, 20]})
+        idx = Iindex.Iext([il, il])
+        self.assertEqual(idx.vlist(func=Ilist.to_obj, extern=False, encoded=False)[0][0],
+                         'er')
 
     def test_numpy(self):
         idx = Iindex.Iext(['er', 2, 'er',[1,2]])
@@ -257,8 +279,8 @@ class Test_iindex(unittest.TestCase):
 
 
     def test_json(self):
-        self.assertTrue(Iindex.Iobj(Iindex(['a']).to_obj()).to_obj()==Iindex(['a']).to_obj()==['a'])
-        self.assertTrue(Iindex.Iobj(Iindex([0]).to_obj()).to_obj()==Iindex([0]).to_obj()==[0])
+        self.assertTrue(Iindex.Iobj(Iindex(['a']).to_obj()).to_obj()==Iindex(['a']).to_obj()=='a')
+        self.assertTrue(Iindex.Iobj(Iindex([0]).to_obj()).to_obj()==Iindex([0]).to_obj()==0)
         self.assertTrue(Iindex.Iobj(Iindex().to_obj()).to_obj()==Iindex().to_obj()==[])
         parent = Iindex.Iext(['j', 'j', 'f', 'f', 'm', 's', 's'])
         fils = Iindex.Iext(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])

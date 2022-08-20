@@ -2,256 +2,14 @@
 """
 Created on Thu May 26 20:30:00 2022
 
-@author: a179227
+@author: Philippe Thomy
 
 The `ES.ilist` module contains the `Ilist` class.
 
----
-# What is the Ilist Object ?
-
-The Ilist Object (Indexed List) is a combination of a list of values (indexed values) 
-and a list of properties (index) that describe it.
-
-For example, csv file, log, measurement are indexed lists.
-
-*Note : indexed values and index values can be every kind of object (not only textual or numerical)*.
-
-<img src="./ilist_ilist.png" width="500">
-
-In the example below, the set of data is scores of students and the properties are the name,
- the age and the subject.
-
-<img src="./ilist_example.png" width="500">
-
-The Ilist Object has many properties and can be converted into a matrix (e.g. Xarray
-object to perform statistical processing) or into several formats (e.g. json, csv, bytes).
-
-```python
-In [21]: example = Ilist.Iedic({'score'   : [10, 12, 15]}, 
-    ...:                       {'name'    : ['paul', 'lea', 'lea'],
-    ...:                        'age'     : [16, 15, 15],
-    ...:                        'subject' : ['math', 'math', 'english']})
-
-In [22]: example.to_xarray(fillvalue=math.nan)
-Out[22]: 
-<xarray.DataArray 'Ilist' (name: 2, subject: 2)>
-array([[15., 12.],
-       [nan, 10.]])
-Coordinates:
-  * name     (name) <U4 'lea' 'paul'
-    age      (name) int32 15 16
-  * subject  (subject) <U7 'english' 'math'
-
-In [23]: example.json()
-Out[23]: 
-{'order': ['name', 'age', 'subject'],
- 'name': ['paul', 'lea'],
- 'age': [16, 15],
- 'subject': ['math', 'english'],
- 'score': [10, 12, 15],
- 'index': [[0, 1, 1], [0, 1, 1], [0, 0, 1]]}
-```
-
-The Ilist data model includes two levels :
-    
-- external level (user data)
-- internal level (key data)
-
-<img src="./ilist_data_structure.png" width="500">
-
-- the user data (extval, extidx) can be everything,
-- the internal data (ival, iidx) are integers, which makes the processing to be performed
- much simpler
-- the index user data (extidx) are dynamic to reduce the size of data.
+The concept of 'indexed list' is describe in [this page]
+(https://github.com/loco-philippe/Environnemental-Sensing/wiki/Indexed-list).
 
 ---
-# Index properties
-
-## Index categories
-
-Indexes can be characterized according to the link between external values and internal keys :
-    
-- complete index : one internal key for one external values
-- unique index : one internal key for all external values 
-- mixte index : index not complete and not unique
-
-<img src="./ilist_index_category.png" width="600">
-
-## Index relationships
-
-An index can also be characterized based on relationships with another index
-
-There are 4 relationships categories :
-
-- coupled : an index is coupled to another if there is a 1-to-1 correspondence between values
-- derived : an index is derived from another if there is a 1-to-n correspondence between values
-- crossed : two indexes are crossed if there is a correspondence between all values
-- linked  : if two indexes are not coupled, derived or crossed
-
-<img src="./ilist_link_category.png" width="800">
-
-If one index is complete, all the indexes are derived from it.<br>
-If one index is unique, it is derived from all indexes.<br>
-If A is derived from B and B is derived from C, A is derived from C.<br> 
-If A is coupled from B, all the relationships with other indexes are identical.    
-
-The indicated ratio is defined to measure the 'proximity' between to indexes. The value is 
-between 0% (the indexes are dependant - coupled or derived) and 100% (the indexes are independant : 
-crossed or linked).
-
-## Global properties
-
-**Index definition**
-
-- An index is derived if it’s derived from at least one other index
-- An index is coupled if it’s coupled from at least one other index
-- An Index is primary if it’s not coupled, not derived and not unique
-
-**IndexSet definition**
-
-- Dimension : number of primary indexes
-- Full : An indexSet is full if all the primary indexes are crossed with each 
-other primary index
-- Complete : An indexSet is complete if all the non coupled indexes are crossed 
-with each other non coupled index
-
-**Properties**
-
-- A derived or coupled index is derived or coupled from a single primary index
-- The number of values of a full indexset is the product of the primary indexes lenght
-- A full indexSet is complete
-- A full IndexSet can be transformed in a Matrix with the dimension of the indexset
-- A complete Indexset can be expressed in a flat list of values (without detailed indexes)
-
-##Canonical format
-
-These properties allow to build a canonical format :
-    
-<img src="./ilist_canonical.png" width="600">
-   
-In the example below, 3 columns are linked (Full name, Course, Examen),
-3 columns are derived (First name, Last name, Group), 1 column is coupled (Surname),
-1 column is unique (Year).
-
-<img src="./ilist_index.png" width="800">
-
-## Functions
-
-The index properties can be used to modify an indexset in particular to transform an 
-Ilist object into a matrix of chosen dimension    
-
-<img src="./ilist_functions.png" width="700">
-
-If an index is not primary, index values can be calculated from primary indexes.
-This property is very usefull if new values have to be added to the Ilist, for example,
-if we decide to have all the combinations of primary indexes.
-
-In the example below (only Anne White), the 'full' method generates missing data for all 
-combinations of primary indexes fullname, course and examen.
-
-<img src="./ilist_full.png" width="800">
-
-## Matrix generation process
-
-The process to transform an Ilist in a matrix is as follow :
-
-<img src="./ilist_process.png" width="800">
-
-When the Ilist is full, it can then be transformed into a matrix with one dimension
- for each primary index. If the dimension required is lower than Ilist dimension, 
- the function to_xarray merge the indexes with the lowest coupling rate. 
-
-In the example below (dimmax = 2), a new index 'course-full name' is created.
-So 'course' and 'full name' become derived from the new index and the dimension 
-now becomes 2 :
-
-```python
-In [42]: il.to_xarray(fillvalue=math.nan)
-Out[42]: 
-<xarray.DataArray 'Ilist' (full name: 4, course: 3, examen: 3)>
-array([[[nan, 10., 12.],
-        [11., 13., 15.],
-        [nan, nan, nan]],
-
-       [[ 2.,  4., nan],
-        [nan, nan, nan],
-        [nan, 18., 17.]],
-
-       [[ 6., nan, nan],
-        [nan, nan, nan],
-        [nan, nan, 18.]],
-
-       [[nan,  8., nan],
-        [15., nan, nan],
-        [nan, nan, nan]]])
-Coordinates:
-    first name  (full name) <U8 'Anne' 'Camille' 'Philippe' 'Philippe'
-    last name   (full name) <U5 'White' 'Red' 'Black' 'White'
-  * full name   (full name) <U14 'Anne White' 'Camille Red' ... 'Philippe White'
-    surname     (full name) <U10 'skyler' 'saul' 'gus' 'heisenberg'
-    group       (full name) <U3 'gr1' 'gr3' 'gr3' 'gr2'
-  * course      (course) <U8 'english' 'math' 'software'
-  * examen      (examen) <U2 't1' 't2' 't3'
-
-In [43]: il.to_xarray(dimmax=2, fillvalue=math.nan)
-Out[43]: 
-<xarray.DataArray 'Ilist' (examen: 3, ["course", "full name"]: 8)>
-array([[11., 15., nan, nan,  2.,  6., nan, nan],
-       [13., nan, 10.,  8.,  4., nan, 18., nan],
-       [15., nan, 12., nan, nan, nan, 17., 18.]])
-Coordinates:
-    first name               (["course", "full name"]) <U8 'Anne' ... 'Philippe'
-    last name                (["course", "full name"]) <U5 'White' ... 'Black'
-    full name                (["course", "full name"]) <U14 'Anne White' ... ...
-    surname                  (["course", "full name"]) <U10 'skyler' ... 'gus'
-    group                    (["course", "full name"]) <U3 'gr1' 'gr2' ... 'gr3'
-    course                   (["course", "full name"]) <U8 'math' ... 'software'
-  * examen                   (examen) <U2 't1' 't2' 't3'
-  * ["course", "full name"]  (["course", "full name"]) <U6 '(0, 0)' ... '(2, 3)'
-```
----
-# Aggregation process
-
-One of the properties of Ilist object is to be able to index any type of objects and 
-in particular Ilist objects. This indexing can be recursive, which makes it possible 
-to preserve the integrity of the data.
-
-A 'merge' method transform the Ilist object thus aggregated 
-into a flat Ilist object.
-
-<img src="./ilist_aggregation.png" width="800">
-
-In the example below, an Ilist object is build for each person.
-These Ilist objects are then assembled into a summary object which can be 
-disassembled by the function 'merge'.
-
-<img src="./ilist_merge.png" width="800">
-
----
-# data representation
-
-## format
-
-Several formats are available to share or store Ilist :
-    
-<img src="./ilist_format.png" width="600">
-    
-    
-## Ilist size
-
-A list of values (e.g. ['Paul', 'John', 'Marie', 'John']) is represented in an indexed list by :
-    
-- a list of different values (e.g. ['Paul', 'John', 'Marie'])
-- a list of index (e.g. [0, 1, 2, 1])
-
-This representation is similar to Pandas categorical's type.
-
-In term of data volume, there is no duplication (gain) but the index list is added (loss). 
-The graph below shows the size difference between simple list and indexed list.
-
-<img src="./ilist_size2.png" width="800">
-
---- 
 """
 #%% declarations
 from collections import Counter
@@ -263,6 +21,7 @@ import math
 from ESconstante import ES
 from iindex import Iindex
 from util import util, IindexEncoder, CborDecoder
+import xarray
 
 class Ilist:
 #%% intro
@@ -300,6 +59,8 @@ class Ilist:
     - `Ilist.lvar`
     - `Ilist.lvarrow`
     - `Ilist.lname`
+    - `Ilist.lunicname`
+    - `Ilist.lunicrow`
     - `Ilist.setidx`
     - `Ilist.tiidx`
     - `Ilist.textidx`
@@ -337,6 +98,7 @@ class Ilist:
     - `Ilist.delrecord`
     - `Ilist.renameindex`
     - `Ilist.setvar`
+    - `Ilist.setname`
     - `Ilist.updateindex`    
     
     *structure management - methods*
@@ -347,6 +109,7 @@ class Ilist:
     - `Ilist.getduplicates`
     - `Ilist.merge`
     - `Ilist.reindex`
+    - `Ilist.reorder`
     - `Ilist.setfilter`
     - `Ilist.sort`
     - `Ilist.swapindex`
@@ -395,11 +158,11 @@ class Ilist:
         - **var** :  int (default None) - row of the variable'''
         #print('debut iext')
         #t0 = time()
-        if not idxname: idxname=[]
-        if not idxval:  idxval =[]
+        if idxname is None: idxname = []
+        if idxval  is None: idxval  = []
         if not isinstance(idxval, list): return None
         if len(idxval) == 0: return cls()
-        if not isinstance(idxval[0], list): val = [idxval]
+        if not isinstance(idxval[0], list): val = [[idx] for idx in idxval]
         else:                               val = idxval
         name = ['i' + str(i) for i in range(len(val))]
         for i in range(len(idxname)): 
@@ -442,6 +205,24 @@ class Ilist:
         return cls.Iext(idxval, idxname, typevalue=None, var=var)
             
     @classmethod
+    def from_file(cls, file, forcestring=False) :
+        '''
+        Generate `Ilist` object from file storage.
+
+         *Parameters*
+
+        - **file** : string - file name (with path)
+        - **forcestring** : boolean (default False) - if True, forces the UTF-8 data format, else the format is calculated
+
+        *Returns* : Ilist object'''
+        with open(file, 'rb') as f: btype = f.read(1)
+        if btype==bytes('[', 'UTF-8') or forcestring:
+            with open(file, 'r', newline='') as f: bjson = f.read()
+        else:
+            with open(file, 'rb') as f: bjson = f.read()
+        return cls.from_obj(bjson)
+
+    @classmethod
     def from_obj(cls, bs=None, reindex=True):
         '''
         Generate an Ilist Object from a bytes, string or list value
@@ -481,7 +262,8 @@ class Ilist:
             self.lvarname = []
             return
         if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)): 
-            listidx = [listidx]
+            #listidx = [listidx]
+            listidx = [[idx] for idx in listidx]
         if len(listidx) == 1:
             code, idx = Iindex.from_obj(listidx[0], typevalue=typevalue)
             if idx.name is None or idx.name == ES.defaultindex: idx.name = 'i0'
@@ -503,7 +285,8 @@ class Ilist:
         #print('fin init', time()-t0)
         #init length
         if not length:  length  = -1
-        leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) != 1]
+        #leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) != 1]
+        leng = [len(iidx) for code, iidx in codind if code < 0]
         if max(leng) == min(leng) and length < 0: length = max(leng)
         if idxvar: length = len(codind[idxvar[0]][1])
         flat = length == max(leng) == min(leng)
@@ -559,7 +342,7 @@ class Ilist:
 
     def __repr__(self):
         '''return classname, number of value and number of indexes'''
-        return self.__class__.__name__ + '[' + str(len(self)) + ', ' + str(len(self.lindex)) + ']'
+        return self.__class__.__name__ + '[' + str(len(self)) + ', ' + str(self.lenindex) + ']'
 
     def __len__(self):
         ''' len of values'''
@@ -571,7 +354,7 @@ class Ilist:
         return item in self.lindex
 
     def __getitem__(self, ind):
-        ''' return val record (value conversion)'''
+        ''' return value record (value conversion)'''
         res = [idx[ind] for idx in self.lindex]
         if len(res) == 1: return res[0]
         return res
@@ -713,6 +496,11 @@ class Ilist:
         return [self.lindex[i] for i in self.lvarrow]
 
     @property
+    def lunicrow(self):
+        '''list of unic idx row'''
+        return [self.lname.index(name) for name in self.lunicname]
+
+    @property
     def lvarrow(self):
         '''list of var row'''
         return [self.lname.index(name) for name in self.lvarname]
@@ -720,19 +508,19 @@ class Ilist:
     @property
     def lidxrow(self):
         '''list of idx row'''
-        return [i for i in range(len(self.lindex)) if i not in self.lvarrow]
+        return [i for i in range(self.lenindex) if i not in self.lvarrow]
         #return [self.lname.index(name) for name not in self.idxvar]
     
+    @property    
+    def lunicname(self):
+        ''' list of unique index name'''
+        return [idx.name for idx in self.lindex if len(idx.codec) == 1]
+
     @property    
     def lname(self):
         ''' list of index name'''
         return [idx.name for idx in self.lindex]
 
-    def nindex(self, name):
-        ''' index with name equal to attribute name'''
-        if name in self.lname: return self.lindex[self.lname.index(name)]
-        return None
-    
     @property    
     def primary(self):
         ''' list of primary idx'''
@@ -805,29 +593,30 @@ class Ilist:
         if dtype and not isinstance(dtype, list): dtype = [dtype] * len(record)
         if dtype: record = [util.cast(value, typ) for value, typ in zip(record, dtype)]
         if self.isinrecord(self.idxrecord(record), False) and unique: return None
-        return [self.lindex[i].append(record[i]) for i in range(len(self.lindex))]
+        return [self.lindex[i].append(record[i]) for i in range(self.lenindex)]
 
-    def applyfilter(self, reverse=False):
-        '''delete records with defined filter value : if reverse is True, delete 
-        record with filter's value is False.
+    def applyfilter(self, reverse=False, filtname=ES.filter, delfilter=True, inplace=True):
+        '''delete records with defined filter value.
         Filter is deleted after record filtering.
 
         *Parameters*
 
-        - **reverse** :  boolean (default False)
+        - **reverse** :  boolean (default False) - delete record with filter's value is reverse
+        - **filtname** : string (default ES.filter) - Name of the filter Iindex added 
+        - **delfilter** :  boolean (default True) - If True, delete filter's Iindex
+        - **inplace** : boolean (default True) - if True, filter is apply to self,
 
-        *Returns* : boolean - True if filtering is done'''
-        if not ES.filter in self.lname: return False
-        ifilt = self.lname.index(ES.filter)
-        order = [ifilt] + [i for i in range(len(self.lindex)) if i != ifilt]
-        #invers = self.lindex[ifilt].keys[0]==self.lindex[ifilt].val[0]
-        invers = self.lindex[ifilt].keys[0]==self.lindex[ifilt].valrow(0)
-        self.sort(order, reverse=invers is not reverse)
-        minind = min(self.lindex[ifilt].recordfromvalue(reverse))
-        for idx in self.lindex: del(idx.keys[minind:])
-        self.delindex(ES.filter)
-        self.reindex()
-        return True
+        *Returns* : self or new Ilist'''
+        if inplace: il = self
+        else: il = copy(self)
+        if not filtname in il.lname: return False
+        ifilt = il.lname.index(filtname)        
+        il.sort([ifilt], reverse=not reverse, func=None)
+        minind = min(il.lindex[ifilt].recordfromvalue(reverse))
+        for idx in il.lindex: del(idx.keys[minind:])
+        if delfilter: self.delindex(filtname)
+        il.reindex()
+        return il
     
     def couplingmatrix(self, default=False, file=None, att='rate'):
         '''return a matrix with coupling infos between each idx.
@@ -909,7 +698,7 @@ class Ilist:
         *Returns* : none '''      
         self.lindex.pop(self.lname.index(indexname))
 
-    def full(self, reindex=False, indexname=None, fillvalue='-'):
+    def full(self, reindex=False, indexname=None, fillvalue='-', inplace=True, complete=True):
         '''tranform a list of indexes in crossed indexes (value extension).
 
         *Parameters*
@@ -917,30 +706,35 @@ class Ilist:
         - **indexname** : list of string - name of indexes to transform
         - **reindex** : boolean (default False) - if True, set default codec before transformation
         - **fillvalue** : object value used for var extension
+        - **inplace** : boolean (default True) - if True, filter is apply to self,
+        - **complete** : boolean (default True) - if True, Iindex are ordered in canonical order
 
-        *Returns* : none '''     
-        if not indexname: primary = self.primary
-        else: primary = [self.idxname.index(name) for name in indexname]
-        secondary = [idx for idx in range(len(self.lidx)) if idx not in primary]
-        if reindex: self.reindex()
-        keysadd = util.idxfull([self.lidx[i] for i in primary])
-        if not keysadd or len(keysadd) == 0: return
-        leninit = len(self)
+        *Returns* : self or new Ilist'''
+        if inplace: il = self
+        else: il = copy(self)
+        if not indexname: primary = il.primary
+        else: primary = [il.idxname.index(name) for name in indexname]
+        secondary = [idx for idx in range(il.lenidx) if idx not in primary]
+        if reindex: il.reindex()
+        keysadd = util.idxfull([il.lidx[i] for i in primary])
+        if not keysadd or len(keysadd) == 0: return il
+        leninit = len(il)
         lenadd  = len(keysadd[0])
-        inf = self.indexinfos()
+        inf = il.indexinfos()
         for i,j in zip(primary, range(len(primary))):
-            if      inf[i]['cat'] == 'unique': self.lidx[i].keys += [0] * lenadd
-            else:   self.lidx[i].keys += keysadd[j]
+            if      inf[i]['cat'] == 'unique': il.lidx[i].keys += [0] * lenadd
+            else:   il.lidx[i].keys += keysadd[j]
         for i in secondary:
-            if      inf[i]['cat'] == 'unique': self.lidx[i].keys += [0] * lenadd
-            else:   self.lidx[i].tocoupled(self.lidx[inf[i]['parent']], coupling=False)  
-        for i in range(len(self.lidx)):
-            if len(self.lidx[i].keys) != leninit + lenadd:
+            if      inf[i]['cat'] == 'unique': il.lidx[i].keys += [0] * lenadd
+            else:   il.lidx[i].tocoupled(il.lidx[inf[i]['parent']], coupling=False)  
+        for i in range(il.lenidx):
+            if len(il.lidx[i].keys) != leninit + lenadd:
                 raise IlistError('primary indexes have to be present')
-        if self.lvarname:
-            self.lvar[0].keys += [len(self.lvar[0].codec)] * len(keysadd[0])
-            self.lvar[0].codec.append(util.cast(fillvalue, ES.def_dtype))
-        return None
+        if il.lvarname:
+            il.lvar[0].keys += [len(il.lvar[0].codec)] * len(keysadd[0])
+            il.lvar[0].codec.append(util.cast(fillvalue, ES.def_dtype))
+        if complete : il.setcanonorder()
+        return il
 
     def getduplicates(self, indexname=None, resindex=None):
         '''check duplicate cod in a list of indexes. Result is add in a new index or returned.
@@ -956,7 +750,7 @@ class Ilist:
         duplicates = []
         for idx in primary: duplicates += self.lidx[idx].getduplicates()
         if resindex and isinstance(resindex, str):
-            newidx = Iindex([True for i in list(range(len(self)))], name=resindex)
+            newidx = Iindex([True] * len(self), name=resindex)
             for item in duplicates: newidx[item] = False
             self.addindex(newidx)
         return tuple(set(duplicates))
@@ -985,7 +779,9 @@ class Ilist:
         return [record[self.lidxrow[i]] for i in range(len(self.lidxrow))]
     
     def indexinfos(self, keys=None, mat=None, default=False, base=False):
-        '''return an array with infos of each index.
+        '''return an array with infos of each index :
+            - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate
+            - lencodec, min, max, typecodec, rate, disttomin, disttomax (base info)
 
         *Parameters*
 
@@ -1000,14 +796,14 @@ class Ilist:
         for i in range(self.lenidx):
             infos[i]['num']  = i
             infos[i]['name'] = self.idxname[i]
-            minrate = 1.0
+            minrate = 1.00
             mindiff = len(self)
             disttomin = None 
             minparent = i
             infos[i]['typecoupl'] = 'null'
             for j in range(self.lenidx):
                 if mat[i][j]['typecoupl'] == 'derived': 
-                    minrate = 0.0
+                    minrate = 0.00
                     if mat[i][j]['diff'] < mindiff:
                         mindiff = mat[i][j]['diff'] 
                         minparent = j 
@@ -1018,7 +814,7 @@ class Ilist:
                         minparent = j
                 if j < i:
                     if mat[i][j]['typecoupl'] == 'coupled':
-                        minrate = 0.0
+                        minrate = 0.00
                         minparent = j
                         break
                     elif mat[i][j]['typecoupl'] == 'crossed' and minrate > 0.0:
@@ -1040,9 +836,11 @@ class Ilist:
                     infos[i]['typecoupl'] = 'crossed'
             if minparent != i: 
                 infos[i]['typecoupl']     = mat[i][minparent]['typecoupl']
-            infos[i]['linkrate']          = minrate
-            infos[i]['parentname']        = self.idxname[infos[i]['parent']]
+            infos[i]['linkrate']          = round(minrate, 2)
+            infos[i]['pname']             = self.idxname[infos[i]['parent']]
+            infos[i]['pparent']           = 0
             if base: infos[i]            |= self.lidx[i].infos
+        for i in range(self.lenidx): util.pparent(i, infos)
         if not keys: return infos
         return [{k:v for k,v in inf.items() if k in keys} for inf in infos]
 
@@ -1059,7 +857,7 @@ class Ilist:
         if not indexinfos: indexinfos = self.indexinfos()
         if not fullsize: fullsize = len(self.to_obj(indexinfos=indexinfos, encoded=True, fullcodec=True))
         if not size:     size     = len(self.to_obj(indexinfos=indexinfos, encoded=True))
-        lenidx = len(self.lidx)
+        lenidx = self.lenidx
         nv = len(self) * (lenidx + 1)
         sv = fullsize / nv
         nc = sum(self.idxlen) + lenidx
@@ -1088,11 +886,11 @@ class Ilist:
 
     def keytoval(self, listkey, extern=True):
         '''
-        convert a keys list (key for each index) to a values list (value for each index).
+        convert a keys list (key for each idx) to a values list (value for each idx).
 
         *Parameters*
 
-        - **listkey** : key for each index
+        - **listkey** : key for each idx
         - **extern** : boolean (default True) - if True, compare rec to val else to values 
         
         *Returns*
@@ -1129,7 +927,7 @@ class Ilist:
         - **name** : str (default 'merge') - name of the new Ilist object
         - **fillvalue** : object (default nan) - value used for the additional data 
         - **mergeidx** : create a new index if mergeidx is False
-        - **updateidx** : if True, update actual values if index name is present (and mergeidx is True)
+        - **updateidx** : if True (and mergeidx is True), update actual values if index name is present 
         
         *Returns*
 
@@ -1160,6 +958,16 @@ class Ilist:
                 break
         return ilm
 
+    def merging(self, listname=None):
+        ''' add a new index in Ilist object build with indexes define in listname'''
+        self.addindex(Iindex.merging([self.nindex(name) for name in listname]))
+        return None
+    
+    def nindex(self, name):
+        ''' index with name equal to attribute name'''
+        if name in self.lname: return self.lindex[self.lname.index(name)]
+        return None
+    
     def record(self, row, extern=True):
         '''return the record at the row
            
@@ -1212,30 +1020,54 @@ class Ilist:
 
     def renameindex(self, oldname, newname):
         '''replace an index name 'oldname' by a new one 'newname'. '''
-        for i in range(len(self.lindex)):
+        for i in range(self.lenindex):
             if self.lname[i] == oldname: self.lindex[i].setname(newname)
         for i in range(len(self.lvarname)):
             if self.lvarname[i] == oldname: self.lvarname[i] = newname
 
-    def setfilter(self, filt=None, first=False):
+    def reorder(self, recorder=None):
+        '''Reorder records in the order define by 'recorder' '''
+        if recorder is None or set(recorder) != set(range(len(self))): return
+        for idx in self.lindex: idx.keys = [idx.keys[i] for i in recorder]
+        return None
+        
+    def setcanonorder(self):
+        '''Set the canonical index order : primary - secondary/unique - variable.
+        Set the canonical keys order : ordered keys in the first columns'''
+        order = [self.lidxrow[idx] for idx in self.primary]
+        order += [idx for idx in self.lidxrow if not idx in order]
+        order += self.lvarrow
+        '''for i in self.lidxrow: 
+            if not i in order: order.append(i)
+        for i in self.lvarrow: order.append(i)'''
+        self.swapindex(order)
+        self.sort()
+        
+    def setfilter(self, filt=None, first=False, filtname=ES.filter):
         '''Add a filter index with boolean values
            
         - **filt** : list of boolean - values of the filter idx to add
-        - **first** : If True insert index at the first row, else at the end
+        - **first** : boolean (default False) - If True insert index at the first row, else at the end
+        - **filtname** : string (default ES.filter) - Name of the filter Iindex added 
 
         *Returns* : none'''
         if not filt: filt = [True] * len(self)
-        idx = Iindex(filt, name=ES.filter)
+        idx = Iindex(filt, name=filtname)
         idx.reindex()
         if not idx.cod in ([True, False], [False, True], [True], [False]):
             raise IlistError('filt is not consistent')
         if ES.filter in self.lname: self.delindex(ES.filter)
         self.addindex(idx, first=first)
                 
+    def setname(self, listname=None):
+        '''Update Iindex name by the name in listname'''
+        for i in range(min(self.lenindex, len(listname))):
+            self.lindex[i].name = listname[i]
+
     def setvar(self, var=None):
         '''Define a var index by the name or the index row'''
         if var is None: self.lvarname = []
-        elif isinstance(var, int) and var >= 0 and var < len(self.lindex): 
+        elif isinstance(var, int) and var >= 0 and var < self.lenindex: 
             self.lvarname = [self.lname[var]]
         elif isinstance(var, str) and var in self.lname:
             self.lvarname = [var]
@@ -1250,16 +1082,17 @@ class Ilist:
         - **order** : list (default None)- new order of index to apply. If None or [], 
         the sort function is applied to the existing order of indexes.
         - **reverse** : boolean (default False)- ascending if True, descending if False
-        - **func**    : function (default str) - key used in the sorted function
+        - **func**    : function (default str) - parameter key used in the sorted function
 
         *Returns* : None'''
-        for idx in self.lindex:
+        if not order: order = []
+        orderfull = order + list(set(range(self.lenindex)) - set(order))
+        for idx in [self.lindex[i] for i in order]:
             idx.reindex(codec=sorted(idx.codec, key=func))
-        if not order: order = list(range(len(self.lindex)))
         newidx = util.transpose(sorted(util.transpose(
-            [self.lindex[order[i]].keys for i in range(len(self.lindex))]), 
+            [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]), 
             reverse=reverse))
-        for i in range(len(self.lindex)): self.lindex[order[i]].keys = newidx[i]
+        for i in range(self.lenindex): self.lindex[orderfull[i]].keys = newidx[i]
 
     def swapindex(self, order):
         '''
@@ -1270,7 +1103,7 @@ class Ilist:
         - **order** : list of int - new order of index to apply.
 
         *Returns* : none '''
-        if len(self.lindex) != len(order): raise IlistError('length of order and Ilist different')
+        if self.lenindex != len(order): raise IlistError('length of order and Ilist different')
         self.lindex=[self.lindex[order[i]] for i in range(len(order))]
 
 
@@ -1309,27 +1142,76 @@ class Ilist:
         size = 0
         if not optcsv: optcsv = {}
         #optcsv = {'quoting': csv.QUOTE_NONNUMERIC} | optcsv
-        if ifunc and not isinstance(ifunc, list): ifunc = [ifunc] * len(self.lindex)
+        if ifunc and not isinstance(ifunc, list): ifunc = [ifunc] * self.lenindex
         with open(filename, 'w', newline='') as f:
             writer = csv.writer(f, **optcsv)
             if header: size += writer.writerow(self.lname)
             for i in range(len(self)):
                 if not ifunc: row = self.record(i) 
                 else: row = [util.funclist(self.lindex[j].values[i], ifunc[j], **kwargs) 
-                       for j in range(len(self.lindex))]
+                       for j in range(self.lenindex)]
                 size += writer.writerow(row)
         return size
     
-    def setcanonorder(self):
-        '''Set the canonical index order : primary - secondary - variable.
-        Set the canonical keys order : ordered keys in the first columns'''
-        order = [self.lidxrow[idx] for idx in self.primary]
-        for i in self.lidxrow: 
-            if not i in order: order.append(i)
-        for i in self.lvarrow: order.append(i)
-        self.swapindex(order)
-        self.sort()
-        
+    def to_xarray(self, info=False, axes=None, dimmax=-1, fillvalue='?', lisfunc=None, 
+                  name='', **kwargs):
+        '''
+        Complete the Ilist and generate a Xarray DataArray with the dimension define by ind.
+
+        *Parameters*
+
+        - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
+        - **axes** : list (default none) - list of index to be completed. If [],
+        self.axes is used.
+        - **dimmax** : int (default -1) - max Xarray dimension (only if axes=[])
+        - **fillvalue** : object (default '?') - value used for the new extval
+        - **func** : function (default none) - function to apply to extval before export
+        - **ifunc** : list of function (default []) - function to apply to
+        extidx before export
+        - **name** : string (default valname) - DataArray name
+        - **kwargs** : parameter for func and ifunc
+
+        *Returns* : none '''
+        if not self.consistent : raise IlistError("Ilist not consistent")
+        if isinstance(lisfunc, list) and len(lisfunc) == 1: 
+            lisfunc = lisfunc * self.lenindex
+        if not isinstance(lisfunc, list) or len(lisfunc) != self.lenindex : 
+            lisfunc = [None] * self.lenindex
+        primary = self.primary
+        if axes is None or axes==[] : axes = primary
+        axesname = [self.idxname[i] for i in primary]
+        ilf = self.full(indexname=axesname, fillvalue=fillvalue, inplace=False)
+        ilf.setcanonorder()
+        axesilf = list(range(len(axes)))
+        coord = ilf._xcoord(axesilf, lisfunc, **kwargs)
+        dims = [ilf.idxname[i] for i in axesilf]
+        data = ilf.lvar[0].to_numpy(func=lisfunc[self.lvarrow[0]], **kwargs
+                                     ).reshape([ilf.idxlen[idx] for idx in axesilf])
+        if not name: name = self.lvarname
+        attrs={}
+        for nam in self.lunicname: attrs[nam] = self.nindex(nam).codec[0]
+        if info: attrs |= ilf.indexinfos()
+        return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
+
+    def to_file(self, file, **kwargs) :
+        '''Generate file to display `Ilist` data.
+
+         *Parameters (kwargs)*
+
+        - **file** : string - file name (with path)
+        - **kwargs** : see 'to_obj' parameters
+
+        *Returns* : Integer - file lenght (bytes)  '''
+        option = {'encode_format': 'cbor'} | kwargs | {'encoded': True}
+        data = self.to_obj(**option)
+        if option['encode_format'] == 'cbor':
+            size = len(data)
+            with open(file, 'wb') as f: f.write(data)
+        else:
+            size = len(bytes(data, 'UTF-8'))
+            with open(file, 'w', newline='') as f: f.write(data)
+        return size
+    
     def to_obj(self, indexinfos=None, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict). 
 
@@ -1340,40 +1222,48 @@ class Ilist:
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **fullcodec** : boolean (default False) - if True, each index is with a full codec
         - **defaultcodec** : boolean (default False) - if True, each index is whith a default codec
+        - **name** : boolean (default False) - if False, default index name are not included
 
         *Returns* : string, bytes or dict'''
         option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False, 
-                  'encode_format': 'json', 'codif': ES.codeb} | kwargs
+                  'encode_format': 'json', 'codif': ES.codeb, 'name': False} | kwargs
         option2 = {'encoded': False, 'encode_format': 'json', 'codif': option['codif']}
         lis = []
         if option['fullcodec'] or option['defaultcodec']: 
-            for idx in self.lidx: lis.append(idx.tostdcodec(full=not option['defaultcodec'])
-                                             .to_obj(keys=not option['fullcodec'], **option2))
+            for idx in self.lidx: 
+                idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
+                lis.append(idx.tostdcodec(full=not option['defaultcodec'])
+                           .to_obj(keys=not option['fullcodec'], name=idxname, **option2))
         else:
             if not indexinfos: indexinfos=self.indexinfos(default=False)
             notkeyscrd = True 
             if self.iscanonorder(): notkeyscrd = None
             for idx, inf in zip(self.lidx, indexinfos):
+                idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
                 if   inf['typecoupl'] == 'unique' : 
-                    lis.append(idx.tostdcodec(full=False).to_obj(**option2))
+                    lis.append(idx.tostdcodec(full=False).to_obj(name=idxname, **option2))
                 elif inf['typecoupl'] == 'crossed': 
-                    lis.append(idx.to_obj(keys=notkeyscrd, **option2))
+                    lis.append(idx.to_obj(keys=notkeyscrd, name=idxname, **option2))
                 elif inf['typecoupl'] == 'coupled': 
                     lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                               to_obj(parent=self.lidxrow[inf['parent']], **option2))
+                               to_obj(parent=self.lidxrow[inf['parent']], 
+                                      name=idxname, **option2))
                 elif inf['typecoupl'] == 'linked' : 
-                    lis.append(idx.to_obj(keys=True, **option2))
+                    lis.append(idx.to_obj(keys=True, name=idxname, **option2))
                 elif inf['typecoupl'] == 'derived': 
                     keys=idx.derkeys(self.lidx[inf['parent']])
-                    lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']], **option2))
+                    lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']], 
+                                          name=idxname, **option2))
                 else: raise IlistError('Iindex type undefined')
         for i in self.lvarrow: 
-            if i != len(self.lindex)-1:
-                lis.insert(i, self.lindex[i].tostdcodec(full=True).
-                           to_obj(keys=False, parent=ES.variable, **option2))        
+            idx = self.lindex[i]
+            idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
+            if i != self.lenindex - 1:
+                lis.insert(i, idx.tostdcodec(full=True).
+                           to_obj(keys=False, parent=ES.variable, name=idxname, **option2))        
             else:
-                lis.append(self.lindex[i].tostdcodec(full=True).
-                           to_obj(keys=False, parent=ES.variable, **option2))        
+                lis.append(idx.tostdcodec(full=True).
+                           to_obj(keys=False, parent=ES.variable, name=idxname, **option2))        
         if option['encoded'] and option['encode_format'] == 'json': 
             return  json.dumps(lis, cls=IindexEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor': 
@@ -1419,8 +1309,26 @@ class Ilist:
 
         *Returns* : list of func result'''
         if index == -1 and self.lvar: return self.lvar[0].vlist(func, *args, **kwargs)
-        if index == -1 and len(self.lindex) == 1: index = 0        
+        if index == -1 and self.lenindex == 1: index = 0        
         return self.lindex[index].vlist(func, *args, **kwargs) 
+
+    def _xcoord(self, axe, lisfunc=None, **kwargs) :
+        ''' Coords generation for Xarray'''
+        inf = self.indexinfos()
+        coord = {}
+        for i in self.lidxrow:
+            fieldi = inf[i]
+            if fieldi['cat'] == 'unique': continue
+            if isinstance(lisfunc, list) and len(lisfunc) == self.lenidx: funci= lisfunc[i]
+            else : funci = None
+            if i in axe :  
+                xlisti = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
+                coord[self.idxname[i]] = xlisti
+            else:
+                self.lidx[i].coupling(self.lidx[fieldi['pparent']], derived=False)
+                xlisti = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
+                coord[self.idxname[i]] = (self.idxname[fieldi['pparent']], xlisti)
+        return coord
 
 class IlistError(Exception):
     ''' Ilist Exception'''
