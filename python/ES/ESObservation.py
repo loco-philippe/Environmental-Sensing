@@ -2,10 +2,32 @@
 """
 Created on Tue Aug  3 23:40:06 2021
 
-@author: Philippe@loco-labs.io
+@author: Philippe Thomy
 
-The `ES.ESObservation` module contains the main class
-of Environmental Sensing : `Observation` class.
+An `ESObservation.Observation` is an object representing a set of information having
+spatial and temporal characteristics associated with measurable or observable
+ properties.
+ 
+The Observation Object is built around three main bricks :
+    
+- Ilist Object which deal with indexing,
+- ESValue Object which integrate the specificities of environmental data,
+- Tools dedicated to particular domains ([Shapely](https://shapely.readthedocs.io/en/stable/manual.html) 
+for location, TimeSlot for Datation)
+
+The `ES.ESObservation` module contains the `Observation` class.
+
+The concept of 'observation' is describe in 
+[this page](https://github.com/loco-philippe/Environnemental-Sensing/wiki/Observation).
+
+The concept of 'indexed list' is describe in 
+[this page](https://github.com/loco-philippe/Environnemental-Sensing/wiki/Indexed-list).
+
+The non-regression test are at 
+[this page](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Tests/test_observation.py)
+
+The [examples](https://github.com/loco-philippe/Environnemental-Sensing/tree/main/python/Example/Observation)
+ are :
 
 """
 from ESconstante import ES, _classval

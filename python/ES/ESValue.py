@@ -4,6 +4,22 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
+ESValue is a module dedicated to structured data (such as dates, location or measurable properties) 
+and groups common properties and concepts.
+
+ESValue is build around two attributes :
+
+- 'name' which is a simple String
+- 'value' which corresponds to a more or less complex object :
+
+    - DatationValue : value is a TimeSlot Object which represent a set of time intervals
+    - LocationValue : value is a Shapely Geometry which represent a set of polygons
+    - PropertyValue : value is a simple dictionary which specifies all the characteristics of a property
+    - NamedValue    : value can be any simple object
+    - ExternValue   : value can be any other object
+
+<img src="https://loco-philippe.github.io/ES/ESValue_class.png" width="800">
+
 This module groups the classes of the objects used in the `ES.Observation` module :
 
 - `DatationValue`,
@@ -16,29 +32,12 @@ and the parent class :
 
 - `ESValue`
 
-# What is the ESValue Object ?
+The concept of 'ESValue' is describe in 
+[this page](https://github.com/loco-philippe/Environnemental-Sensing/wiki/ESValue).
 
-The ESValue is a class dedicated to structured data (such as dates, location or
-measurable properties) and groups common properties and concepts  :
+The non-regression test are at 
+[this page](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Tests/test_esvalue.py)
 
-- each ESValue can have three levels of representation : textual, simplified and complete
-- ESValue has common function (getters, setters, boundary, conversion, export)
-- each ESValue can have additional function or attribute
-
-<img src="./ESValue_common.png" width="800">
-
-ESValue is build around two attributes :
-
-- 'name' which is a simple String
-- 'value' which corresponds to a more or less complex object :
-
-    - DatationValue : value is a TimeSlot Object which represent a set of time intervals
-    - LocationValue : value is a Shapely Geometry which represent a set of polygons
-    - PropertyValue : value is a simple dictionary which specifies all the characteristics of a property
-    - NamedValue    : value can be any simple value
-    - ExternValue   : value can be any object
-
-<img src="./ESValue_class.png" width="800">
 
 """
 import json, geojson, shapely.geometry, re
@@ -940,7 +939,8 @@ class NamedValue (ESValue):               # !!! début ResValue
         if isinstance(self.value, (int, str, float, bool, list, dict, 
                                    datetime.datetime, type(None), bytes)):
             return self.value
-        if isinstance(self.value, tuple): return list(self.value)
+        if isinstance(self.value, tuple): 
+            return list(self.value)
 
 
 class ExternValue (ESValue):               # !!! début ResValue

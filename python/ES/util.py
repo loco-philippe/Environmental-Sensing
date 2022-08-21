@@ -232,6 +232,7 @@ class util:
         - **typevalue** : string (default None) - type to convert values
         - **parent** : int (default ES.nullparent) - Ilist index linked to
         - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
+        - **simpleval** : boolean (default False) - if True, only codec is included
 
         *Parameters (kwargs)*
 
