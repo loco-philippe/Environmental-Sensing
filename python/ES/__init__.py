@@ -43,12 +43,12 @@ all situations (platform)
 # Documentation
 
 The concepts of 'observation', 'indexed list' and 'ES value' are describe in 
-[this page](https://github.com/loco-philippe/Environnemental-Sensing/wiki).
+[this page](https://github.com/loco-philippe/Environmental-Sensing/wiki).
 
 The non-regression tests are at 
-[this page](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Tests)
+[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests)
 
-Examples are [here]](https://github.com/loco-philippe/Environnemental-Sensing/tree/main/python/Example)
+Examples are [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Example)
 
 Modules contain the following classes:
     

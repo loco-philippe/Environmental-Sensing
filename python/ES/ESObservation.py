@@ -18,15 +18,15 @@ for location, TimeSlot for Datation)
 The `ES.ESObservation` module contains the `Observation` class.
 
 The concept of 'observation' is describe in 
-[this page](https://github.com/loco-philippe/Environnemental-Sensing/wiki/Observation).
+[this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Observation).
 
 The concept of 'indexed list' is describe in 
-[this page](https://github.com/loco-philippe/Environnemental-Sensing/wiki/Indexed-list).
+[this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 
 The non-regression test are at 
-[this page](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Tests/test_observation.py)
+[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_observation.py)
 
-The [examples](https://github.com/loco-philippe/Environnemental-Sensing/tree/main/python/Example/Observation)
+The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Example/Observation)
  are :
 
 """

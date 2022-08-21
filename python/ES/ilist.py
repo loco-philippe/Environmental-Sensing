@@ -7,18 +7,18 @@ Created on Thu May 26 20:30:00 2022
 The `ES.ilist` module contains the `Ilist` class.
 
 The concept of 'indexed list' is describe in 
-[this page](https://github.com/loco-philippe/Environnemental-Sensing/wiki/Indexed-list).
+[this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 
 The non-regression test are at 
-[this page](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Tests/test_ilist.py)
+[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_ilist.py)
 
-The [examples](https://github.com/loco-philippe/Environnemental-Sensing/tree/main/python/Example/Ilist)
+The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Example/Ilist)
  are :
-- [creation](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Example/Ilist/Ilist_creation.ipynb)
-- [variable](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Example/Ilist/Ilist_variable.ipynb)
-- [update](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Example/Ilist/Ilist_update.ipynb)
-- [structure](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Example/Ilist/Ilist_structure.ipynb)
-- [structure-analysis](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/python/Example/Ilist/Ilist_structure-analysis.ipynb)
+- [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_creation.ipynb)
+- [variable](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_variable.ipynb)
+- [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_update.ipynb)
+- [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_structure.ipynb)
+- [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_structure-analysis.ipynb)
 
 ---
 """
