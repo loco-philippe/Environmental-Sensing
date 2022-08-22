@@ -32,14 +32,17 @@ and the parent class :
 
 - `ESValue`
 
-The Json Standard for ESValue is define 
+Documentation is available in other pages :
+    
+- The concepts of 'ES value' are describe in 
+[this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/ESValue).
+- The non-regression tests are at 
+[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_esvalue.py)
+- Examples are 
+[here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples)
+- The Json Standard for ESValue is define 
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ESJSON-Standard.pdf)
 
-The concept of 'ESValue' is describe in 
-[this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/ESValue).
-
-The non-regression test are at 
-[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_esvalue.py)
 
 
 """
