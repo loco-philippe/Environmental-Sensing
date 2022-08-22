@@ -2,7 +2,7 @@
 """
 Created on Sat Jul 30 19:03:20 2022
 
-@author: a179227
+@author: philippe@loco-labs.io
 """
 import unittest
 from test_esvalue import TestObsUnitaire

@@ -2,7 +2,7 @@
 """
 Created on Tue Aug  3 23:40:06 2021
 
-@author: Philippe Thomy
+@author: philippe@loco-labs.io
 
 An `ESObservation.Observation` is an object representing a set of information having
 spatial and temporal characteristics associated with measurable or observable

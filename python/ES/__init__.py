@@ -15,6 +15,8 @@ The project was born from the following observations:
 used by the sensors to transmit the information (binary and textual),
 - there is no data exchange format presenting at the same time a temporal, 
 spatial and physical component (apart from file formats),
+- the main standards used to exchange data are CSV file or JSON object. These two
+ standards are not suitable and not optimized for complex data,
 - we spend a lot of energy converting this type of data to make it usable.
 
 # The Environmental Sensing project
@@ -26,13 +28,15 @@ The ES project is made of :
 detailed levels of representation (for example, the evolution of a plume of smoke).
 - Data formats adapted to interfaces (binary payload for networks, json for requests 
 or for NoSQL API, files)
+- structured tools to structure, analyse and optimize data (e.g. control conceptual data 
+model cardinality in a dataset)
 - A library of connectors for different uses (sensors, database, storage, networks, etc.) 
 in différents languages (python, C++)
 - Bidirectional interfaces to data processing tools (eg Numpy, Xarray, GIS).
 
-
 It allows to :
     
+- accelerate standards convergence
 - Facilitate the use and sharing of environmental data
 - Standardize both data acquisition equipment (sensors) and processing applications,
 - Implement a software architecture replacing all coding / decoding operations 
@@ -40,6 +44,14 @@ It allows to :
 - Respect and rely on the main existing standards
 - Collectively share and develop a set of open-source connectors responding to 
 all situations (platform)
+
+# Examples of achievements
+
+- Bluetooth extension for Air Pollutants (available in sept-21)
+- Add 'relationship' property in TableSchema (proposal)
+- Development of 'indexed list' theory to deal with complex datasets (available)
+- standard data exchange format suitable for complex data sets (available, data size divided by 5 to 10)
+- data interoperability connectors (available in python since july-22)
 
 # Documentation
 

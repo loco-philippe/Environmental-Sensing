@@ -2,7 +2,7 @@
 """
 Created on Thu May 26 20:30:00 2022
 
-@author: Philippe Thomy
+@author: philippe@loco-labs.io
 
 The `ES.iindex` module contains the `Iindex` class.
 
