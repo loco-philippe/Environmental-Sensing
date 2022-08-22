@@ -6,6 +6,9 @@ Created on Thu May 26 20:30:00 2022
 
 The `ES.ilist` module contains the `Ilist` class.
 
+The Json Standard for Ilist is define 
+[here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf)
+
 The concept of 'indexed list' is describe in 
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 

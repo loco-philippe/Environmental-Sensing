@@ -32,6 +32,9 @@ and the parent class :
 
 - `ESValue`
 
+The Json Standard for ESValue is define 
+[here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ESJSON-Standard.pdf)
+
 The concept of 'ESValue' is describe in 
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/ESValue).
 
@@ -882,7 +885,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
 
 
 class NamedValue (ESValue):               # !!! début ResValue
-#%% res
+#%% nam
     '''This class represent a simple value with an associated string.
 
     *Attributes (for @property see methods)* :
