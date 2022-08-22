@@ -12,9 +12,9 @@ spatial and physical component (apart from file formats),
  standards are not suitable and not optimized for complex data,
 - we spend a lot of energy converting this type of data to make it usable.
 
-# The Environmental Sensing project
+# The Environmental Sensing project (ES project)
 
-The ES project is made of :
+The open-source ES project is made of :
     
 - A data model that makes it possible to represent elementary observations 
 (a simple one-off measurement), complex observations (multi-dimensions), 
