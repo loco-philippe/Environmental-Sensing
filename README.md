@@ -52,7 +52,7 @@ all situations (platform)
 
 - [data exchange standard - ObsJSON](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
 - [Environmental Sensing project](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ES%20-%20Standard.pdf)
-- [Ilist theory presentation](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/Ilist_technical.pdf)
+- [Ilist principles presentation](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/Ilist_principles.pdf)
 - [Connectors documentation](https://loco-philippe.github.io/ES.html)
 
 - Bluetooth standard for Environmental data
