@@ -9,7 +9,7 @@ stored in Github</a> and can be replayed.
 ## First Observation
 
 This chapter explain you 
-<a href="./Example/first_observation.html" target="_blank">(see the page here)</a> :
+<a href="./first_observation.ipynb" target="_blank">(see the page here)</a> :
     
 - how to create a simple and more complex Observation Object
 - the different view of the data
