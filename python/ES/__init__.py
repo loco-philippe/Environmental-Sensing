@@ -58,7 +58,8 @@ all situations (platform)
 Documentation is available in other pages :
     
 - The concepts of 'observation', 'indexed list' and 'ES value' are describe in 
-[this page](https://github.com/loco-philippe/Environmental-Sensing/wiki).
+[the wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki) and in
+[the presentation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/Ilist_principles.pdf).
 - The non-regression tests are at 
 [this page](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Tests)
 - Examples are 

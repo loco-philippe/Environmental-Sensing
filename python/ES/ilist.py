@@ -187,7 +187,7 @@ class Ilist:
         return cls(lidx, var=var)
 
     @classmethod
-    def from_csv(cls, filename='ilist.csv', var=None, header=True, 
+    def from_csv(cls, filename='ilist.csv', var=None, header=True, nrow=None,
                  optcsv = {'quoting': csv.QUOTE_NONNUMERIC}, dtype=ES.def_dtype):
         '''
         Ilist constructor (from a csv file). Each column represents index values.
@@ -197,24 +197,28 @@ class Ilist:
         - **filename** : string (default 'ilist.csv'), name of the file to read
         - **var** : integer (default None). column row for variable data
         - **header** : boolean (default True). If True, the first raw is dedicated to names
+        - **nrow** : integer (default None). Number of row. If None, all the row else nrow
         - **dtype** : list of string (default None) - data type for each column (default str)
         - **optcsv** : dict (default : quoting) - see csv.reader options'''
         if not optcsv: optcsv = {}
+        if not nrow: nrow = -1
         with open(filename, newline='') as f:
             reader = csv.reader(f, **optcsv)
-            first=True
+            irow = 0
             for row in reader:
-                if first:
+                if   irow == nrow: break 
+                elif irow == 0:
                     if dtype and not isinstance(dtype, list): dtype = [dtype] * len(row)
                     idxval  = [[] for i in range(len(row))]
                     idxname = None
-                if first and header:  idxname = row
+                if irow == 0 and header:  idxname = row
                 else:
                     if not dtype: 
                         for i in range(len(row)) : idxval[i].append(row[i])
                     else:
                         for i in range(len(row)) : idxval[i].append(util.cast(row[i], dtype[i]))
-                first = False
+                irow += 1
+                
         return cls.Iext(idxval, idxname, typevalue=None, var=var)
             
     @classmethod
@@ -878,8 +882,9 @@ class Ilist:
             sc = (size - nc * sv) / (nv - nc)
             ol = sc / sv
         else: ol = None
-        return {'unique values': nc, 'unicity level': round(nc / nv, 3), 
-                'mean size': round(sc, 3), 'object lightness': round(ol, 3),
+        return {'init values': nv, 'mean size': round(sv, 3),
+                'unique values': nc, 'mean coding size': round(sc, 3), 
+                'unicity level': round(nc / nv, 3), 'object lightness': round(ol, 3),
                 'gain':round((fullsize - size) / fullsize, 3)}
         
     def json(self, **kwargs):
