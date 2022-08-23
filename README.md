@@ -56,6 +56,7 @@ all situations (platform)
     - [indexed lists principles presentation](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/Ilist_principles.pdf)
 - Connectors documentation
     - [Python Connectors](https://loco-philippe.github.io/ES.html)
+    - [C++ Connectors](https://github.com/loco-philippe/Environmental-Sensing/tree/main/C%2B%2B)
 - Bluetooth standard for Environmental data
     - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
     - [Extension Air pollutants in ESS Bluetooth](https://www.bluetooth.com/specifications/specs/gatt-specification-supplement-6/)
