@@ -20,7 +20,7 @@ This chapter explain you
 A sensor sends data to a server with a specific protocol. The server stores and processes the data.
 The sensor how use TCP/IP sends the data with ObsJSON format (see above).
 This chapter introduces you to the to binary interface and explain you:
-<a href="./Example/sensor_observation.html" target="_blank">(see the page here)</a> :
+<a href="./sensor_observation.ipynb" target="_blank">(see the page here)</a> :
     
 - how to encode and decode binary data
 - the processes to obtain low data as explain in the "Binary interface" chapter
@@ -33,7 +33,8 @@ In this example, we show you Observations with differents dimensions (1 to 3).
 
 We also present how Result values without index can be loaded with the 'order' parameter.
 
-<a href="./Example/dimension.html" target="_blank">(see the page here)</a> :
+<a href="./dimension.ipynb" target="_blank">(see the page here)</a> :
+[see the page here](./dimension.ipynb) :
     
 ## Observation management
 
