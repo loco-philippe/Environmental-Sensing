@@ -51,11 +51,13 @@ all situations (platform)
 # Documentation
 
 - project presentation
-    - [data exchange standard - ObsJSON](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON%20-%20Standard.pdf)
+    - [data exchange standard - ObsJSON](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON-Standard.pdf)
     - [Environmental Sensing project](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ES%20-%20Standard.pdf)
-    - [Ilist principles presentation](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/Ilist_principles.pdf)
+    - [indexed lists principles presentation](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/Ilist_principles.pdf)
 - [Connectors documentation](https://loco-philippe.github.io/ES.html)
 - Bluetooth standard for Environmental data
     - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
     - [Extension Air pollutants in ESS Bluetooth](https://www.bluetooth.com/specifications/specs/gatt-specification-supplement-6/)
     - [ESS permitted Characteristics](https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/permitted_characteristics.pdf)
+    
+ 
