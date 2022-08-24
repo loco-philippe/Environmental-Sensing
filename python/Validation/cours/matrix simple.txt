@@ -1,0 +1,12 @@
+	0	1	5	4	3	2	
+	course	trimester	month	semester	group	name	
+course	1.0	0.0	0.33	0.0	1.0	0	
+trimester	0.0	1.0	0.83	1.0	0.0	0	
+month	0.33	0.83	1.0	1.0	0.33	0	
+semester	0.0	1.0	1.0	1.0	0.0	0	derivé de trim
+group	1.0	0.0	0.33	0.0	1.0	0	couplé avec course
+name	0	0	0	0	0	0	unique
+	2	3	4	2	2	1	
+							
+	cour et trim indep						
+	trim et month presque liés						

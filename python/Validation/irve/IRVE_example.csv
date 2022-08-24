@@ -1,0 +1,13 @@
+nom_operateur,id_station_itinerance,nom_station,adresse_station,coordonneesXY,id_pdc_itinerance
+SEVDEC,FRSEVP1SCH01,SCH01,151 Rue d'Uelzen 76230 Bois-Guillaume,"[1.106329, 49.474202]",FRSEVE1SCH0101
+SEVDEC,FRSEVP1SCH03,SCH03,151 Rue d'Uelzen 76230 Bois-Guillaume,"[1.106329, 49.474202]",FRSEVE1SCH0301
+SEVDEC,FRSEVP1SCH02,SCH02,151 Rue d'Uelzen 76230 Bois-Guillaume,"[1.106329, 49.474202]",FRSEVE1SCH0201
+Sodetrel,FRS35PSD35711,RENNES - PLACE HONORE COMMEREUC,13 Place HonorÃ© Commeurec 35000 Rennes,"[-1.679739, 48.108482]",FRS35ESD357111
+Sodetrel,FRS35PSD35712,RENNES - PLACE HONORE COMMEREUC,13 Place HonorÃ© Commeurec 35000 Rennes,"[-1.679739, 48.108482]",FRS35ESD357112
+Virta,FRE10E30333,Camping Arinella,"Route de la mer, Brushetto - 20240 Ghisonaccia","[9.445075, 41.995246]",FRE10E30333
+Virta,FRE10E20923,Camping Arinella,"Route de la mer, Brushetto - 20240 Ghisonaccia","[9.445073, 41.995246]",FRE10E20923
+Virta,FRE10P20922,Camping Arinella,"Route de la mer, Brushetto - 20240 Ghisonaccia","[9.445072, 41.995246]",FRE10P20922
+Virta,FRE10P20921,Camping Arinella,"Route de la mer, Brushetto - 20240 Ghisonaccia","[9.445071, 41.995246]",FRE10P20921
+DEBELEC,FRSGAP1M2026,M2026,2682 Boulevard FranÃ§ois Xavier Fafeur 11000 Carcassonne,"[2.298185, 43.212574]",FRSGAE1M202603
+DEBELEC,FRSGAP1M2026,M2026,2682 Boulevard FranÃ§ois Xavier Fafeur 11000 Carcassonne,"[2.298185, 43.212574]",FRSGAE1M202602
+DEBELEC,FRSGAP1M2026,M2026,2682 Boulevard FranÃ§ois Xavier Fafeur 11000 Carcassonne,"[2.298185, 43.212574]",FRSGAE1M202601

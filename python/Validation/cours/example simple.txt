@@ -1,0 +1,7 @@
+"course","trimester","name","group","semester","month","notes"
+"english","t3","anne","gr1","s2","sep",14
+"english","t4","anne","gr1","s2","dec",12
+"math","t3","anne","gr2","s2","sep",13
+"math","t4","anne","gr2","s2","sep",15
+"english","t2","anne","gr1","s1","apr",17
+"math","t2","anne","gr2","s1","apr",18
