@@ -52,6 +52,7 @@ class Ilist:
 
     - `Ilist.Idic`
     - `Ilist.Iext`
+    - `Ilist.Iobj`
     - `Ilist.from_csv`
     - `Ilist.from_obj`
     - `Ilist.from_file`
@@ -238,6 +239,17 @@ class Ilist:
         else:
             with open(file, 'rb') as f: bjson = f.read()
         return cls.from_obj(bjson)
+
+    @classmethod
+    def Iobj(cls, bs=None, reindex=True):
+        '''
+        Generate an Ilist Object from a bytes, string or list value
+
+        *Parameters*
+
+        - **bs** : bytes, string or list data to convert
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        return cls.from_obj(bs, reindex=reindex)
 
     @classmethod
     def from_obj(cls, bs=None, reindex=True):
@@ -1343,7 +1355,8 @@ class Ilist:
                 xlisti = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
                 coord[self.idxname[i]] = xlisti
             else:
-                self.lidx[i].coupling(self.lidx[fieldi['pparent']], derived=False)
+                #self.lidx[i].coupling(self.lidx[fieldi['pparent']], derived=False)
+                self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)
                 xlisti = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
                 coord[self.idxname[i]] = (self.idxname[fieldi['pparent']], xlisti)
         return coord

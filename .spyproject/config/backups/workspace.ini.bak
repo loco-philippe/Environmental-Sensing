@@ -4,7 +4,7 @@ save_data_on_exit = True
 save_history = True
 save_non_project_files = False
 project_type = 'empty-project-type'
-recent_files = ['python\\ES\\__init__.py', 'python\\ES\\ESObservation.py', 'python\\ES\\ESValue.py', 'python\\ES\\iindex.py', 'python\\ES\\ilist.py', 'python\\Tests\\test_all.py', 'python\\Tests\\test_esvalue.py', 'python\\Tests\\test_ilist.py']
+recent_files = ['python\\ES\\ESObservation.py', 'python\\ES\\ESValue.py', 'python\\ES\\ESconstante.py', 'python\\ES\\__init__.py', 'python\\ES\\iindex.py', 'python\\ES\\ilist.py', '..\\python ESstandard\\validation\\irve\\irve.py', 'python\\Tests\\test_all.py', 'python\\Tests\\test_esvalue.py', '..\\python ESstandard\\old\\ES - Copie - 27-07-22\\test_ilist.py', 'python\\Tests\\test_ilist.py']
 
 [main]
 version = 0.2.0

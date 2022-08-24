@@ -433,6 +433,7 @@ class Test_Ilist(unittest.TestCase):
         il3 = Ilist([[il1, il2]], typevalue=None)
         self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["english", "gr1"]), 14)
 
+
     def test_csv(self):
         il=Ilist([[['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 20, 15]])
         il.to_csv()
@@ -505,8 +506,30 @@ class Test_Ilist(unittest.TestCase):
         '''à faire''' #!!!
 
     def test_to_xarray(self):
-        '''à faire''' #!!!
-
+        ilm = Ilist.Iobj([['plants', ['fruit', 'fruit','fruit','fruit','vegetable', 'vegetable', 'vegetable', 'fruit']],
+                          ['quantity', ['kg', '10 kg', 'kg', '10 kg','kg', '10 kg','kg', '10 kg']], 
+                          ['product',['apple', 'apple', 'orange', 'orange', 'peppers', 'peppers', 'banana', 'banana']], 
+                          ['price', [1, 10, 2, 20, 1.5, 15, 0.5, 5], -1]])
+        ilm.nindex('product').coupling(ilm.nindex('plants'))
+        ilx = ilm.to_xarray()
+        self.assertEqual(float(ilx.sel(quantity='10 kg', product='apple').values),
+                         float(ilm.loc(['fruit', '10 kg', 'apple'])))
+        self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])) in 
+                        str(ilx.sel(quantity='10 kg', product='banana').values))        
+        fruit = Ilist.Iobj([['product',['apple', 'apple', 'orange', 'orange', 'banana', 'banana']],
+                            ['quantity', ['kg', '10 kg', 'kg', '10 kg', 'kg', '10 kg']], 
+                            ['price', [1, 10, 2, 20, 0.5, 5], -1]])
+        vege  = Ilist.Iobj([['product',['peppers', 'peppers']],
+                            ['quantity', ['kg', '10 kg']], 
+                            ['price', [1.5, 15], -1]])
+        total = Ilist.Iobj([['plants', ['fruit', 'vegetable']],
+                            ['price', [fruit, vege], -1]])
+        ilx2=total.merge(mergeidx=True).to_xarray()
+        self.assertEqual(float(ilx2.sel(quantity='10 kg', product='apple').values),
+                         float(ilm.loc(['fruit', '10 kg', 'apple'])))
+        self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])) in 
+                        str(ilx2.sel(quantity='10 kg', product='banana').values))  
+        
     def test_example(self):
         '''à faire''' #!!!
 
