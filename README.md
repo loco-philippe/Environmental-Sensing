@@ -1,7 +1,7 @@
 # Environmental-Sensing
 Make environmental data interoperable
 
-# Why a project for Environmental Data ?
+## Why a project for Environmental Data ?
 
 The project was born from the following observations:
     
@@ -12,7 +12,7 @@ spatial and physical component (apart from file formats),
  standards are not suitable and not optimized for complex data,
 - we spend a lot of energy converting this type of data to make it usable.
 
-# The Environmental Sensing project (ES project)
+## The Environmental Sensing project (ES project)
 
 The open-source ES project is made of :
     
@@ -38,7 +38,7 @@ It allows to :
 - Collectively share and develop a set of open-source connectors responding to 
 all situations (platform)
 
-# Examples of achievements
+## Examples of achievements
 
 - Bluetooth extension for Air Pollutants (available since sept-21)
 - Add 'relationship' property in TableSchema (proposal)
@@ -48,7 +48,7 @@ all situations (platform)
 
 ### ***If you are interested challenge us !*** We will be very happy to show you the relevance of our approach
 
-# Documentation
+## Documentation
 
 - project presentation
     - data exchange standard for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf) and [values](./documentation/ESJSON-Standard.pdf)
