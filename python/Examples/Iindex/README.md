@@ -10,5 +10,5 @@ This [example](Iindex_update.ipynb) shows independence of methods from values ob
 ## 5 - Structure
 This [example](Iindex_structure.ipynb) introduces methods for understanding and updating Iindex object.
 ## 6 - Structure analysis
-This [example](Iindex_structure-analysis.ipynb) introduces methods for understanding and managing relationships between Ilist objects.
+This [example](Iindex_structure_analysis.ipynb) introduces methods for understanding and managing relationships between Ilist objects.
 
