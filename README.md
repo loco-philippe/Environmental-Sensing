@@ -55,7 +55,7 @@ all situations (platform)
     - [Environmental Sensing project](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ES-presentation.pdf)
     - [indexed lists principles](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/Ilist_principles.pdf)  presentation, also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list)
 - Connectors documentation
-    - [Python Connectors](https://loco-philippe.github.io/ES.html)
+    - [Python Connectors](./python/README.md)
     - [C++ Connectors](https://github.com/loco-philippe/Environmental-Sensing/tree/main/C%2B%2B)
 - Bluetooth standard for Environmental data
     - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
