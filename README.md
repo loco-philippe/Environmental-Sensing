@@ -51,12 +51,12 @@ all situations (platform)
 # Documentation
 
 - project presentation
-    - [data exchange standard - ObsJSON](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ObsJSON-Standard.pdf)
-    - [Environmental Sensing project](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/ES-presentation.pdf)
-    - [indexed lists principles](https://github.com/loco-philippe/Environnemental-Sensing/blob/main/documentation/Ilist_principles.pdf)  presentation, also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list)
+    - data exchange standard for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf) and [values](./documentation/ESJSON-Standard.pdf)
+    - [Environmental Sensing project](./documentation/ES-presentation.pdf)
+    - [indexed lists principles](./documentation/Ilist_principles.pdf) presentation, also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list)
 - Connectors documentation
     - [Python Connectors](./python/README.md)
-    - [C++ Connectors](https://github.com/loco-philippe/Environmental-Sensing/tree/main/C%2B%2B)
+    - [C++ Connectors](./C%2B%2B)
 - Bluetooth standard for Environmental data
     - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
     - [Extension Air pollutants in ESS Bluetooth](https://www.bluetooth.com/specifications/specs/gatt-specification-supplement-6/)
