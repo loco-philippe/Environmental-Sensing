@@ -21,7 +21,7 @@ spatial and physical component (apart from file formats),
 
 # The Environmental Sensing project
 
-The ES project is made of :
+The [ES project](https://github.com/loco-philippe/Environmental-Sensing#readme) is made of :
     
 - A data model that makes it possible to represent elementary observations 
 (a simple one-off measurement), complex observations (multi-dimensions), 
@@ -64,6 +64,9 @@ Documentation is available in other pages :
 [this page](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Tests)
 - Examples are 
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples)
+- data exchange standard for [observation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ObsJSON-Standard.pdf), 
+[indexed list](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf) and 
+[values](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ESJSON-Standard.pdf)
 
 Modules contain the following classes:
     
