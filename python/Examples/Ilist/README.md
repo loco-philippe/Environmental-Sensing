@@ -2,7 +2,7 @@
 ## 1 - Simple example
 This [example](Ilist-simple.ipynb) shows the capacities of analysis of tabular data.
 ## 2 - Iindex ans ESValue examples
-Ilist objects are built from [Iindex objects](../Iindex) and [ESValue objects](../ESValue).
+Ilist objects are built from [Iindex objects](../Iindex/README.md) and [ESValue objects](../ESValue/README.md).
 ## 3 - Creation
 This [example](Ilist_creation.ipynb) shows the different ways to create an Ilist object.
 ## 4 - Variable
