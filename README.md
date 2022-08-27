@@ -51,13 +51,13 @@ all situations (platform)
 ## Documentation
 
 - data exchange format (three documents)
-    - [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf) and [values](./documentation/ESJSON-Standard.pdf)
+    - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf) and [values](./documentation/ESJSON-Standard.pdf)
 - project presentation
-    - [Environmental Sensing project](./documentation/ES-presentation.pdf)
+    - general presentation of the [Environmental Sensing project](./documentation/ES-presentation.pdf)
     - [interoperability](./documentation/interoperability.pdf) of environmental data
 - data structure
     - [observation](./documentation/Observation.pdf) presentation,
-    - [indexed lists principles](./documentation/Ilist_principles.pdf) presentation, also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list)
+    - presentation of the concepts and principles of [indexed lists principles](./documentation/Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
 - Connectors documentation
     - [Python Connectors](./python/README.md)
     - [C++ Connectors](./C%2B%2B)
