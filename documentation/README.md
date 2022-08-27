@@ -1,5 +1,10 @@
 # Documentation
-Three kind of documents are presented:
-- a general presentation of the [Environmental-Sensing project](https://github.com/loco-philippe/Environmental-Sensing/blob/main/documentation/ES-presentation.pdf)
-- Json format for [Observation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/documentation/ObsJSON-Standard.pdf), [Ilist](https://github.com/loco-philippe/Environmental-Sensing/blob/main/documentation/IlistJSON-Standard.pdf) or [ESValue](https://github.com/loco-philippe/Environmental-Sensing/blob/main/documentation/ESJSON-Standard.pdf)
-- presentation of the concepts and principles of [indexed lists](https://github.com/loco-philippe/Environmental-Sensing/blob/main/documentation/Ilist_principles.pdf) (Ilist and Iindex)
+
+- data exchange format (three documents)
+    - Json format for [observation](./ObsJSON-Standard.pdf), [indexed list](./IlistJSON-Standard.pdf) and [values](./ESJSON-Standard.pdf)
+- project presentation
+    - general presentation of the [Environmental Sensing project](./ES-presentation.pdf)
+    - [interoperability](./interoperability.pdf) of environmental data
+- data structure
+    - [observation](./Observation.pdf) presentation,
+    - presentation of the concepts and principles of [indexed lists principles](./Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
