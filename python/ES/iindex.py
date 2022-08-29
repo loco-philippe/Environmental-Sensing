@@ -251,7 +251,7 @@ class Iindex:
    
     def __str__(self):
         '''return json string format'''
-        return self.to_obj(encoded=True, fullcodec=True, untyped=False) + '\n'
+        return '    ' + self.to_obj(encoded=True, fullcodec=True, untyped=False) + '\n'
 
     def __eq__(self, other):
         ''' equal if class and values are equal'''
@@ -695,7 +695,10 @@ class Iindex:
             if classname in ES.valname: dtype = ES.valname[classname]
             else: dtype = ES.def_dtype
         values = self.values
-        values[ind] = util.cast(value, dtype)
+        if dtype: classvalue = ES.typeName[dtype]
+        else: classvalue=None
+        values[ind] = util.castval(value, classvalue)
+        #values[ind] = util.cast(value, dtype)
         #values[ind] = ESValue._castsimple(value, dtype)
         self.codec, self.keys = util.resetidx(values)
 

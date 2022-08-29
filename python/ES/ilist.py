@@ -243,7 +243,7 @@ class Ilist:
     @classmethod
     def Iobj(cls, bs=None, reindex=True):
         '''
-        Generate an Ilist Object from a bytes, string or list value
+        Generate a new Object from a bytes, string or list value
 
         *Parameters*
 
@@ -314,8 +314,9 @@ class Ilist:
         #print('fin init', time()-t0)
         #init length
         if not length:  length  = -1
-        #leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) != 1]
-        leng = [len(iidx) for code, iidx in codind if code < 0]
+        leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) != 1]
+        #leng = [len(iidx) for code, iidx in codind if code < 0]
+        if not leng: leng = [1]
         if max(leng) == min(leng) and length < 0: length = max(leng)
         if idxvar: length = len(codind[idxvar[0]][1])
         flat = length == max(leng) == min(leng)
@@ -363,7 +364,7 @@ class Ilist:
 
 #%% special
     def __str__(self):
-        '''return json string format for var and lidx'''
+        '''return string format for var and lidx'''
         if self.lvar: stri = str(self.lvar[0]) + '\n'
         else: stri = ''
         for idx in self.lidx: stri += str(idx)

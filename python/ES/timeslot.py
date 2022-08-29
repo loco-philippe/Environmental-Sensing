@@ -95,8 +95,9 @@ class TimeSlot:
         if isinstance(val, str):
             try:        val = json.loads(val)   
             except:
-                try:    val = TimeInterval._dattz(datetime.datetime.fromisoformat(val))
-                except: val = None    
+                val = TimeInterval._dattz(datetime.datetime.fromisoformat(val))
+                #try:    val = TimeInterval._dattz(datetime.datetime.fromisoformat(val))
+                #except: val = None    
         if val == None : 
             self.slot = slot
             return

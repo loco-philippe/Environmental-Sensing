@@ -250,7 +250,8 @@ class Es:
             self.json_type_res,
             self.json_type_prp,
 
-            self.parameter    ,
+            #self.parameter    ,
+            self.param        ,
             self.information  ,
             self.type         ,
             self.multi        ,
@@ -395,10 +396,13 @@ class Es:
         self.json_type_res    = "typeres"
         self.json_type_prp    = "typeprop"
 
+        self.data             = "data"
         self.datetime         = "datetime"
         self.ilist            = 'ilist'
         self.timeslot         = 'timeslot'
-        self.parameter        = "parameter"
+        #self.parameter        = "parameter"
+        self.id               = "id"
+        self.param            = "param"
         self.information      = "information"
         self.type             = "type"
         self.multi            = "Multi"
@@ -412,6 +416,7 @@ class Es:
         self.idxref           = "idxref"
         self.variable         = "variable"
         self.order            = "order"
+        self.name             = "name"
 
         self.nul_classES      = "nullClass"
         self.obs_classES      = "observation"
@@ -422,6 +427,9 @@ class Es:
 
         self.obs_attributes   = "attributes"
         self.obs_id           = "id"
+        self.obs_name         = "name"
+        self.obs_data         = "data"
+        self.obs_param        = "param"
         self.obs_resultTime   = "ResultTime"
         self.obs_complet      = "complet"
         self.obs_reference    = "reference"

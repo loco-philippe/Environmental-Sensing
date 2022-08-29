@@ -531,10 +531,10 @@ class DatationValue(ESValue):   # !!! début ESValue
             self.value = val.value
             return
         if not val is None: 
-            value = TimeSlot(val)
-            if value: self.value = value 
-            elif not value and not name: name = val
-            elif not value and name: raise ESValueError('name and val inconsistent')
+            try: self.value = TimeSlot(val)
+            except:
+                if not name: name = val
+                else: raise ESValueError('name and val inconsistent')
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
 
