@@ -3,7 +3,7 @@
 - data exchange format (three documents)
     - Json format for [observation](./ObsJSON-Standard.pdf), [indexed list](./IlistJSON-Standard.pdf) and [values](./ESJSON-Standard.pdf)
 - project presentation
-    - general presentation of the Environmental Sensing project[document(french)](./ES-presentation.pdf) and [slides(french)](./presentation projet.pdf)
+    - general presentation of the Environmental Sensing project [document(french)](./ES-presentation.pdf) and [slides(french)](./presentation_projet.pdf)
     - [interoperability](./interoperability.pdf) of environmental data
 - data structure
     - [observation](./Observation.pdf) presentation,
