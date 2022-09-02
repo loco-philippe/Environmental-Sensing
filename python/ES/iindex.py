@@ -96,6 +96,8 @@ class Iindex:
     - `Iindex.isvalue`
     - `Iindex.keysfromderkeys`
     - `Iindex.keytoval`
+    - `Iindex.loc`   
+    - `Iindex.recordfromkeys`   
     - `Iindex.recordfromvalue`   
     - `Iindex.valtokey`   
 
@@ -104,6 +106,7 @@ class Iindex:
     - `Iindex.to_obj`
     - `Iindex.to_numpy`   
     - `Iindex.vlist`
+    - `Iindex.vName`
     - `Iindex.vSimple`
     '''
     def __init__(self, codec=None, name=None, keys=None, typevalue=ES.def_clsName, 
@@ -134,8 +137,10 @@ class Iindex:
         if keys : leng = len(keys)
         if not name: name = ES.defaultindex 
         else:
-            if name in ES.typeName: typevalue = ES.typeName[name]
-            if name[0:2] == 'ES':   typevalue = ES.ES_clsName
+            typevalue = util.typename(name, typevalue)
+            #if typename: typevalue = typename
+            #if name in ES.typeName: typevalue = ES.typeName[name]
+            #if name[0:2] == 'ES':   typevalue = ES.ES_clsName
         if not isinstance(keys, list): raise IindexError("keys not list")
         if not keys:
             if len(codec) == 1: keys = [0] * leng
@@ -165,8 +170,9 @@ class Iindex:
         if not values: return cls(name=name, typevalue=typevalue)
         if isinstance(values, Iindex): return copy(values)
         if not isinstance(values, list): values = [values]
-        if name in ES.typeName: typevalue = ES.typeName[name]
-        if name and name[0:2] == 'ES':   typevalue = ES.ES_clsName
+        typevalue = util.typename(name, typevalue)
+        #if name in ES.typeName: typevalue = ES.typeName[name]
+        #if name and name[0:2] == 'ES':   typevalue = ES.ES_clsName
         values = util.castobj(values, typevalue)
         if fullcodec: codec, keys = (values, [i for i in range(len(values))])
         else:  codec, keys = util.resetidx(values)
@@ -209,7 +215,7 @@ class Iindex:
         return Iindex(codec=codec, name=name, keys=parent.keys, typevalue=typevalue)
     
     @classmethod
-    def Iobj(cls, bs, extkeys=None, typevalue=ES.def_clsName):
+    def Iobj(cls, bs, extkeys=None, typevalue=ES.def_clsName, context=True):
         '''Generate an Iindex Object from a bytes, json or dict value and from 
         a keys list (derived Iindex)
 
@@ -218,12 +224,13 @@ class Iindex:
         - **bs** : bytes, string or dict data to convert
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **extkeys** : list (default None) of int, string or dict data to convert in keys
+        - **context** : boolean (default True) - if False, only codec and keys are included
 
         *Returns* : tuple(code, Iindex) '''
-        return Iindex.from_obj(bs, extkeys=extkeys, typevalue=typevalue)[1]
+        return Iindex.from_obj(bs, extkeys=extkeys, typevalue=typevalue, context=context)[1]
     
     @classmethod
-    def from_obj(cls, bs, extkeys=None, typevalue=ES.def_clsName):
+    def from_obj(cls, bs, extkeys=None, typevalue=ES.def_clsName, context=True):
         '''Generate an Iindex Object from a bytes, json or dict value and from 
         a keys list (derived Iindex)
 
@@ -232,12 +239,13 @@ class Iindex:
         - **bs** : bytes, string or dict data to convert
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **extkeys** : list (default None) of int, string or dict data to convert in keys
+        - **context** : boolean (default True) - if False, only codec and keys are included
 
         *Returns* : tuple(code, Iindex) '''
         #print('debut fromobj')
         #t0 = time()
         if isinstance(bs, Iindex): return (ES.nullparent, copy(bs))
-        name, typevaluedec, codec, parent, keys = util.decodeobj(bs, typevalue)
+        name, typevaluedec, codec, parent, keys = util.decodeobj(bs, typevalue, context)
         if extkeys and parent >= 0 :  keys = Iindex.keysfromderkeys(extkeys, keys)
         elif extkeys and parent < 0 :  keys = extkeys
         if not keys: keys = list(range(len(codec)))
@@ -304,18 +312,6 @@ class Iindex:
     
 #%% property
     @property
-    def values(self):
-        '''return values (see data model)'''
-        return [self.codec[key] for key in self.keys]    
-
-    @property
-    def val(self):
-        '''return values conversion to string '''
-        return self.to_obj(fullcodec=True, simpleval=True, encoded=False)
-        #if ES.def_clsName: return [self.codec[key].json(encoded=False) for key in self.keys]
-        #return self.values
-
-    @property
     def cod(self):
         '''return codec conversion to string '''
         return self.to_obj(fullcodec=False, simpleval=True, encoded=False, listunic=True)
@@ -342,6 +338,23 @@ class Iindex:
         return {'lencodec': x, 'min': m, 'max': M, 'typecodec': typecodec, 
                 'rate': rate, 'disttomin': disttomin, 'disttomax': disttomax}
 
+    @property
+    def typevalue(self):
+        '''return typevalue calculated from name'''
+        return util.typename(self.name)   
+
+    @property
+    def values(self):
+        '''return values (see data model)'''
+        return [self.codec[key] for key in self.keys]    
+
+    @property
+    def val(self):
+        '''return values conversion to string '''
+        return self.to_obj(fullcodec=True, simpleval=True, encoded=False)
+        #if ES.def_clsName: return [self.codec[key].json(encoded=False) for key in self.keys]
+        #return self.values
+
 #%% methods
     def append(self, value,  typevalue=ES.def_clsName, unique=True):
         '''add a new value
@@ -353,9 +366,11 @@ class Iindex:
         - **unique** :  boolean (default True) - If False, duplication codec if value is present
 
         *Returns* : key of value '''        
-        if typevalue is None: dtype = None
-        else: dtype = ES.valname[typevalue]
-        value = util.cast(value, dtype)
+        #if typevalue is None: typevalue = self.typevalue
+        #if typevalue is None: dtype = None
+        #else: dtype = ES.valname[typevalue]
+        #value = util.cast(value, dtype)
+        value = util.castval(value, util.typename(self.name, ES.def_clsName))
         if value in self.codec and unique: key = self.codec.index(value)
         else: 
             key = len(self.codec)
@@ -574,6 +589,20 @@ class Iindex:
         *Returns* : list of keys'''
         return [derkeys[parentkeys[i]] for i in range(len(parentkeys))]
     
+    def loc(self, value, extern=True):
+        '''return a list of record number with value
+        
+        *Parameters*
+
+        - **value** : value to check
+        - **extern** : if True, compare value to external representation of self.value, 
+        else, internal
+        
+        *Returns*
+
+        - **list of int** : list of record number finded (None else)'''
+        return self.recordfromvalue(value, extern=extern)
+    
     def recordfromvalue(self, value, extern=True):
         '''return a list of record number with value
         
@@ -585,12 +614,27 @@ class Iindex:
         
         *Returns*
 
-        - **list of int** : list of keys finded (None else)'''
+        - **list of int** : list of record number finded (None else)'''
         
-        if extern: value = util.cast(value, ES.def_dtype)
+        if extern: value = util.castval(value, util.typename(self.name, ES.def_clsName))
+        #if extern: value = util.cast(value, ES.def_dtype)
         if not value in self.codec: raise IndexError('value not present')
-        code = [cod for cod, val in zip(range(len(self.codec)), self.codec) if val == value]
-        return [rec for rec, key in zip(range(len(self)), self.keys ) if key in code ]
+        listkeys = [cod for cod, val in zip(range(len(self.codec)), self.codec) if val == value]
+        return self.recordfromkeys(listkeys)
+        #return [rec for rec, key in zip(range(len(self)), self.keys ) if key in keys ]
+    
+    def recordfromkeys(self, listkeys):
+        '''return a list of record number with key in listkeys
+        
+        *Parameters*
+
+        - **listkeys** : list of keys to check
+        
+        *Returns*
+
+        - **list of int** : list of record number finded (None else)'''
+        
+        return [rec for rec, key in zip(range(len(self)), self.keys ) if key in listkeys ]
     
     def reindex(self, codec=None):
         '''apply a reordered codec. If None, a new default codec is apply. 
@@ -626,22 +670,25 @@ class Iindex:
             return None
         return Iindex(name=self.name, codec=codec, keys=keys)
     
-    def setcodecvalue(self, oldvalue, newvalue, extern=True, dtype=None):
+    def setcodecvalue(self, oldvalue, newvalue, extern=True, typevalue=None):
         '''update all the oldvalue by newvalue
 
         *Parameters*
 
         - **oldvalue** : list of values to replace 
         - **newvalue** : list of new value to apply
-        - **dtype** : str (default None) - cast to apply to the new value 
+        - **typevalue** : str (default None) - cast to apply to the new value 
         - **extern** : if True, the newvalue has external representation, else internal
 
         *Returns* : int - last codec rank updated (-1 if None)'''
-        dt = None
+        if extern: 
+            newvalue = util.castval(newvalue, util.typename(self.name, typevalue))
+            oldvalue = util.castval(oldvalue, util.typename(self.name, typevalue))
+        '''dt = None
         if extern and not dtype: dt = ES.def_dtype
         if dtype: dt = dtype 
         newvalue = util.cast(newvalue, dt)
-        oldvalue = util.cast(oldvalue, dt)
+        oldvalue = util.cast(oldvalue, dt)'''
         rank = -1
         for i in range(len(self.codec)):
             if self.codec[i] == oldvalue: 
@@ -678,7 +725,7 @@ class Iindex:
             return True
         return False
         
-    def setvalue(self, ind, value, extern=True, dtype=None):
+    def setvalue(self, ind, value, extern=True, typevalue=None):
         '''update a value at the rank ind (and update codec and keys) 
         
         *Parameters*
@@ -686,18 +733,22 @@ class Iindex:
         - **ind** : rank of the value 
         - **value** : new value 
         - **extern** : if True, the value has external representation, else internal
-        - **dtype** : str (default None) - cast to apply to the new value 
+        - **typevalue** : str (default None) - cast to apply to the new value 
 
         *Returns* : None'''
+        if extern: 
+            value = util.castval(value, util.typename(self.name, typevalue))
+        values = self.values
+        values[ind] = value
         #if extern and not dtype: dtype = ES.def_dtype
-        if extern and not dtype: 
+        '''if extern and not dtype: 
             classname = self.values[ind].__class__.__name__
             if classname in ES.valname: dtype = ES.valname[classname]
             else: dtype = ES.def_dtype
         values = self.values
         if dtype: classvalue = ES.typeName[dtype]
         else: classvalue=None
-        values[ind] = util.castval(value, classvalue)
+        values[ind] = util.castval(value, classvalue)'''
         #values[ind] = util.cast(value, dtype)
         #values[ind] = ESValue._castsimple(value, dtype)
         self.codec, self.keys = util.resetidx(values)
@@ -712,9 +763,11 @@ class Iindex:
         - **extern** : if True, the value has external representation, else internal
 
         *Returns* : None'''
-        if extern and not typevalue: typevalue = ES.def_clsName
-        values = util.castobj(listvalue, typevalue)
-        self.codec, self.keys = util.resetidx(values)
+        if extern: listvalue = util.castobj(listvalue, util.typename(self.name, typevalue))
+        self.codec, self.keys = util.resetidx(listvalue)
+        #if extern and not typevalue: typevalue = ES.def_clsName
+        #values = util.castobj(listvalue, typevalue)
+        #self.codec, self.keys = util.resetidx(values)
         
     def sort(self, reverse=False, inplace=True, func=str):
         '''Define sorted index with ordered codec.
@@ -795,13 +848,16 @@ class Iindex:
         if func == 'index' : return np.array(list(range(len(self))))
         if not codec: values = util.funclist(self.values, func, **kwargs)
         else:  values = util.funclist(self.codec, func, **kwargs)
-        if isinstance(values[0], str):
-            try : datetime.datetime.fromisoformat(values[0])
+        if isinstance(values[0], (str, datetime.datetime)):
+            try: return np.array(values, dtype=np.datetime64)
+            except : return np.array(values)
+        return np.array(values)
+        '''    try : datetime.datetime.fromisoformat(values[0])
             except : return np.array(values)
             return np.array(values, dtype=np.datetime64)
         if isinstance(values[0], datetime.datetime): 
             return np.array(values, dtype=np.datetime64)
-        return np.array(values)
+        return np.array(values)'''
 
     def to_obj(self, keys=None, typevalue=None, fullcodec=False, simpleval=False, 
                parent=ES.nullparent, name=True, listunic=False, **kwargs):
@@ -864,7 +920,7 @@ class Iindex:
         *Returns*
 
         - **int** : first key finded (None else)'''
-        if extern: value = util.cast(value, ES.def_dtype)
+        if extern: value = util.castval(value, util.typename(self.name, ES.def_dtype))
         if value in self.codec:  return self.codec.index(value)
         return None
 
@@ -881,6 +937,18 @@ class Iindex:
         *Returns* : list of func result'''
         if extern: return util.funclist(self.val, func, *args, **kwargs)
         return util.funclist(self.values, func, *args, **kwargs)
+
+    def vName(self, default=ES.nullName, maxlen=None):
+        '''
+        Return the list of name for ESValue data .
+
+        *Parameters*
+
+        - **default** : value return if no name is available
+        - **maxlen** : integer (default None) - max length of name
+
+        *Returns* : list of name founded'''
+        return [util.cast(val, dtype='name', default=default, maxlen=maxlen) for val in self.values]
 
     def vSimple(self, string=False):
         '''

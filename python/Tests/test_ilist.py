@@ -44,13 +44,13 @@ class Test_Ilist(unittest.TestCase):
                           ['propertyvalue', [True, False]]])                 
         iidx1 = Ilist([['datationvalue', [10,20,30]],
                           ['locationvalue', [100,200,300], 0],
-                          ['propertyvalue', [True, False]]], 6)                 
+                          ['propertyvalue', [True, False]]], length=6)                 
         iidx2 = Ilist([['datationvalue', [10,20,30], [0,0,1,1,2,2]],
                            ['locationvalue', [100,200,300], [0,0,1,1,2,2]],
-                           ['propertyvalue', [True, False], [0,1,0,1,0,1]]], 6)
+                           ['propertyvalue', [True, False], [0,1,0,1,0,1]]], length=6)
         iidx3 = Ilist([['datationvalue', [10, 10, 20, 20, 30, 30]],
                            ['locationvalue', [100, 100, 200, 200, 300, 300]],
-                           ['propertyvalue', [True, False, True, False, True, False]]], 6)   
+                           ['propertyvalue', [True, False, True, False, True, False]]], length=6)   
         iidx4 = Ilist([['datationvalue', [10, 10, 20, 20, 30, 30]],
                            ['locationvalue', [100, 100, 200, 200, 300, 300]],
                            ['propertyvalue', [True, False, True, False, True, False]]])   
@@ -60,6 +60,9 @@ class Test_Ilist(unittest.TestCase):
                         iidx1.lidx[2].values)
         self.assertEqual(Ilist(Ilist([[0, 2, 0, 2, 0], [10,0,20,20,15]])), 
                          Ilist([[0, 2, 0, 2, 0], [10,0,20,20,15]]))
+        il = Ilist([[{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]]], 
+                   name='location', context=False) 
+        self.assertEqual(il.lindex[0].codec[1].value.__class__.__name__, 'Point')
         
     def test_creation_variable(self) :
         #self.assertEqual(Ilist2(indexset=['i1', [1, 2, 3]]), Ilist2([defv, [True, True, True]], ['i1', [1, 2, 3]]))
@@ -91,7 +94,12 @@ class Test_Ilist(unittest.TestCase):
         self.assertTrue(iidx == iidx1 == iidx4)
         self.assertTrue(Ilist.Idic({}) == Ilist.Idic() == Ilist() ==
                         Ilist.Iext([]) == Ilist.Iext())
-
+        il = Ilist.Iext([[1,2,3], [[4,5,6],0], [7,8], [[11,12,13,14,15,16], -1]])
+        il1 = Ilist([[1,2,3], [[4,5,6],0], [7,8], [[11,12,13,14,15,16], -1]])
+        il2 = Ilist.Idic({'i0':[1,2,3], 'i1':[[4,5,6],0], 'i2':[7,8], 'i3':[[11,12,13,14,15,16], -1]})
+        self.assertTrue(il == il1 == il2)
+        self.assertTrue(len(il) == len(il1) == len(il2) == 6)
+        
     def test_var(self):
         il2 =Ilist([['namvalue'     , ["a", "b", "c", "d", "e", "f"], -1], 
                      ['datationvalue', [10, 10, 20, 20, 30, 30]],
@@ -127,7 +135,9 @@ class Test_Ilist(unittest.TestCase):
                             ['locationvalue', [100, 100, 200, 200, 300, 300]],
                             ['propertyvalue', [True, False, True, False, True, False]]])   
         self.assertTrue(iidx == iidx1 == iidx2 == iidx4)
-
+        ilx = Ilist.Iext([20,['a', 'b', 'b', 'c', 'c', 'a'], [1,1,2,2,3,3] ] )
+        self.assertTrue(ilx.lindex[0].values == [20, 20, 20, 20, 20, 20])
+        
     def test_properties(self) :
         il=Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1],[0, 2, 0, 2], 
                    [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0], 
@@ -243,6 +253,11 @@ class Test_Ilist(unittest.TestCase):
         il.append([0,40])
         self.assertEqual( len(il), 5)
         self.assertEqual( il, Ilist([[0, 2, 0, 2, 0], [30, 12, 20, 15, 40]]))
+        il = Ilist([[{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]]], 'location', context=False)
+        il.append([[4.83, 45.76]])
+        self.assertEqual( len(il), 4)
+        self.assertEqual( len(il.lindex[0].codec), 3)
+        
 
     def test_append_variable(self) :
         il=Ilist([[['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 20, 15]])
@@ -529,7 +544,17 @@ class Test_Ilist(unittest.TestCase):
                          float(ilm.loc(['fruit', '10 kg', 'apple'])))
         self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])) in 
                         str(ilx2.sel(quantity='10 kg', product='banana').values))  
-        
+        il = Ilist.Idic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+                         'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
+                           '2021-07-04T10:05:00+00:00',
+                           '2021-05-04T10:05:00+00:00'],
+                          0],
+                         'propert': [{'prp': 'PM25', 'unit': 'kg/m3'},
+                          {'prp': 'PM10', 'unit': 'kg/m3'}],
+                         'result': [[{'ert':0}, 1, 2, 3, 4, 5],-1]})
+        ilx = il.to_xarray(lisfunc=[ESValue.to_float])
+        self.assertTrue(list(ilx.values[0]) == [1.0, 0.0])
+                        
     def test_example(self):
         '''à faire''' #!!!
 

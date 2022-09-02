@@ -32,9 +32,11 @@ import json
 import csv
 import math
 from ESconstante import ES
+from ESValue import ESValue
 from iindex import Iindex
 from util import util, IindexEncoder, CborDecoder
 import xarray
+import numpy as np
 
 class Ilist:
 #%% intro
@@ -176,8 +178,13 @@ class Ilist:
         if idxval  is None: idxval  = []
         if not isinstance(idxval, list): return None
         if len(idxval) == 0: return cls()
-        if not isinstance(idxval[0], list): val = [[idx] for idx in idxval]
-        else:                               val = idxval
+        val = []
+        for idx in idxval:
+            if not isinstance(idx, list): val.append([idx])
+            else: val.append(idx)
+        return cls(listidx=val, name=idxname, var=var, typevalue=typevalue, context=False)
+        '''#if not isinstance(idxval[0], list): val = [[idx] for idx in idxval]
+        #else:                               val = idxval
         name = ['i' + str(i) for i in range(len(val))]
         for i in range(len(idxname)): 
             if isinstance(idxname[i], str): name[i] = idxname[i]
@@ -185,7 +192,7 @@ class Ilist:
         lidx = [Iindex.Iext(idx, name, typevalue, fullcodec) 
                     for idx, name in zip(val, name)]
         #print('fin lidx iext', time()-t0)
-        return cls(lidx, var=var)
+        return cls(lidx, var=var)'''
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', var=None, header=True, nrow=None,
@@ -241,48 +248,54 @@ class Ilist:
         return cls.from_obj(bjson)
 
     @classmethod
-    def Iobj(cls, bs=None, reindex=True):
+    def Iobj(cls, bs=None, reindex=True, context=True):
         '''
         Generate a new Object from a bytes, string or list value
 
         *Parameters*
 
         - **bs** : bytes, string or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
-        return cls.from_obj(bs, reindex=reindex)
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **context** : boolean (default True) - if False, only codec and keys are included'''
+        return cls.from_obj(bs, reindex=reindex, context=context)
 
     @classmethod
-    def from_obj(cls, bs=None, reindex=True):
+    def from_obj(cls, bs=None, reindex=True, context=True):
         '''
         Generate an Ilist Object from a bytes, string or list value
 
         *Parameters*
 
         - **bs** : bytes, string or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **context** : boolean (default True) - if False, only codec and keys are included'''
         if not bs: bs = []
         if   isinstance(bs, bytes): lis = cbor2.loads(bs)
         elif isinstance(bs, str)  : lis = json.loads(bs, object_hook=CborDecoder().codecbor)
         elif isinstance(bs, list) : lis = bs
         else: raise IlistError("the type of parameter is not available")
-        return cls(lis, reindex=reindex)
+        return cls(lis, reindex=reindex, context=context)
 
-    def __init__(self, listidx=None, length=None, var=None, reindex=True, 
-                 typevalue=ES.def_clsName):
+    def __init__(self, listidx=None, name=None, length=None, var=None, reindex=True, 
+                 typevalue=ES.def_clsName, context=True):
         '''
         Ilist constructor.
 
         *Parameters*
 
-        - **listidx** :  list (default None) - list of compatible Iindex data
+        - **listidx** :  list (default None) - list of compatible Iindex data 
+        - **name** :  list (default None) - list of name for the Iindex data
         - **var** :  int (default None) - row of the variable
         - **length** :  int (default None)  - len of each Iindex
         - **reindex** : boolean (default True) - if True, default codec for each Iindex
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
+        - **context** : boolean (default True) - if False, only codec and keys are included'''
         #init self.lidx
         #print('debut')
         #t0 = time()
-        if isinstance(listidx, Ilist): 
+        self.name = self.__class__.__name__
+        if not isinstance(name, list): name = [name]
+        if listidx.__class__.__name__ in ['Ilist','Obs']: 
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.lvarname = copy(listidx.lvarname)
             return
@@ -293,25 +306,33 @@ class Ilist:
         if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)): 
             #listidx = [listidx]
             listidx = [[idx] for idx in listidx]
+        typeval = [typevalue for i in range(len(listidx))]
+        for i in range(len(name)): 
+            typeval[i] = util.typename(name[i], typeval[i])          
+            #if util.typename(name[i]): typeval[i] = util.typename(name[i])          
         if len(listidx) == 1:
-            code, idx = Iindex.from_obj(listidx[0], typevalue=typevalue)
+            code, idx = Iindex.from_obj(listidx[0], typevalue=typeval[0], context=context)
+            if len(name) > 0 and name[0]: idx.name = name[0]
             if idx.name is None or idx.name == ES.defaultindex: idx.name = 'i0'
             self.lindex = [idx]
             self.lvarname = [idx.name]
             return            
         #print('init', time()-t0)
+        
         #init
         if       isinstance(var, list): idxvar = var
         elif not isinstance(var, int) or var < 0: idxvar = []
         else: idxvar = [var]
-        codind = [Iindex.from_obj(idx, typevalue=typevalue) for idx in listidx]
+        codind = [Iindex.from_obj(idx, typevalue=typ, context=context) for idx, typ in zip(listidx, typeval)]
         for ii, (code, idx) in zip(range(len(codind)), codind):
+            if len(name) > ii and name[ii]: idx.name = name[ii]
             if idx.name is None or idx.name == ES.defaultindex: idx.name = 'i'+str(ii)
             if code == ES.variable and not idxvar: idxvar = [ii]
         self.lindex = list(range(len(codind)))    
         lcodind = [codind[i] for i in range(len(codind)) if i not in idxvar]
         lidx    = [i         for i in range(len(codind)) if i not in idxvar]
         #print('fin init', time()-t0)
+        
         #init length
         if not length:  length  = -1
         leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) != 1]
@@ -327,6 +348,7 @@ class Ilist:
                 raise IlistError('length of Iindex and Ilist inconsistent')
             else: length = len(keysset[0])
         #print('fin leng', time()-t0)
+        
         #init primary               
         primary = [(rang, iidx) for rang, (code, iidx) in zip(range(len(lcodind)), lcodind)
                    if code < 0 and len(iidx) != 1]
@@ -334,6 +356,7 @@ class Ilist:
             if not flat: iidx.keys = keysset[ip]
             self.lindex[lidx[rang]] = iidx
         #print('fin primary', time()-t0)
+        
         #init secondary               
         for ii, (code, iidx) in zip(range(len(lcodind)), lcodind):
             if iidx.name is None or iidx.name == ES.defaultindex: iidx.name = 'i'+str(ii)
@@ -345,6 +368,7 @@ class Ilist:
             elif code < 0 and isinstance(self.lindex[lidx[ii]], int): 
                 raise IlistError('Ilist not canonical')
         #print('fin secondary', time()-t0)
+        
         #init variable
         for i in idxvar: self.lindex[i] = codind[i][1]
         self.lvarname = [codind[i][1].name for i in idxvar]
@@ -404,7 +428,7 @@ class Ilist:
 
     def __eq__(self, other):
         ''' equal if all Iindex and var are equal'''
-        return self.__class__ == other.__class__ \
+        return self.__class__.__name__ == other.__class__.__name__ \
             and self.lvarname == other.lvarname \
             and set([idx in self.lindex for idx in other.lindex]) in ({True}, set())
     
@@ -576,7 +600,13 @@ class Ilist:
     def textidxext(self):
         '''list of val for each rec'''
         return util.transpose(self.extidxext)
-    
+
+    @property
+    def typevalue(self):
+        '''return typevalue calculated from Iindex name'''
+        return [util.typename(name)for name in self.lname]  
+
+
     @property
     def zip(self):
         '''return a zip format for textidx : tuple(tuple(rec))'''
@@ -609,7 +639,7 @@ class Ilist:
         elif update:
             self.lindex[idxname.index(idx.name)].setlistvalue(idx.values)
             
-    def append(self, record, unique=False, dtype=ES.def_dtype):
+    def append(self, record, unique=False, typevalue=ES.def_clsName):
         '''add a new record.
 
         *Parameters*
@@ -620,8 +650,15 @@ class Ilist:
          string if dtype is available for all indexes
 
         *Returns* : list - key record'''
-        if dtype and not isinstance(dtype, list): dtype = [dtype] * len(record)
-        if dtype: record = [util.cast(value, typ) for value, typ in zip(record, dtype)]
+        if self.lenindex != len(record): raise('len(record) not consistent')
+        if not isinstance(typevalue, list): typevalue = [typevalue] * len(record)
+        typevalue = [util.typename(self.lname[i], typevalue[i]) for i in range(self.lenindex)]
+        record = [util.castval(val, typ) for val, typ in zip(record, typevalue)]
+        '''for i in range(self.lenindex):
+            if not typevalue[i] and self.typevalue[i]: typevalue[i] = ES.valname[self.typevalue[i]]
+        #if dtype and not isinstance(dtype, list): dtype = [dtype] * len(record)
+        #if dtype: record = [util.cast(value, typ) for value, typ in zip(record, dtype)]
+        record = [util.cast(value, typ) for value, typ in zip(record, typevalue)]'''
         if self.isinrecord(self.idxrecord(record), False) and unique: return None
         return [self.lindex[i].append(record[i]) for i in range(self.lenindex)]
 
@@ -762,7 +799,8 @@ class Ilist:
                 raise IlistError('primary indexes have to be present')
         if il.lvarname:
             il.lvar[0].keys += [len(il.lvar[0].codec)] * len(keysadd[0])
-            il.lvar[0].codec.append(util.cast(fillvalue, ES.def_dtype))
+            il.lvar[0].codec.append(util.castval(fillvalue, util.typename(il.lvarname[0], ES.def_clsName)))
+            #il.lvar[0].codec.append(util.cast(fillvalue, ES.def_dtype))
         if complete : il.setcanonorder()
         return il
 
@@ -963,7 +1001,8 @@ class Ilist:
         *Returns*
 
         - **Ilist** : merged Ilist '''     
-        fillvalue = util.cast(fillvalue, ES.def_dtype)
+        fillvalue = util.castval(fillvalue, util.typename(self.lvarname[0], ES.def_clsName))
+        #fillvalue = util.cast(fillvalue, ES.def_dtype)
         find = True
         ilm = copy(self)
         nameinit = ilm.idxname
@@ -1184,41 +1223,44 @@ class Ilist:
                 size += writer.writerow(row)
         return size
     
-    def to_xarray(self, info=False, axes=None, dimmax=-1, fillvalue='?', lisfunc=None, 
-                  name='', **kwargs):
+    def to_xarray(self, info=False, idx=None, dimmax=-1, fillvalue='?', lisfunc=None, 
+                  name=None, numeric=False, **kwargs):
         '''
         Complete the Ilist and generate a Xarray DataArray with the dimension define by ind.
 
         *Parameters*
 
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
-        - **axes** : list (default none) - list of index to be completed. If [],
+        - **idx** : list (default none) - list of idx to be completed. If [],
         self.axes is used.
         - **dimmax** : int (default -1) - max Xarray dimension (only if axes=[])
         - **fillvalue** : object (default '?') - value used for the new extval
-        - **func** : function (default none) - function to apply to extval before export
-        - **ifunc** : list of function (default []) - function to apply to
-        extidx before export
-        - **name** : string (default valname) - DataArray name
-        - **kwargs** : parameter for func and ifunc
+        - **lisfunc** : function (default none) - list of function to apply to indexes before export
+        - **name** : string (default None) - DataArray name. If None, variable name
+        - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
+        - **kwargs** : parameter for listfunc
 
         *Returns* : none '''
         if not self.consistent : raise IlistError("Ilist not consistent")
+        if len(self.lvarname) == 0 : raise IlistError("Variable is not defined")
         if isinstance(lisfunc, list) and len(lisfunc) == 1: 
             lisfunc = lisfunc * self.lenindex
         if not isinstance(lisfunc, list) or len(lisfunc) != self.lenindex : 
             lisfunc = [None] * self.lenindex
-        primary = self.primary
-        if axes is None or axes==[] : axes = primary
-        axesname = [self.idxname[i] for i in primary]
+        if numeric: 
+            lisfunc[self.lvarrow[0]] = ESValue.to_float
+            fillvalue= math.nan
+        lisfuncname = dict(zip(self.lname, lisfunc))
+        if idx is None or idx==[] : idx = self.primary
+        axesname = [self.idxname[i] for i in idx]
         ilf = self.full(indexname=axesname, fillvalue=fillvalue, inplace=False)
         ilf.setcanonorder()
-        axesilf = list(range(len(axes)))
-        coord = ilf._xcoord(axesilf, lisfunc, **kwargs)
-        dims = [ilf.idxname[i] for i in axesilf]
-        data = ilf.lvar[0].to_numpy(func=lisfunc[self.lvarrow[0]], **kwargs
-                                     ).reshape([ilf.idxlen[idx] for idx in axesilf])
-        if not name: name = self.lvarname
+        idxilf = list(range(len(idx)))
+        coord = ilf._xcoord(idxilf, lisfuncname, **kwargs)
+        dims = [ilf.idxname[i] for i in idxilf]
+        data = ilf.lvar[0].to_numpy(func=lisfuncname[self.lvarname[0]], **kwargs
+                                     ).reshape([ilf.idxlen[idx] for idx in idxilf])
+        if not name: name = self.lvarname[0]
         attrs={}
         for nam in self.lunicname: attrs[nam] = self.nindex(nam).codec[0]
         if info: attrs |= ilf.indexinfos()
@@ -1343,18 +1385,22 @@ class Ilist:
         if index == -1 and self.lenindex == 1: index = 0        
         return self.lindex[index].vlist(func, *args, **kwargs) 
 
-    def _xcoord(self, axe, lisfunc=None, **kwargs) :
+    def _xcoord(self, axe, lisfuncname=None, **kwargs) :
         ''' Coords generation for Xarray'''
         inf = self.indexinfos()
         coord = {}
         for i in self.lidxrow:
             fieldi = inf[i]
             if fieldi['cat'] == 'unique': continue
-            if isinstance(lisfunc, list) and len(lisfunc) == self.lenidx: funci= lisfunc[i]
+            if isinstance(lisfuncname, list) and len(lisfuncname) == self.lenindex: 
+                funci= lisfuncname[self.lname[i]]
             else : funci = None
             if i in axe :  
-                xlisti = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
-                coord[self.idxname[i]] = xlisti
+                coord[self.idxname[i]] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
+                coord[self.idxname[i]+'_row'] = (self.idxname[i], 
+                                                 np.arange(len(coord[self.idxname[i]])))
+                coord[self.idxname[i]+'_str'] = (self.idxname[i], 
+                            self.lidx[i].to_numpy(func=util.cast, codec=True, dtype='str', maxlen=kwargs['maxlen']))
             else:
                 #self.lidx[i].coupling(self.lidx[fieldi['pparent']], derived=False)
                 self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)

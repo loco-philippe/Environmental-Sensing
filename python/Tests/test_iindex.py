@@ -62,7 +62,11 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(Iindex(codec=[True], lendefault=3).val == [True, True, True])
     
     def test_obj(self):
-        listval = [ ['name', ['value']], 'value', ['value'], ['value', 'value2']]
+        listval = [ ['name', ['value']], 'value', ['value'], ['value', 'value2'],
+                    ['b', ['value', [[1],[2]], [[3],[4]]]],
+                    ['b', ['value', [[[0.0, 1.0], [1.0, 2.0], [1.0, 1.0], [0.0, 1.0]]],
+                     [[[0.0, 2.0], [2.0, 2.0], [1.0, 1.0], [0.0, 2.0]]]]]
+                  ]
         for val in listval:
             self.assertTrue(Iindex.Iobj(val).values[0] == 'value')
             self.assertTrue(Iindex.Iobj(Iindex.Iobj(val).to_obj()) == Iindex.Iobj(val))
@@ -99,6 +103,11 @@ class Test_iindex(unittest.TestCase):
         idx = Iindex.Iext(['er', 2,[1,2]])
         self.assertTrue(idx.keytoval(idx.valtokey([1,2])) == [1,2])
         self.assertTrue(idx.isvalue([1,2]))
+        idx = Iindex.Iobj(['location', [{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]]])
+        self.assertTrue(idx.keytoval(idx.valtokey([4.83, 45.76])) == [4.83, 45.76])
+        self.assertTrue(idx.loc([4.83, 45.76]) == [1])
+        idx = Iindex.Iext([1,3,3,2,5,3,4])
+        self.assertTrue(idx.loc(3) == [1, 2, 5])
 
     def test_setvalue_setname(self):
         idx = Iindex.Iext(['er', 2,[1,2]])
@@ -108,7 +117,7 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx.val == ['ez', 'ez', [1,2]])        
         idx[1] = 3
         self.assertTrue(idx.val == ['ez', 3, [1,2]])
-        idx.setvalue(0, 'ez', dtype='datvalue')
+        idx.setvalue(0, 'ez', typevalue='DatationValue')
         if ES.def_clsName: self.assertTrue(idx.val == ['ez', 3, [1,2]])
         self.assertTrue(idx.values[0] == DatationValue(name='ez'))
         idx.setlistvalue([3, (3,4), 'ee'])
@@ -182,6 +191,11 @@ class Test_iindex(unittest.TestCase):
         idx = Iindex.Iext([il, il])
         self.assertEqual(idx.vlist(func=Ilist.to_obj, extern=False, encoded=False)[0][0],
                          'er')
+        idx = Iindex.Idic({'datation': [{'date1': '2021-02-04T11:05:00+00:00'},
+          '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
+        self.assertTrue(idx.vlist(func=ESValue.vName, extern=False, default='ici') ==
+                        ['date1', 'ici', 'ici'] == idx.vName(default='ici'))
+                        
 
     def test_numpy(self):
         idx = Iindex.Iext(['er', 2, 'er',[1,2]])
@@ -351,5 +365,12 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual(len(idx2), 2 * len(idx))
         idx += idx
         self.assertEqual(idx2, idx)
-        
+    
+    def test_iskeys(self):
+        istrue = [ 1, [1], [-1, [1,2,3]], [1,[1]], [1,2,3]]
+        isfalse = ['a', [[1,2]], [[1,2], [2,3]], [1,2,[2,3]], [[1], 2, 3], [1, [1,2,0.1]], 
+                   [-1.5, [1,2,3]], [1,2,3.2]]
+        for isT in istrue:  self.assertTrue (util.iskeysobj(isT))
+        for isF in isfalse: self.assertFalse(util.iskeysobj(isF))
+
 if __name__ == '__main__':  unittest.main(verbosity=2)

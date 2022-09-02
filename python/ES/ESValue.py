@@ -54,6 +54,7 @@ from geopy import distance
 from timeslot import TimeSlot, TimeInterval
 from openlocationcode import encode
 import cbor2
+from copy import copy
 #from util import util
 
 class ESValueEncoder(json.JSONEncoder):
@@ -202,9 +203,9 @@ class ESValue:
         '''check if self value intersects other value (return a boolean).'''
         return self.link(other) == 'intersects'
 
-    def isNotNull(self):
+    def isNotNull(self, nullvalue=None):
         '''return boolean. True if the 'ESValue' is not a NullValue'''
-        return self != self.__class__()
+        return self != self.__class__(nullvalue)
 
     def isEqual(self, other, name=True, value=True):
         '''Compare two `ESValue`
@@ -314,7 +315,7 @@ class ESValue:
         '''return vSimple object (@property) '''
         return self.vSimple(string=False)
 
-    def to_float(self):
+    def to_float(self, **kwargs):
         '''return a converted float value or nan'''
         if self.value == None :         return float('nan')
         if isinstance(self.value, str):
@@ -342,7 +343,7 @@ class ESValue:
         else:
             if not self.name or self.name == ES.nullName :  
                 js =  self._jsonValue(**option2)
-            elif not self.value or self.value == self.__class__.nullValue() : 
+            elif self.value is None or self.value == self.__class__.nullValue() : 
                 js =  self.name
             else :                                          
                 js = {self.name : self._jsonValue(**option2)}
@@ -355,6 +356,21 @@ class ESValue:
         ''' Return the vSimple of the `ESValue` (string or object) '''
         return self.__class__.vSimple(self, string=string)
 
+    @staticmethod
+    def ljson(listval, **kwargs):
+        '''
+        Export a list in json/cbor format (string or dict).
+
+        *Parameters*
+
+        - **untyped** : boolean (default False) - include dtype in the json if True
+        - **encoded** : boolean (default True) - choice for return format (string/bytes if True, dict else)
+        - **encode_format**    : string (default 'json')- choice for return format (json, cbor)
+        - **simpleval** : boolean (default False) - if True, only value is included
+
+        *Returns* :  list of string or dict '''
+        return [val.to_obj(**kwargs) for val in listval]       
+        
     @staticmethod
     def valClassName(val):
         '''return the calculate ESValue Class of val (string)'''
@@ -404,7 +420,8 @@ class ESValue:
     def _castsimple(val):
         ''' convert val in hashable val'''
         typeval = val.__class__.__name__
-        if typeval == 'list': return tuple(val)
+        if typeval == 'list': return ESValue._tupled(val)
+        #if typeval == 'list': return tuple(val)
         #if typeval == 'dict' and len(val) <= 1: return val
         #if typeval == 'dict' and len(val) > 1: return str(val)
         #if typeval == 'dict': return str(val)
@@ -421,11 +438,22 @@ class ESValue:
     def _uncastsimple(val):
         ''' convert val in hashable val'''
         typeval = val.__class__.__name__
-        if typeval == 'tuple': return list(val)
+        if typeval == 'tuple': return ESValue._listed(val)
+        #if typeval == 'tuple': return list(val)
         if typeval == 'str' and len(val) > 0 and val[0] == '{': return json.loads(val)
         if typeval == 'datetime': return val.isoformat()
         return val
 
+    @staticmethod
+    def _tupled(idx):
+        '''transform a list of list in a tuple of tuple'''
+        return tuple([val if not isinstance(val, list) else ESValue._tupled(val) for val in idx])
+
+    @staticmethod
+    def _listed(idx):
+        '''transform a tuple of tuple in a list of list'''
+        return [val if not isinstance(val, tuple) else ESValue._listed(val) for val in idx]
+    
     @staticmethod
     def _decodeclass(val):
         ''' return ESclassname of val'''
@@ -751,9 +779,10 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @staticmethod
     def _gshape(coord):
         ''' transform a GeoJSON coordinates (list) into a shapely geometry'''
-        if   isinstance(coord, list): coor = json.dumps(coord, cls=ESValueEncoder)
-        elif isinstance(coord, str) : coor = coord
-        else: coor = coord.__copy__()
+        if   isinstance(coord, tuple): coor = json.dumps(list(coord), cls=ESValueEncoder)
+        elif isinstance(coord, list):  coor = json.dumps(coord, cls=ESValueEncoder)
+        elif isinstance(coord, str):   coor = coord
+        else: coor = copy(coord)
         for tpe in ["Point", "MultiPoint", "Polygon", "MultiPolygon"]:
             try:
                 return shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))

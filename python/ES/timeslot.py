@@ -226,6 +226,11 @@ class TimeSlot:
         '''return the date corresponding to the middle of the bounds (datetime format)'''
         return self.bounds.instant
     
+    @property    
+    def name(self):
+        ''' class name'''
+        return self.__class__.__name__
+
     @property
     def interval(self): 
         '''return a list with the start and end dates (datetime format)'''

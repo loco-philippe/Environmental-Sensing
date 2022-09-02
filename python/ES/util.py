@@ -71,9 +71,14 @@ class util:
     c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
 
     @staticmethod
-    def cast(val, dtype=None, string=True):
+    def cast(val, dtype=None, string=True, default=None, maxlen=None):
         ''' convert val in the type defined by the string dtype'''
         typeval = val.__class__.__name__
+        if dtype == 'name':
+            if typeval in ES.className and val.name: name = val.name
+            else: name = default
+            if maxlen: return name[:maxlen]
+            return name
         if dtype == 'simple':
             if typeval in ES.className: return val.vSimple(string=string)
             else: return val
@@ -83,9 +88,11 @@ class util:
         if dtype == 'obj':
             if typeval in ES.className: return val.to_obj(encoded=False)
             else: return val
+        if dtype == 'str':  
+            if maxlen: return str(val)[:maxlen]
+            else: return str(val)
         if typeval in ES.ESclassName: return val
         if not dtype : return ESValue._castsimple(val)
-        if dtype == 'str':  return str(val)
         if dtype == 'int':
             try : return int(val.lstrip())
             except : return math.nan
@@ -117,6 +124,7 @@ class util:
             classvalue = classn
         if classvalue is None: dtype = None
         else: dtype = ES.valname[classvalue]
+        
         if dtype is None: 
             return util.cast(val)
         if classvalue in ES.ESclassName: # or dtype is None:
@@ -156,12 +164,14 @@ class util:
         return dic
 
     @staticmethod 
-    def decodeobj(bs=None, classname=None):
+    def decodeobj(bs=None, classname=None, context=True):
         '''Generate an Iindex data from a bytes, json or dict value
 
         *Parameters*
 
         - **bs** : bytes, string or dict data to convert
+        - **classname** : string(default None) - classname to convert codec data
+        - **context** : boolean (default True) - if False, only codec and keys are included
 
         *Returns* : tuple - name, typevaluedec, codec, parent, keys'''
         if bs is None: return (None, None, [], ES.nullparent, None)
@@ -173,21 +183,39 @@ class util:
         else: lis = [bs]
         #else: raise utilError("the type of parameter is not available")
         if not isinstance(lis, list): raise utilError("the parameter has to be a list")
+        
         if not lis:
-            return (None, None, [], ES.nullparent, None)
-        if not isinstance(lis[0], (str, dict, list)) or len(lis) > 3: 
+            return (None, None, [], ES.nullparent, None)        
+        if context and (not isinstance(lis[0], (str, dict, list)) or len(lis) > 3): 
+            return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
+        if not context and len(lis) > 2: 
             return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
         if len(lis) == 3 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
-            and isinstance(lis[2], (list, int)): 
+            and isinstance(lis[2], (list, int)) and context: 
             return (*util.decodecontext(lis[0]), util.decodecodec(lis[1], classname), *util.decodekeys(lis[2]))
-        if len(lis) == 2 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list):
+        if len(lis) == 2 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) and context:
             return (*util.decodecontext(lis[0]), util.decodecodec(lis[1], classname), ES.nullparent, None)
-        if len(lis) == 2 and isinstance(lis[0], list) and isinstance(lis[1], (int, list)):
+        #if len(lis) == 2 and isinstance(lis[0], (tuple, list)) and isinstance(lis[1], (int, list)):
+        if len(lis) == 2 and isinstance(lis[0], (tuple, list)) and util.iskeysobj(lis[1]):
             return (None, None, util.decodecodec(lis[0], classname), *util.decodekeys(lis[1]))
         if len(lis) == 1 and isinstance(lis[0], list):
             return (None, None, util.decodecodec(lis[0], classname), ES.nullparent, None)
         return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
-
+        
+    @staticmethod
+    def iskeysobj(obj):
+        if isinstance(obj, int):                        return True
+        if not isinstance(obj, list):                   return False
+        if not isinstance(obj[0], int):                 return False
+        if len(obj) == 1:                               return True
+        if len(obj) > 2 and not isinstance(obj[1], int):return False
+        if len(obj) == 2 and isinstance(obj[1], int):   return True
+        if len(obj) == 2 and isinstance(obj[1], list): obj = obj[1]
+        if not isinstance(obj, list):                   return False
+        for i in range(len(obj)):
+            if not isinstance(obj[i], int):             return False
+        return True
+        
     @staticmethod
     def decodecodec(codecobj, classname=ES.nam_clsName):
         '''Generate a codec list from a json value'''
@@ -436,6 +464,23 @@ class util:
     def tuple(idx):
         '''transform a list of list in a list of tuple'''
         return [val if not isinstance(val, list) else tuple(val) for val in idx]
+
+    @staticmethod
+    def tupled(idx):
+        '''transform a list of list in a tuple of tuple'''
+        return tuple([val if not isinstance(val, list) else util.tupled(val) for val in idx])
+
+    @staticmethod
+    def listed(idx):
+        '''transform a tuple of tuple in a list of list'''
+        return [val if not isinstance(val, tuple) else util.listed(val) for val in idx]
+    
+    @staticmethod
+    def typename(name, typevalue=None):
+        if not name:            return typevalue
+        if name in ES.typeName: return ES.typeName[name]
+        if name[0:2] == 'ES':   return ES.ES_clsName
+        return typevalue
 
 class utilError(Exception):
     ''' util Exception'''

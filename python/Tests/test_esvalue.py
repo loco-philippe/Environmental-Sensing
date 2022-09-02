@@ -56,6 +56,7 @@ class TestObsUnitaire(unittest.TestCase):
     def test_NamedValue(self):
         self.assertEqual(NamedValue("coucou").to_obj(), '"coucou"')
         self.assertEqual(NamedValue.from_obj('{"er":2}').json(), '{"er": 2}')
+        self.assertEqual(NamedValue.from_obj('{"er":0}').json(), '{"er": 0}')
         self.assertEqual(NamedValue(21).json(), '21')
         self.assertEqual(NamedValue(2.1).json(), '2.1')
 
