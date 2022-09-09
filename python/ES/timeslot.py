@@ -25,7 +25,7 @@ The main principles are as follows :
 
 A `TimeSlot` is a list of `TimeInterval`.
 
-A `TimeInterval` is defined by to `datetime` objects (start and end)
+A `TimeInterval` is defined by two `datetime` objects (start and end)
 
 Multiple properties are associated with the data :
     
