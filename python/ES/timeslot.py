@@ -9,7 +9,7 @@ The `ES.timeslot` module contains the `TimeSlot` and the `TimeInterval` classes.
 # What is the TimeSlot Object ?
 
 The TimeSlot Object is a representation of time intervals data and properties. For example,
- i can represent the working day of 2022-march-15 by a TimeSlot which inclde the following intervals:
+ I can represent the working day of 2022-march-15 by a TimeSlot which includes the following intervals:
 - from 9 a.m. to 12 p.m.
 - from 2 p.m. to 4:30 p.m.
 - from 5 p.m. to 7:30 p.m.
