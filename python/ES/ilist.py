@@ -14,13 +14,13 @@ Documentation is available in other pages :
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 - The non-regression test are at 
 [this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_ilist.py)
-- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Example/Ilist)
+- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Ilist)
  are :
-    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_creation.ipynb)
-    - [variable](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_variable.ipynb)
-    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_update.ipynb)
-    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_structure.ipynb)
-    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Ilist/Ilist_structure-analysis.ipynb)
+    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_creation.ipynb)
+    - [variable](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_variable.ipynb)
+    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_update.ipynb)
+    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_structure.ipynb)
+    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_structure-analysis.ipynb)
 
 ---
 """
