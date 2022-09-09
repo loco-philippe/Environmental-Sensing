@@ -8,19 +8,19 @@ The `ES.iindex` module contains the `Iindex` class.
 
 Documentation is available in other pages :
 
-- The Json Standard for Iindex is define 
+- The Json Standard for Iindex is defined 
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf)
-- The concept of 'indexed list' is describe in 
+- The concept of 'indexed list' is described in 
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
-- The non-regression test are at 
+- The non-regression tests are at 
 [this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_iindex.py)
-- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Example/Iindex)
+- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Iindex)
  are :
-    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Iindex/Iindex_creation.ipynb)
-    - [value](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Iindex/Iindex_value.ipynb)
-    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Iindex/Iindex_update.ipynb)
-    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Iindex/Iindex_structure.ipynb)
-    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Example/Iindex/Iindex_structure-analysis.ipynb)
+    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Iindex/Iindex_creation.ipynb)
+    - [value](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Iindex/Iindex_value.ipynb)
+    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Iindex/Iindex_update.ipynb)
+    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Iindex/Iindex_structure.ipynb)
+    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Iindex/Iindex_structure-analysis.ipynb)
 
 ---
 

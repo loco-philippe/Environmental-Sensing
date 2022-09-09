@@ -355,7 +355,7 @@ class Es:
                                self.res_classES : ['namemini', 'sfloat'],
                                self.variable    : ['namemini', 'value']}
 
-        '''Dictionnary for property codification (BLE - Environnemental Sensing Service) '''
+        '''Dictionnary for property codification (BLE - Environmental Sensing Service) '''
 
         self.sampling: Dict = { self.nullDict       : 0,
                                'instantaneous'      : 1,
@@ -365,10 +365,10 @@ class Es:
                                'minimum'            : 5,
                                'accumulated'        : 6,
                                'count'              : 7}
-        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
+        '''Dictionnary for property sampling mode (BLE - Environmental Sensing Service) '''
 
         self.invSampling: Dict = self._inv(self.sampling)
-        '''Dictionnary for property sampling mode (BLE - Environnemental Sensing Service) '''
+        '''Dictionnary for property sampling mode (BLE - Environmental Sensing Service) '''
 
         self.application: Dict = { self.nullDict        : 0,
                        'air'                            : 1,
@@ -378,10 +378,10 @@ class Es:
                        'infrared'                       : 5,
                        'map database'                   : 6,
                        'barometric elevation source'    : 7}
-        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
+        '''Dictionnary for property application (BLE - Environmental Sensing Service) '''
 
         self.invApplication = self._inv(self.application)
-        '''Dictionnary for property application (BLE - Environnemental Sensing Service) '''
+        '''Dictionnary for property application (BLE - Environmental Sensing Service) '''
 
     def _initName(self) :
     #%% init name
