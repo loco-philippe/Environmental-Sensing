@@ -31,7 +31,7 @@ or for NoSQL API, files)
 - structured tools to structure, analyse and optimize data (e.g. control conceptual data 
 model cardinality in a dataset)
 - A library of connectors for different uses (sensors, database, storage, networks, etc.) 
-in differents languages (python, C++)
+in different languages (python, C++)
 - Bidirectional interfaces to data processing tools (eg Numpy, Xarray, GIS).
 
 It allows to :
