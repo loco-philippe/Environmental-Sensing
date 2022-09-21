@@ -385,11 +385,8 @@ class ESValue:
         if isinstance(val,(DatationValue, LocationValue, PropertyValue, NamedValue, 
                            ExternValue, TimeSlot)):
             return val.__class__.__name__
-        #if val.__class__.__name__ in [ES.obs_clsName, ES.ili_clsName, ES.tim_clsName]:
-        #    return val.__class__.__name__
         if val.__class__.__name__ in [ES.obs_clsName, ES.ili_clsName]:
             return ES.ext_clsName
-            #return val.__class__.__name__
         if val.__class__.__name__ == ES.tim_clsName: return ES.dat_clsName
         if isinstance(val, str):
             try: dic = json.loads(val)
@@ -398,7 +395,6 @@ class ESValue:
         if isinstance(dic, (int, float, bool, list, str, tuple)): 
             return ES.nam_clsName
         if isinstance(dic, dict) and len(dic) != 1: 
-            #return ES.nam_clsName
             return ES.prp_clsName
         if isinstance(dic, dict) and len(dic) == 1 and list(dic.keys())[0] in ES.typeName.keys(): 
             return ES.typeName[list(dic.keys())[0]]

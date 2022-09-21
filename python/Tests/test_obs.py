@@ -88,8 +88,6 @@ r2 = NamedValue(23)
 r3 = NamedValue("coucou")
 r4 = NamedValue(41.2)
 r5 = NamedValue(18)
-#r6 = ResultValue([41, [2, 2, 0]])
-#r7 = ResultValue([18, [1, 2, 1]])
 s1 = [t1, t2]
 dat1 = (ES.dat_classES, {'date1' : t1.isoformat()})
 dat2 = (ES.dat_classES, [t1.isoformat(), t2.isoformat()])
@@ -114,13 +112,6 @@ loc3d = (loc3[0], [loc3[1],0])
 loc3sn = (ES.loc_classES, [paris, lyon, marseille])
 ploc3 = (ES.loc_classES, [pparis, plyon, pmarseille])
 res2 = (ES.res_classES, [[41, [2, 2, 0]], [18, [1, 2, 1]]])
-
-'''reslist = [ResultValue(21, 'test'), ResultValue(22, 'test2'),
-           ResultValue(23, 'test3'), ResultValue(24, 'test4')]
-ir5 = ResultValue(25)
-
-resind = [[0,2,3,1], [2,1,3,0], [0,1,2,3]]
-setres = ESIlistSet([reslist, resind]) '''
 
 def _option_simple(ob1):
     ob1.option["json_param"]            = True
@@ -169,6 +160,7 @@ def _sort(res):
     if type(li[0]) == int : return li
     else : return res.vListValue
 
+#%% tests exemples
 class TestExemples(unittest.TestCase):      # !!! exemples
     def test_first_observation(self) :
         # cas simple + présentation
@@ -203,7 +195,6 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         ob.nindex('location').setcodeclist([paris, lyon, marseille], valueonly=True)
 
         #print(ob.setDatation)
-        #ob.majList(ES.dat_classES, ["2021-05-05T10", "2021-05-05T16"])
         ob.nindex('datation').setcodeclist(["2021-05-05T10", "2021-05-05T16"], valueonly=True)
         #ob.view(width=15)
         ob.voxel()
@@ -214,7 +205,6 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         #ob._info(string=False)
     
     def test_observation_for_sensor(self) :
-
         #Case 1: Simple sensor
         time = "2021-05-05T10:08"
         coord = [[2.35, 48.87]]
@@ -322,9 +312,9 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         self.assertTrue(ob_complet.dimension == 2 and ob_complet.complete)   # it's True !!
         #print(ob_complet.to_obj(encoded=True, json_info=True))
         
-#%% début tests
+#%% tests unitaires
 @unittest.skipIf(simple, "test Observation")
-class TestObservation(unittest.TestCase):           # !!! test observation
+class TestObservation(unittest.TestCase):
     '''Unit tests for `ES.ESObs.Obs` '''
 
     def test_obs_creation_copy(self):
@@ -341,18 +331,11 @@ class TestObservation(unittest.TestCase):           # !!! test observation
             self.assertEqual(copy.copy(ob), ob)
 
         ob1 = Obs.Idic(dict((dat1, loc1, prop3, _res(3))))
-        #ob2 = Obs.Idic({dat1[0] : dat1[1]}, {loc1[0]:loc1[1]}, {prop3[0]:prop3[1]},
-        #                  {_res(3)[0]:_res(3)[1]})
         ob3 = Obs.Std(datation=dat1[1], location=loc1[1], property=prop3[1],
                               result=_res(3)[1])
-        #ob5 = Observation([[dat1[1]], [loc1[1]], prop3[1], _res(3)[1]])
         ob6 = Obs.Std(datation=[dat1[1]], location=[loc1[1]],
                           property=prop3[1], result=_res(3)[1])
-        #ob7 = Observation([[dat1[1]], [loc1[1]], prop3[1], _res(3)[1]], datation=[dat1[1]])
-        #ob8 = Observation({dat1[0] : dat1[1]}, {loc1[0]:loc1[1]}, {prop3[0]:prop3[1]},
-        #                  {_res(3)[0]:_res(3)[1]}, location=loc2[1])
         self.assertTrue(ob1 == ob3 == ob6)
-                        #ob2.json == ob4.json ==ob5.json == ob7.json == ob8.json)
         ob  = Obs()
         ob1 = Obs.Idic({})
         ob2 = Obs([])
@@ -362,11 +345,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob1.append(['fort', 'ce matin', 'paris', 'pm10'])
         ob2=Obs.Std(datation=['ce matin'], location=['paris'], property=['pm10'], result=['fort'])
         self.assertTrue(ob == ob1 == ob2)
-        #ob=Observation()
-        #ob.addJson(json.dumps(dict((obs_1, _res(3), dat3))))
-        #ob1 = Observation(json.dumps(dict((obs_1, _res(3), dat3))))
-        #self.assertEqual(ob.json, ob1.json)
-
 
     def test_obs_loc_iloc_maj(self):
         ob = Obs.Idic(dict((dat3, loc3d, prop2, _res(6))), param=truc_mach)
@@ -383,9 +361,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         self.assertTrue (ob.nindex('datation').loc("2021-07-04T10:05:00") == 
                          ob.nindex('datation').loc(DatationValue("2021-07-04T10:05:00"), 
                                                    extern=False) == [2,3])
-        #self.assertEqual(ob.indexLoc(DatationValue("2021-02-04T11:05:00"), 'datation', string=False)["value"], 0)
-        #self.assertEqual(ob.indexLoc(LocationValue("paris"), 'location', string=False)["name"], 0)
-        
 
     def test_obs_vList(self):
         ob = Obs.Idic(dict((dat3, loc3)), param=truc_mach)
@@ -428,17 +403,13 @@ class TestObservation(unittest.TestCase):           # !!! test observation
     def test_obs_majListName_majListValue(self):
         ob = Obs.Idic(dict((dat3, loc3, prop2, _res(18))))
         ob.nindex('location').setcodeclist([pparis, plyon, pmarseille], valueonly=True)
-        #ob1.majList(ES.loc_classES, [pparis, plyon, pmarseille], name=False)
         self.assertEqual(ob.setLocation[2].vSimple(), pmarseille)
         ob.nindex('datation').setcodeclist([pt1, pt2, pt3], valueonly=True)
-        #ob1.majList(ES.dat_classES, [pt1, pt2, pt3], name=False)
         self.assertEqual(ob.setDatation[2].simple, pt3)
-        #ob1.majList(ES.loc_classES, ['paris', 'lyon', 'marseille'], 'name')
         ob.nindex('location').setcodeclist(['paris', 'lyon', 'marseille'], nameonly=True)
         self.assertEqual(ob.setLocation[2].name, 'marseille')
 
     def test_append_obs(self):
-        #ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
         ob = Obs.Idic(dict((dat3, loc3d, prop2, _res(6))))
         ob1 = copy.copy(ob)
         ind = ob1.appendObs(ob)
@@ -447,14 +418,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob1=Obs.Std()
         ob1.appendObs(ob)
         ob2=Obs.Iobj(ob1.to_obj(encode_format='json', encoded=False))
-        #self.assertEqual(ob2.to_json(encode_format='json', encoded=False),
-        #                 ob1.to_json(encode_format='json', encoded=False))
-        #ob2=Observation(ob1.json)
-        #self.assertEqual(ob2.to_json(encode_format='json', encoded=True),
-        #                 ob1.to_json(encode_format='json', encoded=True))
-        #ob2=Observation(ob1.to_json(encode_format='bson', encoded=False))
-        #self.assertEqual(ob2.to_json(encode_format='bson', encoded=False),
-        #                 ob1.to_json(encode_format='bson', encoded=False))
 
     def test_obs_sort(self):
         dat = d1, c2, d3 = [{'d1':t1}, {'c2':t2}, {'d3':t3}]
@@ -464,20 +427,15 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         dic = {'location': [loc,2], 'property': prp, 'datation': dat, 'result': res}
         ob  = Obs.Idic(dic)
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
-        #ob.sort(order=['location','datation', 'property'])
         ob.sort(order=[0,2,1])
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
-        #self.assertEqual(ob.vListName('location'), ['l1', 'l3', 'm2'])
         self.assertEqual(ob.lindex[0].vName()[:3], ['l1', 'l1', 'l3'])
-        #ob.sort(order=['datation','location', 'property'])
         ob.sort(order=[2,0,1])
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
-        #self.assertEqual(ob.vListName('datation'), ['c2', 'd1', 'd3'])       
         self.assertEqual(ob.lindex[2].vName()[:3], ['c2', 'c2', 'd1'])
         ob.sort([3])
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
         self.assertEqual(ob.lindex[3].val, [10, 11, 12, 13, 14, 15])       
-        #ob.sort(order=['property', 'datation','location'])
         ob.sort(order=[1,0,2])
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
         self.assertEqual(ob.lindex[1].vName()[:4], ['p1', 'p1', 'p1', 'p2'])
@@ -502,13 +460,11 @@ class TestObservation(unittest.TestCase):           # !!! test observation
                      "property": [[{"prp": "PM25", "unit": "kg/m3"}, {"prp": "PM10", "unit": "kg/m3"}],
                                   [0,1,0,1,0,1]],
                      "result": [[0,1,2,3,4,5], -1]}, name='test1')
-        #ob1=ob.full(fillvalue=ResultValue(-1))
         ob1=ob.full(fillvalue=-1, inplace=False)
         rec=[{"date1": "2021-02-04T12:05:00"}, {"paris": [2.35, 48.87]}, 
              {"prp": "PM10", "unit": "kg/m3"}]
         self.assertTrue(ob.loc(rec) == ob1.loc(rec) == [NamedValue(1)])
         self.assertEqual(len(ob1), 18)
-        #ob.full(fillvalue=ResultValue(-1), inplace=True)
         ob.full(fillvalue=-1, inplace=True)
         self.assertEqual(ob, ob1)
 
@@ -547,25 +503,6 @@ class TestObservation(unittest.TestCase):           # !!! test observation
         ob.to_file('test.obs', encode_format='json')
         self.assertEqual(Observation.from_file('test.obs').to_json(encoded=False),
                          ob.to_json(encoded=False))
-    def test_bytes(self):
-        ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), 
-                         idxref={'datation':'location'})
-        ob.mAtt['reference'] = 0
-        opt = {ES.dat_classES : ['name', 'value'], ES.loc_classES : ['name', 'value'],
-               ES.prp_classES : ['name', 'value'], ES.res_classES : ['uint8']}
-        self.assertEqual(ob.json, Observation.from_bytes(ob.to_bytes(opt)).json)
-        ob = Observation({  'type': 'observation',
-                            'datation': [{'date1': '2021-02-04T12:05:00'},
-                                         '2021-07-04T12:05:00',
-                                         '2021-05-04T12:05:00'],
-                            'location': [{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
-                            'property': [{'prp': 'PM25', 'unit': 'kg/m3'},
-                                         {'prp': 'PM10', 'unit': 'kg/m3'}],
-                            'result': [0, 1, 2, 3, 4, 5],
-                            'index': [[0, 1, 0, 1, 2, 2], [0, 0, 1, 1, 2, 2], 
-                                      [0, 1, 0, 1, 0, 1]]})
-        self.assertEqual(ob.json, Observation.from_bytes(ob.to_bytes(opt)).json)
-
         
 class TestExports(unittest.TestCase):
     '''Unit tests for `ES.ESObservation.Observation` exports '''
@@ -720,34 +657,6 @@ class TestInterne(unittest.TestCase):
     '''Unit tests for `ES.ESObservation.Observation` internal '''
 
     @unittest.skipIf(mongo, "test envoi mongo")
-    def test__list_bytes(self):
-        ob = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(6))), 
-                         idxref={'location':'datation'}, order=['datation', 'property', 'location'])
-        lis  = ob.ilist.setidx[0]
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'datation', 'name'))[1]
-        self.assertEqual(lis[0].name, lis2[0].name)
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'datation', 'namemini'))[1]
-        self.assertEqual(lis[0].name, lis2[0].name)
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'datation', 'value'))[1]
-        self.assertEqual(lis[0].value, lis2[0].value)
-        lis  = ob.ilist.setidx[1]
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'location', 'name'))[1]
-        self.assertEqual(lis[0].name, lis2[0].name)
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'location', 'value'))[1]
-        self.assertEqual(lis[0].value, lis2[0].value)
-        lis  = ob.ilist.setidx[2]
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'property', 'name'))[1]
-        self.assertEqual(lis[0].name, lis2[0].name)
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'property', 'value'))[1]
-        self.assertEqual(lis[0].value, lis2[0].value)
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'property', 'valuemini'))[1]
-        self.assertEqual(lis[0].value, lis2[0].value)
-        lis  = ob.ilist.extval
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'result', 'name'))[1]
-        self.assertEqual(lis[0].name, lis2[0].name)
-        lis2 = ob._list_from_bytes(ob._list_to_bytes(lis,'result', 'value'))[1]
-        self.assertEqual(lis[0].value, lis2[0].value)
-
     def test_plot(self):
         il3 = Ilist.Idic({'location': [[0,1], [4.83, 45.76], [5.38, 43.3]],
          'datation': [{'date1': '2021-02-04T11:05:00+00:00'},
@@ -813,124 +722,6 @@ class TestInterne(unittest.TestCase):
         ob1=Obs(il1)
         ob1.plot(line=True)
         ob1.plot(line=False)
-    
-    def test_obs_simple(self):
-        ob = Obs.Idic({dat3[0]:dat3[1]}, param=truc_mach)
-        #_option_simple(ob1)
-        self.assertEqual(json.dumps(dict((obs_1, truc_mach, dat3))),    ob1.to_json(encoded=True))
-        ob1 = Observation(dict((obs_1, truc_mach, loc3)))
-        _option_simple(ob1)
-        self.assertEqual(dict((obs_1, truc_mach, loc3)),    ob1.to_json(encoded=False))
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, prop2))))
-        _option_simple(ob1)
-        self.assertEqual(dict((obs_1, truc_mach, prop2)),    ob1.to_json(encoded=False))
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, _res(9)))))
-        _option_simple(ob1)
-        self.assertEqual(dict((obs_1, truc_mach, _res(9))), ob1.to_json(encoded=False))
-        ob1 = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
-        dic=ob1.to_json(encoded=False)
-        dic.pop('index')
-        self.assertEqual(dict((obs_1, truc_mach, tdat3, loc3, prop2, _res(6))), dic)
-
-    def test_obs_att(self):
-        ob1 = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2,
-                               (ES.obs_reference, 25), (ES.prp_upperValue,'254'),
-                                           _res(6))), idxref={'location':'datation'})
-        self.assertEqual(ob1.mAtt['truc'], 'machin')
-        self.assertEqual(ob1.mAtt[ES.obs_reference], 25)
-        self.assertEqual(ob1.mAtt[ES.prp_upperValue], '254')"""
-        
-"""def test_obs_maj_type(self):
-        maj = [False, True]
-        for maj_index in maj:
-            ob = Observation()
-            self.assertTrue(ob.score == 0 and not ob.complet )
-            ob = Observation(json.dumps(dict((obs_1, dat1))))
-            self.assertTrue(ob.score == 1 and not ob.complet )
-            ob = Observation(json.dumps(dict((obs_1, dat3))))
-            self.assertTrue(ob.score == 2 and not ob.complet )
-            ob = Observation(json.dumps(dict((obs_1, loc1))))
-            self.assertTrue(ob.score == 10 and not ob.complet)
-            ob = Observation(json.dumps(dict((obs_1, loc1, dat1))))
-            self.assertTrue(ob.score == 11 and not ob.complet)
-            ob = Observation(json.dumps(dict((obs_1, loc1, dat3))))
-            self.assertTrue(ob.score == 12 and not ob.complet)
-            ob = Observation(json.dumps(dict((obs_1, loc3))))
-            self.assertTrue(ob.score == 20 and not ob.complet)
-            ob = Observation(json.dumps(dict((obs_1, loc3, dat1))))
-            self.assertTrue(ob.score == 21 and not ob.complet)
-            ob = Observation(json.dumps(dict((obs_1, loc3, dat3))))
-            self.assertTrue(ob.score == 22 and not ob.complet)
-            ob = Observation(json.dumps(dict((obs_1, _res(1)))))
-            self.assertTrue(ob.score == 0 and ob.complet and ob.axes == [])
-            ob = Observation(json.dumps(dict((obs_1, _res(1), dat1))))
-            self.assertTrue(ob.score == 1 and ob.complet and ob.axes == [0])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), dat3))))
-            self.assertTrue(ob.score == 2 and ob.complet and ob.axes == [0])
-            ob = Observation(json.dumps(dict((obs_1, _res(1), loc1))))
-            self.assertTrue(ob.score == 10 and ob.complet and ob.axes == [1])
-            ob = Observation(json.dumps(dict((obs_1, _res(1), loc1, dat1))))
-            self.assertTrue(ob.score == 11 and ob.complet and ob.axes == [0])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), loc1, dat3))))
-            self.assertTrue(ob.score == 12 and ob.complet and ob.axes == [0])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), loc3))))
-            self.assertTrue(ob.score == 20 and ob.complet and ob.axes == [1])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), loc3, dat1))))
-            self.assertTrue(ob.score == 21 and ob.complet and ob.axes == [1])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), loc3, dat3))), idxref={'location': 'datation'})
-            self.assertTrue(ob.score == 22 and ob.complet and ob.axes == [0])
-            ob = Observation(json.dumps(dict((obs_1, _res(6), loc3, dat2))))
-            self.assertTrue(ob.score == 23 and ob.complet and ob.axes == [0,1])
-            ob = Observation(json.dumps(dict((obs_1, _res(9)))))
-            self.assertTrue(ob.score == 0 and ob.complet and ob.axes == [])
-            #ob = Observation(json.dumps(dict((obs_1, _res(9), dat1))))
-            #self.assertTrue(ob.score == 1 and not ob.complet and ob.axes == [])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), dat3, prop1))))
-            self.assertTrue(ob.score == 102 and ob.complet and ob.axes == [0])
-            #ob = Observation(json.dumps(dict((obs_1, _res(6), dat3, prop1))))
-            #self.assertTrue(ob.score == 102 and not ob.complet and ob.axes == [])
-            ob = Observation(json.dumps(dict((obs_1, _res(1), loc1, prop1))))
-            self.assertTrue(ob.score == 110 and ob.complet and ob.axes == [1])
-            ob = Observation(json.dumps(dict((obs_1, _res(1), loc1, dat1, prop1))))
-            self.assertTrue(ob.score == 111 and ob.complet and ob.axes == [0])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), loc1, dat3, prop1))))
-            self.assertTrue(ob.score == 112 and ob.complet and ob.axes == [0])
-            #ob = Observation(json.dumps(dict((obs_1, _res(6), loc1, dat3, prop1))))
-            #self.assertTrue(ob.score == 112 and not ob.complet and ob.axes == [])
-            ob = Observation(json.dumps(dict((obs_1, _res(6), loc3, prop2))))
-            self.assertTrue(ob.score == 223 and ob.complet and ob.axes == [1, 2])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), loc3, prop3))), idxref={'location': 'property'})
-            self.assertTrue(ob.score == 220 and ob.complet and ob.axes == [1])
-            ob = Observation(json.dumps(dict((obs_1, _res(3), loc3, dat1, prop3))), idxref={'property':'location'})
-            self.assertTrue(ob.score == 221 and ob.complet and ob.axes == [1])
-            ob = Observation(json.dumps(dict((obs_1, _res(6), loc3, dat1, prop2))))
-            self.assertTrue(ob.score == 224 and ob.complet and ob.axes == [1, 2])
-            ob = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18)))))
-            self.assertTrue(ob.score == 228 and ob.complet and ob.axes == [0, 1, 2])
-            ob = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop3, _res(3)))), idxref={'property':'datation', 'location':'datation'})
-            self.assertTrue(ob.score == 222 and ob.complet and ob.axes == [0])
-            ob = Observation(json.dumps(dict((obs_1, dat3, loc3, prop2, _res(6)))), idxref = {'location': 'datation'})
-            self.assertTrue(ob.score == 225 and ob.complet and ob.axes == [0, 2])
-            #ob.option["json_res_index"] = True
-            #print(ob.to_json(), '\n')
-
-    def test_obs_majIndex_iLoc(self):
-        ob1 = Observation(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18))))
-        self.assertEqual(ob1.iLoc(0,0,1)[ES.res_classES], '1')
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18)))), order=['location', 'property',  'datation'])
-        self.assertEqual(ob1.iLoc(0,0,1)[ES.res_classES], '3')
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(18)))), order=['property',  'datation', 'location'])
-        self.assertEqual(ob1.iLoc(0,0,1)[ES.res_classES], '9')
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(6)))), idxref={'location':'datation'}, order=['datation', 'property', 'location'])
-        self.assertEqual(ob1.iLoc(0,0,1)[ES.res_classES], '1')
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop2, _res(6)))), idxref={'location':'datation'}, order=['location', 'property', 'datation'])
-        self.assertEqual(ob1.iLoc(0,0,1)[ES.res_classES], '1')
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat2, loc3, prop3, _res(6)))), idxref={'property':'location'}, order=['location', 'datation', 'property'])
-        self.assertEqual(ob1.iLoc(0,1,1)[ES.res_classES], '2')
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc2, prop3, _res(6)))), idxref={'property':'datation'}, order=['location', 'datation', 'property'])
-        self.assertEqual(ob1.iLoc(0,1,0)[ES.res_classES], '3')
-        ob1 = Observation(json.dumps(dict((obs_1, truc_mach, dat3, loc3, prop3, _res(3)))), idxref={'property':'datation', 'location':'datation'})
-        self.assertEqual(ob1.iLoc(1,1,1)[ES.res_classES], '1')
 """ 
        
 if __name__ == '__main__':

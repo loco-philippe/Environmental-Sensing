@@ -12,8 +12,8 @@ from iindex import Iindex, util
 from ilist import Ilist
 from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from test_observation import dat3, loc3, prop2, _res
-from ESObservation import Observation
+from test_obs import dat3, loc3, prop2
+from ESObs import Obs
 from ESValue import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue #, ReesultValue
 import datetime
 from ESconstante import ES

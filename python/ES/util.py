@@ -57,7 +57,6 @@ class IindexEncoder(json.JSONEncoder):
         if isinstance(o, datetime.datetime): return o.isoformat()
         option = {'encoded': False, 'encode_format': 'json'}
         if o.__class__.__name__ in ('Ilist', 'TimeSlot'): return o.json(**option)
-        #if isinstance(o, Observation): return o.to_json(**option)
         if issubclass(o.__class__, ESValue): return o.json(**option)
         try : return o.to_json(**option)
         except :
@@ -390,8 +389,7 @@ class util:
             else: return {_invcastfunc[val.__class__]: val.json(**option)} 
         if val.__class__.__name__ == 'Ilist':       return {ES.ili_valName: val.json(**option)}
         if val.__class__.__name__ == 'Iindex':      return {ES.iin_valName: val.json(**option)}
-        if val.__class__.__name__ == 'Observation': return {ES.obs_valName: val.to_json(**option)}
-        if val.__class__.__name__ == 'Obs':         return {ES.obs2_valName: val.to_obj(**option)}
+        if val.__class__.__name__ == 'Obs':         return {ES.obs_valName: val.to_obj(**option)}
 
     @staticmethod
     def list(tuplelists): 
