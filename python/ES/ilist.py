@@ -31,12 +31,14 @@ import datetime, cbor2
 import json
 import csv
 import math
+from tabulate import tabulate
 from ESconstante import ES
 from ESValue import ESValue
 from iindex import Iindex
 from util import util, IindexEncoder, CborDecoder
 import xarray
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Ilist:
 #%% intro
@@ -101,6 +103,7 @@ class Ilist:
     - `Ilist.isinrecord`
     - `Ilist.keytoval`
     - `Ilist.loc`
+    - `Ilist.nindex`
     - `Ilist.record`
     - `Ilist.recidx`
     - `Ilist.recvar`
@@ -108,6 +111,7 @@ class Ilist:
 
     *add - update methods*
 
+    - `Ilist.add`
     - `Ilist.addindex`
     - `Ilist.append`
     - `Ilist.delindex`
@@ -135,12 +139,15 @@ class Ilist:
     *exports methods*
 
     - `Ilist.json`
+    - `Ilist.plot`
     - `Ilist.to_obj`
     - `Ilist.to_csv`
     - `Ilist.to_file`
     - `Ilist.to_numpy`
     - `Ilist.to_xarray`
+    - `Ilist.view`
     - `Ilist.vlist`
+    - `Ilist.voxel`
     '''
     @classmethod
     def Idic(cls, idxdic=None, typevalue=ES.def_clsName, fullcodec=False, var=None):
@@ -177,12 +184,13 @@ class Ilist:
         if idxname is None: idxname = []
         if idxval  is None: idxval  = []
         if not isinstance(idxval, list): return None
-        if len(idxval) == 0: return cls()
+        #if len(idxval) == 0: return cls()
         val = []
         for idx in idxval:
             if not isinstance(idx, list): val.append([idx])
             else: val.append(idx)
-        return cls(listidx=val, name=idxname, var=var, typevalue=typevalue, context=False)
+        return cls(listidx=val, name=idxname, var=var, typevalue=typevalue, 
+                   context=False)
         '''#if not isinstance(idxval[0], list): val = [[idx] for idx in idxval]
         #else:                               val = idxval
         name = ['i' + str(i) for i in range(len(val))]
@@ -290,9 +298,10 @@ class Ilist:
         - **reindex** : boolean (default True) - if True, default codec for each Iindex
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **context** : boolean (default True) - if False, only codec and keys are included'''
-        #init self.lidx
         #print('debut')
         #t0 = time()
+
+        #init self.lidx
         self.name = self.__class__.__name__
         if not isinstance(name, list): name = [name]
         if listidx.__class__.__name__ in ['Ilist','Obs']: 
@@ -309,7 +318,6 @@ class Ilist:
         typeval = [typevalue for i in range(len(listidx))]
         for i in range(len(name)): 
             typeval[i] = util.typename(name[i], typeval[i])          
-            #if util.typename(name[i]): typeval[i] = util.typename(name[i])          
         if len(listidx) == 1:
             code, idx = Iindex.from_obj(listidx[0], typevalue=typeval[0], context=context)
             if len(name) > 0 and name[0]: idx.name = name[0]
@@ -323,7 +331,8 @@ class Ilist:
         if       isinstance(var, list): idxvar = var
         elif not isinstance(var, int) or var < 0: idxvar = []
         else: idxvar = [var]
-        codind = [Iindex.from_obj(idx, typevalue=typ, context=context) for idx, typ in zip(listidx, typeval)]
+        codind = [Iindex.from_obj(idx, typevalue=typ, context=context) 
+                  for idx, typ in zip(listidx, typeval)]
         for ii, (code, idx) in zip(range(len(codind)), codind):
             if len(name) > ii and name[ii]: idx.name = name[ii]
             if idx.name is None or idx.name == ES.defaultindex: idx.name = 'i'+str(ii)
@@ -335,12 +344,32 @@ class Ilist:
         
         #init length
         if not length:  length  = -1
-        leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) != 1]
+        #leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) != 1]
+        leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) > 0]
+        leng2 = [l for l in leng if l > 1]
+
+        if not leng: length = 0
+        elif not leng2: length = 1 
+        #if max(leng) == min(leng) and length < 0: length = max(leng)
+        elif max(leng2) == min(leng2) and length < 0: length = max(leng2)
+        
+        '''#leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) > 1] #!!!!
+        
         #leng = [len(iidx) for code, iidx in codind if code < 0]
-        if not leng: leng = [1]
-        if max(leng) == min(leng) and length < 0: length = max(leng)
+        #if not leng: leng = [1] #!!!!!
+        if not leng: leng = [0]
+        #if max(leng) == min(leng) and length < 0: length = max(leng)
+        if max(leng2) == min(leng2) and length < 0: length = max(leng2)
+        '''
         if idxvar: length = len(codind[idxvar[0]][1])
-        flat = length == max(leng) == min(leng)
+        if length == 0 :
+            self.lvarname = [codind[i][1].name for i in idxvar]
+            #self.lindex = [[] for i in range(len(listidx))]
+            self.lindex = [iidx for code, iidx in codind]
+            return
+        #flat = length == max(leng) == min(leng)
+        flat = True
+        if leng2: flat = length == max(leng2) == min(leng2)
         if not flat:
             keysset = util.canonorder([len(iidx) for code, iidx in lcodind 
                          if code < 0 and len(iidx) != 1])
@@ -364,7 +393,7 @@ class Ilist:
                 iidx.keys = [0] * length
                 self.lindex[lidx[ii]] = iidx
             elif code >=0 and isinstance(self.lindex[lidx[ii]], int): 
-                self._addiidx(lidx[ii], code, iidx, codind)
+                self._addiidx(lidx[ii], code, iidx, codind, length)
             elif code < 0 and isinstance(self.lindex[lidx[ii]], int): 
                 raise IlistError('Ilist not canonical')
         #print('fin secondary', time()-t0)
@@ -375,12 +404,21 @@ class Ilist:
         if reindex: self.reindex()
         return None
                 
-    def _addiidx(self, rang, code, iidx, codind):
-        '''creation Iindex and update lindex'''
+    def _addiidx(self, rang, code, iidx, codind, length):
+        '''creation derived or coupled Iindex and update lindex'''
         if isinstance(self.lindex[code], int): 
-            self._addiidx(code, codind[code][0], codind[code][1], codind)
-        if iidx.keys == list(range(len(iidx.codec))): #coupled format
-            self.lindex[rang] = Iindex(iidx.codec, iidx.name, self.lindex[code].keys)
+            self._addiidx(code, codind[code][0], codind[code][1], codind, length)
+        if iidx.keys == list(range(len(iidx.codec))):
+            #if len(iidx.codec) == length: #coupled format
+            if len(iidx.codec) == len(self.lindex[code].codec): #coupled format
+                self.lindex[rang] = Iindex(iidx.codec, iidx.name, self.lindex[code].keys)
+            else:  #derived format without keys
+                parent = copy(self.lindex[code])
+                parent.reindex()
+                leng = len(parent.codec)    
+                keys = [(i*len(iidx.codec))//leng for i in range(leng)]
+                self.lindex[rang] = Iindex(iidx.codec, iidx.name, 
+                                      Iindex.keysfromderkeys(parent.keys, keys))
         else:
             self.lindex[rang] = Iindex(iidx.codec, iidx.name, 
                                       Iindex.keysfromderkeys(self.lindex[code].keys, 
@@ -440,12 +478,7 @@ class Ilist:
 
     def __iadd__(self, other):
         ''' Add other's values to self's values'''
-        if self.lenindex != other.lenindex: raise IlistError('length are not identical')
-        if sorted(self.lname) != sorted(other.lname): raise IlistError('name are not identical')
-        for i in range(self.lenindex): 
-            self.lindex[i] += other.lindex[other.lname.index(self.lname[i])]
-        if not self.lvarname: self.lvarname = other.lvarname
-        return self        
+        return self.add(other, name=True, solve=False)     
     
     def __or__(self, other):
         ''' Add other's index to self's index in a new Ilist'''
@@ -614,6 +647,25 @@ class Ilist:
         return tuple(tuple(idx) for idx in textidx)
     
     #%% methods
+    def add(self, other, name=False, solve=True):
+        ''' Add other's values to self's values for each index 
+
+        *Parameters*
+
+        - **other** : Ilist object to add to self object
+        - **name** : Boolean (default False) - Add values with same index name (True) or 
+        same index row (False)
+
+        *Returns* : self '''      
+        if self.lenindex != other.lenindex: raise IlistError('length are not identical')
+        if name and sorted(self.lname) != sorted(other.lname): raise IlistError('name are not identical')
+        for i in range(self.lenindex): 
+            if name: self.lindex[i].add(other.lindex[other.lname.index(self.lname[i])], 
+                                        solve=solve)
+            else: self.lindex[i].add(other.lindex[i], solve=solve)
+        if not self.lvarname: self.lvarname = other.lvarname
+        return self        
+
     def addindex(self, index, first=False, merge=False, update=False):
         '''add a new index.
 
@@ -625,7 +677,7 @@ class Ilist:
         - **update** : if True, update actual values if index name is present (and merge is True)
 
         *Returns* : none '''      
-        idx = Iindex.from_obj(index)[1]
+        idx = Iindex.Iobj(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0: 
             raise IlistError('size are different')
@@ -646,8 +698,8 @@ class Ilist:
 
         - **record** :  list of new index values to add to Ilist
         - **unique** :  boolean (default False) - Append isn't done if unique is True and record present
-        - **dtype** : list of string (default ES.def_dtype) - data type to convert record or
-         string if dtype is available for all indexes
+        - **typevalue** : list of string (default ES.def_clsName) - typevalue to convert record or
+         string if typevalue is not define in indexes
 
         *Returns* : list - key record'''
         if self.lenindex != len(record): raise('len(record) not consistent')
@@ -765,7 +817,8 @@ class Ilist:
         *Returns* : none '''      
         self.lindex.pop(self.lname.index(indexname))
 
-    def full(self, reindex=False, indexname=None, fillvalue='-', inplace=True, complete=True):
+    def full(self, reindex=False, indexname=None, fillvalue='-', fillextern=True, 
+             inplace=True, complete=True):
         '''tranform a list of indexes in crossed indexes (value extension).
 
         *Parameters*
@@ -773,6 +826,7 @@ class Ilist:
         - **indexname** : list of string - name of indexes to transform
         - **reindex** : boolean (default False) - if True, set default codec before transformation
         - **fillvalue** : object value used for var extension
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
         - **inplace** : boolean (default True) - if True, filter is apply to self,
         - **complete** : boolean (default True) - if True, Iindex are ordered in canonical order
 
@@ -799,7 +853,9 @@ class Ilist:
                 raise IlistError('primary indexes have to be present')
         if il.lvarname:
             il.lvar[0].keys += [len(il.lvar[0].codec)] * len(keysadd[0])
-            il.lvar[0].codec.append(util.castval(fillvalue, util.typename(il.lvarname[0], ES.def_clsName)))
+            if fillextern: il.lvar[0].codec.append(util.castval(fillvalue, 
+                             util.typename(il.lvarname[0], ES.def_clsName)))
+            else: il.lvar[0].codec.append(fillvalue)
             #il.lvar[0].codec.append(util.cast(fillvalue, ES.def_dtype))
         if complete : il.setcanonorder()
         return il
@@ -967,25 +1023,30 @@ class Ilist:
         - **list** : value for each index'''
         return [idx.keytoval(key, extern=extern) for idx, key in zip(self.lidx, listkey)] 
     
-    def loc(self, rec, extern=True):
+    def loc(self, rec, extern=True, row=False):
         '''
-        Return variable value corresponding to a list of idx values.
+        Return variable value or row corresponding to a list of idx values.
 
         *Parameters*
 
         - **rec** : list - value for each idx
         - **extern** : boolean (default True) - if True, compare rec to val else to values 
+        - **row** : Boolean (default False) - if True, return list of row, else list of variable values
         
         *Returns*
 
         - **object** : variable value or None if not found'''
-        try:
+        locrow = list(set.intersection(*[set(self.lidx[i].loc(rec[i], extern)) 
+                                       for i in range(self.lenidx)]))
+        if row: return locrow
+        else: return self.lvar[0][tuple(locrow)]
+        '''try:
             if extern: 
                 row = self.textidxext.index(rec)
             else: 
                 row = self.textidx.index(rec)
         except: return None
-        return self.lvar[0][row]
+        return self.lvar[0][row]'''
 
     def merge(self, name='merge', fillvalue=math.nan, mergeidx=False, updateidx=False):
         '''
@@ -1001,7 +1062,9 @@ class Ilist:
         *Returns*
 
         - **Ilist** : merged Ilist '''     
-        fillvalue = util.castval(fillvalue, util.typename(self.lvarname[0], ES.def_clsName))
+        #if len(self.lvarname) == 0: fillvalue = util.castval(fillvalue, ES.def_clsName)
+        #else: fillvalue = util.castval(fillvalue, util.typename(self.lvarname[0], 
+        #                                                        ES.def_clsName))
         #fillvalue = util.cast(fillvalue, ES.def_dtype)
         find = True
         ilm = copy(self)
@@ -1009,7 +1072,7 @@ class Ilist:
         while find:
             find = False
             for i in range(len(ilm)):
-                if not isinstance(ilm.lvar[0].values[i], Ilist): continue
+                if not ilm.lvar[0].values[i].__class__.__name__ in ['Ilist', 'Obs']: continue
                 find = True
                 il = ilm.lvar[0].values[i].merge()
                 ilname = il.idxname
@@ -1020,7 +1083,8 @@ class Ilist:
                     il.addindex ([nameidx, [val] * len(il)], first=True,
                                           merge=mergeidx, update=updidx) # ajout des index au fils
                 for name in ilname:
-                    ilm.addindex([name, [fillvalue] * len(ilm)], 
+                    fillval = util.castval(fillvalue, util.typename(name, ES.def_clsName))
+                    ilm.addindex([name, [fillval] * len(ilm)], 
                                           merge=mergeidx, update=False) # ajout des index au père
                 del(ilm[i])
                 il.renameindex(il.lvarname[0], ilm.lvarname[0]) 
@@ -1038,6 +1102,50 @@ class Ilist:
         if name in self.lname: return self.lindex[self.lname.index(name)]
         return None
     
+    def plot(self, order=None, line=True, size=5, marker='o', maxlen=20):
+        '''
+        This function visualize data with line or colormesh.
+
+        *Parameters*
+
+        - **line** : Boolean (default True) - Choice line or colormesh.
+        - **order** : list (defaut None) - order of the axes (x, y, hue or col)
+        - **size** : int (defaut 5) - plot size
+        - **marker** : Char (default 'o') - Symbol for each point.
+        - **maxlen** : Integer (default 20) - maximum length for string
+
+        *Returns*
+
+        - **None**  '''
+        if not self.consistent : return
+        xa = self.to_xarray(numeric = True, lisfunc=[util.cast], 
+                             dtype='str', maxlen=maxlen)
+        if not order: order = [0,1,2]
+        
+        if   len(xa.dims) == 1:
+            xa.plot.line(x=xa.dims[0]+'_row', size=size, marker=marker)
+        elif len(xa.dims) == 2 and line:
+            xa.plot.line(x=xa.dims[order[0]]+ '_row',
+                xticks=list(xa.coords[xa.dims[0]+'_row'].values),
+                #hue=xa.dims[order[1]]+'_row', size=size, marker=marker)
+                hue=xa.dims[order[1]], size=size, marker=marker)
+        elif len(xa.dims) == 2 and not line:
+            xa.plot(x=xa.dims[order[0]]+'_row', y=xa.dims[order[1]]+'_row',
+                xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
+                yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
+                size = size)
+        elif len(xa.dims) == 3 and line:
+            xa.plot.line(x=xa.dims[order[0]]+ '_row', col=xa.dims[order[1]],
+                xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
+                hue=xa.dims[order[2]], col_wrap=2, size=size, marker=marker)
+        elif len(xa.dims) == 3 and not line:
+            xa.plot(x=xa.dims[order[0]]+'_row', y=xa.dims[order[1]]+'_row', 
+                xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
+                yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
+                col=xa.dims[order[2]], col_wrap=2, size=size)
+        plt.show()
+        return {xa.dims[i]: list(xa.coords[xa.dims[i]].values) for i in range(len(xa.dims))}
+
     def record(self, row, extern=True):
         '''return the record at the row
            
@@ -1112,6 +1220,7 @@ class Ilist:
         for i in self.lvarrow: order.append(i)'''
         self.swapindex(order)
         self.sort()
+        return self
         
     def setfilter(self, filt=None, first=False, filtname=ES.filter):
         '''Add a filter index with boolean values
@@ -1192,8 +1301,38 @@ class Ilist:
             self.lindex = lindex
             return self
         return Ilist(lindex, var=self.lvarrow[0])
+
+    def to_csv(self, filename, optcsv={'quoting': csv.QUOTE_NONNUMERIC}, **kwargs):
+        '''
+        Generate csv file to display data.
+
+        *Parameters*
+
+        - **filename** : string - file name (with path)
+        - **optcsv** : parameter for csv.writer
+
+        *Parameters (kwargs)*
+
+        - **name=listcode** : element (default None) - eg location='ns'
+            - listcode : string with Code for each index (j: json, n: name, s: simple).
+            - name : name of the index 
+        - **lenres** : Integer (default : 0) - Number of raws (all if 0)
+        - **header** : Boolean (default : True) - If True, first line with names
+        - **optcsv** : parameter for csv.writer
+        - **ifunc** : function (default None) - function to apply to indexes
+        - **other kwargs** : parameter for ifunc
         
-    def to_csv(self, filename='ilist.csv', ifunc=None, header=True, 
+        *Returns* : size of csv file '''
+        size = 0
+        if not optcsv: optcsv = {}
+        tab = self._to_tab(**kwargs)
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, **optcsv)
+            for lign in tab : 
+                size += writer.writerow(lign)
+        return size
+       
+    """def to_csv(self, filename='ilist.csv', ifunc=None, header=True, 
                optcsv={'quoting': csv.QUOTE_NONNUMERIC}, **kwargs):
         '''
         Generate a csv file with Ilist data (a column for each index)
@@ -1221,10 +1360,10 @@ class Ilist:
                 else: row = [util.funclist(self.lindex[j].values[i], ifunc[j], **kwargs) 
                        for j in range(self.lenindex)]
                 size += writer.writerow(row)
-        return size
+        return size"""
     
-    def to_xarray(self, info=False, idx=None, dimmax=-1, fillvalue='?', lisfunc=None, 
-                  name=None, numeric=False, **kwargs):
+    def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
+                  lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
         '''
         Complete the Ilist and generate a Xarray DataArray with the dimension define by ind.
 
@@ -1233,34 +1372,42 @@ class Ilist:
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
         - **idx** : list (default none) - list of idx to be completed. If [],
         self.axes is used.
-        - **dimmax** : int (default -1) - max Xarray dimension (only if axes=[])
         - **fillvalue** : object (default '?') - value used for the new extval
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
         - **lisfunc** : function (default none) - list of function to apply to indexes before export
         - **name** : string (default None) - DataArray name. If None, variable name
         - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
-        - **kwargs** : parameter for listfunc
+        - **npdtype** : string (default None) - numpy dtype for the DataArray ('object' if None)
+        - **kwargs** : parameter for lisfunc
 
         *Returns* : none '''
         if not self.consistent : raise IlistError("Ilist not consistent")
         if len(self.lvarname) == 0 : raise IlistError("Variable is not defined")
         if isinstance(lisfunc, list) and len(lisfunc) == 1: 
             lisfunc = lisfunc * self.lenindex
-        if not isinstance(lisfunc, list) or len(lisfunc) != self.lenindex : 
+        elif isinstance(lisfunc, list) and len(lisfunc) != self.lenindex : 
             lisfunc = [None] * self.lenindex
+        elif not isinstance(lisfunc, list):
+            funcvar = lisfunc            
+            lisfunc = [None] * self.lenindex
+            lisfunc[self.lvarrow[0]] = funcvar
         if numeric: 
             lisfunc[self.lvarrow[0]] = ESValue.to_float
             fillvalue= math.nan
+            npdtype='float'
         lisfuncname = dict(zip(self.lname, lisfunc))
         if idx is None or idx==[] : idx = self.primary
-        axesname = [self.idxname[i] for i in idx]
-        ilf = self.full(indexname=axesname, fillvalue=fillvalue, inplace=False)
+        axesname = [self.idxname[i] for i in idx[:len(self.idxname)]]
+        ilf = self.full(indexname=axesname, fillvalue=fillvalue, 
+                        fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
-        idxilf = list(range(len(idx)))
+        idxilf = list(range(len(idx[:len(self.idxname)])))
         coord = ilf._xcoord(idxilf, lisfuncname, **kwargs)
         dims = [ilf.idxname[i] for i in idxilf]
-        data = ilf.lvar[0].to_numpy(func=lisfuncname[self.lvarname[0]], **kwargs
+        data = ilf.lvar[0].to_numpy(func=lisfuncname[self.lvarname[0]], 
+                                    npdtype=npdtype, **kwargs
                                      ).reshape([ilf.idxlen[idx] for idx in idxilf])
-        if not name: name = self.lvarname[0]
+        if not name: name = self.name
         attrs={}
         for nam in self.lunicname: attrs[nam] = self.nindex(nam).codec[0]
         if info: attrs |= ilf.indexinfos()
@@ -1324,8 +1471,12 @@ class Ilist:
                 elif inf['typecoupl'] == 'linked' : 
                     lis.append(idx.to_obj(keys=True, name=idxname, **option2))
                 elif inf['typecoupl'] == 'derived': 
-                    keys=idx.derkeys(self.lidx[inf['parent']])
-                    lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']], 
+                    if idx.iskeysfromderkeys(self.lidx[inf['parent']]):
+                        lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']], 
+                                          name=idxname, **option2))                        
+                    else:
+                        keys=idx.derkeys(self.lidx[inf['parent']])
+                        lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']], 
                                           name=idxname, **option2))
                 else: raise IlistError('Iindex type undefined')
         for i in self.lvarrow: 
@@ -1370,6 +1521,36 @@ class Ilist:
         - **list of int** : rec key for each idx'''
         return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lidx, rec)]
 
+    def view(self, **kwargs) :
+        '''
+        Generate tabular list to display data.
+
+        *Parameters (kwargs)*
+
+        - **name=listcode** : element (default None) - eg location='ns'
+            - listcode : string with Code for each index (j: json, n: name, s: simple).
+            - name : name of the index 
+        - **defcode** : String (default : 'j') - default list code (if 'all' is True)
+        - **all** : Boolean (default : True) - 'defcode apply to all indexes or none
+        - **lenres** : Integer (default : 0) - Number of raws (all if 0)
+        - **header** : Boolean (default : True) - First line with names
+        - **width** : Integer (default None) - Number of characters displayed for each attribute (all if None)
+        - **ifunc** : function (default None) - function to apply to indexes
+        - **tabulate params** : default 'tablefmt': 'simple', 'numalign': 'left', 'stralign': 'left',
+                   'floatfmt': '.3f' - See tabulate module
+        - **other kwargs** : parameter for ifunc
+
+        *Returns* : None '''
+        #print(kwargs)
+        opttab = {'defcode': 'j', 'all': True, 'lenres': 0, 'header':True}
+        optview = {'tablefmt': 'simple', 'numalign': 'decimal', 'stralign': 'left', 'floatfmt': '.2f'}
+        option = opttab | optview | kwargs
+        tab = self._to_tab(**option)
+        width = ({'width': None} | kwargs)['width']
+        if width: tab = [[(lambda x : x[:width] if type(x)==str else x)(val) 
+                           for val in lig] for lig in tab]
+        print(tabulate(tab, headers='firstrow', **{k: option[k] for k in optview})) 
+    
     def vlist(self, *args, func=None, index=-1, **kwargs):
         '''
         Apply a function to an index and return the result.
@@ -1385,27 +1566,121 @@ class Ilist:
         if index == -1 and self.lenindex == 1: index = 0        
         return self.lindex[index].vlist(func, *args, **kwargs) 
 
+    def voxel(self):
+        '''
+        Plot not null values in a cube with voxels and return indexes values.
+        
+        *Returns* : **dict of indexes values**
+        '''
+        if not self.consistent : return
+        if   self.lenidx  > 3: raise IlistError('number of idx > 3')
+        elif self.lenidx == 2: self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
+        elif self.lenidx == 1: 
+            self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
+            self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
+        xa = self.to_xarray(idx=[0,1,2], fillvalue='?', fillextern=False,
+                             lisfunc=util.isNotEqual, tovalue='?')
+        ax = plt.figure().add_subplot(projection='3d')
+        ax.voxels(xa, edgecolor='k')
+        ax.set_xticks(np.arange(self.idxlen[self.idxname.index(xa.dims[0])]))
+        ax.set_yticks(np.arange(self.idxlen[self.idxname.index(xa.dims[1])]))
+        ax.set_zticks(np.arange(self.idxlen[self.idxname.index(xa.dims[2])]))
+        ax.set(xlabel=xa.dims[0][:8], 
+               ylabel=xa.dims[1][:8],
+               zlabel=xa.dims[2][:8])
+        plt.show()
+        return {xa.dims[i]: list(xa.coords[xa.dims[i]].values) 
+                for i in range(len(xa.dims))}
+
+    def _to_tab(self, **kwargs):
+        ''' data preparation (dict of dict) for view or csv export. Representation is included if :
+            - code is definie in the name element of the field
+            - or code is defined in 'defcode' element and 'all' element is True
+
+        *Parameters (kwargs)*
+
+        - **name=listcode** : element (default None) - eg location='ns'
+            - listcode : string with Code for each index (j: json, n: name, s: simple, f: ifunc).
+            - name : name of the index 
+        - **defcode** : String (default : 'j') - default list code (if 'all' is True)
+        - **all** : Boolean (default : True) - 'defcode apply to all indexes or none
+        - **lenres** : Integer (default : 0) - Number of raws (all if 0)
+        - **ifunc** : function (default None) - function to apply to indexes
+        - **other kwargs** : parameter for ifunc'''
+
+        option = {'defcode': 'j', 'all': True, 'lenres': 0, 'ifunc': None,
+                  'header': True}  | kwargs
+        tab = list()
+        resList = []
+        diccode = {'j': '', 'n': 'name-', 's': 'smpl-', 'f': 'func-'}
+        if option['header']:
+            for name in self.lname:
+                if name in option:
+                    for n, code in diccode.items():
+                        if n in option[name]: resList.append(code + name)
+                elif option['all']:
+                    for n, code in diccode.items():
+                        if n in option['defcode']: resList.append(code + name)                
+                '''for n, code in diccode.items():
+                    if (name in option and n in option[name]) or (
+                                option['all'] and n in option['defcode']):
+                        resList.append(code + name)'''
+            tab.append(resList)
+        lenres = option['lenres']
+        if lenres == 0 : lenres = len(self)
+        for i in range(min(lenres, len(self))) :
+            resList = []
+            for name in self.lname:
+                if name in option:
+                    for n, code in diccode.items():
+                        if n in option[name]: 
+                            val = self.nindex(name).values[i]
+                            if n == 'j': resList.append(util.cast(val, dtype='json'))
+                            if n == 'n': resList.append(util.cast(val, dtype='name'))
+                            if n == 's': resList.append(util.cast(val, dtype='json', string=True))
+                            if n == 'f': resList.append(util.funclist(val, option['ifunc'], **kwargs))
+                elif option['all']:
+                    for n, code in diccode.items():
+                        if n in option['defcode']: 
+                            val = self.nindex(name).values[i]
+                            if n == 'j': resList.append(util.cast(val, dtype='json'))
+                            if n == 'n': resList.append(util.cast(val, dtype='name'))
+                            if n == 's': resList.append(util.cast(val, dtype='json', string=True))
+                            if n == 'f': resList.append(util.funclist(val, option['ifunc'], **kwargs))
+                '''for n, code in diccode.items():
+                    if (name in option and n in option[name]) or (
+                                option['all'] and n in option['defcode']):
+                        val = self.nindex(name).values[i]
+                        if n == 'j': resList.append(util.cast(val, dtype='json'))
+                        if n == 'n': resList.append(util.cast(val, dtype='name'))
+                        if n == 's': resList.append(util.cast(val, dtype='json', string=True))
+                        if n == 'f': resList.append(util.funclist(val, option['ifunc'], **kwargs))'''
+            tab.append(resList)
+        #print(tab)
+        return tab
+    
     def _xcoord(self, axe, lisfuncname=None, **kwargs) :
         ''' Coords generation for Xarray'''
-        inf = self.indexinfos()
+        if 'maxlen' in kwargs : maxlen=kwargs['maxlen']
+        else: maxlen = 20
+        info = self.indexinfos()
         coord = {}
         for i in self.lidxrow:
-            fieldi = inf[i]
+            fieldi = info[i]
             if fieldi['cat'] == 'unique': continue
-            if isinstance(lisfuncname, list) and len(lisfuncname) == self.lenindex: 
+            if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex: 
                 funci= lisfuncname[self.lname[i]]
             else : funci = None
+            iname = self.idxname[i]
             if i in axe :  
-                coord[self.idxname[i]] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
-                coord[self.idxname[i]+'_row'] = (self.idxname[i], 
-                                                 np.arange(len(coord[self.idxname[i]])))
-                coord[self.idxname[i]+'_str'] = (self.idxname[i], 
-                            self.lidx[i].to_numpy(func=util.cast, codec=True, dtype='str', maxlen=kwargs['maxlen']))
+                coord[iname] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
+                coord[iname+'_row'] = (iname, np.arange(len(coord[iname])))
+                coord[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast, 
+                                       codec=True, dtype='str', maxlen=maxlen))
             else:
-                #self.lidx[i].coupling(self.lidx[fieldi['pparent']], derived=False)
                 self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)
-                xlisti = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
-                coord[self.idxname[i]] = (self.idxname[fieldi['pparent']], xlisti)
+                coord[iname] = (self.idxname[fieldi['pparent']], 
+                                self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))
         return coord
 
 class IlistError(Exception):

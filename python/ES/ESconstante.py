@@ -14,10 +14,12 @@ def _classval():
         NamedValue, ExternValue
     from timeslot import TimeSlot
     from ESObservation import Observation
+    from ESObs import Obs
     from ilist import Ilist
     from iindex import Iindex
     import datetime
     return {ES.obs_clsName: Observation,
+            ES.obs2_clsName: Obs,
             ES.dat_clsName: DatationValue,
             ES.loc_clsName: LocationValue,
             ES.prp_clsName: PropertyValue,
@@ -37,6 +39,7 @@ def _classESval():
     from ESValue import LocationValue, DatationValue, PropertyValue, \
         NamedValue, ExternValue
     return {ES.obs_clsName: ExternValue,
+            ES.obs2_clsName: ExternValue,
             ES.dat_clsName: DatationValue,
             ES.loc_clsName: LocationValue,
             ES.prp_clsName: PropertyValue,
@@ -209,6 +212,7 @@ class Es:
         #%% typevalue initialization (dict)        
         self.typeName: Dict = {
             self.obs_valName : self.obs_clsName,
+            self.obs2_valName : self.obs2_clsName,
             self.dat_valName : self.dat_clsName,
             self.loc_valName : self.loc_clsName,
             self.prp_valName : self.prp_clsName,
@@ -224,8 +228,8 @@ class Es:
             self.loc_classES : self.loc_clsName,
             self.prp_classES : self.prp_clsName,
             }
-        self.valname : Dict = dict(zip(list(self.typeName.values())[:10], 
-                                       list(self.typeName.keys())[:10]))
+        self.valname : Dict = dict(zip(list(self.typeName.values())[:11], 
+                                       list(self.typeName.keys())[:11]))
         self.className : list = list(self.typeName.values())
 
         self.EStypeName: Dict = {
@@ -420,6 +424,7 @@ class Es:
 
         self.nul_classES      = "nullClass"
         self.obs_classES      = "observation"
+        self.obs2_classES      = "obs"
         self.dat_classES      = "datation"
         self.loc_classES      = "location"
         self.prp_classES      = "property"
@@ -463,6 +468,7 @@ class Es:
         self.prp_name           = "name";
 
         self.obs_valName      = "observation"
+        self.obs2_valName      = "obs"
         self.dat_valName      = "datvalue"
         self.loc_valName      = "locvalue"
         self.prp_valName      = "prpvalue"
@@ -476,6 +482,7 @@ class Es:
         self.slo_valName      = "timeslot"
 
         self.obs_clsName      = 'Observation'
+        self.obs2_clsName      = 'Obs'
         self.dat_clsName      = 'DatationValue'
         self.loc_clsName      = 'LocationValue'
         self.prp_clsName      = 'PropertyValue'

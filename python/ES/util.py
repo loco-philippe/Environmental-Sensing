@@ -70,6 +70,13 @@ class util:
     c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
     c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
 
+
+    @staticmethod
+    def canonorder(lenidx): 
+        '''return a list of crossed keys from a list of number of values'''
+        listrange = [range(lidx) for lidx in lenidx] 
+        return util.transpose(util.list(list(product(*listrange))))
+
     @staticmethod
     def cast(val, dtype=None, string=True, default=None, maxlen=None):
         ''' convert val in the type defined by the string dtype'''
@@ -91,12 +98,13 @@ class util:
         if dtype == 'str':  
             if maxlen: return str(val)[:maxlen]
             else: return str(val)
-        if typeval in ES.ESclassName: return val
+        #if typeval in ES.ESclassName: return val
         if not dtype : return ESValue._castsimple(val)
         if dtype == 'int':
             try : return int(val.lstrip())
             except : return math.nan
         if dtype == 'float':
+            if typeval in ES.className: return val.to_float()
             try : return float(val.lstrip())
             except : return math.nan
         if dtype == 'datetime':
@@ -106,6 +114,7 @@ class util:
             if util.c1.search(val) and util.c2.search(val) :
                 return [float(util.c1.search(val)[0][:-1]), float(util.c2.search(val)[0][1:])]
             else : return [-1, -1]
+        if typeval in ES.ESclassName: return val
         if dtype in ES.typeName: # tous les types environmental sensing
             return ESValue.from_obj(val, ES.typeName[dtype])
         raise utilError("dtype : " + dtype + " inconsistent with data")
@@ -198,14 +207,15 @@ class util:
         #if len(lis) == 2 and isinstance(lis[0], (tuple, list)) and isinstance(lis[1], (int, list)):
         if len(lis) == 2 and isinstance(lis[0], (tuple, list)) and util.iskeysobj(lis[1]):
             return (None, None, util.decodecodec(lis[0], classname), *util.decodekeys(lis[1]))
-        if len(lis) == 1 and isinstance(lis[0], list):
-            return (None, None, util.decodecodec(lis[0], classname), ES.nullparent, None)
+        #if len(lis) == 1 and isinstance(lis[0], list):
+        #    return (None, None, util.decodecodec(lis[0], classname), ES.nullparent, None)
         return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
         
     @staticmethod
     def iskeysobj(obj):
         if isinstance(obj, int):                        return True
         if not isinstance(obj, list):                   return False
+        if len(obj) == 0:                               return True
         if not isinstance(obj[0], int):                 return False
         if len(obj) == 1:                               return True
         if len(obj) > 2 and not isinstance(obj[1], int):return False
@@ -227,7 +237,7 @@ class util:
         if isinstance(context, dict) and len(context)==1:
             name, dtype = list(context.items())[0][0]
             if isinstance(name, str) and isinstance(dtype, str) and dtype in ES.typeName.keys():  
-                return (name, ES.typename[dtype])
+                return (name, ES.typeName[dtype])
             raise utilError('name or typevalue is unconsistent')
         if context in ES.typeName.keys(): return (context, ES.typeName[context])
         if isinstance(context, str): return (context, None)
@@ -237,6 +247,8 @@ class util:
     def decodekeys(keys):
         '''Generate a tuple (parent, keys) from a json value'''
         if isinstance(keys, int): return (keys, None)
+        if isinstance(keys, list) and len(keys) == 0:
+            return (ES.nullparent, keys)
         if isinstance(keys, list) and len(keys) == 1 and isinstance(keys[0], int):
             return (keys[0], None)
         if isinstance(keys, list) and len(keys) == 2 and isinstance(keys[0], int) \
@@ -245,8 +257,8 @@ class util:
         raise utilError('parent or keys is unconsistent')
     
     @staticmethod
-    def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False, typevalue=None, 
-                  parent=ES.nullparent, listunic=False, **kwargs):
+    def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False, 
+                  codecval=False, typevalue=None, parent=ES.nullparent, listunic=False, **kwargs):
         '''
         Return a formatted object with values, keys and codec.
         - Format can be json, bson or cbor
@@ -260,7 +272,8 @@ class util:
         - **typevalue** : string (default None) - type to convert values
         - **parent** : int (default ES.nullparent) - Ilist index linked to
         - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
-        - **simpleval** : boolean (default False) - if True, only codec is included
+        - **codecval** : boolean (default False) - if True, only list of codec values is included
+        - **simpleval** : boolean (default False) - if True, only value (without name) is included
 
         *Parameters (kwargs)*
 
@@ -273,7 +286,7 @@ class util:
         option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
                   'codif': {}, 'typevalue': typevalue} | kwargs
         js = []
-        if not simpleval:
+        if not codecval:
             if name and typevalue:          js.append({name: typevalue})
             elif name:                      js.append(name)
             elif typevalue:                 js.append(typevalue)
@@ -285,7 +298,7 @@ class util:
         '''js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
                              fullcodec=fullcodec, untyped=option['untyped']) 
                    for cc in codeclist])'''
-        if not simpleval: 
+        if not codecval: 
             if parent >= 0 and keyslist:    js.append([parent, keyslist])
             elif parent != ES.nullparent:   js.append(parent)
             elif keyslist:                  js.append(keyslist)      
@@ -341,6 +354,25 @@ class util:
         return keysadd
 
     @staticmethod
+    def isEqual(value, tovalue=None):
+        ''' return True if value and tovalue are equal'''
+        return value.__class__.__name__ == tovalue.__class__.__name__ and \
+            value == tovalue
+
+    @staticmethod
+    def isNotEqual(value, tovalue=None):
+        ''' return True if value and tovalue are not equal'''
+        return value.__class__.__name__ != tovalue.__class__.__name__ or \
+            value != tovalue
+
+    @staticmethod
+    def isNotNull(value, nullvalue=None):
+        '''return boolean. True if value' is not a NullValue'''
+        if  value.__class__.__name__ in ES.valname:
+            return value != value.__class__(nullvalue)
+        return not value is None
+    
+    @staticmethod
     def idxlink(ref, l2):
         ''' return a dict for each different tuple (ref value, l2 value)'''
         lis = set(util.tuple(util.transpose([ref, l2])))
@@ -359,13 +391,7 @@ class util:
         if val.__class__.__name__ == 'Ilist':       return {ES.ili_valName: val.json(**option)}
         if val.__class__.__name__ == 'Iindex':      return {ES.iin_valName: val.json(**option)}
         if val.__class__.__name__ == 'Observation': return {ES.obs_valName: val.to_json(**option)}
-
-
-    @staticmethod
-    def canonorder(lenidx): 
-        '''return a list of crossed keys from a list of number of values'''
-        listrange = [range(lidx) for lidx in lenidx] 
-        return util.transpose(util.list(list(product(*listrange))))
+        if val.__class__.__name__ == 'Obs':         return {ES.obs2_valName: val.to_obj(**option)}
 
     @staticmethod
     def list(tuplelists): 

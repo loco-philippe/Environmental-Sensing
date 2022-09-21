@@ -30,8 +30,8 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
         self.assertTrue(idx.values == [])
         idx = Iindex(lendefault=3) 
-        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [0,1,2] and idx.keys == [0,1,2])
-        self.assertTrue(idx.val == [0,1,2])
+        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [0] and idx.keys == [0,0,0])
+        self.assertTrue(idx.val == [0,0,0])
         self.assertTrue(Iindex(1) == Iindex([1]))
         self.assertTrue(Iindex('trux') == Iindex(['trux']))
         
