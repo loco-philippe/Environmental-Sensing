@@ -67,4 +67,4 @@ all situations (platform)
     - [ESS permitted Characteristics](https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/permitted_characteristics.pdf)
     
  
-*The Environmental Sensing project is one of the five [BlueHats Semester of Code](https://communs.numerique.gouv.fr/bluehats/bsoc-contributions-2022/) projects selected among the 40 projects identified by in March 22.*
+*The Environmental Sensing project is one of the six [BlueHats Semester of Code](https://communs.numerique.gouv.fr/bluehats/bsoc-contributions-2022/) projects selected among the 40 projects identified by in March 22.*
