@@ -12,8 +12,8 @@ from iindex import Iindex, util
 from ilist import Ilist
 from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from test_observation import dat3, loc3, prop2, _res
-from ESObservation import Observation
+from test_obs import dat3, loc3, prop2
+from ESObs import Obs
 from ESValue import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue #, ReesultValue
 import datetime
 from ESconstante import ES
@@ -30,8 +30,8 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
         self.assertTrue(idx.values == [])
         idx = Iindex(lendefault=3) 
-        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [0,1,2] and idx.keys == [0,1,2])
-        self.assertTrue(idx.val == [0,1,2])
+        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [0] and idx.keys == [0,0,0])
+        self.assertTrue(idx.val == [0,0,0])
         self.assertTrue(Iindex(1) == Iindex([1]))
         self.assertTrue(Iindex('trux') == Iindex(['trux']))
         

@@ -94,8 +94,8 @@ class ESValue:
 
     **other methods**
 
+    - `ESValue.boundingBox` (@classmethod)
     - `ESValue.from_obj` (@classmethod)
-    - `ESValue.bounds`
     - `ESValue.boxUnion`
     - `ESValue.getValue`
     - `ESValue.getName`
@@ -236,6 +236,13 @@ class ESValue:
 
 
 #%% methods
+    @staticmethod
+    def boundingBox(listValue):
+        ''' return a `ESValue` object with bounds values'''
+        box = copy(listValue[0])
+        for val in listValue: box = box.boxUnion(val)
+        return box
+    
     @property
     def bounds(self):
         '''list or tuple (@property)
@@ -317,7 +324,7 @@ class ESValue:
 
     def to_float(self, **kwargs):
         '''return a converted float value or nan'''
-        if self.value == None :         return float('nan')
+        if self.value is None :         return float('nan')
         if isinstance(self.value, str):
             if self.value == ES.nullAtt:return float('nan')
             try:                        return float(self.value)
@@ -352,7 +359,7 @@ class ESValue:
         if option['encoded'] and option['encode_format'] == 'cbor': return cbor2.dumps(js)
         return js
 
-    def vSimple(self, string=False):
+    def vSimple(self, string=False, **kwargs):
         ''' Return the vSimple of the `ESValue` (string or object) '''
         return self.__class__.vSimple(self, string=string)
 
@@ -378,11 +385,8 @@ class ESValue:
         if isinstance(val,(DatationValue, LocationValue, PropertyValue, NamedValue, 
                            ExternValue, TimeSlot)):
             return val.__class__.__name__
-        #if val.__class__.__name__ in [ES.obs_clsName, ES.ili_clsName, ES.tim_clsName]:
-        #    return val.__class__.__name__
         if val.__class__.__name__ in [ES.obs_clsName, ES.ili_clsName]:
             return ES.ext_clsName
-            #return val.__class__.__name__
         if val.__class__.__name__ == ES.tim_clsName: return ES.dat_clsName
         if isinstance(val, str):
             try: dic = json.loads(val)
@@ -391,7 +395,6 @@ class ESValue:
         if isinstance(dic, (int, float, bool, list, str, tuple)): 
             return ES.nam_clsName
         if isinstance(dic, dict) and len(dic) != 1: 
-            #return ES.nam_clsName
             return ES.prp_clsName
         if isinstance(dic, dict) and len(dic) == 1 and list(dic.keys())[0] in ES.typeName.keys(): 
             return ES.typeName[list(dic.keys())[0]]
@@ -401,7 +404,7 @@ class ESValue:
             return ESValue.valClassName(list(dic.values())[0])
         return ES.nam_clsName
 
-    def vName(self, default=ES.nullName):
+    def vName(self, default=ES.nullName, **kwargs):
         '''
         Return the Name of the `ESValue`
 
@@ -487,7 +490,8 @@ class ESValue:
             try: bs = json.loads(bs)
             except JSONDecodeError: pass
         if not isinstance(bs, dict): val = bs
-        elif isinstance(bs, dict) and len(bs) > 1: val = bs
+        #elif isinstance(bs, dict) and len(bs) > 1: val = bs
+        elif isinstance(bs, dict) and len(bs) != 1: val = bs
         elif list(bs.keys())[0] in ES.typeName:
             classname = ES.typeName[list(bs.keys())[0]]
             bs2 = bs[list(bs.keys())[0]]
@@ -843,13 +847,20 @@ class PropertyValue(ESValue):              # !!! début ESValue
             self.name = val.name
             self.value = val.value
             return
+        if not val is None and name == ES.prp_type:
+            name = None
+            val = {ES.prp_type: val}
+        elif isinstance(val, str) and isinstance(name, str) and name != ES.nullName :
+            val = {name: val}
         if isinstance(val, dict):
             if len(val) > 0 and isinstance(list(val.values())[0], dict):
                     self.name = list(val.keys())[0]
                     self.value |= val[list(val.keys())[0]]
             else:   self.value |= val
         elif isinstance(val, str): name = val
-        else: raise ESValueError('type data not compatible with PropertyValue')
+        #elif not val is None: raise ESValueError('type data not compatible with PropertyValue')
+        #else: raise ESValueError('type data not compatible with PropertyValue')
+        
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
             self.name = name
         if not ES.prp_type in self.value: raise ESValueError("type property not defined")
@@ -1013,7 +1024,7 @@ class ExternValue (ESValue):               # !!! début ResValue
 
         '''
         ESValue.__init__(self)
-        if isinstance(val, ExternValue):
+        if isinstance(val, self.__class__):
             self.name = val.name
             self.value = val.value
             return
@@ -1039,7 +1050,7 @@ class ExternValue (ESValue):               # !!! début ResValue
 
     def _jsonValue(self, **option) :
         '''return a json object for the value '''
-        if self.value.__class__.__name__ in ['Iindex', 'Ilist']: 
+        if self.value.__class__.__name__ in ['Iindex', 'Ilist', 'Obs']: 
             return self.value.json(encoded=False, encode_format='json')
         if isinstance(self.value, (int, str, float, bool, list, tuple, dict, datetime.datetime, type(None), bytes)):
             return self.value

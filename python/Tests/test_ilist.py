@@ -11,10 +11,10 @@ import unittest
 from ilist import Ilist
 from iindex import Iindex
 from copy import copy
+from util import util
 import csv #, os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from test_observation import dat3, loc3, prop2, _res
-from ESObservation import Observation
+from test_obs import dat3, loc3, prop2, _res
 from ESValue import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue #, ReesultValue
 from datetime import datetime
 from ESconstante import ES
@@ -244,7 +244,7 @@ class Test_Ilist(unittest.TestCase):
         il2.addindex(['truc', ['un', 'deux'], [0,0,1,1,0]])
         il2.addindex(['truc2', ['un', 'de', 'un', 'de', 'un']])
         il2.reindex()
-        self.assertEqual(il2.loc([12, 120, "deux", "de"]), '_ry')
+        self.assertEqual(il2.loc([12, 120, "deux", "de"]), ['_ry'])
         
     def test_append(self) :
         il=Ilist([[0, 2, 0, 2], [30, 12, 20, 15]])
@@ -443,16 +443,16 @@ class Test_Ilist(unittest.TestCase):
                            'name'      : ['philippe white', 'anne white'],
                            'firstname' : ['philippe', 'anne'],
                            'group'     : ['gr1', 'gr2']}, var=0)
-        self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["anne white", "anne", "gr1", "english" ]), 14)
-        self.assertEqual(il3.merge(mergeidx=True, updateidx=False).loc(["anne white", "anne", "gr2", "english" ]), 14)
+        self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["anne white", "anne", "gr1", "english" ]), [14])
+        self.assertEqual(il3.merge(mergeidx=True, updateidx=False).loc(["anne white", "anne", "gr2", "english" ]), [14])
         il3 = Ilist([[il1, il2]], typevalue=None)
-        self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["english", "gr1"]), 14)
+        self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(["english", "gr1"]), [14])
 
 
     def test_csv(self):
         il=Ilist([[['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 20, 15]])
-        il.to_csv()
-        il2 = Ilist.from_csv(var=0)
+        il.to_csv('test.csv')
+        il2 = Ilist.from_csv('test.csv', var=0)
         self.assertTrue(il == il2)
         if ES.def_clsName: 
             il.to_csv(ifunc=ESValue.vSimple)
@@ -460,8 +460,9 @@ class Test_Ilist(unittest.TestCase):
             il3 = Ilist.from_csv(var=0)
             self.assertTrue(il == il3)
         il=Ilist.Iext([['er', 'rt', 'er', 'ry', 'ab'], [0, 2, 0, 2, 0], [10,0,20,20,15], [1,2,1,2,1]], var=0)
-        il.to_csv(optcsv={'dialect':'excel', 'delimiter':';', 'quoting': csv.QUOTE_NONNUMERIC})
-        il2 = Ilist.from_csv(var=0, optcsv={'dialect':'excel', 'delimiter':';', 'quoting': csv.QUOTE_NONNUMERIC})
+        il.to_csv('test.csv', optcsv={'dialect':'excel', 'delimiter':';', 'quoting': csv.QUOTE_NONNUMERIC})
+        il2 = Ilist.from_csv('test.csv', var=0, optcsv={'dialect':'excel', 'delimiter':';', 
+                                                        'quoting': csv.QUOTE_NONNUMERIC})
         self.assertTrue(il == il2)
 
     def test_axes(self):
@@ -528,8 +529,8 @@ class Test_Ilist(unittest.TestCase):
         ilm.nindex('product').coupling(ilm.nindex('plants'))
         ilx = ilm.to_xarray()
         self.assertEqual(float(ilx.sel(quantity='10 kg', product='apple').values),
-                         float(ilm.loc(['fruit', '10 kg', 'apple'])))
-        self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])) in 
+                         float(ilm.loc(['fruit', '10 kg', 'apple'])[0]))
+        self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])[0]) in 
                         str(ilx.sel(quantity='10 kg', product='banana').values))        
         fruit = Ilist.Iobj([['product',['apple', 'apple', 'orange', 'orange', 'banana', 'banana']],
                             ['quantity', ['kg', '10 kg', 'kg', '10 kg', 'kg', '10 kg']], 
@@ -541,8 +542,8 @@ class Test_Ilist(unittest.TestCase):
                             ['price', [fruit, vege], -1]])
         ilx2=total.merge(mergeidx=True).to_xarray()
         self.assertEqual(float(ilx2.sel(quantity='10 kg', product='apple').values),
-                         float(ilm.loc(['fruit', '10 kg', 'apple'])))
-        self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])) in 
+                         float(ilm.loc(['fruit', '10 kg', 'apple'])[0]))
+        self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])[0]) in 
                         str(ilx2.sel(quantity='10 kg', product='banana').values))  
         il = Ilist.Idic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
                          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
@@ -552,8 +553,10 @@ class Test_Ilist(unittest.TestCase):
                          'propert': [{'prp': 'PM25', 'unit': 'kg/m3'},
                           {'prp': 'PM10', 'unit': 'kg/m3'}],
                          'result': [[{'ert':0}, 1, 2, 3, 4, 5],-1]})
-        ilx = il.to_xarray(lisfunc=[ESValue.to_float])
-        self.assertTrue(list(ilx.values[0]) == [1.0, 0.0])
+        ilx1 = il.to_xarray(lisfunc=[None, None, None, ESValue.to_float])
+        ilx2 = il.to_xarray(lisfunc=[None, None, None, util.cast], dtype='float')
+        ilx3 = il.to_xarray(numeric=True)
+        self.assertTrue(list(ilx1.values[0]) == list(ilx2.values[0]) == list(ilx3.values[0]) == [1.0, 0.0])
                         
     def test_example(self):
         '''à faire''' #!!!

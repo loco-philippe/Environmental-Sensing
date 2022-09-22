@@ -9,13 +9,12 @@ The `ES.test_esvalue` module contains the unit tests (class unittest) for the
 """
 import unittest, json
 from ilist import Ilist
-from ESObservation import Observation
+from ESObs import Obs
 from ESValue import LocationValue, DatationValue, \
     PropertyValue, NamedValue, ExternValue, ESValue #, _gshape
 from ESconstante import ES
-#from pprint import pprint
 import datetime
-from test_observation import dat3, loc3, prop2, _res, lyon, paris, pol1, \
+from test_obs import dat3, loc3, prop2, _res, lyon, paris, pol1, \
     pol75, t1, pprop_pm25, t2, s1, t1n, matin, travail, pt1, tnull, pprop_pm10, \
     prop_pm25, pol2, pol13, aprem
 from itertools import product
@@ -37,21 +36,21 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ESValue.valClassName(NamedValue("cou")), 'NamedValue')
         self.assertEqual(ESValue.valClassName(LocationValue(name="cou")), 'LocationValue')
         self.assertEqual(ESValue.valClassName(Ilist()), 'ExternValue')
-        #self.assertEqual(ESValue.valClassName(Observation()), 'Observation')
+        self.assertEqual(ESValue.valClassName(Obs()), 'ExternValue')
         #self.assertEqual(ESValue.valClassName(datetime.datetime(2020,1,1)), 'datetime')
         self.assertEqual(ESValue.valClassName(datetime.datetime(2020,1,1)), 'DatationValue')
         self.assertEqual(ESValue.valClassName('{"namvalue":{"val":21}}'), 'NamedValue')
         self.assertEqual(ESValue.valClassName('{"locvalue":{"val":21}}'), 'LocationValue')
-        self.assertEqual(ESValue.valClassName('{"observation":{"val":21}}'), 'Observation')
-        self.assertEqual(ESValue.valClassName('{"truc":{"observation":{}}}'), 'NamedValue')
+        self.assertEqual(ESValue.valClassName('{"obs":{"val":21}}'), 'Obs')
+        self.assertEqual(ESValue.valClassName('{"truc":{"obs":{}}}'), 'NamedValue')
        # self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'NamedValue')
-        self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'PropertyValue')
+        self.assertEqual(ESValue.valClassName('{"locvalue":1, "obs":{}}'), 'PropertyValue')
         self.assertEqual(ESValue.valClassName({"namvalue":{"val":21}}), 'NamedValue')
         self.assertEqual(ESValue.valClassName({"locvalue":{"val":21}}), 'LocationValue')
-        self.assertEqual(ESValue.valClassName({"observation":{"val":21}}), 'Observation')
+        self.assertEqual(ESValue.valClassName({"obs":{"val":21}}), 'Obs')
         #self.assertEqual(ESValue.valClassName({"truc": Observation()}), 'Observation')
         #self.assertEqual(ESValue.valClassName({"locvalue":1, "observation":{}}), 'NamedValue')
-        self.assertEqual(ESValue.valClassName({"locvalue":1, "observation":{}}), 'PropertyValue')
+        self.assertEqual(ESValue.valClassName({"locvalue":1, "obs":{}}), 'PropertyValue')
         
     def test_NamedValue(self):
         self.assertEqual(NamedValue("coucou").to_obj(), '"coucou"')
@@ -213,9 +212,9 @@ class TestObsUnitaire(unittest.TestCase):
                 ['{"namvalue":{"val":21}}',                 'NamedValue'],
                 ['{"locvalue":{"val":[2,1]}}',              'LocationValue'],
                 #['{"observation":{"val":21}}',              'Observation'],
-                ['{"truc":{"observation":{}}}',             'str'],
+                ['{"truc":{"obs":{}}}',             'str'],
                 #['{"truc":{"observation":{}}}',             'NamedValue'],
-                ['{"locvalue":1, "observation":{}}',        'str'],
+                ['{"locvalue":1, "obs":{}}',        'str'],
                 #['{"locvalue":1, "observation":{}}',        'PropertyValue'],
                 [{"iindex": ["simple", [{"truc": 25}, 21]]},'Iindex']
                 ]     
@@ -236,8 +235,9 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ESValue.from_obj('{"namvalue":{"val":21}}').json(encoded=False), {"val":21})
         self.assertEqual(ESValue.from_obj('{"locvalue":{"val":[2,1]}}').json(encoded=False), {"val":[2,1]})
         self.assertEqual(ESValue.from_obj({"locvalue":{"val":[2,1]}}).json(encoded=False), {"val":[2,1]})
-        self.assertEqual(ESValue.from_obj('{"observation":{"val":21}}').__class__.__name__, 'Observation')
-        self.assertEqual(ESValue.from_obj({"observation":{"val":21}}).__class__.__name__, 'Observation')
+        # !!!! à adapter en fonction de ExternValue
+        self.assertEqual(ESValue.from_obj('{"obs":["val", 21]}').__class__.__name__, 'Obs')
+        self.assertEqual(ESValue.from_obj({"obs":["val", 21]}).__class__.__name__, 'Obs')
         #self.assertEqual(ESValue.from_obj('{"truc":{"observation":{}}}').json(encoded=False), {"truc":'{"observation": {}}'})
         #self.assertEqual(ESValue.from_obj({"truc": Observation()}).json(encoded=False), {"truc":{"type":"observation"}})
         #self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'NamedValue')
