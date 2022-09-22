@@ -1,6 +1,5 @@
 from datetime import datetime
 from pymongo import MongoClient
-from ESObservation import Observation
 
 def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.net/test'):
     auth        = 'authSource=admin'
@@ -28,10 +27,15 @@ class ESSearchMongo:
     def __init__(self, collection = None, searchtype = "aggregate", **kwargs):
         self.collection = collection
         self.searchtype = searchtype # peut être fonction des critères de recherche
-        self.params = kwargs # params = {"dateparam" : dateparam, "locparam" : locparam, "proparam" : proparam, "nameparam" : nameparam, "extparam" : extparam}
+        self.params = kwargs # params = {"dateparam" : [dateparam], "locparam" : [locparam], 
+                             #           "proparam" : [proparam], "nameparam" : [nameparam], "extparam" : [extparam]}
 
     def __repr__(self):
         return {"collection" : self.collection, "searchtype" : self.searchtype, "parameters" : self.params}
+
+    def addParam(self, param):
+        for paramtype in param: # On suppose ici que tous les paramètres sont correctement entrés.
+            self.params[paramtype].append(param[paramtype])
 
     def _condSearchDate(self, **kwargs):
         """
