@@ -680,7 +680,7 @@ class Ilist:
         idx = Iindex.Iobj(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0: 
-            raise IlistError('size are different')
+            raise IlistError('sizes are different')
         if not idx.name in idxname: 
             if first: self.lindex.insert(0, idx)
             else: self.lindex.append(idx)
