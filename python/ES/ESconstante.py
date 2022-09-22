@@ -13,11 +13,11 @@ def _classval():
     from ESValue import LocationValue, DatationValue, PropertyValue, \
         NamedValue, ExternValue
     from timeslot import TimeSlot
-    from ESObservation import Observation
+    from ESObs import Obs
     from ilist import Ilist
     from iindex import Iindex
     import datetime
-    return {ES.obs_clsName: Observation,
+    return {ES.obs_clsName: Obs,
             ES.dat_clsName: DatationValue,
             ES.loc_clsName: LocationValue,
             ES.prp_clsName: PropertyValue,
@@ -419,7 +419,7 @@ class Es:
         self.name             = "name"
 
         self.nul_classES      = "nullClass"
-        self.obs_classES      = "observation"
+        self.obs_classES      = "obs"
         self.dat_classES      = "datation"
         self.loc_classES      = "location"
         self.prp_classES      = "property"
@@ -462,7 +462,7 @@ class Es:
         self.prp_uncertain      = "uncertainty";
         self.prp_name           = "name";
 
-        self.obs_valName      = "observation"
+        self.obs_valName      = "obs"
         self.dat_valName      = "datvalue"
         self.loc_valName      = "locvalue"
         self.prp_valName      = "prpvalue"
@@ -475,7 +475,7 @@ class Es:
         self.tim_valName      = "datetime"
         self.slo_valName      = "timeslot"
 
-        self.obs_clsName      = 'Observation'
+        self.obs_clsName      = 'Obs'
         self.dat_clsName      = 'DatationValue'
         self.loc_clsName      = 'LocationValue'
         self.prp_clsName      = 'PropertyValue'
