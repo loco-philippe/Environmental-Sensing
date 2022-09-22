@@ -72,7 +72,7 @@ Modules contain the following classes:
     
 - ESObservation : 
     
-    - `ES.ESObservation`
+    - `ES.ESObs`
     
 - ESValue : 
     
