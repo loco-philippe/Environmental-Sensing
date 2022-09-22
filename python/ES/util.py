@@ -321,7 +321,8 @@ class util:
         '''return the function func applied to the object value with parameters args and kwargs'''
         if func in (None, []) : return value
         lis = []
-        if not isinstance(value, list): listval = [value]
+        if not (isinstance(value, list) or value.__class__.__name__ in ['Iindex', 'Ilist', 'Obs']):
+            listval = [value]
         else : listval = value
         for val in listval :
             try : lis.append(val.func(*args, **kwargs))

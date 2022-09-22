@@ -217,6 +217,33 @@ class Obs(Ilist) :
         return bound
 
     @property
+    def __geo_interface__(self):
+        '''**dict (@property)** : return the union of Location geometry (see shapely)'''
+        codecgeo = self.nindex('location').codec
+        if len(codecgeo) == 0: return ""
+        if len(codecgeo) == 1: return codecgeo[0].value.__geo_interface__
+        else: 
+            collec = codecgeo[0].value
+            for loc in codecgeo[1:]: collec = collec.union(loc.value)
+            return collec.__geo_interface__
+
+    @property
+    def jsonFeature(self):
+        '''
+        **string (@property)** : "FeatureCollection" with Location geometry'''
+        if self.setLocation :
+            geo = self.__geo_interface__
+            if geo['type'] == "MultiPolygon": typ = "Polygon"
+            else : typ = "Point"
+            lis = list(dict((("type", typ), ("coordinates", geo['coordinates'][i]))) 
+                       for i in range(len(geo['coordinates'])))
+            fea = list(dict((("type","Feature"), ("id", i), ("geometry", lis[i]))) 
+                       for i in range(len(geo['coordinates'])))
+            return json.dumps(dict((("type","FeatureCollection"), ("features",fea))), 
+                              cls=ESValueEncoder)
+        else: return ''
+    
+    @property
     def setDatation(self):
         '''**list (@property)** : list of codec values in the datation index'''
         if self.nindex(ES.dat_classES): return self.nindex(ES.dat_classES).codec
@@ -265,6 +292,35 @@ class Obs(Ilist) :
         if ES.res_classES in self.lname:
             record[self.lname.index(ES.res_classES)] = ExternValue(obs)
         return self.append(record, unique=unique)
+
+    def choropleth(self, name="choropleth"):
+        '''
+        Display `Obs` on a folium.Map (only with dimension=1)
+
+        - **name** : String, optionnal (default 'choropleth') - Name of the choropleth
+
+        *Returns* : None'''
+        if self.dimension == 1 :
+            m = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
+            folium.Choropleth(
+                geo_data=self.jsonFeature,
+                name=name,
+                data=self.to_xarray(numeric=True).to_dataframe(name='obs'),
+                key_on="feature.id",
+                columns = ['location_row', 'obs'],
+                fill_color="OrRd",
+                fill_opacity=0.7,
+                line_opacity=0.4,
+                line_weight = 2,
+                legend_name="test choropleth"
+            ).add_to(m)
+            folium.PolyLine(
+                #self.vList('location', func=LocationValue.vPointInv)
+                util.funclist(self.nindex('location'), LocationValue.vPointInv)
+            ).add_to(m)
+            folium.LayerControl().add_to(m)
+            return m
+        return None
 
     def to_obj(self, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict). 
@@ -361,64 +417,11 @@ class Obs(Ilist) :
         return dcinf
 """
 #%% special
-    @property
-    def __geo_interface__(self):
-        '''dict (@property) : return the union of geometry (see shapely)'''
-        if self.setLocation :
-            collec = self.vListValue(ES.loc_classES)[0]
-            first = True
-            for shap in self.vListValue(ES.loc_classES) :
-                if not first : collec = collec.union(shap)
-                first = False
-            return collec.__geo_interface__
-        else : return ""
+
 
     def __to_bytes__(self, **option):
         return self.to_json(encoded=option['encoded'], encode_format='bson',
                             json_info=False, json_res_index=True, json_param=True)
-
-    @property
-    def jsonFeature(self):
-        '''
-        **string (@property)** : "FeatureCollection" with ESSetLocation geometry'''
-        if self.setLocation :
-            geo = self.__geo_interface__
-            if geo['type'] == "MultiPolygon": typ = "Polygon"
-            else : typ = "Point"
-            lis = list(dict((("type", typ), ("coordinates", geo['coordinates'][i]))) for i in range(len(geo['coordinates'])))
-            fea = list(dict((("type","Feature"), ("id", i), ("geometry", lis[i]))) for i in range(len(geo['coordinates'])))
-            return json.dumps(dict((("type","FeatureCollection"), ("features",fea))), cls=ESValueEncoder)
-        else: return ''
-
-    def choropleth(self, name="choropleth"):
-        '''
-        Display `Observation` on a folium.Map (only with dim=1)
-
-        - **name** : String, optionnal (default 'choropleth') - Name of the choropleth
-
-        *Returns*
-
-        - **folium.Map**  '''
-        if self.dimension == 1 :
-            m = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
-            folium.Choropleth(
-                geo_data=self.jsonFeature,
-                name=name,
-                data=self.to_dataFrame(numeric=True),
-                key_on="feature.id",
-                columns = ['locran', 'Observation'],
-                fill_color="OrRd",
-                fill_opacity=0.7,
-                line_opacity=0.4,
-                line_weight = 2,
-                legend_name="test choropleth"
-            ).add_to(m)
-            folium.PolyLine(
-                self.vList('location', func=LocationValue.vPointInv)
-            ).add_to(m)
-            folium.LayerControl().add_to(m)
-            return m
-        return None
 
     @classmethod
     def from_file(cls, file) :

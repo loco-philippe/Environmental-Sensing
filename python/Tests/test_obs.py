@@ -34,7 +34,7 @@ def _val(n): return list(i for i in range(n))
 def _res(n): return (ES.res_classES, _val(n))
 def _dat(n): return (ES.dat_classES, [datetime.datetime(2000+i, 2, 4, 12, 5, 0) for i in range(n)])
 def _loc(n): return (ES.loc_classES, [[5+i, 20+i] for i in range(n)])
-with open('C:\\Users\\a179227\\OneDrive - Alliance\\perso Wx\\ES standard\\python ESstandard\\departements-version-simplifiee.geojson') as f:
+with open('..\Examples\Observation\departements-version-simplifiee.geojson') as f:
     dp = f.read()
 dpt = json.loads(dp)['features']
 #https://github.com/gregoiredavid/france-geojson
@@ -174,12 +174,12 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         # valeur numériques + choropleth
         ob.nindex('location').setlistvalue([paris, lyon, marseille], valueonly=True)
         #ob.view()
-        '''choro = ob.choropleth()'''       # !!! à voir
-        #choro.save("test.html")
+        choro = ob.choropleth()       # !!!! à voir
+        choro.save("test.html")
         ob.nindex('location').setlistvalue([pol75, pol69, pol13],  valueonly=True)
         #ob.view(width=40)
-        '''choro = ob.choropleth()'''       # !!! à voir
-        #choro.save("test.html")
+        choro = ob.choropleth()       # !!! à voir
+        choro.save("test2.html")
         # ajout dimension 2, infos globales
         #ob.append([30, 'morning', 'paris', 'Humidity'], equal='name')
         morning = ob.setDatation[0]
@@ -502,38 +502,38 @@ class TestObservation(unittest.TestCase):
                          ob.to_json(encoded=False))
         ob.to_file('test.obs', encode_format='json')
         self.assertEqual(Observation.from_file('test.obs').to_json(encoded=False),
-                         ob.to_json(encoded=False))
+                         ob.to_json(encoded=False))"""
         
 class TestExports(unittest.TestCase):
     '''Unit tests for `ES.ESObservation.Observation` exports '''
 
-    @unittest.skipIf(mongo, "test envoi mongo")
+    """@unittest.skipIf(mongo, "test envoi mongo")
     def test__envoi_mongo(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
         data = ob.to_json(encoded=False, encode_format='bson', json_info=True)
         self.assertFalse(_envoi_mongo_python(data)==None)
         data = ob.to_json(encoded=True, encode_format='json', json_info=True)
-        self.assertEqual(_envoi_mongo_url(data), 200)
+        self.assertEqual(_envoi_mongo_url(data), 200)"""
 
     def test_geo_interface(self):
-        ob = Observation(dict([obs_1, loc3]))
-        _resloc = (tuple(paris), tuple(lyon), tuple(marseille))
+        ob = Obs.Idic(dict((loc3, dat3)))
+        _resloc = (tuple(lyon), tuple(paris), tuple(marseille))
         _resgeo = dict([(ES.type,"MultiPoint"), ("coordinates",_resloc)])
         self.assertEqual(ob.__geo_interface__, _resgeo)
         self.assertEqual(ob.__geo_interface__["coordinates"], _resloc)
         self.assertEqual(ob.__geo_interface__, _resgeo)
-        ob = Observation(dict((obs_1, dpt2, dat1)))
+        ob = Obs.Idic(dict((dpt2, dat1)))
         dpt2pt = {'type': 'Polygon', 'coordinates': (((0.5, 1.5), (0.0, 2.0),
           (1.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)}
         self.assertEqual(ob.__geo_interface__, dpt2pt)
 
     def test_obs_polygon(self):
-        ob = Observation(dict((obs_1, dat3, dpt2, prop2, _res(6))), idxref={'property':'location'})
+        ob = Obs.Idic(dict((dat3, dpt2, _res(6))))
         self.assertEqual(ob.__geo_interface__, {'type': 'Polygon',
                          'coordinates': (((0.5, 1.5), (0.0, 2.0), (1.0, 2.0),
                           (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)})
 
-    def test_to_numpy(self):
+    """def test_to_numpy(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, order=['location', 'property', 'datation'])
         '''self.assertEqual(ob.to_numpy(func=ResultValue.vSimple, string=True)[0][1,1], '4.0')
         self.assertEqual(ob.to_numpy(func=ResultValue.vSimple, string=False)[0][1,1], 4.0)

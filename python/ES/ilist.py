@@ -1211,13 +1211,11 @@ class Ilist:
         
     def setcanonorder(self):
         '''Set the canonical index order : primary - secondary/unique - variable.
-        Set the canonical keys order : ordered keys in the first columns'''
+        Set the canonical keys order : ordered keys in the first columns
+        Return self'''
         order = [self.lidxrow[idx] for idx in self.primary]
         order += [idx for idx in self.lidxrow if not idx in order]
         order += self.lvarrow
-        '''for i in self.lidxrow: 
-            if not i in order: order.append(i)
-        for i in self.lvarrow: order.append(i)'''
         self.swapindex(order)
         self.sort()
         return self
@@ -1285,7 +1283,6 @@ class Ilist:
         if self.lenindex != len(order): raise IlistError('length of order and Ilist different')
         self.lindex=[self.lindex[order[i]] for i in range(len(order))]
 
-
     def tostdcodec(self, inplace=False, full=True):
         '''Transform all codec in full or default codec.
         
@@ -1331,36 +1328,6 @@ class Ilist:
             for lign in tab : 
                 size += writer.writerow(lign)
         return size
-       
-    """def to_csv(self, filename='ilist.csv', ifunc=None, header=True, 
-               optcsv={'quoting': csv.QUOTE_NONNUMERIC}, **kwargs):
-        '''
-        Generate a csv file with Ilist data (a column for each index)
-
-        *Parameters*
-
-        - **filename** : string (default 'ilist.csv') - name of the file to create
-        - **ifunc** : list of function (default None) - function to apply to indexes
-        before writting csv file
-        - **order** : list of integer (default None) - ordered list of index in columns
-        - **header** : boolean (default True). If True, the first raw is dedicated to names
-        - **optcsv** : parameter for csv.writer
-        - **kwargs** : parameter for ifunc
-
-        *Returns* : size of csv file '''
-        size = 0
-        if not optcsv: optcsv = {}
-        #optcsv = {'quoting': csv.QUOTE_NONNUMERIC} | optcsv
-        if ifunc and not isinstance(ifunc, list): ifunc = [ifunc] * self.lenindex
-        with open(filename, 'w', newline='') as f:
-            writer = csv.writer(f, **optcsv)
-            if header: size += writer.writerow(self.lname)
-            for i in range(len(self)):
-                if not ifunc: row = self.record(i) 
-                else: row = [util.funclist(self.lindex[j].values[i], ifunc[j], **kwargs) 
-                       for j in range(self.lenindex)]
-                size += writer.writerow(row)
-        return size"""
     
     def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
                   lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
