@@ -256,9 +256,9 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         payload = ob_sensor.json(encoded=True, encode_format='cbor')     # if the payload is binary payload
         #print(len(payload)) # 280 bytes (35 bytes/measure)
         # data decoding in the server
-        obs_receive = Obs.Iobj(payload)
+        ob_receive = Obs.Iobj(payload)
         #print(ob_receive1 == ob_receive2 == ob_sensor)   # it's True !!
-        self.assertTrue(obs_receive == obs_sensor)   # it's True !!
+        self.assertTrue(ob_receive == ob_sensor)   # it's True !!
 
         #case 4 : minimize data in operation
         # initialization phase (sensor or server) -> once
@@ -298,7 +298,7 @@ class TestExemples(unittest.TestCase):      # !!! exemples
             if i%3 == 0: il_sensor.append([ 105 + i//3, date, prop2])
         il_sensor.full(fillvalue=None) 
         il_sensor.nindex('property').setcodeclist([None, None])
-        self.assertTrue(il_sensor.dimension == 2 and len(obs_sensor) == 12)
+        self.assertTrue(il_sensor.dimension == 2 and len(il_sensor) == 12)
         #send data
         payload = il_sensor.json(encoded=True, encode_format='cbor')     # if the payload is binary payload
         #print(len(payload)) # 88 bytes (11 bytes/measure)

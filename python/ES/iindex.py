@@ -275,7 +275,7 @@ class Iindex:
 
     def __eq__(self, other):
         ''' equal if class and values are equal'''
-        return self.__class__ == other.__class__ and self.values == other.values
+        return self.__class__ .__name__== other.__class__.__name__ and self.values == other.values
 
     def __len__(self):
         ''' len of values'''

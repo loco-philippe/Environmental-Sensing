@@ -143,8 +143,8 @@ class Ilist:
     - `Ilist.to_obj`
     - `Ilist.to_csv`
     - `Ilist.to_file`
-    - `Ilist.to_numpy`
     - `Ilist.to_xarray`
+    - `Ilist.to_dataFrame`
     - `Ilist.view`
     - `Ilist.vlist`
     - `Ilist.voxel`
@@ -240,14 +240,14 @@ class Ilist:
     @classmethod
     def from_file(cls, file, forcestring=False) :
         '''
-        Generate `Ilist` object from file storage.
+        Generate Object from file storage.
 
          *Parameters*
 
         - **file** : string - file name (with path)
         - **forcestring** : boolean (default False) - if True, forces the UTF-8 data format, else the format is calculated
 
-        *Returns* : Ilist object'''
+        *Returns* : new Object'''
         with open(file, 'rb') as f: btype = f.read(1)
         if btype==bytes('[', 'UTF-8') or forcestring:
             with open(file, 'r', newline='') as f: bjson = f.read()
@@ -350,24 +350,12 @@ class Ilist:
 
         if not leng: length = 0
         elif not leng2: length = 1 
-        #if max(leng) == min(leng) and length < 0: length = max(leng)
         elif max(leng2) == min(leng2) and length < 0: length = max(leng2)
-        
-        '''#leng = [len(iidx) for code, iidx in codind if code < 0 and len(iidx) > 1] #!!!!
-        
-        #leng = [len(iidx) for code, iidx in codind if code < 0]
-        #if not leng: leng = [1] #!!!!!
-        if not leng: leng = [0]
-        #if max(leng) == min(leng) and length < 0: length = max(leng)
-        if max(leng2) == min(leng2) and length < 0: length = max(leng2)
-        '''
         if idxvar: length = len(codind[idxvar[0]][1])
         if length == 0 :
             self.lvarname = [codind[i][1].name for i in idxvar]
-            #self.lindex = [[] for i in range(len(listidx))]
             self.lindex = [iidx for code, iidx in codind]
             return
-        #flat = length == max(leng) == min(leng)
         flat = True
         if leng2: flat = length == max(leng2) == min(leng2)
         if not flat:
@@ -969,7 +957,7 @@ class Ilist:
         return [{k:v for k,v in inf.items() if k in keys} for inf in infos]
 
     def indicator(self, fullsize=None, size=None, indexinfos=None):
-        '''generate Ilist indicators: ol (object lightness), ul (unicity level), gain (sizegain)
+        '''generate size indicators: ol (object lightness), ul (unicity level), gain (sizegain)
         
         *Parameters*
 
@@ -1040,13 +1028,6 @@ class Ilist:
                                        for i in range(self.lenidx)]))
         if row: return locrow
         else: return self.lvar[0][tuple(locrow)]
-        '''try:
-            if extern: 
-                row = self.textidxext.index(rec)
-            else: 
-                row = self.textidx.index(rec)
-        except: return None
-        return self.lvar[0][row]'''
 
     def merge(self, name='merge', fillvalue=math.nan, mergeidx=False, updateidx=False):
         '''
@@ -1059,13 +1040,7 @@ class Ilist:
         - **mergeidx** : create a new index if mergeidx is False
         - **updateidx** : if True (and mergeidx is True), update actual values if index name is present 
         
-        *Returns*
-
-        - **Ilist** : merged Ilist '''     
-        #if len(self.lvarname) == 0: fillvalue = util.castval(fillvalue, ES.def_clsName)
-        #else: fillvalue = util.castval(fillvalue, util.typename(self.lvarname[0], 
-        #                                                        ES.def_clsName))
-        #fillvalue = util.cast(fillvalue, ES.def_dtype)
+        *Returns*: merged Ilist '''     
         find = True
         ilm = copy(self)
         nameinit = ilm.idxname
@@ -1093,7 +1068,7 @@ class Ilist:
         return ilm
 
     def merging(self, listname=None):
-        ''' add a new index in Ilist object build with indexes define in listname'''
+        ''' add a new index build with indexes define in listname'''
         self.addindex(Iindex.merging([self.nindex(name) for name in listname]))
         return None
     
@@ -1211,7 +1186,7 @@ class Ilist:
         
     def setcanonorder(self):
         '''Set the canonical index order : primary - secondary/unique - variable.
-        Set the canonical keys order : ordered keys in the first columns
+        Set the canonical keys order : ordered keys in the first columns.
         Return self'''
         order = [self.lidxrow[idx] for idx in self.primary]
         order += [idx for idx in self.lidxrow if not idx in order]
@@ -1330,17 +1305,17 @@ class Ilist:
             for lign in tab : 
                 size += writer.writerow(lign)
         return size
-    
-    def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
+
+    def to_dataFrame(self, info=False, idx=None, fillvalue='?', fillextern=True,
                   lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
         '''
-        Complete the Ilist and generate a Xarray DataArray with the dimension define by ind.
+        Complete the Object and generate a Pandas dataFrame with the dimension define by idx.
 
         *Parameters*
 
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
         - **idx** : list (default none) - list of idx to be completed. If [],
-        self.axes is used.
+        self.primary is used.
         - **fillvalue** : object (default '?') - value used for the new extval
         - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
         - **lisfunc** : function (default none) - list of function to apply to indexes before export
@@ -1349,7 +1324,33 @@ class Ilist:
         - **npdtype** : string (default None) - numpy dtype for the DataArray ('object' if None)
         - **kwargs** : parameter for lisfunc
 
-        *Returns* : none '''
+        *Returns* : pandas.DataFrame '''
+        if self.consistent :
+            return self.to_xarray(info=info, idx=idx, fillvalue=fillvalue, 
+                                  fillextern=fillextern, lisfunc=lisfunc, name=name,
+                                  numeric=numeric, npdtype=npdtype, **kwargs
+                                  ).to_dataframe(name=name)
+        return None
+    
+    def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
+                  lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
+        '''
+        Complete the Object and generate a Xarray DataArray with the dimension define by idx.
+
+        *Parameters*
+
+        - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
+        - **idx** : list (default none) - list of idx to be completed. If [],
+        self.primary is used.
+        - **fillvalue** : object (default '?') - value used for the new extval
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
+        - **lisfunc** : function (default none) - list of function to apply to indexes before export
+        - **name** : string (default None) - DataArray name. If None, variable name
+        - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
+        - **npdtype** : string (default None) - numpy dtype for the DataArray ('object' if None)
+        - **kwargs** : parameter for lisfunc
+
+        *Returns* : DataArray '''
         option = {'dtype': None} | kwargs 
         if not self.consistent : raise IlistError("Ilist not consistent")
         if len(self.lvarname) == 0 : raise IlistError("Variable is not defined")
@@ -1361,12 +1362,6 @@ class Ilist:
             funcvar = lisfunc            
             lisfunc = [None] * self.lenindex
             lisfunc[self.lvarrow[0]] = funcvar
-        """if numeric: 
-            lisfunc[self.lvarrow[0]] = util.cast
-            #lisfunc[self.lvarrow[0]] = ESValue.to_float
-            fillvalue= math.nan
-            npdtype='float'
-            option['dtype'] = 'float'"""
         lisfuncname = dict(zip(self.lname, lisfunc))
         if idx is None or idx==[] : idx = self.primary
         axesname = [self.idxname[i] for i in idx[:len(self.idxname)]]
@@ -1382,7 +1377,6 @@ class Ilist:
             fillvalue= math.nan
             npdtype='float'
             option['dtype'] = 'float'
-        #data = ilf.lvar[0].to_numpy(func=lisfuncname[self.lvarname[0]], 
         data = ilf.lvar[0].to_numpy(func=lisfunc[self.lvarrow[0]], 
                                     npdtype=npdtype, **option
                                      ).reshape([ilf.idxlen[idx] for idx in idxilf])
@@ -1393,7 +1387,7 @@ class Ilist:
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
 
     def to_file(self, file, **kwargs) :
-        '''Generate file to display `Ilist` data.
+        '''Generate file to display data.
 
          *Parameters (kwargs)*
 
@@ -1574,7 +1568,8 @@ class Ilist:
                 for i in range(len(xa.dims))}
 
     def _to_tab(self, **kwargs):
-        ''' data preparation (dict of dict) for view or csv export. Representation is included if :
+        ''' data preparation (dict of dict) for view or csv export. 
+        Representation is included if :
             - code is definie in the name element of the field
             - or code is defined in 'defcode' element and 'all' element is True
 
@@ -1628,16 +1623,7 @@ class Ilist:
                             if n == 'n': resList.append(util.cast(val, dtype='name'))
                             if n == 's': resList.append(util.cast(val, dtype='json', string=True))
                             if n == 'f': resList.append(util.funclist(val, option['ifunc'], **kwargs))
-                '''for n, code in diccode.items():
-                    if (name in option and n in option[name]) or (
-                                option['all'] and n in option['defcode']):
-                        val = self.nindex(name).values[i]
-                        if n == 'j': resList.append(util.cast(val, dtype='json'))
-                        if n == 'n': resList.append(util.cast(val, dtype='name'))
-                        if n == 's': resList.append(util.cast(val, dtype='json', string=True))
-                        if n == 'f': resList.append(util.funclist(val, option['ifunc'], **kwargs))'''
             tab.append(resList)
-        #print(tab)
         return tab
     
     def _xcoord(self, axe, lisfuncname=None, **kwargs) :
