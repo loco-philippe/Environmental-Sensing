@@ -906,17 +906,18 @@ class Iindex:
         - **kwargs** : parameters to apply to the func function
 
         *Returns* : Numpy Array'''
+        #option = {'dtype': None} | kwargs
         if len(self) == 0: raise IindexError("Ilist is empty")
-        if npdtype is None: dtype = np.dtype('object')
-        else: dtype = np.dtype(npdtype)
+        if npdtype is None: npdtype = np.dtype('object')
+        else: npdtype = np.dtype(npdtype)
         if func is None : func = identity
         if func == 'index' : return np.array(list(range(len(self))))
         if not codec: values = util.funclist(self.values, func, **kwargs)
         else:  values = util.funclist(self.codec, func, **kwargs)
         if isinstance(values[0], (str, datetime.datetime)):
             try: return np.array(values, dtype=np.datetime64)
-            except : return np.array(values, dtype=dtype)
-        return np.array(values, dtype=dtype)
+            except : return np.array(values, dtype=npdtype)
+        return np.array(values, dtype=npdtype)
         #return np.array(values, dtype=object)
         '''    try : datetime.datetime.fromisoformat(values[0])
             except : return np.array(values)

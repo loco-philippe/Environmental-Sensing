@@ -103,6 +103,7 @@ class util:
             try : return int(val.lstrip())
             except : return math.nan
         if dtype == 'float':
+            if typeval in ['float', 'int']: return float(val)
             if typeval in ES.className: return val.to_float()
             try : return float(val.lstrip())
             except : return math.nan
@@ -354,19 +355,19 @@ class util:
         return keysadd
 
     @staticmethod
-    def isEqual(value, tovalue=None):
+    def isEqual(value, tovalue=None, **kwargs):
         ''' return True if value and tovalue are equal'''
         return value.__class__.__name__ == tovalue.__class__.__name__ and \
             value == tovalue
 
     @staticmethod
-    def isNotEqual(value, tovalue=None):
+    def isNotEqual(value, tovalue=None, **kwargs):
         ''' return True if value and tovalue are not equal'''
         return value.__class__.__name__ != tovalue.__class__.__name__ or \
             value != tovalue
 
     @staticmethod
-    def isNotNull(value, nullvalue=None):
+    def isNotNull(value, nullvalue=None, **kwargs):
         '''return boolean. True if value' is not a NullValue'''
         if  value.__class__.__name__ in ES.valname:
             return value != value.__class__(nullvalue)

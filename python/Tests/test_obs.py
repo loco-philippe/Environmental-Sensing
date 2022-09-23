@@ -230,10 +230,10 @@ class TestExemples(unittest.TestCase):      # !!! exemples
 
         #case 2 : Mobile sensor with one property
         obs_sensor = Obs.Std()
-        prop1 = PropertyValue(prop_pm25)
+        prop1 = prop_pm25
         for i in range(6): # simule une boucle de mesure
-            obs_sensor.append([ 45 + i, DatationValue(datetime.datetime(2021, 6, 4+i, 12, 5).isoformat()),
-                       LocationValue([14.1+i, 40.2]), prop1])
+            obs_sensor.append([ 45 + i, datetime.datetime(2021, 6, 4+i, 12, 5),
+                               [1.1+i, 40.2+i], prop1])
         self.assertTrue(obs_sensor.dimension == 1 and len(obs_sensor) == 6)
         payload = obs_sensor.json(encoded=True, encode_format='cbor')     # if the payload is binary payload
         #print(len(payload)) # 41.8 bytes/measure
@@ -243,17 +243,17 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         self.assertTrue(obs_receive == obs_sensor)   # it's True !!
 
         #case 3 : Mobile sensor with two properties
-        obs_sensor = Obs.Std()
-        prop1 = PropertyValue(prop_pm25)
-        prop2 = PropertyValue(prop_pm10)
+        ob_sensor = Obs.Std()
+        prop1 = {'prp': 'PM25', 'unit': 'kg/m3'}
+        prop2 = {'prp': 'PM10', 'unit': 'kg/m3'}
         for i in range(6): # simule une boucle de mesure
-            date = DatationValue(datetime.datetime(2021, 6, 4+i, 12, 5).isoformat())
-            loc = LocationValue([14.1+i, 40.2])
-            obs_sensor.append([ 45 + i, date, loc, prop1])
-            if i%3 == 0: obs_sensor.append([ 105 + i//3, date, loc, prop2])
-        obs_sensor.full(fillvalue=None)
-        self.assertTrue(obs_sensor.dimension == 2 and len(obs_sensor) == 12)
-        payload = obs_sensor.json(encoded=True, encode_format='cbor')     # if the payload is binary payload
+            date = datetime.datetime(2021, 6, 4 + i, 12, 5)
+            loc = [1.1 + i, 40.2 + i]
+            ob_sensor.append([ 45 + i, date, loc, prop1])
+            if i%3 == 0: ob_sensor.append([ 105 + i//3, date, loc, prop2])
+        ob_sensor.full(fillvalue=None)
+        self.assertTrue(ob_sensor.dimension == 2 and len(ob_sensor) == 12)
+        payload = ob_sensor.json(encoded=True, encode_format='cbor')     # if the payload is binary payload
         #print(len(payload)) # 280 bytes (35 bytes/measure)
         # data decoding in the server
         obs_receive = Obs.Iobj(payload)
@@ -276,7 +276,7 @@ class TestExemples(unittest.TestCase):      # !!! exemples
         # data decoding in the server
         il_receive1 = Ilist.Iobj(payload1)
         il_receive2 = Ilist.Iobj(payload2)
-        date_receive = datetime.datetime(2021, 6, 4+i, 12, 5)
+        date_receive = datetime.datetime(2021, 6, 4, 12, 5)
         #print(ob_receive1 == ob_receive2 == ob_sensor)   # it's True !!
         self.assertTrue(il_receive1 == il_receive2 == il_operat)   # it's True !!
         # complete observation

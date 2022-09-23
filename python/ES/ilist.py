@@ -1118,8 +1118,8 @@ class Ilist:
 
         - **None**  '''
         if not self.consistent : return
-        xa = self.to_xarray(numeric = True, lisfunc=[util.cast], 
-                             dtype='str', maxlen=maxlen)
+        xa = self.to_xarray(numeric = True, lisfunc=[util.cast], dtype='str',
+                             npdtype='str', maxlen=maxlen)
         if not order: order = [0,1,2]
         
         if   len(xa.dims) == 1:
@@ -1261,7 +1261,7 @@ class Ilist:
         - **reverse** : boolean (default False)- ascending if True, descending if False
         - **func**    : function (default str) - parameter key used in the sorted function
 
-        *Returns* : None'''
+        *Returns* : self'''
         if not order: order = []
         orderfull = order + list(set(range(self.lenindex)) - set(order))
         for idx in [self.lindex[i] for i in order]:
@@ -1270,6 +1270,7 @@ class Ilist:
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]), 
             reverse=reverse))
         for i in range(self.lenindex): self.lindex[orderfull[i]].keys = newidx[i]
+        return self
 
     def swapindex(self, order):
         '''
@@ -1279,9 +1280,10 @@ class Ilist:
 
         - **order** : list of int - new order of index to apply.
 
-        *Returns* : none '''
+        *Returns* : self '''
         if self.lenindex != len(order): raise IlistError('length of order and Ilist different')
         self.lindex=[self.lindex[order[i]] for i in range(len(order))]
+        return self
 
     def tostdcodec(self, inplace=False, full=True):
         '''Transform all codec in full or default codec.
@@ -1348,6 +1350,7 @@ class Ilist:
         - **kwargs** : parameter for lisfunc
 
         *Returns* : none '''
+        option = {'dtype': None} | kwargs 
         if not self.consistent : raise IlistError("Ilist not consistent")
         if len(self.lvarname) == 0 : raise IlistError("Variable is not defined")
         if isinstance(lisfunc, list) and len(lisfunc) == 1: 
@@ -1358,10 +1361,12 @@ class Ilist:
             funcvar = lisfunc            
             lisfunc = [None] * self.lenindex
             lisfunc[self.lvarrow[0]] = funcvar
-        if numeric: 
-            lisfunc[self.lvarrow[0]] = ESValue.to_float
+        """if numeric: 
+            lisfunc[self.lvarrow[0]] = util.cast
+            #lisfunc[self.lvarrow[0]] = ESValue.to_float
             fillvalue= math.nan
             npdtype='float'
+            option['dtype'] = 'float'"""
         lisfuncname = dict(zip(self.lname, lisfunc))
         if idx is None or idx==[] : idx = self.primary
         axesname = [self.idxname[i] for i in idx[:len(self.idxname)]]
@@ -1369,10 +1374,17 @@ class Ilist:
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
         idxilf = list(range(len(idx[:len(self.idxname)])))
-        coord = ilf._xcoord(idxilf, lisfuncname, **kwargs)
+        coord = ilf._xcoord(idxilf, lisfuncname, **option)
         dims = [ilf.idxname[i] for i in idxilf]
-        data = ilf.lvar[0].to_numpy(func=lisfuncname[self.lvarname[0]], 
-                                    npdtype=npdtype, **kwargs
+        if numeric: 
+            lisfunc[self.lvarrow[0]] = util.cast
+            #lisfunc[self.lvarrow[0]] = ESValue.to_float
+            fillvalue= math.nan
+            npdtype='float'
+            option['dtype'] = 'float'
+        #data = ilf.lvar[0].to_numpy(func=lisfuncname[self.lvarname[0]], 
+        data = ilf.lvar[0].to_numpy(func=lisfunc[self.lvarrow[0]], 
+                                    npdtype=npdtype, **option
                                      ).reshape([ilf.idxlen[idx] for idx in idxilf])
         if not name: name = self.name
         attrs={}
@@ -1446,15 +1458,17 @@ class Ilist:
                         lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']], 
                                           name=idxname, **option2))
                 else: raise IlistError('Iindex type undefined')
+        if self.lenindex > 1: parent = ES.variable
+        else: parent = ES.nullparent
         for i in self.lvarrow: 
             idx = self.lindex[i]
             idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
             if i != self.lenindex - 1:
                 lis.insert(i, idx.tostdcodec(full=True).
-                           to_obj(keys=False, parent=ES.variable, name=idxname, **option2))        
+                           to_obj(keys=False, parent=parent, name=idxname, **option2))        
             else:
                 lis.append(idx.tostdcodec(full=True).
-                           to_obj(keys=False, parent=ES.variable, name=idxname, **option2))        
+                           to_obj(keys=False, parent=parent, name=idxname, **option2))        
         if option['encoded'] and option['encode_format'] == 'json': 
             return  json.dumps(lis, cls=IindexEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor': 
