@@ -6,6 +6,8 @@ The Notebook files are
 <a href="https://github.com/loco-philippe/loco-philippe.github.io/tree/main/Example" target="_blank">
 stored in Github</a> and can be replayed.
 
+The Jupyter Notebooks with map are available on [nbviewer](http://nbviewer.org/github/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Observation/)
+
 ## First Observation
 
 This [chapter](./first_observation.ipynb) explain you:
