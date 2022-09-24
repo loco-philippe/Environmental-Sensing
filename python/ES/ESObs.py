@@ -60,7 +60,7 @@ class Obs(Ilist) :
     - `Obs.Idic`
     - `Obs.Std`
     - `Obs.from_obj`
-    - `Ilist.from_file`
+    - `ES.ilist.Ilist.from_file`
 
     *dynamic value (getters @property)*
 
@@ -73,93 +73,93 @@ class Obs(Ilist) :
 
     *dynamic value inherited (getters @property)*
 
-    - `Ilist.extidx`
-    - `Ilist.extidxext`
-    - `Ilist.idxname`
-    - `Ilist.idxref`
-    - `Ilist.idxlen`
-    - `Ilist.iidx`
-    - `Ilist.keys`
-    - `Ilist.lenindex`
-    - `Ilist.lenidx`
-    - `Ilist.lidx`
-    - `Ilist.lidxrow`
-    - `Ilist.lvar`
-    - `Ilist.lvarrow`
-    - `Ilist.lname`
-    - `Ilist.lunicname`
-    - `Ilist.lunicrow`
-    - `Ilist.setidx`
-    - `Ilist.tiidx`
-    - `Ilist.textidx`
-    - `Ilist.textidxext`
+    - `ES.ilist.Ilist.extidx`
+    - `ES.ilist.Ilist.extidxext`
+    - `ES.ilist.Ilist.idxname`
+    - `ES.ilist.Ilist.idxref`
+    - `ES.ilist.Ilist.idxlen`
+    - `ES.ilist.Ilist.iidx`
+    - `ES.ilist.Ilist.keys`
+    - `ES.ilist.Ilist.lenindex`
+    - `ES.ilist.Ilist.lenidx`
+    - `ES.ilist.Ilist.lidx`
+    - `ES.ilist.Ilist.lidxrow`
+    - `ES.ilist.Ilist.lvar`
+    - `ES.ilist.Ilist.lvarrow`
+    - `ES.ilist.Ilist.lname`
+    - `ES.ilist.Ilist.lunicname`
+    - `ES.ilist.Ilist.lunicrow`
+    - `ES.ilist.Ilist.setidx`
+    - `ES.ilist.Ilist.tiidx`
+    - `ES.ilist.Ilist.textidx`
+    - `ES.ilist.Ilist.textidxext`
 
     *global value (getters @property)*
 
-    - `Ilist.complete`
-    - `Ilist.consistent`
-    - `Ilist.dimension`
-    - `Ilist.lencomplete`
-    - `Ilist.primary`
-    - `Ilist.zip`
+    - `ES.ilist.Ilist.complete`
+    - `ES.ilist.Ilist.consistent`
+    - `ES.ilist.Ilist.dimension`
+    - `ES.ilist.Ilist.lencomplete`
+    - `ES.ilist.Ilist.primary`
+    - `ES.ilist.Ilist.zip`
 
     *selecting - infos methods*
 
-    - `Ilist.couplingmatrix`
-    - `Ilist.idxrecord`
-    - `Ilist.indexinfos`
-    - `Ilist.indicator`
-    - `Ilist.iscanonorder`
-    - `Ilist.isinrecord`
-    - `Ilist.keytoval`
-    - `Ilist.loc`
-    - `Ilist.nindex`
-    - `Ilist.record`
-    - `Ilist.recidx`
-    - `Ilist.recvar`
-    - `Ilist.valtokey`
+    - `ES.ilist.Ilist.couplingmatrix`
+    - `ES.ilist.Ilist.idxrecord`
+    - `ES.ilist.Ilist.indexinfos`
+    - `ES.ilist.Ilist.indicator`
+    - `ES.ilist.Ilist.iscanonorder`
+    - `ES.ilist.Ilist.isinrecord`
+    - `ES.ilist.Ilist.keytoval`
+    - `ES.ilist.Ilist.loc`
+    - `ES.ilist.Ilist.nindex`
+    - `ES.ilist.Ilist.record`
+    - `ES.ilist.Ilist.recidx`
+    - `ES.ilist.Ilist.recvar`
+    - `ES.ilist.Ilist.valtokey`
 
     *add - update methods*
 
-    - `Ilist.add`
-    - `Ilist.addindex`
-    - `Ilist.append`
+    - `ES.ilist.Ilist.add`
+    - `ES.ilist.Ilist.addindex`
+    - `ES.ilist.Ilist.append`
     - `Obs.appendObs`
-    - `Ilist.delindex`
-    - `Ilist.delrecord`
-    - `Ilist.renameindex`
-    - `Ilist.setvar`
-    - `Ilist.setname`
-    - `Ilist.updateindex`    
+    - `ES.ilist.Ilist.delindex`
+    - `ES.ilist.Ilist.delrecord`
+    - `ES.ilist.Ilist.renameindex`
+    - `ES.ilist.Ilist.setvar`
+    - `ES.ilist.Ilist.setname`
+    - `ES.ilist.Ilist.updateindex`    
     
     *structure management - methods*
 
-    - `Ilist.applyfilter`
-    - `Ilist.coupling`
-    - `Ilist.full`
-    - `Ilist.getduplicates`
-    - `Ilist.merge`
-    - `Ilist.reindex`
-    - `Ilist.reorder`
-    - `Ilist.setfilter`
-    - `Ilist.sort`
-    - `Ilist.swapindex`
-    - `Ilist.setcanonorder`
-    - `Ilist.tostdcodec`
+    - `ES.ilist.Ilist.applyfilter`
+    - `ES.ilist.Ilist.coupling`
+    - `ES.ilist.Ilist.full`
+    - `ES.ilist.Ilist.getduplicates`
+    - `ES.ilist.Ilist.merge`
+    - `ES.ilist.Ilist.reindex`
+    - `ES.ilist.Ilist.reorder`
+    - `ES.ilist.Ilist.setfilter`
+    - `ES.ilist.Ilist.sort`
+    - `ES.ilist.Ilist.swapindex`
+    - `ES.ilist.Ilist.setcanonorder`
+    - `ES.ilist.Ilist.tostdcodec`
     
     *exports methods*
 
     - `Obs.choropleth`
-    - `Ilist.json`
-    - `Ilist.plot`
-    - `Ilist.to_obj`
-    - `Ilist.to_csv`
-    - `Ilist.to_file`
-    - `Ilist.to_xarray`
-    - `Ilist.to_dataFrame`
-    - `Ilist.view`
-    - `Ilist.vlist`
-    - `Ilist.voxel`
+    - `ES.ilist.Ilist.json`
+    - `ES.ilist.Ilist.plot`
+    - `ES.ilist.Ilist.to_csv`
+    - `ES.ilist.Ilist.to_file`
+    - `Obs.to_obj`
+    - `ES.ilist.Ilist.to_xarray`
+    - `ES.ilist.Ilist.to_dataFrame`
+    - `ES.ilist.Ilist.view`
+    - `ES.ilist.Ilist.vlist`
+    - `ES.ilist.Ilist.voxel`
         
     """
 
