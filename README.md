@@ -51,7 +51,7 @@ all situations (platform)
 ## Documentation
 
 - data exchange format (three documents)
-    - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf) and [values](./documentation/ESJSON-Standard.pdf)
+    - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
 - project presentation
     - general presentation of the Environmental Sensing project [document(french)](./ES-presentation.pdf) and [slides(french)](./presentation_projet.pdf)
     - [interoperability](./interoperability.pdf) of environmental data
@@ -65,6 +65,7 @@ all situations (platform)
     - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
     - [Extension Air pollutants in ESS Bluetooth](https://www.bluetooth.com/specifications/specs/gatt-specification-supplement-6/)
     - [ESS permitted Characteristics](https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/permitted_characteristics.pdf)
-    
+- [TableSchema](https://specs.frictionlessdata.io/table-schema/#introduction) : schema for tabular data
+    - [proposal](./documentation/relationship_property.pdf) for a 'relationship' property
  
 *The Environmental Sensing project is one of the five [BlueHats Semester of Code](https://communs.numerique.gouv.fr/bluehats/bsoc-contributions-2022/) projects selected among the 40 projects identified by in March 22.*
