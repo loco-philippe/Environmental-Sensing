@@ -2,6 +2,7 @@
 
 - data exchange format (three documents)
     - Json format for [observation](./ObsJSON-Standard.pdf), [indexed list](./IlistJSON-Standard.pdf) and [values](./ESJSON-Standard.pdf)
+    - Json Examples for [observation (jupyter Notebook)](./ObsJSON-Standard.pdf) and [text file](./ObsJSON-Standard.pdf)
 - project presentation
     - general presentation of the Environmental Sensing project [document(french)](./ES-presentation.pdf) and [slides(french)](./presentation_projet.pdf)
     - [interoperability](./interoperability.pdf) of environmental data
