@@ -59,6 +59,7 @@ class Obs(Ilist) :
 
     - `Obs.Idic`
     - `Obs.Std`
+    - `ES.ilist.Ilist.Iobj`
     - `Obs.from_obj`
     - `ES.ilist.Ilist.from_file`
 
@@ -248,7 +249,8 @@ class Obs(Ilist) :
         else: listidx.append(Iindex.Iext(location, ES.loc_classES))
         if property is None: listidx.append([ES.prp_classES,[]]) 
         else: listidx.append(Iindex.Iext(property, ES.prp_classES))
-        return cls(listidx=listidx, length=length, name=name, id=None, param=param, var=0, context=True)
+        return cls(listidx=listidx, length=length, name=name, id=None, param=param, 
+                   var=0, context=True)
 
     @classmethod
     def from_obj(cls, bs=None, reindex=True, context=True):
@@ -277,7 +279,8 @@ class Obs(Ilist) :
         if ES.data in dic:  data = dic[ES.data]
         else:               data = None
         if data and not isinstance(data, list): raise ObsError('data is not a list')
-        return cls(listidx=Ilist.Iobj(data), name=name, id=id, param=param, context=context)
+        return cls(listidx=Ilist.Iobj(data, reindex=reindex, context=context), 
+                   name=name, id=id, param=param, context=context, reindex=reindex)
 
 #%% special
     def __copy__(self):

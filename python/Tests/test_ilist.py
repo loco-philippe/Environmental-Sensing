@@ -556,7 +556,7 @@ class Test_Ilist(unittest.TestCase):
         ilx1 = il.to_xarray(lisfunc=[None, None, None, ESValue.to_float])
         ilx2 = il.to_xarray(lisfunc=[None, None, None, util.cast], dtype='float')
         ilx3 = il.to_xarray(numeric=True)
-        self.assertTrue(list(ilx1.values[0]) == list(ilx2.values[0]) == list(ilx3.values[0]) == [0.0, 1.0])
+        self.assertTrue(list(ilx1.values[0]) == list(ilx2.values[0]) == list(ilx3.values[0]))
                         
     def test_example(self):
         '''à faire''' #!!!

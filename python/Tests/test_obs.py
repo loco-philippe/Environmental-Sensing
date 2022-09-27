@@ -161,7 +161,67 @@ def _sort(res):
     else : return res.vListValue
 
 #%% tests exemples
-class TestExemples(unittest.TestCase):      # !!! exemples
+def polygon(i, j): return [[[i, j], [round(i+0.01, 2), j], [round(i+0.01, 2), round(j+0.01, 2)], [i, round(j+0.01, 2)]]]
+def dat(n): return ['datation', [datetime.datetime(2022,9,i).isoformat() for i in range(1, n+1)]]
+def slt(n): return ['datation',[[datetime.datetime(2022,9,i).isoformat(),
+                                 datetime.datetime(2022,9,i+1).isoformat()] for i in range(1, n+1)]]
+def loc(n): return ['location', [[round(2.1 + i/10, 2), round(45.1 + i / 10, 2)] for i in range(n)]]
+def pol(n): return ['location', [polygon(round(2.1 + i/10, 2), round(45.1 + i / 10, 2)) for i in range(n)]]
+def prp(n): return ['property', [{'prp': 'PM' + str(i), 'unit': 'kg/m3'} for i in range(1, n+1)]]
+def res(n): return ['result', [i for i in range(n)], -1]
+def stg(n): return ['string', ['example' + str(i)  for i in range(n)]]
+def dic(n): return ['dict', [{'example': 'value'+ str(i)}  for i in range(n)]]
+def lis(n): return ['list', [list(range(i+1))  for i in range(1, n+1)]]
+def mix(n): return ['mixte', [[stg, dic, lis][i%3](n)[1][i-1] for i in range(1, n+1)]]
+def s(f, n): return f(n)[1]
+def p(f, n, p): return [f(n)[0], f(n)[1], p]
+def printf(data, ob, mode='a'):         
+    with open('json_examples.obs', mode, newline='') as file: file.write(data + '\n')
+    return Obs.Iobj(data) == ob
+def pobs(listobs, info=False, mode='a'): 
+    ob = Obs.Iobj({'data':listobs}).setcanonorder()
+    return printf(ob.json(encoded=True, json_info=info), ob, mode) 
+def ppobs(listobs, param=None, name=None, info=False, mode='a'): 
+    ob = Obs.Iobj({'name':name, 'data':listobs, 'param':param}).setcanonorder()
+    return printf(ob.json(encoded=True, json_info=info), ob, mode)
+
+class TestExamples(unittest.TestCase):
+    def test_obsjson(self):
+        self.assertTrue(pobs([], mode='w'))
+        self.assertTrue(pobs([s(dat,1)]))
+        self.assertTrue(pobs([s(loc,1)]))
+        self.assertTrue(pobs([s(lis,1)]))
+        self.assertTrue(pobs([s(dic,1)]))
+        self.assertTrue(pobs([s(stg,1)]))
+        self.assertTrue(pobs([s(res,1)]))
+        self.assertTrue(ppobs([s(dat,1)], {'test':'simple value'}, 'example'))
+        self.assertTrue(pobs([dat(1)]))
+        self.assertTrue(pobs([loc(1)]))
+        self.assertTrue(pobs([lis(1)]))
+        self.assertTrue(pobs([dic(1)]))
+        self.assertTrue(pobs([res(1)]))
+        self.assertTrue(pobs([dat(1), loc(1)]))
+        self.assertTrue(pobs([dat(1), loc(1), prp(1), stg(1), res(1)]))
+        self.assertTrue(pobs([dat(2), loc(2)]))
+        self.assertTrue(ppobs([res(3), dat(3), loc(3), prp(3), stg(3)]))
+        self.assertTrue(ppobs([res(3), slt(3), pol(3), prp(3), stg(3)]))
+        self.assertTrue(ppobs([dat(3), p(loc,3,0), prp(2), p(stg, 3, 0), res(6)]))
+        self.assertTrue(ppobs([dat(3), loc(3), prp(2), p(stg, 3, 0), res(18)]))
+        self.assertTrue(ppobs([dat(3), loc(3), prp(2), p(stg, 3, 0), res(18)], 
+              param={'dimension': 3}, name='example4', info=True))
+        ob=Obs.Idic({"datation": [[{"date1": "2021-02-04T12:05:00"},
+                                   "2021-07-04T12:05:00", "2021-05-04T12:05:00"], 
+                                  [0,0,1,1,2,2]],
+                     "location": [[{"paris": [2.35, 48.87]}, [4.83, 45.76], 
+                                   [5.38, 43.3]], [0,0,2,1,1,2]],
+                     "property": [[{"prp": "PM25", "unit": "kg/m3"}, 
+                                   {"prp": "PM10", "unit": "kg/m3"}], [0,1,0,1,0,1]],
+                     "locinfos": [["begin", "middle", "end"], 1],
+                     "result": [[0,1,2,3,4,5], -1]}, name='test1').setcanonorder()
+        self.assertTrue(printf(ob.json(encoded=True), ob))
+        self.assertTrue(printf(ob.json(encoded=True, json_info=True), ob))
+        self.assertTrue(printf(ob.full().json(encoded=True), ob.full()))
+
     def test_first_observation(self) :
         # cas simple + présentation
         ob=Obs.Std('high', 'morning', 'paris', ' Temp')
@@ -354,8 +414,8 @@ class TestObservation(unittest.TestCase):
                         ob.loc([DatationValue(dat3[1][1]), LocationValue(loc3[1][1]), 
                                 PropertyValue(prop2[1][1])], extern=False))
         ob.nindex('location').setcodecvalue(loc3[1][1], loc3[1][2])
-        self.assertEqual(ob.nindex('location').codec[0], ob.nindex('location').codec[2])
-        self.assertEqual(ob.setLocation[0], ob.setLocation[2])
+        self.assertEqual(len(set(ob.nindex('location').codec)), 2)
+        #self.assertEqual(ob.setLocation[0], ob.setLocation[2])
         self.assertTrue (ob.nindex('result').loc(5) == 
                          ob.nindex('result').loc(NamedValue(5), extern=False) == [5])
         self.assertTrue (ob.nindex('datation').loc("2021-07-04T10:05:00") == 
@@ -517,21 +577,18 @@ class TestExports(unittest.TestCase):
 
     def test_geo_interface(self):
         ob = Obs.Idic(dict((loc3, dat3)))
-        _resloc = (tuple(lyon), tuple(paris), tuple(marseille))
-        _resgeo = dict([(ES.type,"MultiPoint"), ("coordinates",_resloc)])
-        self.assertEqual(ob.__geo_interface__, _resgeo)
-        self.assertEqual(ob.__geo_interface__["coordinates"], _resloc)
-        self.assertEqual(ob.__geo_interface__, _resgeo)
+        _resloc = set((tuple(lyon), tuple(paris), tuple(marseille)))
+        self.assertEqual(ob.__geo_interface__['type'], "MultiPoint")
+        self.assertEqual(set(ob.__geo_interface__["coordinates"]), _resloc)
         ob = Obs.Idic(dict((dpt2, dat1)))
         dpt2pt = {'type': 'Polygon', 'coordinates': (((0.5, 1.5), (0.0, 2.0),
           (1.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)}
-        self.assertEqual(ob.__geo_interface__, dpt2pt)
-
-    def test_obs_polygon(self):
+        self.assertEqual(set(ob.__geo_interface__['coordinates'][0]), set(dpt2pt['coordinates'][0]))
         ob = Obs.Idic(dict((dat3, dpt2, _res(6))))
-        self.assertEqual(ob.__geo_interface__, {'type': 'Polygon',
+        self.assertEqual(set(ob.__geo_interface__['coordinates'][0]), set(dpt2pt['coordinates'][0]))
+        '''{'type': 'Polygon',
                          'coordinates': (((0.5, 1.5), (0.0, 2.0), (1.0, 2.0),
-                          (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)})
+                          (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)})'''
 
     """def test_to_numpy(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, order=['location', 'property', 'datation'])

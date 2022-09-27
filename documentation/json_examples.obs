@@ -1,0 +1,23 @@
+examples of ObsJSON :
+
+{"type": "obs", "data": []}
+{"type": "obs", "data": ["2022-09-01T00:00:00+00:00"]}
+{"type": "obs", "data": [[[2.1, 45.1]]]}
+{"type": "obs", "data": [[[0, 1]]]}
+{"type": "obs", "data": [{"example": "value0"}]}
+{"type": "obs", "data": ["example0"]}
+{"type": "obs", "data": [0]}
+{"type": "obs", "name": "example", "param": {"test": "simple value"}, "data": ["2022-09-01T00:00:00+00:00"]}
+{"type": "obs", "data": [["datation", ["2022-09-01T00:00:00+00:00"]]]}
+{"type": "obs", "data": [["location", [[2.1, 45.1]]]]}
+{"type": "obs", "data": [["list", [[0, 1]]]]}
+{"type": "obs", "data": [["dict", [{"example": "value0"}]]]}
+{"type": "obs", "data": [["result", [0]]]}
+{"type": "obs", "data": [["datation", ["2022-09-01T00:00:00+00:00"]], ["location", [[2.1, 45.1]]]]}
+{"type": "obs", "data": [["datation", ["2022-09-01T00:00:00+00:00"]], ["location", [[2.1, 45.1]]], ["property", [{"prp": "PM1", "unit": "kg/m3"}]], ["string", ["example0"]], ["result", [0], -1]]}
+{"type": "obs", "data": [["datation", ["2022-09-01T00:00:00+00:00", "2022-09-02T00:00:00+00:00"]], ["location", [[2.1, 45.1], [2.2, 45.2]], 0]]}
+{"type": "obs", "data": [["datation", ["2022-09-01T00:00:00+00:00", "2022-09-03T00:00:00+00:00", "2022-09-02T00:00:00+00:00"]], ["location", [[2.1, 45.1], [2.3, 45.3], [2.2, 45.2]], 0], ["property", [{"prp": "PM1", "unit": "kg/m3"}, {"prp": "PM3", "unit": "kg/m3"}, {"prp": "PM2", "unit": "kg/m3"}], 0], ["string", ["example0", "example2", "example1"], 0], ["result", [0, 2, 1], -1]]}
+{"type": "obs", "data": [["datation", [["2022-09-03T00:00:00+00:00", "2022-09-04T00:00:00+00:00"], ["2022-09-01T00:00:00+00:00", "2022-09-02T00:00:00+00:00"], ["2022-09-02T00:00:00+00:00", "2022-09-03T00:00:00+00:00"]]], ["location", [[[[2.3, 45.3], [2.31, 45.3], [2.31, 45.31], [2.3, 45.31], [2.3, 45.3]]], [[[2.1, 45.1], [2.11, 45.1], [2.11, 45.11], [2.1, 45.11], [2.1, 45.1]]], [[[2.2, 45.2], [2.21, 45.2], [2.21, 45.21], [2.2, 45.21], [2.2, 45.2]]]], 0], ["property", [{"prp": "PM3", "unit": "kg/m3"}, {"prp": "PM1", "unit": "kg/m3"}, {"prp": "PM2", "unit": "kg/m3"}], 0], ["string", ["example2", "example0", "example1"], 0], ["result", [2, 0, 1], -1]]}
+{"type": "obs", "data": [["datation", ["2022-09-01T00:00:00+00:00", "2022-09-03T00:00:00+00:00", "2022-09-02T00:00:00+00:00"]], ["property", [{"prp": "PM1", "unit": "kg/m3"}, {"prp": "PM2", "unit": "kg/m3"}]], ["location", [[2.1, 45.1], [2.3, 45.3], [2.2, 45.2]], 0], ["string", ["example0", "example2", "example1"], 0], ["result", [0, 1, 4, 5, 2, 3], -1]]}
+{"type": "obs", "data": [["datation", ["2022-09-01T00:00:00+00:00", "2022-09-03T00:00:00+00:00", "2022-09-02T00:00:00+00:00"]], ["location", [[2.1, 45.1], [2.3, 45.3], [2.2, 45.2]]], ["property", [{"prp": "PM1", "unit": "kg/m3"}, {"prp": "PM2", "unit": "kg/m3"}]], ["string", ["example0", "example2", "example1"], 0], ["result", [0, 1, 4, 5, 2, 3, 12, 13, 16, 17, 14, 15, 6, 7, 10, 11, 8, 9], -1]]}
+{"type": "obs", "name": "example4", "param": {"dimension": 3}, "data": [["datation", ["2022-09-01T00:00:00+00:00", "2022-09-03T00:00:00+00:00", "2022-09-02T00:00:00+00:00"]], ["location", [[2.1, 45.1], [2.3, 45.3], [2.2, 45.2]]], ["property", [{"prp": "PM1", "unit": "kg/m3"}, {"prp": "PM2", "unit": "kg/m3"}]], ["string", ["example0", "example2", "example1"], 0], ["result", [0, 1, 4, 5, 2, 3, 12, 13, 16, 17, 14, 15, 6, 7, 10, 11, 8, 9], -1]], "information": {"len-datation": 3, "len-location": 3, "len-property": 2, "len-string": 3, "len-result": 18, "locationBox": [2.1, 45.1, 2.3, 45.3], "geobox": {"type": "Polygon", "coordinates": [[[2.3, 45.1], [2.3, 45.3], [2.1, 45.3], [2.1, 45.1], [2.3, 45.1]]]}, "propertyBox": ["PM1", "PM2"], "datationBox": ["2022-09-01", "2022-09-03"], "complet": true, "dim": 3, "axes": ["datation", "location", "property"]}}

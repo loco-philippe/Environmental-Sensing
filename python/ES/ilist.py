@@ -1515,7 +1515,7 @@ class Ilist:
                    'floatfmt': '.3f' - See tabulate module
         - **other kwargs** : parameter for ifunc
 
-        *Returns* : None '''
+        *Returns* : list or html table (tabulate format) '''
         #print(kwargs)
         opttab = {'defcode': 'j', 'all': True, 'lenres': 0, 'header':True}
         optview = {'tablefmt': 'simple', 'numalign': 'decimal', 'stralign': 'left', 'floatfmt': '.2f'}
@@ -1524,7 +1524,7 @@ class Ilist:
         width = ({'width': None} | kwargs)['width']
         if width: tab = [[(lambda x : x[:width] if type(x)==str else x)(val) 
                            for val in lig] for lig in tab]
-        print(tabulate(tab, headers='firstrow', **{k: option[k] for k in optview})) 
+        return tabulate(tab, headers='firstrow', **{k: option[k] for k in optview})
     
     def vlist(self, *args, func=None, index=-1, **kwargs):
         '''

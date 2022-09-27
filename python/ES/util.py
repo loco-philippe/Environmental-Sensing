@@ -293,7 +293,8 @@ class util:
         codlis = [util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
                             fullcodec=fullcodec, untyped=option['untyped']) for cc in codeclist]
         if len(js) == 1 and isinstance(js[0], str): listunic = True
-        if len(codlis) == 1 and not listunic : codlis = codlis[0]
+        if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):
+            codlis = codlis[0]
         js.append(codlis)
         '''js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
                              fullcodec=fullcodec, untyped=option['untyped']) 
