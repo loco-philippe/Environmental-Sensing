@@ -1,7 +1,7 @@
 # Documentation
 
-- data exchange format (three documents)
-    - Json format for [observation](./ObsJSON-Standard.pdf), [indexed list](./IlistJSON-Standard.pdf) and [values](./ESJSON-Standard.pdf)
+- data exchange format 
+    - Json format (three documents) for [observation](./ObsJSON-Standard.pdf), [indexed list](./IlistJSON-Standard.pdf) and [values](./ESJSON-Standard.pdf)
     - Json Examples for observation [(jupyter Notebook](./json_examples.ipynb) and [text file)](./json_examples.obs)
 - project presentation
     - general presentation of the Environmental Sensing project [document(french)](./ES-presentation.pdf) and [slides(french)](./presentation_projet.pdf)
