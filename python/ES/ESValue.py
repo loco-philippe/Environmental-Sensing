@@ -433,9 +433,6 @@ class ESValue:
             try: return TimeInterval._dattz(datetime.datetime.fromisoformat(val))
             except ValueError: return val
         return val
-        '''if isinstance(val, (int, str, float, bool, tuple, datetime.datetime, type(None), bytes)) :
-            return val
-        raise ESValueError('val is not simple value')'''
 
     @staticmethod
     def _uncastsimple(val):

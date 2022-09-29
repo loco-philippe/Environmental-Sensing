@@ -508,8 +508,8 @@ class Obs(Ilist) :
             dcinf |= self._infoOther()
         ldel =[]
         for k,v in dcinf.items() :
-            if type(v) == str and (v == "null" or v =='')   : ldel.append(k)
-            if type(v) == list and v == ES.nullCoor         : ldel.append(k)
+            if isinstance(v, str) and (v == "null" or v =='')   : ldel.append(k)
+            if isinstance(v, list) and v == ES.nullCoor         : ldel.append(k)
         for k in ldel: del dcinf[k]
         if len(dcinf) == 0 :    return ""
         return {ES.information : dcinf }

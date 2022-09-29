@@ -157,7 +157,7 @@ def _indic(res):
 
 def _sort(res):
     li = res.sort()
-    if type(li[0]) == int : return li
+    if isinstance(li[0], int) : return li
     else : return res.vListValue
 
 #%% tests exemples

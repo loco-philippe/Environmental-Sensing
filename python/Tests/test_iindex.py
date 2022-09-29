@@ -333,10 +333,7 @@ class Test_iindex(unittest.TestCase):
                [datetime.datetime(2020,1,1),    'DatationValue',   DatationValue],
                #[datetime.datetime(2020,1,1),   'TimeSlot',        TimeSlot],
                [datetime.datetime(2020,1,1),    None,              datetime.datetime]]
-        for t in liste:
-            #print(t[0], t[1])
-            #print(type(util.castobj([t[0]], t[1])[0]))
-            self.assertTrue(isinstance(util.castobj([t[0]], t[1])[0], t[2]))
+        for t in liste: self.assertTrue(isinstance(util.castobj([t[0]], t[1])[0], t[2]))
         idx = Iindex.Idic({'datation': ['er', 'rt', 'ty', 'ty']})
         self.assertTrue(isinstance(idx.values[0], DatationValue))
         idx = Iindex.Idic({'ESdatation': ['er', 'rt', 'ty', 'ty']})

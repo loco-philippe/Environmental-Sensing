@@ -1522,7 +1522,7 @@ class Ilist:
         option = opttab | optview | kwargs
         tab = self._to_tab(**option)
         width = ({'width': None} | kwargs)['width']
-        if width: tab = [[(lambda x : x[:width] if type(x)==str else x)(val) 
+        if width: tab = [[(lambda x : x[:width] if isinstance(x, str) else x)(val) 
                            for val in lig] for lig in tab]
         return tabulate(tab, headers='firstrow', **{k: option[k] for k in optview})
     
