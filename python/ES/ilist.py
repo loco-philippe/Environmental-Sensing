@@ -1333,7 +1333,7 @@ class Ilist:
         return None
     
     def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
-                  lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
+                  lisfunc=None, name=None, numeric=False, npdtype=None, attrs=None, **kwargs):
         '''
         Complete the Object and generate a Xarray DataArray with the dimension define by idx.
 
@@ -1348,6 +1348,7 @@ class Ilist:
         - **name** : string (default None) - DataArray name. If None, variable name
         - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
         - **npdtype** : string (default None) - numpy dtype for the DataArray ('object' if None)
+        - **attrs** : dict (default None) - attributes for the DataArray
         - **kwargs** : parameter for lisfunc
 
         *Returns* : DataArray '''
@@ -1373,7 +1374,6 @@ class Ilist:
         dims = [ilf.idxname[i] for i in idxilf]
         if numeric: 
             lisfunc[self.lvarrow[0]] = util.cast
-            #lisfunc[self.lvarrow[0]] = ESValue.to_float
             fillvalue= math.nan
             npdtype='float'
             option['dtype'] = 'float'
@@ -1381,7 +1381,7 @@ class Ilist:
                                     npdtype=npdtype, **option
                                      ).reshape([ilf.idxlen[idx] for idx in idxilf])
         if not name: name = self.name
-        attrs={}
+        if not isinstance(attrs, dict): attrs = {}
         for nam in self.lunicname: attrs[nam] = self.nindex(nam).codec[0]
         if info: attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
