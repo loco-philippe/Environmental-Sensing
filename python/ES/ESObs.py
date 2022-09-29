@@ -156,7 +156,7 @@ class Obs(Ilist) :
     - `ES.ilist.Ilist.to_csv`
     - `ES.ilist.Ilist.to_file`
     - `Obs.to_obj`
-    - `ES.ilist.Ilist.to_xarray`
+    - `Obs.to_xarray`
     - `ES.ilist.Ilist.to_dataFrame`
     - `ES.ilist.Ilist.view`
     - `ES.ilist.Ilist.vlist`
@@ -474,7 +474,27 @@ class Obs(Ilist) :
                                timezone=datetime.timezone.utc, canonical=True)
         return dic
 
+    def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
+                  lisfunc=None, numeric=False, npdtype=None, **kwargs):
+        '''
+        Complete the Obs and generate a Xarray DataArray with the dimension define by idx.
 
+        *Parameters*
+
+        - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
+        - **idx** : list (default none) - list of idx to be completed. If [],
+        self.primary is used.
+        - **fillvalue** : object (default '?') - value used for the new extval
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
+        - **lisfunc** : function (default none) - list of function to apply to indexes before export
+        - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
+        - **npdtype** : string (default None) - numpy dtype for the DataArray ('object' if None)
+        - **kwargs** : parameter for lisfunc
+
+        *Returns* : DataArray '''
+        return Ilist.to_xarray(self, info=info, idx=idx, fillvalue=fillvalue, 
+                              fillextern=fillextern, lisfunc=lisfunc, name=self.name,
+                              numeric=numeric, npdtype=npdtype, attrs=self.param, **kwargs)
 #%% internal
     def _info(self, **kwargs):
         ''' Create json dict with info datas'''
