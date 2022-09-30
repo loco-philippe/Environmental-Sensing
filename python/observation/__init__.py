@@ -96,7 +96,7 @@ Modules contain the following classes:
     
     - `observation.esconstante`.
 """
-from esobservation import Obs
+from esobservation import Observation
 from esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
 from esvalue_base import ESValue
 from ilist import Ilist

@@ -304,7 +304,7 @@ class Ilist:
         #init self.lidx
         self.name = self.__class__.__name__
         if not isinstance(name, list): name = [name]
-        if listidx.__class__.__name__ in ['Ilist','Obs']: 
+        if listidx.__class__.__name__ in ['Ilist','Observation']: 
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.lvarname = copy(listidx.lvarname)
             return
@@ -1047,7 +1047,7 @@ class Ilist:
         while find:
             find = False
             for i in range(len(ilm)):
-                if not ilm.lvar[0].values[i].__class__.__name__ in ['Ilist', 'Obs']: continue
+                if not ilm.lvar[0].values[i].__class__.__name__ in ['Ilist', 'Observation']: continue
                 find = True
                 il = ilm.lvar[0].values[i].merge()
                 ilname = il.idxname

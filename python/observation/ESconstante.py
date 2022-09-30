@@ -12,8 +12,8 @@ from typing import Dict
 def _classval():
     import datetime
     from observation import LocationValue, DatationValue, PropertyValue, \
-        NamedValue, ExternValue, TimeSlot, Obs, Ilist, Iindex
-    return {ES.obs_clsName: Obs,
+        NamedValue, ExternValue, TimeSlot, Observation, Ilist, Iindex
+    return {ES.obs_clsName: Observation,
             ES.dat_clsName: DatationValue,
             ES.loc_clsName: LocationValue,
             ES.prp_clsName: PropertyValue,
@@ -129,7 +129,7 @@ class Es:
                         self.prp_uncertain   : self.prp_classES  ,
                         "EMFType "           : "ObservingEMF"  ,
                         "ResultNature "      : "ObservingEMF"  }
-        ''' Assignment of attributes to ESObs objects '''
+        ''' Assignment of attributes to Observation objects '''
 
         self.obsCat: Dict = {
                             -1 :"obserror" ,
@@ -465,7 +465,7 @@ class Es:
         self.tim_valName      = "datetime"
         self.slo_valName      = "timeslot"
 
-        self.obs_clsName      = 'Obs'
+        self.obs_clsName      = 'Observation'
         self.dat_clsName      = 'DatationValue'
         self.loc_clsName      = 'LocationValue'
         self.prp_clsName      = 'PropertyValue'

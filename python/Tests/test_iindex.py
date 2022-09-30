@@ -12,7 +12,7 @@ from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 import datetime
 from itertools import product
-from observation import Obs, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
+from observation import Observation, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
 from test_obs import dat3, loc3, prop2
 
 class Test_iindex(unittest.TestCase):

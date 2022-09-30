@@ -324,7 +324,7 @@ class util:
         '''return the function func applied to the object value with parameters args and kwargs'''
         if func in (None, []) : return value
         lis = []
-        if not (isinstance(value, list) or value.__class__.__name__ in ['Iindex', 'Ilist', 'Obs']):
+        if not (isinstance(value, list) or value.__class__.__name__ in ['Iindex', 'Ilist', 'Observation']):
             listval = [value]
         else : listval = value
         for val in listval :
@@ -393,7 +393,7 @@ class util:
             else: return {_invcastfunc[val.__class__]: val.json(**option)} 
         if val.__class__.__name__ == 'Ilist':       return {ES.ili_valName: val.json(**option)}
         if val.__class__.__name__ == 'Iindex':      return {ES.iin_valName: val.json(**option)}
-        if val.__class__.__name__ == 'Obs':         return {ES.obs_valName: val.to_obj(**option)}
+        if val.__class__.__name__ == 'Observation':         return {ES.obs_valName: val.to_obj(**option)}
 
     @staticmethod
     def list(tuplelists): 

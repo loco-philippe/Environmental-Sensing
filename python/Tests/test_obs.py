@@ -14,7 +14,8 @@ import datetime
 #from datetime import datetime
 from pymongo import MongoClient
 from pprint import pprint
-from observation import Obs, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
+from observation import Observation as Obs
+from observation import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
 
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False
@@ -535,7 +536,7 @@ class TestObservation(unittest.TestCase):
         self.assertTrue(ob.complete)
 
 """class TestImportExport(unittest.TestCase):
-    '''Unit tests for `ES.ESObservation.Observation` import and export '''
+    '''Unit tests for `observation.esobservation.Observation` import and export '''
     def test_json(self):
         res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
         ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref={'location':'datation'})        
@@ -703,7 +704,7 @@ class TestExports(unittest.TestCase):
                                        location={'within' : LocationValue.Box((14.5, 41, 18.5, 44))} )), 2)
 
 class TestInterne(unittest.TestCase):
-    '''Unit tests for `ES.ESObservation.Observation` internal '''
+    '''Unit tests for `observation.esobservation.Observation` internal '''
 
     @unittest.skipIf(mongo, "test envoi mongo")
     def test_plot(self):

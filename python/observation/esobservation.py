@@ -41,7 +41,7 @@ from esconstante import ES
 from esvalue import LocationValue, DatationValue, PropertyValue, ExternValue 
 from esvalue_base import ESValue, ESValueEncoder
 
-class Obs(Ilist) :
+class Observation(Ilist) :
     """
     An `Obs` is derived from `observation.Ilist` object.
 
@@ -55,20 +55,20 @@ class Obs(Ilist) :
 
     *constructor (@classmethod))*
 
-    - `Obs.Idic`
-    - `Obs.Std`
+    - `Observation.Idic`
+    - `Observation.Std`
     - `observation.ilist.Ilist.Iobj`
-    - `Obs.from_obj`
+    - `Observation.from_obj`
     - `observation.ilist.Ilist.from_file`
 
     *dynamic value (getters @property)*
 
-    - `Obs.bounds`
-    - `Obs.jsonFeature`
-    - `Obs.setLocation`
-    - `Obs.setDatation`
-    - `Obs.setProperty`
-    - `Obs.setResult`
+    - `Observation.bounds`
+    - `Observation.jsonFeature`
+    - `Observation.setLocation`
+    - `Observation.setDatation`
+    - `Observation.setProperty`
+    - `Observation.setResult`
 
     *dynamic value inherited (getters @property)*
 
@@ -123,7 +123,7 @@ class Obs(Ilist) :
     - `observation.ilist.Ilist.add`
     - `observation.ilist.Ilist.addindex`
     - `observation.ilist.Ilist.append`
-    - `Obs.appendObs`
+    - `Observation.appendObs`
     - `observation.ilist.Ilist.delindex`
     - `observation.ilist.Ilist.delrecord`
     - `observation.ilist.Ilist.renameindex`
@@ -148,13 +148,13 @@ class Obs(Ilist) :
     
     *exports methods*
 
-    - `Obs.choropleth`
+    - `Observation.choropleth`
     - `observation.ilist.Ilist.json`
     - `observation.ilist.Ilist.plot`
     - `observation.ilist.Ilist.to_csv`
     - `observation.ilist.Ilist.to_file`
-    - `Obs.to_obj`
-    - `Obs.to_xarray`
+    - `Observation.to_obj`
+    - `Observation.to_xarray`
     - `observation.ilist.Ilist.to_dataFrame`
     - `observation.ilist.Ilist.view`
     - `observation.ilist.Ilist.vlist`
@@ -179,7 +179,7 @@ class Obs(Ilist) :
         - **param**    : dict (default None) - Dict with parameter data or user's data
         - **context** : boolean (default True) - if False, only codec and keys are included
         - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
-        if isinstance(listidx, Obs): 
+        if isinstance(listidx, Observation): 
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.lvarname = [name for name in listidx.lvarname]
             if not listidx.param is None: self.param = {k:v for k,v in listidx.param.items()}
@@ -283,7 +283,7 @@ class Obs(Ilist) :
 #%% special
     def __copy__(self):
         ''' Copy all the data '''
-        return Obs(self)
+        return Observation(self)
 
     def __str__(self):
         '''return string format for var and lidx'''

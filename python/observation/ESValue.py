@@ -601,7 +601,7 @@ class ExternValue (ESValue):               # !!! début ResValue
 
     def _jsonValue(self, **option) :
         '''return a json object for the value '''
-        if self.value.__class__.__name__ in ['Iindex', 'Ilist', 'Obs']: 
+        if self.value.__class__.__name__ in ['Iindex', 'Ilist', 'Observation']: 
             return self.value.json(encoded=False, encode_format='json')
         if isinstance(self.value, (int, str, float, bool, list, tuple, dict, datetime.datetime, type(None), bytes)):
             return self.value
