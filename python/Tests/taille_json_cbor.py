@@ -6,8 +6,8 @@ Created on Tue May  3 09:31:11 2022
 """
 from datetime import datetime, timezone
 import math, json, cbor2
-from ESObservation import Observation
-from ESconstante import ES
+from observation import Observation
+from esconstante import ES
 from test_observation import obs_1, dat1, loc1, _res, prop1
 
 def round_half(x):

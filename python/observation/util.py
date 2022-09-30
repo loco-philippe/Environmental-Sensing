@@ -9,15 +9,16 @@ from collections import Counter
 from itertools import product
 from copy import copy
 import datetime, cbor2
-from timeslot import TimeSlot, TimeInterval
 import json
 import re
 import numpy as np
+import math
+from json import JSONDecodeError 
+
+from timeslot import TimeSlot, TimeInterval
+from esconstante import ES, _classval
 from esvalue import LocationValue, DatationValue, PropertyValue, NamedValue, ExternValue
 from esvalue_base import ESValue
-import math
-from ESconstante import ES, _classval
-from json import JSONDecodeError 
 
 
 def identity(*args, **kwargs):

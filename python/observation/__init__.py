@@ -70,37 +70,38 @@ Documentation is available in other pages :
 
 Modules contain the following classes:
     
-- ESObservation : 
+- Observation : 
     
-    - `ES.ESObs`
+    - `observation.observation`
     
 - ESValue : 
     
-    - `ES.ESValue`(`ES.ESValue.DatationValue`, `ES.ESValue.LocationValue`, `ES.ESValue.PropertyValue`,
-    `ES.ESValue.NamedValue`, `ES.ESValue.ExternValue`, `ES.ESValue.ESValue`)
+    - `observation.esvalue`(`observation.esvalue.DatationValue`, `observation.esvalue.LocationValue`, 
+    `observation.esvalue.PropertyValue`, `observation.esvalue.NamedValue`, 
+    `observation.esvalue.ExternValue`, `observation.esvalue.ESValue`)
     
 - Ilist : 
     
-    - `ES.ilist`
+    - `observation.ilist`
     
 - Iindex : 
     
-    - `ES.iindex`
+    - `observation.iindex`
     
 - TimeSlot : 
     
-    - `ES.timeslot`
+    - `observation.timeslot`
 
-- ESconstante : 
+- ES : 
     
-    - `ES.ESconstante`.
+    - `observation.esconstante`.
 """
-from ESObs import Obs
+from esobservation import Obs
 from esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
 from esvalue_base import ESValue
 from ilist import Ilist
 from iindex import Iindex
-from ESconstante import ES, Es, _classval
+from esconstante import ES, Es, _classval
 from util import util
 from timeslot import TimeSlot
 

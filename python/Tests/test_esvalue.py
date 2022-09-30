@@ -4,7 +4,7 @@ Created on Sun Aug  1 22:05:08 2021
 
 @author: Philippe@loco-labs.io
 
-The `ES.test_esvalue` module contains the unit tests (class unittest) for the
+The `observation.test_esvalue` module contains the unit tests (class unittest) for the
 `ESValue` functions.
 """
 import unittest, json
@@ -21,7 +21,7 @@ simple  = False  # False
 
 @unittest.skipIf(simple, "test unitaire")
 class TestObsUnitaire(unittest.TestCase):
-    '''Unit tests for `ES.ESValue`, `ES.ESObs`, `ES.ESElement` '''
+    '''Unit tests for `observation.ESValue`, `observation.ESObs` '''
     opt = ES.mOption.copy()
 
     def test_valClassName(self):

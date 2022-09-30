@@ -4,7 +4,7 @@ Created on Tue Aug  3 23:40:06 2021
 
 @author: philippe@loco-labs.io
 
-An `ESObs.Obs` is an object representing a set of information having
+An `observation.Obs` is an object representing a set of information having
 spatial and temporal characteristics associated with measurable or observable
  properties.
  
@@ -15,7 +15,7 @@ The Obs Object is built around three main bricks :
 - Tools dedicated to particular domains ([Shapely](https://shapely.readthedocs.io/en/stable/manual.html) 
 for location, TimeSlot for Datation)
 
-The `ES.ESObs` module contains the `Obs` class.
+The `observation.observation` module contains the `Obs` class.
 
 Documentation is available in other pages :
 
@@ -29,23 +29,21 @@ Documentation is available in other pages :
 
 
 """
-from ESconstante import ES
-#import ESValue
-from esvalue import LocationValue, DatationValue, PropertyValue, ExternValue 
-from esvalue_base import ESValue, ESValueEncoder
 import datetime
 import json, folium
-from ilist import Ilist
-from iindex import Iindex
-from util import util, IindexEncoder, CborDecoder
 import cbor2
 from copy import copy
 
-#from ESValue import _EsClassValue
+from ilist import Ilist
+from iindex import Iindex
+from util import util, IindexEncoder, CborDecoder
+from esconstante import ES
+from esvalue import LocationValue, DatationValue, PropertyValue, ExternValue 
+from esvalue_base import ESValue, ESValueEncoder
 
 class Obs(Ilist) :
     """
-    An `Obs` is derived from `ES.Ilist` object.
+    An `Obs` is derived from `observation.Ilist` object.
 
     *Additional attributes (for @property see methods)* :
 
@@ -59,9 +57,9 @@ class Obs(Ilist) :
 
     - `Obs.Idic`
     - `Obs.Std`
-    - `ES.ilist.Ilist.Iobj`
+    - `observation.ilist.Ilist.Iobj`
     - `Obs.from_obj`
-    - `ES.ilist.Ilist.from_file`
+    - `observation.ilist.Ilist.from_file`
 
     *dynamic value (getters @property)*
 
@@ -74,93 +72,93 @@ class Obs(Ilist) :
 
     *dynamic value inherited (getters @property)*
 
-    - `ES.ilist.Ilist.extidx`
-    - `ES.ilist.Ilist.extidxext`
-    - `ES.ilist.Ilist.idxname`
-    - `ES.ilist.Ilist.idxref`
-    - `ES.ilist.Ilist.idxlen`
-    - `ES.ilist.Ilist.iidx`
-    - `ES.ilist.Ilist.keys`
-    - `ES.ilist.Ilist.lenindex`
-    - `ES.ilist.Ilist.lenidx`
-    - `ES.ilist.Ilist.lidx`
-    - `ES.ilist.Ilist.lidxrow`
-    - `ES.ilist.Ilist.lvar`
-    - `ES.ilist.Ilist.lvarrow`
-    - `ES.ilist.Ilist.lname`
-    - `ES.ilist.Ilist.lunicname`
-    - `ES.ilist.Ilist.lunicrow`
-    - `ES.ilist.Ilist.setidx`
-    - `ES.ilist.Ilist.tiidx`
-    - `ES.ilist.Ilist.textidx`
-    - `ES.ilist.Ilist.textidxext`
+    - `observation.ilist.Ilist.extidx`
+    - `observation.ilist.Ilist.extidxext`
+    - `observation.ilist.Ilist.idxname`
+    - `observation.ilist.Ilist.idxref`
+    - `observation.ilist.Ilist.idxlen`
+    - `observation.ilist.Ilist.iidx`
+    - `observation.ilist.Ilist.keys`
+    - `observation.ilist.Ilist.lenindex`
+    - `observation.ilist.Ilist.lenidx`
+    - `observation.ilist.Ilist.lidx`
+    - `observation.ilist.Ilist.lidxrow`
+    - `observation.ilist.Ilist.lvar`
+    - `observation.ilist.Ilist.lvarrow`
+    - `observation.ilist.Ilist.lname`
+    - `observation.ilist.Ilist.lunicname`
+    - `observation.ilist.Ilist.lunicrow`
+    - `observation.ilist.Ilist.setidx`
+    - `observation.ilist.Ilist.tiidx`
+    - `observation.ilist.Ilist.textidx`
+    - `observation.ilist.Ilist.textidxext`
 
     *global value (getters @property)*
 
-    - `ES.ilist.Ilist.complete`
-    - `ES.ilist.Ilist.consistent`
-    - `ES.ilist.Ilist.dimension`
-    - `ES.ilist.Ilist.lencomplete`
-    - `ES.ilist.Ilist.primary`
-    - `ES.ilist.Ilist.zip`
+    - `observation.ilist.Ilist.complete`
+    - `observation.ilist.Ilist.consistent`
+    - `observation.ilist.Ilist.dimension`
+    - `observation.ilist.Ilist.lencomplete`
+    - `observation.ilist.Ilist.primary`
+    - `observation.ilist.Ilist.zip`
 
     *selecting - infos methods*
 
-    - `ES.ilist.Ilist.couplingmatrix`
-    - `ES.ilist.Ilist.idxrecord`
-    - `ES.ilist.Ilist.indexinfos`
-    - `ES.ilist.Ilist.indicator`
-    - `ES.ilist.Ilist.iscanonorder`
-    - `ES.ilist.Ilist.isinrecord`
-    - `ES.ilist.Ilist.keytoval`
-    - `ES.ilist.Ilist.loc`
-    - `ES.ilist.Ilist.nindex`
-    - `ES.ilist.Ilist.record`
-    - `ES.ilist.Ilist.recidx`
-    - `ES.ilist.Ilist.recvar`
-    - `ES.ilist.Ilist.valtokey`
+    - `observation.ilist.Ilist.couplingmatrix`
+    - `observation.ilist.Ilist.idxrecord`
+    - `observation.ilist.Ilist.indexinfos`
+    - `observation.ilist.Ilist.indicator`
+    - `observation.ilist.Ilist.iscanonorder`
+    - `observation.ilist.Ilist.isinrecord`
+    - `observation.ilist.Ilist.keytoval`
+    - `observation.ilist.Ilist.loc`
+    - `observation.ilist.Ilist.nindex`
+    - `observation.ilist.Ilist.record`
+    - `observation.ilist.Ilist.recidx`
+    - `observation.ilist.Ilist.recvar`
+    - `observation.ilist.Ilist.valtokey`
 
     *add - update methods*
 
-    - `ES.ilist.Ilist.add`
-    - `ES.ilist.Ilist.addindex`
-    - `ES.ilist.Ilist.append`
+    - `observation.ilist.Ilist.add`
+    - `observation.ilist.Ilist.addindex`
+    - `observation.ilist.Ilist.append`
     - `Obs.appendObs`
-    - `ES.ilist.Ilist.delindex`
-    - `ES.ilist.Ilist.delrecord`
-    - `ES.ilist.Ilist.renameindex`
-    - `ES.ilist.Ilist.setvar`
-    - `ES.ilist.Ilist.setname`
-    - `ES.ilist.Ilist.updateindex`    
+    - `observation.ilist.Ilist.delindex`
+    - `observation.ilist.Ilist.delrecord`
+    - `observation.ilist.Ilist.renameindex`
+    - `observation.ilist.Ilist.setvar`
+    - `observation.ilist.Ilist.setname`
+    - `observation.ilist.Ilist.updateindex`    
     
     *structure management - methods*
 
-    - `ES.ilist.Ilist.applyfilter`
-    - `ES.ilist.Ilist.coupling`
-    - `ES.ilist.Ilist.full`
-    - `ES.ilist.Ilist.getduplicates`
-    - `ES.ilist.Ilist.merge`
-    - `ES.ilist.Ilist.reindex`
-    - `ES.ilist.Ilist.reorder`
-    - `ES.ilist.Ilist.setfilter`
-    - `ES.ilist.Ilist.sort`
-    - `ES.ilist.Ilist.swapindex`
-    - `ES.ilist.Ilist.setcanonorder`
-    - `ES.ilist.Ilist.tostdcodec`
+    - `observation.ilist.Ilist.applyfilter`
+    - `observation.ilist.Ilist.coupling`
+    - `observation.ilist.Ilist.full`
+    - `observation.ilist.Ilist.getduplicates`
+    - `observation.ilist.Ilist.merge`
+    - `observation.ilist.Ilist.reindex`
+    - `observation.ilist.Ilist.reorder`
+    - `observation.ilist.Ilist.setfilter`
+    - `observation.ilist.Ilist.sort`
+    - `observation.ilist.Ilist.swapindex`
+    - `observation.ilist.Ilist.setcanonorder`
+    - `observation.ilist.Ilist.tostdcodec`
     
     *exports methods*
 
     - `Obs.choropleth`
-    - `ES.ilist.Ilist.json`
-    - `ES.ilist.Ilist.plot`
-    - `ES.ilist.Ilist.to_csv`
-    - `ES.ilist.Ilist.to_file`
+    - `observation.ilist.Ilist.json`
+    - `observation.ilist.Ilist.plot`
+    - `observation.ilist.Ilist.to_csv`
+    - `observation.ilist.Ilist.to_file`
     - `Obs.to_obj`
     - `Obs.to_xarray`
-    - `ES.ilist.Ilist.to_dataFrame`
-    - `ES.ilist.Ilist.view`
-    - `ES.ilist.Ilist.vlist`
-    - `ES.ilist.Ilist.voxel`
+    - `observation.ilist.Ilist.to_dataFrame`
+    - `observation.ilist.Ilist.view`
+    - `observation.ilist.Ilist.vlist`
+    - `observation.ilist.Ilist.voxel`
         
     """
 

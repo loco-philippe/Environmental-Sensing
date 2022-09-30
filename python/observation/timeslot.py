@@ -4,7 +4,7 @@ Created on Sun Jan  2 18:30:14 2022
 
 @author: Philippe@loco-labs.io
 
-The `ES.timeslot` module contains the `TimeSlot` and the `TimeInterval` classes.
+The `observation.timeslot` module contains the `TimeSlot` and the `TimeInterval` classes.
 
 # What is the TimeSlot Object ?
 
@@ -47,7 +47,7 @@ Multiple operations between two objects can be performed :
 """
 import datetime
 import json, numpy, pandas, bson
-from ESconstante import ES #, _identity
+from esconstante import ES #, _identity
 
 class TimeSlotEncoder(json.JSONEncoder):
     """add a new json encoder for TimeSlot"""

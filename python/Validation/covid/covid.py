@@ -17,7 +17,7 @@ api : https://www.data.gouv.fr/fr/datasets/donnees-hospitalieres-relatives-a-lep
 import os
 os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 from ilist import Ilist, identity
-from ESObservation import Observation
+from observation import Observation
 from time import time
 import csv
 from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue, ESValue

@@ -30,7 +30,7 @@ def _classval():
             ES.res_classES: NamedValue}
 
 def _classESval():
-    from observation import LocationValue, DatationValue, PropertyValue, \
+    from esobservation import LocationValue, DatationValue, PropertyValue, \
         NamedValue, ExternValue
     return {ES.obs_clsName: ExternValue,
             ES.dat_clsName: DatationValue,
@@ -88,7 +88,7 @@ class Es:
                       "sort_order"          : 'dlp',
                       "codif"               : {}   #self.codeb sinon
                       }
-        ''' Default options for `ES.ESObservation.Observation`'''
+        ''' Default options for `observation.Observation`'''
 
         #%% observation initialization (dict)
         self.vName: Dict = {  self.obs_classES  :   self.obs ,
@@ -97,12 +97,6 @@ class Es:
                         self.res_classES  :   self.res ,
                         self.prp_classES  :   self.prp }
         '''name for json classES identification '''
-
-        """self.mValObs: Dict = {self.loc_valName  : self.loc_classES  ,
-                        self.dat_valName  : self.dat_classES  ,
-                        self.prp_valName  : self.prp_classES  ,
-                        self.res_valName  : self.res_classES  }
-        '''assignment of ESValue name to ESObs objects '''"""
 
         self.json_type: list = [self.json_type_dat, self.json_type_loc, self.json_type_prp, self.json_type_res]
         '''ordered list for json_type '''
@@ -177,7 +171,7 @@ class Es:
                             227 : 'histoObsareaFeature'  ,
                             228 : 'obsGrid'  ,
                             }
-        ''' Default name for `ES.ESObservation.Observation.score` '''
+        ''' Default name for `observation.Observation.score` '''
 
         #%% Xarray initialization (dict)
         self.nax: Dict = {'dat' : 0, 'loc' : 1, 'prp' : 2,
@@ -316,15 +310,15 @@ class Es:
                             self.index        :   6 ,
                             self.variable     :   7}
         self.invcodeb: Dict = self._inv(self.codeb)
-        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
-        `ES.ESObservation.Observation.to_bytes` '''
+        ''' Code for bynary interface `observation.Observation.from_bytes` and
+        `observation.Observation.to_bytes` '''
         self.codevalue: Dict = {'name': 1,
                                 'value': 2,
                                 'namemini':3,
                                 'valuemini':4}
         self.invcodevalue: Dict = self._inv(self.codevalue)
-        ''' Code for bynary interface `ES.ESObservation.Observation.from_bytes` and
-        `ES.ESObservation.Observation.to_bytes` '''
+        ''' Code for bynary interface `observation.Observation.from_bytes` and
+        `observation.Observation.to_bytes` '''
         self.minivalue: list = [3,4]
         self.namevalue: list = [1,3]
         

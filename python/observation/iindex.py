@@ -4,7 +4,7 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `ES.iindex` module contains the `Iindex` class.
+The `observation.iindex` module contains the `Iindex` class.
 
 Documentation is available in other pages :
 
@@ -31,7 +31,7 @@ import json
 from copy import copy, deepcopy
 import datetime
 import numpy as np
-from ESconstante import ES
+from esconstante import ES
 from util import identity
 from collections import defaultdict, Counter
 from esvalue_base import ESValueEncoder, ESValue

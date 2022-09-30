@@ -4,7 +4,7 @@ Created on Sun Aug  1 22:05:08 2021
 
 @author: Philippe@loco-labs.io
 
-The `ES.test_obs` module contains the unit tests (class unittest) for the
+The `observation.test_obs` module contains the unit tests (class unittest) for the
 Obs methods.
 """
 import unittest
@@ -367,7 +367,7 @@ class TestExamples(unittest.TestCase):
 #%% tests unitaires
 @unittest.skipIf(simple, "test Observation")
 class TestObservation(unittest.TestCase):
-    '''Unit tests for `ES.ESObs.Obs` '''
+    '''Unit tests for `ES.observation.Obs` '''
 
     def test_obs_creation_copy(self):
         listob = [Obs(), Obs(id='truc', listidx=[1,2,3]), Obs.from_obj({'data':[1,2,3]}),
@@ -557,7 +557,7 @@ class TestObservation(unittest.TestCase):
                          ob.to_json(encoded=False))"""
         
 class TestExports(unittest.TestCase):
-    '''Unit tests for `ES.ESObservation.Observation` exports '''
+    '''Unit tests for `ES.observation.Observation` exports '''
 
     """@unittest.skipIf(mongo, "test envoi mongo")
     def test__envoi_mongo(self):

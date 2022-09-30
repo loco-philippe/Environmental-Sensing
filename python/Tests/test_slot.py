@@ -4,7 +4,7 @@ Created on Fri Mar 11 20:50:18 2022
 
 @author: Philippe@loco-labs.io
 
-The `ES.test_slot` module contains the unit tests (class unittest) for the 
+The `observation.test_slot` module contains the unit tests (class unittest) for the 
 `TimeSlot` functions.
 """
 

@@ -20,7 +20,7 @@ ESValue is build around two attributes :
 
 <img src="https://loco-philippe.github.io/ES/ESValue_class.png" width="800">
 
-This module groups the classes of the objects used in the `ES.Observation` module :
+This module groups the classes of the objects used in the `observation.esobservation` module :
 
 - `DatationValue`,
 - `LocationValue`,
@@ -52,7 +52,7 @@ from json import JSONDecodeError
 import cbor2
 from copy import copy
 
-from ESconstante import ES, _classval
+from esconstante import ES, _classval
 from timeslot import TimeInterval
 
 ListESValue = ['LocationValue', 'DatationValue', 'PropertyValue', 'NamedValue', 'ExternValue']

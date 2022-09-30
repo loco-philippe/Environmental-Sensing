@@ -4,7 +4,7 @@ Created on Sat Jan 29 22:44:05 2022
 
 @author: Philippe@loco-labs.io
 
-The `ES.test_ilist` module contains the unit tests (class unittest) for the
+The `observation.test_ilist` module contains the unit tests (class unittest) for the
 `Ilist` functions.
 """
 import unittest

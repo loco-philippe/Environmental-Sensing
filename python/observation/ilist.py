@@ -4,7 +4,7 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `ES.ilist` module contains the `Ilist` class.
+The `observation.ilist` module contains the `Ilist` class.
 
 Documentation is available in other pages :
 
@@ -32,7 +32,7 @@ import json
 import csv
 import math
 from tabulate import tabulate
-from ESconstante import ES
+from esconstante import ES
 from esvalue_base import ESValue
 from iindex import Iindex
 from util import util, IindexEncoder, CborDecoder

@@ -4,7 +4,7 @@ Created on Sat Jan 29 22:44:05 2022
 
 @author: Philippe@loco-labs.io
 
-The `ES.test_iindex` module contains the unit tests (class unittest) for the
+The `observation.test_iindex` module contains the unit tests (class unittest) for the
 `Iindex` class.
 """
 import unittest
