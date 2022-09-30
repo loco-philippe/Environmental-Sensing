@@ -1,0 +1,12 @@
+
+build/
+dist/
+__pycache__/
+*.so
+*.il
+*.ob
+*.obs
+*.py[cod]
+*~
+
+.cache

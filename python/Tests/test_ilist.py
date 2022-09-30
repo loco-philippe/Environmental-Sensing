@@ -8,16 +8,17 @@ The `ES.test_ilist` module contains the unit tests (class unittest) for the
 `Ilist` functions.
 """
 import unittest
-from ilist import Ilist
-from iindex import Iindex
+from ES import Obs, NamedValue, DatationValue, LocationValue, PropertyValue, ESValue, Ilist, Iindex, ES
+#from ilist import Ilist
+#from iindex import Iindex
 from copy import copy
 from util import util
 import csv #, os
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 from test_obs import dat3, loc3, prop2, _res
-from ESValue import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue #, ReesultValue
+#from ESValue import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue #, ReesultValue
 from datetime import datetime
-from ESconstante import ES
+#from ESconstante import ES
 from math import nan
 from itertools import product
 

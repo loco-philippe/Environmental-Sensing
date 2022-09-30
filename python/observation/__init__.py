@@ -95,3 +95,8 @@ Modules contain the following classes:
     
     - `ES.ESconstante`.
 """
+from ESObs import Obs
+from ESValue import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue
+from ilist import Ilist
+from iindex import Iindex
+from ESconstante import ES
