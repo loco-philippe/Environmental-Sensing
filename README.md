@@ -68,4 +68,4 @@ all situations (platform)
 - [TableSchema](https://specs.frictionlessdata.io/table-schema/#introduction) : schema for tabular data
     - [proposal](./documentation/relationship_property.pdf) for a 'relationship' property
  
-*The Environmental Sensing project is one of the five [BlueHats Semester of Code](https://communs.numerique.gouv.fr/bluehats/bsoc-contributions-2022/) projects selected among the 40 projects identified by in March 22.*
+*The Environmental Sensing project is one of the six [BlueHats Semester of Code](https://communs.numerique.gouv.fr/bluehats/bsoc-contributions-2022/) projects selected among the 40 projects identified by in March 22.*
