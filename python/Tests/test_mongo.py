@@ -7,11 +7,8 @@ Created on Sat Jul 24 11:01:54 2021
 from tabulate import tabulate
 from pymongo import MongoClient, GEOSPHERE
 from pprint import pprint
-from ESObservation import Observation
-from ESValue import LocationValue
-import json
-import bson
-#from bson.codec_options import CodecOptions
+from observation import LocationValue
+
 
 # Requires the PyMongo package# https://api.mongodb.com/python/current
 # pathClient = 'mongodb+srv://ESobsUser:observation@esobs.gwpay.mongodb.net/test'

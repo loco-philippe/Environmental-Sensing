@@ -34,7 +34,7 @@ import numpy as np
 from ESconstante import ES
 from util import identity
 from collections import defaultdict, Counter
-from ESValue import ESValueEncoder, ESValue
+from esvalue_base import ESValueEncoder, ESValue
 
 class Iindex:
 #%% intro

@@ -8,21 +8,13 @@ The `ES.test_obs` module contains the unit tests (class unittest) for the
 Obs methods.
 """
 import unittest
-
-#import os
-#os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from ESValue import LocationValue, DatationValue, ESValue,\
-    PropertyValue, NamedValue, ExternValue
-from ESObs import Obs
-from iindex import Iindex
-from ESconstante import ES
 import json, copy #, shapely
 import requests as rq
 import datetime
 #from datetime import datetime
 from pymongo import MongoClient
 from pprint import pprint
-from ilist import Ilist
+from observation import Obs, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
 
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False

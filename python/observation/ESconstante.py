@@ -10,13 +10,9 @@ import datetime, math
 from typing import Dict
 
 def _classval():
-    from ESValue import LocationValue, DatationValue, PropertyValue, \
-        NamedValue, ExternValue
-    from timeslot import TimeSlot
-    from ESObs import Obs
-    from ilist import Ilist
-    from iindex import Iindex
     import datetime
+    from observation import LocationValue, DatationValue, PropertyValue, \
+        NamedValue, ExternValue, TimeSlot, Obs, Ilist, Iindex
     return {ES.obs_clsName: Obs,
             ES.dat_clsName: DatationValue,
             ES.loc_clsName: LocationValue,
@@ -34,7 +30,7 @@ def _classval():
             ES.res_classES: NamedValue}
 
 def _classESval():
-    from ESValue import LocationValue, DatationValue, PropertyValue, \
+    from observation import LocationValue, DatationValue, PropertyValue, \
         NamedValue, ExternValue
     return {ES.obs_clsName: ExternValue,
             ES.dat_clsName: DatationValue,

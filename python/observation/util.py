@@ -13,8 +13,8 @@ from timeslot import TimeSlot, TimeInterval
 import json
 import re
 import numpy as np
-from ESValue import LocationValue, DatationValue, PropertyValue, NamedValue
-from ESValue import ESValue, ExternValue
+from esvalue import LocationValue, DatationValue, PropertyValue, NamedValue, ExternValue
+from esvalue_base import ESValue
 import math
 from ESconstante import ES, _classval
 from json import JSONDecodeError 

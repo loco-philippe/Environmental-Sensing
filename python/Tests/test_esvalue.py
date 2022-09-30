@@ -8,17 +8,13 @@ The `ES.test_esvalue` module contains the unit tests (class unittest) for the
 `ESValue` functions.
 """
 import unittest, json
-from ilist import Ilist
-from ESObs import Obs
-from ESValue import LocationValue, DatationValue, \
-    PropertyValue, NamedValue, ExternValue, ESValue #, _gshape
-from ESconstante import ES
 import datetime
 from test_obs import dat3, loc3, prop2, _res, lyon, paris, pol1, \
     pol75, t1, pprop_pm25, t2, s1, t1n, matin, travail, pt1, tnull, pprop_pm10, \
     prop_pm25, pol2, pol13, aprem
 from itertools import product
-from util import util
+from observation import Obs, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util
+
 
 # couverture tests (True if non passed)----------------------------------------
 simple  = False  # False

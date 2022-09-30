@@ -31,8 +31,8 @@ Documentation is available in other pages :
 """
 from ESconstante import ES
 #import ESValue
-from ESValue import LocationValue, DatationValue, PropertyValue, \
-    ExternValue, ESValue, ESValueEncoder
+from esvalue import LocationValue, DatationValue, PropertyValue, ExternValue 
+from esvalue_base import ESValue, ESValueEncoder
 import datetime
 import json, folium
 from ilist import Ilist

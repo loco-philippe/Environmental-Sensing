@@ -33,7 +33,7 @@ import csv
 import math
 from tabulate import tabulate
 from ESconstante import ES
-from ESValue import ESValue
+from esvalue_base import ESValue
 from iindex import Iindex
 from util import util, IindexEncoder, CborDecoder
 import xarray
