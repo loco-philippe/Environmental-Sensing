@@ -63,11 +63,13 @@ class ESSearchMongo:
 
         if condtype == 'datation':
             self.datation = True
-            if not path:
-                path = "datation.dateTime"
+            if path == None: path = "datation.dateTime"
+        elif condtype == 'location':
+            if path == None: path = "location.coordinates"
+
 
         condition = {"comp" : operator, "operand" : operand, "path" : path}
-        if all: condition |= {"all" : all}
+        if all != None: condition |= {"all" : all}
         if formatstring: condition |= {"formatstring" : formatstring} #paramètre actuellement sans effet. lorsque entré, s'applique d'abord aux dates de la base de donnée, et ensuite éventuellement sur la date en paramètre de la condition.
 
         if or_position >= len(self.params):
@@ -75,21 +77,22 @@ class ESSearchMongo:
         else:
             self.params[or_position].append(condition)
 
-    def addDatationCondition(self, dates = None, comparator = None, all = None, path = "datation.dateTime", or_position = -1, formatstring = None, date = None, comp = None):
+    def addDatationCondition(self, dates = None, comparator = None, all = None, path = "datation.dateTime", 
+                                or_position = -1, formatstring = None, date = None, comp = None):
         """
         Adds one condition on the datation.
         Condition format : {comparator, dates} where dates is either a date or a list of dates.
         cond1 -> [cond1, cond2] -> [ [cond1, cond2], [cond1', cond2', cond3']]
-        Date format is defined once and for all with parameter dateType, and formatstring when needed.
+        Date format must be consistent, and can use formatstring when needed.
         or_position : parameter used when Mongo request contains "$or"
         """
         
         #seules parties nécessitant vraiment le côté date sont le chemin et l'éventuelle vérification du type datetime, str et application du format.
 
-        if not dates:
+        if dates == None:
             if date: dates = date
             else: raise ValueError("Parameter dates is missing.")
-        if not comparator:
+        if comparator == None:
             if comp: comparator = comp
             else: raise ValueError("Parameter comparator is missing.")
 
@@ -103,19 +106,18 @@ class ESSearchMongo:
         self.addCondition(or_position = len(self.params), **kwargs)
 
     def removeCondition(self, condnum = None, or_position = None):
-        if not or_position:
-            if not condnum: self.params = {}
+        if or_position == None:
+            if condnum == None: self.params = {}
             else: self.params.pop(condnum)
         else:
-            if not condnum: self.params.pop(or_position)
+            if condnum == None: self.params.pop(or_position)
             else: self.params[or_position].pop(condnum)
 
-    def _Search(self): #EN L'ÉTAT NE FONCTIONNE QUE POUR DES AGGRÉGATIONS
+    def _search(self): #EN L'ÉTAT NE FONCTIONNE QUE POUR DES AGGRÉGATIONS
 
         if self.datation:
-            self._match_1 = {"$or":[{"datation.datationType":"simple"},{"datation.datationType":"multi"}]}
-            #self._match_1 = {"$match" : {"datation.dateType" : "datetime"}} #à remettre après les test et enlever ligne précédente
-            self._unwind.append( "datation.dateTime")
+            self._match_1 = {"$match" : {"datation.dateType" : "datetime"}}
+            self._unwind.append("datation.dateTime")
 
         for param in self.params:
             for cond in param:
@@ -126,19 +128,19 @@ class ESSearchMongo:
         Prend en entrée des paramètres et retourne un dictionnaire de la condition pour la recherche MongoDB.
         Tri par dates : (Tout) / (au moins une date) est (supérieur à) / (inférieur à) / (égal à) / (dans) [date(s) en paramètre]
         (syntaxe à vérifier) -> Dans le cas d'un intervalle, cette fonction est appelée plusieurs fois.
-        -> Traiter le cas de conditions redondantes (ex <4 => <8)
+        -> Traiter le cas de conditions redondantes (ex <4 => <8) (actuelleme,t, le dernier arrivé l'emporte)
         -> Max actuel : 4 conditions : "tout" dans un intervalle et "au moins un" dans un intervalle inclus dans celui-ci.
-        L'utilisation de OR est gérée par _Search.
+        L'utilisation de OR est gérée par _search.
         Format dates : array de 2^k valeurs, kcN [date1, date2, date3, date3] <-> Timeslot([[date1, date2], date3])
         """
         
-        if not comp in {"$eq", "$gte", "$gt", "$lte", "$lt", "$in"}:
-            if comp in {"eq", "=", "=="}      : comp = "$eq"
-            elif comp in {"gte", ">=", "=>"}  : comp = "$gte"
-            elif comp in {"gt", ">"}          : comp = "$gt"
-            elif comp in {"lte", "<=", "=<"}  : comp = "$lte"
-            elif comp in {"lt", "<"}          : comp = "$lt"
-            elif comp == "in"                 : comp = "$in"
+        if isinstance(comp, str) and comp[0] != "$":
+            if comp in {"eq", "=", "=="}        : comp = "$eq"
+            elif comp in {"gte", ">=", "=>"}    : comp = "$gte"
+            elif comp in {"gt", ">"}            : comp = "$gt"
+            elif comp in {"lte", "<=", "=<"}    : comp = "$lte"
+            elif comp in {"lt", "<"}            : comp = "$lt"
+            elif comp == "in"                   : comp = "$in"
             else:
                 raise ValueError("Comparators allowed are =, <, >, <=, >=, in and MongoDB equivalents.")
         
@@ -162,7 +164,7 @@ class ESSearchMongo:
         
         self._request = {}
 
-        self._Search()
+        self._search()
 
 
     def _fullSearchAggregation(self):
@@ -171,9 +173,11 @@ class ESSearchMongo:
         self._match_1 = {}
         self._unwind = []
         self._match_2 = {}
-        self._project = {}
+        #self._group = {"_id" : '$_id'} # ne renvoie rien d'autre que les _id
+        self._project = {} #{"data" : 1}
+        self._sort = {}
         
-        self._Search()
+        self._search()
         if self._match_1 != {}:
             self._request.append({"$match" : self._match_1})
         if self._unwind != {}:
@@ -181,8 +185,12 @@ class ESSearchMongo:
                 self._request.append({"$unwind" : "$" + unwind})
         if self._match_2 != {}:
             self._request.append({"$match" : self._match_2})
-        if self._project!= {}:
-            self._project.append({"$project" : self._project})
+        #if self._group != {}:
+        #    self._request.append({"$group" : self._group})
+        if self._project != {}:
+            self._request.append({"$project" : self._project})
+        if self._sort != {}:
+            self._request.append({"$sort" : self._sort})
         return self._request
 
     def _fullSearch(self):
@@ -195,9 +203,6 @@ class ESSearchMongo:
 
     @property
     def request(self):
-        #if self.collection == None:
-        #    raise AttributeError("self.collection not defined.")
-        #else:
         return self._fullSearch()
 
     def execute(self):
@@ -218,7 +223,7 @@ if __name__ == "__main__":
     #client = clientMongo(config["USER"], config["PWD"], config["SITE"])
     client = clientMongo()
     db = client['test_obs']
-    coll = db['observation2']
+    coll = db['observation']
 
     #2. Exemple de requête avec condition sur la date :
     research = ESSearchMongo(collection=coll)
@@ -229,8 +234,9 @@ if __name__ == "__main__":
     for el in curseur: print(el)
 
     # équivalent à :
-    research = ESSearchMongo({"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte"}, collection=coll)
+    research = ESSearchMongo([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte"},
+                {"condtype" : 'datation', "operand" : datetime(2022, 9, 20, 3), 'operator' : "$gte", 'all' : False}], collection = coll)
     print("Requête effectuée :", research.request)
 
 
-# possibilité d'enregistrer tous les chemins lors du tour à vide. (avec coll. count() ?)
+# possibilité d'enregistrer tous les chemins lors du tour à vide. (avec coll. count() ?) + regarder les index présents dans mongoDB.
