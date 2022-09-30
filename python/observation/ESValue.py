@@ -4,7 +4,7 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-ESValue is a module dedicated to structured data (such as dates, location or measurable properties) 
+ESValue is a class dedicated to structured data (such as dates, location or measurable properties) 
 and groups common properties and concepts.
 
 ESValue is build around two attributes :
@@ -12,11 +12,11 @@ ESValue is build around two attributes :
 - 'name' which is a simple String
 - 'value' which corresponds to a more or less complex object :
 
-    - DatationValue : value is a TimeSlot Object which represent a set of time intervals
-    - LocationValue : value is a Shapely Geometry which represent a set of polygons
-    - PropertyValue : value is a simple dictionary which specifies all the characteristics of a property
-    - NamedValue    : value can be any simple object
-    - ExternValue   : value can be any other object
+    - 'DatationValue' : value is a TimeSlot Object which represent a set of time intervals
+    - 'LocationValue' : value is a Shapely Geometry which represent a set of polygons
+    - 'PropertyValue' : value is a simple dictionary which specifies all the characteristics of a property
+    - 'NamedValue'    : value can be any simple object
+    - 'ExternValue'   : value can be any other object
 
 <img src="https://loco-philippe.github.io/ES/ESValue_class.png" width="800">
 
@@ -30,7 +30,7 @@ This module groups the classes of the objects used in the `observation.esobserva
 
 and the parent class :
 
-- `ESValue`
+- `observation.esvalue_base.ESValue`
 
 Documentation is available in other pages :
     
