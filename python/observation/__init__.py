@@ -72,13 +72,13 @@ Modules contain the following classes:
     
 - Observation : 
     
-    - `observation.observation`
+    - `observation.Observation`
     
 - ESValue : 
     
     - `observation.esvalue`(`observation.esvalue.DatationValue`, `observation.esvalue.LocationValue`, 
     `observation.esvalue.PropertyValue`, `observation.esvalue.NamedValue`, 
-    `observation.esvalue.ExternValue`, `observation.esvalue.ESValue`)
+    `observation.esvalue.ExternValue`, `observation.esvalue_base.ESValue`)
     
 - Ilist : 
     

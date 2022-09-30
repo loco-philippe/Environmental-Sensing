@@ -4,18 +4,18 @@ Created on Tue Aug  3 23:40:06 2021
 
 @author: philippe@loco-labs.io
 
-An `observation.Obs` is an object representing a set of information having
+An `Observation` is an object representing a set of information having
 spatial and temporal characteristics associated with measurable or observable
  properties.
  
-The Obs Object is built around three main bricks :
+The `Observation` Object is built around three main bricks :
     
 - Ilist Object which deal with indexing,
 - ESValue Object which integrate the specificities of environmental data,
 - Tools dedicated to particular domains ([Shapely](https://shapely.readthedocs.io/en/stable/manual.html) 
 for location, TimeSlot for Datation)
 
-The `observation.observation` module contains the `Obs` class.
+The `observation.esobservation` module contains the `Observation` class.
 
 Documentation is available in other pages :
 
@@ -24,7 +24,7 @@ Documentation is available in other pages :
 - The concept of 'indexed list' is describe in 
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 - The non-regression test are at 
-[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_observation.py)
+[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_obs.py)
 - The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Observation)
 
 
@@ -43,7 +43,7 @@ from esvalue_base import ESValue, ESValueEncoder
 
 class Observation(Ilist) :
     """
-    An `Obs` is derived from `observation.Ilist` object.
+    An `Observation` is derived from `observation.Ilist` object.
 
     *Additional attributes (for @property see methods)* :
 
@@ -166,7 +166,7 @@ class Observation(Ilist) :
     def __init__(self, listidx=None, name=None, id=None, param=None, length=None, var=None, reindex=True, 
                  typevalue=ES.def_clsName, context=True):
         '''
-        Obs constructor
+        Observation constructor
 
         *Parameters*
 
@@ -205,7 +205,7 @@ class Observation(Ilist) :
     @classmethod
     def Idic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None, var=None):
         '''
-        Obs constructor (external dictionnary).
+        Observation constructor (external dictionnary).
 
         *Parameters*
 
@@ -224,7 +224,7 @@ class Observation(Ilist) :
     def Std(cls, result=None, datation=None, location=None, property=None, 
             name=None, id=None, param=None):
         '''
-        Generate an Obs Object with standard indexes
+        Generate an Observation Object with standard indexes
 
         *Parameters*
 
@@ -253,7 +253,7 @@ class Observation(Ilist) :
     @classmethod
     def from_obj(cls, bs=None, reindex=True, context=True):
         '''
-        Generate an Obs Object from a bytes, string or dic value
+        Generate an Observation Object from a bytes, string or dic value
 
         *Parameters*
 
@@ -310,7 +310,7 @@ class Observation(Ilist) :
     @property
     def bounds(self):
         '''
-        **list of `ES.ESValue` (@property)** : `ES.ESValue` bounding box for each axis.'''
+        **list of `observation.esvalue` (@property)** : `observation.esvalue` bounding box for each axis.'''
         bound = [None, None, None]
         if self.setDatation : bound[0] = ESValue.boundingBox(self.setDatation).bounds
         if self.setLocation : bound[1] = ESValue.boundingBox(self.setLocation).bounds
@@ -372,16 +372,16 @@ class Observation(Ilist) :
 #%% methods
     def appendObs(self, obs, unique=False, fillvalue='-') :
         '''
-        Add an `Obs` as a new Result `ES.ESValue` with bounding box for the Index `ES.ESValue`
+        Add an `Observation` as a new Result `observation.esvalue` with bounding box for the Index `observation.esvalue`
 
         *Parameters*
 
-        - **obs** : Obs object
+        - **obs** : Observation object
         - **fillvalue** : object value used for default value
 
         *Returns*
 
-        - **int** : last index in the `Obs`
+        - **int** : last index in the `Observation`
         '''
         record = [fillvalue] * len(self.lname)
         if ES.dat_classES in self.lname:
@@ -396,7 +396,7 @@ class Observation(Ilist) :
 
     def choropleth(self, name="choropleth"):
         '''
-        Display `Obs` on a folium.Map (only with dimension=1)
+        Display `Observation` on a folium.Map (only with dimension=1)
 
         - **name** : String, optionnal (default 'choropleth') - Name of the choropleth
 
@@ -475,7 +475,7 @@ class Observation(Ilist) :
     def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
                   lisfunc=None, numeric=False, npdtype=None, **kwargs):
         '''
-        Complete the Obs and generate a Xarray DataArray with the dimension define by idx.
+        Complete the Observation and generate a Xarray DataArray with the dimension define by idx.
 
         *Parameters*
 
