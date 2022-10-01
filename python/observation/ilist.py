@@ -31,14 +31,15 @@ import datetime, cbor2
 import json
 import csv
 import math
+import xarray
+import numpy as np
+import matplotlib.pyplot as plt
 from tabulate import tabulate
+
 from esconstante import ES
 from esvalue_base import ESValue
 from iindex import Iindex
 from util import util, IindexEncoder, CborDecoder
-import xarray
-import numpy as np
-import matplotlib.pyplot as plt
 
 class Ilist:
 #%% intro
@@ -191,16 +192,6 @@ class Ilist:
             else: val.append(idx)
         return cls(listidx=val, name=idxname, var=var, typevalue=typevalue, 
                    context=False)
-        '''#if not isinstance(idxval[0], list): val = [[idx] for idx in idxval]
-        #else:                               val = idxval
-        name = ['i' + str(i) for i in range(len(val))]
-        for i in range(len(idxname)): 
-            if isinstance(idxname[i], str): name[i] = idxname[i]
-        #print('fin init iext', time()-t0)
-        lidx = [Iindex.Iext(idx, name, typevalue, fullcodec) 
-                    for idx, name in zip(val, name)]
-        #print('fin lidx iext', time()-t0)
-        return cls(lidx, var=var)'''
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', var=None, header=True, nrow=None,
@@ -233,8 +224,7 @@ class Ilist:
                         for i in range(len(row)) : idxval[i].append(row[i])
                     else:
                         for i in range(len(row)) : idxval[i].append(util.cast(row[i], dtype[i]))
-                irow += 1
-                
+                irow += 1                
         return cls.Iext(idxval, idxname, typevalue=None, var=var)
             
     @classmethod
@@ -298,12 +288,11 @@ class Ilist:
         - **reindex** : boolean (default True) - if True, default codec for each Iindex
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **context** : boolean (default True) - if False, only codec and keys are included'''
-        #print('debut')
-        #t0 = time()
 
-        #init self.lidx
         self.name = self.__class__.__name__
         if not isinstance(name, list): name = [name]
+
+        #init self.lindex self.lvarname
         if listidx.__class__.__name__ in ['Ilist','Observation']: 
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.lvarname = copy(listidx.lvarname)
@@ -313,7 +302,6 @@ class Ilist:
             self.lvarname = []
             return
         if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)): 
-            #listidx = [listidx]
             listidx = [[idx] for idx in listidx]
         typeval = [typevalue for i in range(len(listidx))]
         for i in range(len(name)): 
@@ -325,9 +313,7 @@ class Ilist:
             self.lindex = [idx]
             self.lvarname = [idx.name]
             return            
-        #print('init', time()-t0)
         
-        #init
         if       isinstance(var, list): idxvar = var
         elif not isinstance(var, int) or var < 0: idxvar = []
         else: idxvar = [var]
@@ -337,6 +323,7 @@ class Ilist:
             if len(name) > ii and name[ii]: idx.name = name[ii]
             if idx.name is None or idx.name == ES.defaultindex: idx.name = 'i'+str(ii)
             if code == ES.variable and not idxvar: idxvar = [ii]
+
         self.lindex = list(range(len(codind)))    
         lcodind = [codind[i] for i in range(len(codind)) if i not in idxvar]
         lidx    = [i         for i in range(len(codind)) if i not in idxvar]
@@ -364,8 +351,16 @@ class Ilist:
             if length >= 0 and length != len(keysset[0]): 
                 raise IlistError('length of Iindex and Ilist inconsistent')
             else: length = len(keysset[0])
+        else: keysset = None
         #print('fin leng', time()-t0)
-        
+        self._init_index(lcodind, flat, keysset, lidx, length, codind)
+        #init variable
+        for i in idxvar: self.lindex[i] = codind[i][1]
+        self.lvarname = [codind[i][1].name for i in idxvar]
+        if reindex: self.reindex()
+        return None
+
+    def _init_index(self, lcodind, flat, keysset, lidx, length, codind):
         #init primary               
         primary = [(rang, iidx) for rang, (code, iidx) in zip(range(len(lcodind)), lcodind)
                    if code < 0 and len(iidx) != 1]
@@ -386,11 +381,11 @@ class Ilist:
                 raise IlistError('Ilist not canonical')
         #print('fin secondary', time()-t0)
         
-        #init variable
+        '''#init variable
         for i in idxvar: self.lindex[i] = codind[i][1]
         self.lvarname = [codind[i][1].name for i in idxvar]
         if reindex: self.reindex()
-        return None
+        return None'''
                 
     def _addiidx(self, rang, code, iidx, codind, length):
         '''creation derived or coupled Iindex and update lindex'''

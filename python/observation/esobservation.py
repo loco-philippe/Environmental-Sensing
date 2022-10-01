@@ -465,8 +465,6 @@ class Observation(Ilist) :
         else: js2 = dic
         if option['encoded'] and option['encode_format'] == 'json':
             return json.dumps(js2, cls=IindexEncoder)
-        #if option['encoded'] and option['encode_format'] == 'bson':
-        #    return bson.encode(js2)
         if option['encoded'] and option['encode_format'] == 'cbor': 
             return cbor2.dumps(js2, datetime_as_timestamp=True, 
                                timezone=datetime.timezone.utc, canonical=True)
