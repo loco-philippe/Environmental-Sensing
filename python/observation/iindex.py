@@ -124,43 +124,28 @@ class Iindex:
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **lendefault** : integer (default 0) - default len if no keys is defined
         - **reindex** : boolean (default True) - if True, default codec is apply'''
-        #print(name)
-        #t0=time()
         if isinstance(codec, Iindex):
             self.keys  = copy(codec.keys)
             self.codec = deepcopy(codec.codec)
             self.name  = copy(codec.name)
             return
-        #if keys is None : keys  = []
         if codec is None: codec = []
         if not isinstance(codec, list): codec = [codec]
         leng = lendefault
         if codec and len(codec) > 0 and not leng: leng = len(codec)
-        #if keys : leng = len(keys)
         if not keys is None: leng = len(keys)
         if not name: name = ES.defaultindex 
-        else:
-            typevalue = util.typename(name, typevalue)
-            #if typename: typevalue = typename
-            #if name in ES.typeName: typevalue = ES.typeName[name]
-            #if name[0:2] == 'ES':   typevalue = ES.ES_clsName
-        #if not isinstance(keys, list): raise IindexError("keys not list")
+        else: typevalue = util.typename(name, typevalue)
         if not (keys is None or isinstance(keys, list)): raise IindexError("keys not list")
-        #if not keys: keys = [(i*len(codec))//leng for i in range(leng)]
         if keys is None and leng == 0: keys = [] 
         elif keys is None: keys = [(i*len(codec))//leng for i in range(leng)]
-        #if not keys: 
-        #    if len(codec) == 1: keys = [0] * leng
-        #    else:  keys = list(range(leng))
         if not isinstance(codec, list): raise IindexError("codec not list")
         if codec == [] : codec = util.tocodec(keys)
-        #codec = util.castobj(codec, typevalue)
         codec = [ESValue.from_obj(val, typevalue) for val in codec]
         self.keys  = keys
         self.codec = codec
         self.name  = name
         if reindex: self.reindex()
-        #print('time', time()-t0)
 
     @classmethod
     def Iext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
@@ -173,18 +158,13 @@ class Iindex:
         - **name** : string (default None) - name of index (see data model)
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **fullcodec** : boolean (default False) - full codec if True'''
-        #print('debut iindex iext')
-        #t0=time()
         if not values: return cls(name=name, typevalue=typevalue)
         if isinstance(values, Iindex): return copy(values)
         if not isinstance(values, list): values = [values]
         typevalue = util.typename(name, typevalue)
-        #if name in ES.typeName: typevalue = ES.typeName[name]
-        #if name and name[0:2] == 'ES':   typevalue = ES.ES_clsName
         values = util.castobj(values, typevalue)
         if fullcodec: codec, keys = (values, [i for i in range(len(values))])
         else:  codec, keys = util.resetidx(values)
-        #print('fin iext', time()-t0)
         return cls(name=name, codec=codec, keys=keys, typevalue=None)
 
     @classmethod
@@ -253,13 +233,10 @@ class Iindex:
         - **reindex** : boolean (default True) - if True, default codec is apply
 
         *Returns* : tuple(code, Iindex) '''
-        #print('debut fromobj')
-        #t0 = time()
         if isinstance(bs, Iindex): return (ES.nullparent, copy(bs))
         name, typevaluedec, codec, parent, keys = util.decodeobj(bs, typevalue, context)
         if extkeys and parent >= 0 :  keys = Iindex.keysfromderkeys(extkeys, keys)
         elif extkeys and parent < 0 :  keys = extkeys
-        #if not keys: keys = list(range(len(codec)))
         if keys is None: keys = list(range(len(codec)))
         if typevaluedec: typevalue=typevaluedec
         return (parent, Iindex(codec=codec, name=name, keys=keys, typevalue=typevalue, reindex=reindex))
@@ -327,7 +304,6 @@ class Iindex:
         if solve: 
             solved = copy(other)
             for i in range(len(solved.codec)):
-                #if solved.codec[i] is None and i in range(len(self.codec)): 
                 if not util.isNotNull(solved.codec[i]) and i in range(len(self.codec)): 
                     solved.codec[i] = self.codec[i]
             values = self.values + solved.values
@@ -339,7 +315,6 @@ class Iindex:
 
     def __copy__(self):
         ''' Copy all the data '''
-        #return Iindex([copy(cod) for cod in self.codec], copy(self.name), copy(self.keys))
         return Iindex(self)
     
 #%% property
@@ -347,9 +322,6 @@ class Iindex:
     def cod(self):
         '''return codec conversion to string '''
         return self.to_obj(fullcodec=False, codecval=True, encoded=False, listunic=True)
-        #return self.to_obj(fullcodec=False, simpleval=True, encoded=False, listunic=True)
-        #if ES.def_clsName: return [cod.json(encoded=False) for cod in self.codec]
-        #return self.codec
         
     @property
     def infos(self):
@@ -360,7 +332,6 @@ class Iindex:
         rate = 0.0
         if   M == 0: typecodec = 'null'
         elif x == 1: typecodec = 'unique'
-        #elif m == 1: typecodec = 'unique'
         elif m == M: typecodec = 'complete'
         elif x == M: typecodec = 'full'
         else: 
@@ -386,9 +357,6 @@ class Iindex:
     def val(self):
         '''return values conversion to string '''
         return self.to_obj(fullcodec=True, codecval=True, encoded=False)
-        #return self.to_obj(fullcodec=True, simpleval=True, encoded=False)
-        #if ES.def_clsName: return [self.codec[key].json(encoded=False) for key in self.keys]
-        #return self.values
 
 #%% methods
     def append(self, value,  typevalue=ES.def_clsName, unique=True):
@@ -401,10 +369,6 @@ class Iindex:
         - **unique** :  boolean (default True) - If False, duplication codec if value is present
 
         *Returns* : key of value '''        
-        #if typevalue is None: typevalue = self.typevalue
-        #if typevalue is None: dtype = None
-        #else: dtype = ES.valname[typevalue]
-        #value = util.cast(value, dtype)
         value = util.castval(value, util.typename(self.name, ES.def_clsName))
         if value in self.codec and unique: key = self.codec.index(value)
         else: 
@@ -446,7 +410,6 @@ class Iindex:
         self.tocoupled(idxzip)
         if not derived: 
             for ix in index: ix.tocoupled(idxzip)
-        #return len(self.codec)
         return self.getduplicates()
     
     def couplinginfos(self, other, default=False):
@@ -658,11 +621,9 @@ class Iindex:
         - **list of int** : list of record number finded (None else)'''
         
         if extern: value = util.castval(value, util.typename(self.name, ES.def_clsName))
-        #if extern: value = util.cast(value, ES.def_dtype)
         if not value in self.codec: raise IndexError('value not present')
         listkeys = [cod for cod, val in zip(range(len(self.codec)), self.codec) if val == value]
         return self.recordfromkeys(listkeys)
-        #return [rec for rec, key in zip(range(len(self)), self.keys ) if key in keys ]
     
     def recordfromkeys(self, listkeys):
         '''return a list of record number with key in listkeys
@@ -827,9 +788,6 @@ class Iindex:
             elif typevalue in ES.ESclassName and valueonly: values[i].setValue(listvalue[i].value)
             else: values[i] = listvalue[i]
         self.codec, self.keys = util.resetidx(values)
-        #if extern and not typevalue: typevalue = ES.def_clsName
-        #values = util.castobj(listvalue, typevalue)
-        #self.codec, self.keys = util.resetidx(values)
         
     def sort(self, reverse=False, inplace=True, func=str):
         '''Define sorted index with ordered codec.
@@ -906,7 +864,6 @@ class Iindex:
         - **kwargs** : parameters to apply to the func function
 
         *Returns* : Numpy Array'''
-        #option = {'dtype': None} | kwargs
         if len(self) == 0: raise IindexError("Ilist is empty")
         if npdtype is None: npdtype = np.dtype('object')
         else: npdtype = np.dtype(npdtype)
@@ -918,13 +875,6 @@ class Iindex:
             try: return np.array(values, dtype=np.datetime64)
             except : return np.array(values, dtype=npdtype)
         return np.array(values, dtype=npdtype)
-        #return np.array(values, dtype=object)
-        '''    try : datetime.datetime.fromisoformat(values[0])
-            except : return np.array(values)
-            return np.array(values, dtype=np.datetime64)
-        if isinstance(values[0], datetime.datetime): 
-            return np.array(values, dtype=np.datetime64)
-        return np.array(values)'''
 
     def to_obj(self, keys=None, typevalue=None, fullcodec=False, simpleval=False, 
                codecval=False, parent=ES.nullparent, name=True, listunic=False, **kwargs):

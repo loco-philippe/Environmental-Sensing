@@ -98,7 +98,6 @@ class util:
         if dtype == 'str':  
             if maxlen: return str(val)[:maxlen]
             else: return str(val)
-        #if typeval in ES.ESclassName: return val
         if not dtype : return ESValue._castsimple(val)
         if dtype == 'int':
             try : return int(val.lstrip())
@@ -186,12 +185,10 @@ class util:
         *Returns* : tuple - name, typevaluedec, codec, parent, keys'''
         if bs is None: return (None, None, [], ES.nullparent, None)
         if   isinstance(bs, bytes): lis = cbor2.loads(bs)
-        #elif isinstance(bs, str): lis = json.loads(bs, object_hook=CborDecoder().codecbor)
         elif isinstance(bs, str) and bs[0] in ['{', '[']:
             lis = json.loads(bs, object_hook=CborDecoder().codecbor)
         elif isinstance(bs, list):  lis = bs
         else: lis = [bs]
-        #else: raise utilError("the type of parameter is not available")
         if not isinstance(lis, list): raise utilError("the parameter has to be a list")
         
         if not lis:
@@ -205,11 +202,8 @@ class util:
             return (*util.decodecontext(lis[0]), util.decodecodec(lis[1], classname), *util.decodekeys(lis[2]))
         if len(lis) == 2 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) and context:
             return (*util.decodecontext(lis[0]), util.decodecodec(lis[1], classname), ES.nullparent, None)
-        #if len(lis) == 2 and isinstance(lis[0], (tuple, list)) and isinstance(lis[1], (int, list)):
         if len(lis) == 2 and isinstance(lis[0], (tuple, list)) and util.iskeysobj(lis[1]):
             return (None, None, util.decodecodec(lis[0], classname), *util.decodekeys(lis[1]))
-        #if len(lis) == 1 and isinstance(lis[0], list):
-        #    return (None, None, util.decodecodec(lis[0], classname), ES.nullparent, None)
         return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
         
     @staticmethod
@@ -297,9 +291,6 @@ class util:
         if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):
             codlis = codlis[0]
         js.append(codlis)
-        '''js.append([util.json(cc, encoded=False, typevalue=None, simpleval=simpleval, 
-                             fullcodec=fullcodec, untyped=option['untyped']) 
-                   for cc in codeclist])'''
         if not codecval: 
             if parent >= 0 and keyslist:    js.append([parent, keyslist])
             elif parent != ES.nullparent:   js.append(parent)
@@ -422,9 +413,7 @@ class util:
     @staticmethod
     def resetidx(values):
         '''return codec and keys from a list of values'''
-        #t0 = time()
         codec = util.tocodec(values)
-        #print('fin codec', time() - t0)
         return (codec, util.tokeys(values, codec))
 
     @staticmethod
@@ -446,14 +435,9 @@ class util:
     def tokeys(values, codec=None):
         ''' return a list of keys from a list of values'''
         if not codec: codec = util.tocodec(values)
-        #print('tokeys')
-        #t0=time()
         dic = {codec[i]:i for i in range(len(codec))} #!!!!long
-        #print('gendic', time()-t0)
         keys = [dic[val] for val in values]    # hyper long
-        #print('genkeys', time()-t0)
         return keys
-        #return [codec.index(val) for val in values]
  
     @staticmethod
     def tovalues(keys, codec):

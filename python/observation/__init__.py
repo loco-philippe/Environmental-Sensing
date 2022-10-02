@@ -82,7 +82,7 @@ Modules contain the following classes:
     
 - Ilist : 
     
-    - `observation.ilist`
+    - `observation.ilist`, `observation.ilist_structure`, `observation.ilist_interface`
     
 - Iindex : 
     
