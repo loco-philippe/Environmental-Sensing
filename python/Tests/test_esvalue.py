@@ -263,6 +263,10 @@ class TestObsUnitaire(unittest.TestCase):
         #self.assertTrue(v == LocationValue.from_obj(ESValue.__from_bytes__(v.__to_bytes__(encoded=True)))
         #                  == LocationValue.from_obj(ESValue.__from_bytes__(v.__to_bytes__(encoded=False))))
 
+    def test_codeplus(self):
+        v = LocationValue.from_obj({"loc1": pol2})
+        self.assertEqual(v.vCodePlus() , '6FH3M282+M2')
+        
     def test_box_bounds(self):
         v = LocationValue.Box(LocationValue.from_obj(pol13))
         self.assertTrue(v.isEqual(v.Box(v.bounds), name=False))
