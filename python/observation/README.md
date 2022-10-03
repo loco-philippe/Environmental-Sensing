@@ -1,6 +1,6 @@
 # Code organization
 The Environmental Sensing code is grouped into classes :
-- [Observation](./observation.py) : class derived from the Ilist class with specificities linked to the notion of observation (ISO 19456 Observation and Measurement)
+- [Observation](./esobservation.py) : class derived from the Ilist class with specificities linked to the notion of observation (ISO 19456 Observation and Measurement)
 - [Ilist](./ilist.py) : class for indexed lists and tabular data
 - [Iindex](./iindex.py) : class for structured (component of Ilist)
 - [ESValue](./esValue_base.py) : classes for extended values (ESValue, DatationValue, LocationValue, PropertyValue, NamedValue, ExternValue) 
