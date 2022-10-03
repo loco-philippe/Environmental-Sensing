@@ -50,6 +50,7 @@ import json, geojson, shapely.geometry
 import datetime
 from geopy import distance
 from copy import copy
+from openlocationcode import openlocationcode
 
 from esconstante import ES, _classval
 from esvalue_base import ESValueEncoder, ESValue
@@ -302,7 +303,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     def vCodePlus(self) :
         ''' return CodePlus value (string) of the point property value'''
-        return encode(self.vSimple(False)[1], self.vSimple(False)[0])
+        return openlocationcode.encode(self.vSimple(False)[1], self.vSimple(False)[0])
 
     def vSimple(self, string=False):
         ''' return simple value (centroid coordinates for the shape : 

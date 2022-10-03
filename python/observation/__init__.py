@@ -86,7 +86,7 @@ Modules contain the following classes:
     
 - Iindex : 
     
-    - `observation.iindex`
+    - `observation.iindex`, `observation.iindex_structure`, `observation.iindex_interface`
     
 - TimeSlot : 
     
