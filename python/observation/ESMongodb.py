@@ -1,6 +1,10 @@
 from datetime import datetime
+from xmlrpc.client import boolean
 import shapely
+import pymongo
 from pymongo import MongoClient
+from esobservation import Observation
+import pandas as pd
 
 
 # ajouter des vérifications sur le format des données entrées.
@@ -59,45 +63,26 @@ class ESSearchMongo:
             for param in params: # On suppose ici que tous les paramètres sont correctement entrés.
                 self.addCondition(**param)
             
-    def addCondition(self, condtype = None, operand = None, operator = None, path = None, all = None, or_position = -1, formatstring = None):
+    def addCondition(self, condtype = None, operand = None, operator = "$eq", path = None, all = None, or_position = -1, formatstring = None):
 
         if condtype == 'datation':
             self.datation = True
-            if path == None: path = "datation.dateTime"
+            if path == None: path = "data.datation"
         elif condtype == 'location':
-            if path == None: path = "location.coordinates"
-
+            if path == None: path = "data.location"
+        elif condtype == 'property':
+            if path == None: path = "data.property"
+        elif condtype != None:
+            if path == None: path = "data." + condtype
 
         condition = {"comp" : operator, "operand" : operand, "path" : path}
         if all != None: condition |= {"all" : all}
-        if formatstring: condition |= {"formatstring" : formatstring} #paramètre actuellement sans effet. lorsque entré, s'applique d'abord aux dates de la base de donnée, et ensuite éventuellement sur la date en paramètre de la condition.
+        if formatstring: condition |= {"formatstring" : formatstring} #paramètre actuellement sans effet. Lorsque entré, s'applique d'abord aux dates de la base de donnée, et ensuite éventuellement sur la date en paramètre de la condition.
 
         if or_position >= len(self.params):
             self.params.append([condition])
         else:
             self.params[or_position].append(condition)
-
-    def addDatationCondition(self, dates = None, comparator = None, all = None, path = "datation.dateTime", 
-                                or_position = -1, formatstring = None, date = None, comp = None):
-        """
-        Adds one condition on the datation.
-        Condition format : {comparator, dates} where dates is either a date or a list of dates.
-        cond1 -> [cond1, cond2] -> [ [cond1, cond2], [cond1', cond2', cond3']]
-        Date format must be consistent, and can use formatstring when needed.
-        or_position : parameter used when Mongo request contains "$or"
-        """
-        
-        #seules parties nécessitant vraiment le côté date sont le chemin et l'éventuelle vérification du type datetime, str et application du format.
-
-        if dates == None:
-            if date: dates = date
-            else: raise ValueError("Parameter dates is missing.")
-        if comparator == None:
-            if comp: comparator = comp
-            else: raise ValueError("Parameter comparator is missing.")
-
-        self.addCondition('datation', dates, comparator, path, all, or_position, formatstring)
-
 
     def orCondition(self, **kwargs):
         """
@@ -116,7 +101,8 @@ class ESSearchMongo:
     def _search(self): #EN L'ÉTAT NE FONCTIONNE QUE POUR DES AGGRÉGATIONS
 
         if self.datation:
-            self._match_1 = {"$match" : {"datation.dateType" : "datetime"}}
+            #self._match_1 = {"datation.dateType" : "datetime"}
+            self._match_1 = {"$or":[{"datation.datationType":"simple"}, {"datation.datationType":"multi"}]}
             self._unwind.append("datation.dateTime")
 
         for param in self.params:
@@ -144,7 +130,7 @@ class ESSearchMongo:
             else:
                 raise ValueError("Comparators allowed are =, <, >, <=, >=, in and MongoDB equivalents.")
         
-        if all:
+        if all and type(operand) in {datetime, int}:
             if comp == "$eq"    :   cond_0 = {"$nor" : [{"$lt" : operand}, {"$gt" : operand}]}
             elif comp == "$gte" :   cond_0 = {"$not" : {"$lt"  : operand}}
             elif comp == "$gt"  :   cond_0 = {"$not" : {"$lte" : operand}}
@@ -170,10 +156,10 @@ class ESSearchMongo:
     def _fullSearchAggregation(self):
         
         self._request = []
-        self._match_1 = {}
+        self._match_1 = {'type' : 'obs'}
         self._unwind = []
         self._match_2 = {}
-        #self._group = {"_id" : '$_id'} # ne renvoie rien d'autre que les _id
+        #self._group = {"_id" : '$_id'} # ne renvoie rien d'autre que les _id mais évite de renvoyer des doublons
         self._project = {} #{"data" : 1}
         self._sort = {}
         
@@ -213,30 +199,187 @@ class ESSearchMongo:
             raise AttributeError("self.collection not defined.")
         #print("Requête exécutée : self.collection."+self.searchtype+"(", self.request, ")")
         exec('setattr(self, "cursor", self.collection.' + self.searchtype + '(self.request))')
-        return self.cursor
+        return [self._filtered(item) for item in self.cursor]
+
+    def _filtered(self, dico):
+        """
+        Takes a dictionary corresponding to an Observation and returns a filtered dictionary corresponding to a filtered Observation.
+        """
+        # self.params = [[ cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
+        # dico = {'data': [['datation', [date1, date2, date3], [0,1,0,2,2,1]], ['location', [loc1, loc2, loc3], [0,1,2,0]]]}
+        if self.params == None: return dico
+
+        if len(dico['data']) == 0: return dico
+        else:
+            iindexes = [] # list of dictionnaries where key = old iindexes, value = new iindexes
+            stack = [i for i in range(len(dico['data']))]
+            while len(stack) > 0:
+                i = stack.pop(0)
+                iindexes.append({})
+                if not (len(dico['data'][i]) > 2 and (isinstance(dico['data'][i][2], int) or (isinstance(dico['data'][i][2], list) 
+                        and len(dico['data'][i][2]) > 1 and isinstance(dico['data'][i][2][1], list)))):   # column does not depend on another column
+                    if isinstance(dico['data'][i], list):
+                        if len(dico['data'][i]) == 1: # condition type is not given
+                            if not self._condcheck(dico['data'][i][0]):
+                                dico['data'][i] = []
+                                iindexes[i][0] = -1
+                            else:
+                                iindexes[i][0] = 0
+                        elif len(dico['data'][i]) > 1: # condition type is given (with some assumptions)
+                            k = 0
+                            for j in range(len(dico['data'][i][1])):
+                                if not self._condcheck(dico['data'][i][1][j], dico['data'][i][0]):
+                                    iindexes[i][j] = -1
+                                else:
+                                    iindexes[i][j] = k
+                                    k += 1
+                                if j > k:
+                                    dico['data'][i][1][k] = dico['data'][i][1][j]
+                            dico['data'][i][1] = dico['data'][i][1][:k]
+                            if len(dico['data'][i]) > 2: # iindex is used
+                                L = []
+                                for item in dico['data'][i][2]:
+                                    if iindexes[item] != -1:
+                                        L.append(item)
+                                dico['data'][i][2] = L
+                    else:
+                        if not self._condcheck(dico['data'][i]):
+                            dico['data'][i]
+                            iindexes[i][0] = -1
+                        else:
+                            iindexes[i][0] = 0
+                else: # column depends on another column
+                    if (isinstance(dico['data'][i][2], int) and dico['data'][i][2] > i) or \
+                            (isinstance(dico['data'][i][2], list) and dico['data'][i][2][0] > i): #column depended on not yet treated
+                        stack.append(i)
+                    elif isinstance(dico['data'][i][2], int) and dico['data'][i][2] < i: #column depended on already treated : case 1
+                        pass
+
+                        #to do
+
+                    elif isinstance(dico['data'][i][2], list) and dico['data'][i][2][0] < i: # case 2
+                        k = 0
+                        for j in range(len(dico['data'][i][1])):
+#idée : tour à vide initialement pour savoir quelles colonnes sont liées entre elles. (puisque lien n'est marqué que dans une sur deux)
+# ensuite, traiter simultanément les colonnes liées... semble peu performant
+#idée 2 : remettre la colonne dans la stack si on s'aperçoit qu'elle doit être traitée à nouveau
+# => implique colonne parcourue autant de fois qu'il y a de dérivations, ce qui n'implique pas nécessairement une augmentation du temps de
+# calcul puisque n*3 == 3*n
+# Comment traite-t-on une colonne remise pour cette raison ? doit être indiqué clairement.
+# idée : dans un premier temps, se contenter de passer à -1 les index des éléments à enlever et faire tous les enlèvements d'un coup
+# ainsi que les repositionnenements (puisque enlèvement faits indirectement par écrasement) et les mises à jour des iindex
+# => permet de ne pas remettre dans la stack : on passe directement les index à -1 depuis la colonne dérivée.
+# potentiellement plus efficace avec ilist.setfilter(), ilist.applyfilter() ?
+                            if iindexes[dico['data'][i][2][j]][j] == -1: #CONDITION NON CORRECTE : IL FAUT QUE TOUS VAILLENT -1 SIMULTANEMENT
+                                iindexes[i][j] = -1
+                            elif not self._condcheck(dico['data'][i][1][j], dico['data'][i][0]):
+                                iindexes[i][j] = -1
+                                iindexes[dico['data'][i][2][0]][j] = -1 #NON CORRECT : PLUSIEURS IINDEX A METTRE A -1
+                            else:
+                                iindexes[i][j] = k
+                                k += 1
+                            if j > k:
+                                dico['data'][i][1][k] = dico['data'][i][1][j]
+                        dico['data'][i][1] = dico['data'][i][1][:k]
+                        L = []
+                        for item in dico['data'][i][2][1]:
+                            if iindexes[item] != -1:
+                                L.append(item)
+                        dico['data'][i][2][1] = L
+            
+    def _condcheck(self, item, type = None):
+        """
+        Takes an item and returns a Boolean.
+        """
+        # self.params = [[ cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
+        if self.params: return True
+        booleans = [True] * len(self.params)
+        for i in range(len(self.params)):
+            for param in self.params[i]:
+                booleans[i] = booleans[i] and self._condcheck_0(item, param, type)
+        boolean = False
+        for item in booleans:
+            boolean = boolean or item
+        return boolean
+
+    def _condcheck_0(self, item, cond = None, type = None):
+        """
+        Takes an item and returns a Boolean.
+        """
+        #cond = {"comp" : operator, "operand" : operand, "path" : path} and sometimes can contain "all" and "formatstring"
+        if cond == None: return True
+
+        if type == 'datation':
+            pass
+        if type == 'location': # voir si ces cas peuvent être traités avec shapely
+            if cond['comp'] in {"$geowithin", "geowithin", "$geoWithin", "geoWithin"}:
+                pass
+            if cond['comp'] in {"$geonear", "geonear", "$geoNear", "geoNear"}:
+                pass
+
+        if cond['comp'] in {"$eq", "eq", "=", "=="}     : return item == cond['operand']
+        elif cond['comp'] in {"$gte", "gte", ">=", "=>"}: return item >= cond['operand']
+        elif cond['comp'] in {"$gt", "gt", ">"}         : return item >  cond['operand']
+        elif cond['comp'] in {"$lte", "lte", "<=", "=<"}: return item <= cond['operand']
+        elif cond['comp'] in {"$lt", "lt", "<"}         : return item <  cond['operand']
+        elif cond['comp'] in {"$in", "in"}              : return item in cond['operand']
+        else:
+            raise ValueError("Comparator not supported.")
+
+    def __iter__(self): # suggéré par Copilot. Ne semble pas fonctionner.
+        return self.execute()
+
+    def __next__(self): # idem
+        return next(self.cursor)
+
+    def __getitem__(self, key): # idem
+        return self.cursor[key]
+
+    def __str__(self): #idem
+        return str(self.request)
+
+    def toDataFrame(self): #idem (légerement modifié)
+        """
+        Returns a pandas DataFrame with the results of the search.
+        """
+        self.execute()
+        return pd.DataFrame(list(self.cursor))
+
+def cursor_to_Observation(cursor, filtre):
+    """
+    Takes a pymongo cursor and returns a filtered Observation object.
+    """
+    L = []
+    for dico in cursor:
+        del dico["_id"]
+        obs = Observation.filtrage(obs, filtre) #éventuellement, filtrage du dictionnaire puis passage en Observation
+        L.append()
+    return Observation.fusion(L)
 
 if __name__ == "__main__":
-    from dotenv import dotenv_values
+    #from dotenv import dotenv_values
 
     # 1. Connection à la base de donnée
     #config = dotenv_values(".env")
     #client = clientMongo(config["USER"], config["PWD"], config["SITE"])
     client = clientMongo()
     db = client['test_obs']
-    coll = db['observation']
+    coll = db['observation3']
 
     #2. Exemple de requête avec condition sur la date :
     research = ESSearchMongo(collection=coll)
-    research.addDatationCondition(datetime(2022, 9, 19, 1), ">=")
-    research.addDatationCondition(datetime(2022, 9, 20, 3), ">=", all = False)
+    research.addCondition('datation', datetime(2022, 9, 19, 1), ">=", path="datation.dateTime")
+    #research.addCondition('datation', datetime(2022, 9, 20, 3), ">=", all = False)
+    #research.addCondition('location', [2.1, 45.1])
     print("Requête effectuée :", research.request)
     curseur = research.execute()
     for el in curseur: print(el)
+    #obs = cursor_to_Observation(research.execute())
+    #print(obs)
+    #print(obs[1])
+    #print(obs[1].to_obj())
 
     # équivalent à :
     research = ESSearchMongo([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte"},
                 {"condtype" : 'datation', "operand" : datetime(2022, 9, 20, 3), 'operator' : "$gte", 'all' : False}], collection = coll)
     print("Requête effectuée :", research.request)
-
-
-# possibilité d'enregistrer tous les chemins lors du tour à vide. (avec coll. count() ?) + regarder les index présents dans mongoDB.
