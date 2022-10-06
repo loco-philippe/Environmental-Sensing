@@ -26,6 +26,7 @@ def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.n
 
 
 class ESSearchMongo:
+    #Modifier en une classe ESSearch qui peut faire la recherche sur une liste qui n'est pas dans MongoDB
     """
     Prend en entrée les paramètres de la requête et retourne la requête à effectuer.
     -> faire en sorte que l'on puisse ajouter tous les paramètres d'un coup, mais également ajouter/retirer un paramètre à la 
@@ -67,13 +68,13 @@ class ESSearchMongo:
 
         if condtype == 'datation':
             self.datation = True
-            if path == None: path = "data.datation"
+            if path is None: path = "data.datation"
         elif condtype == 'location':
-            if path == None: path = "data.location"
+            if path is None: path = "data.location"
         elif condtype == 'property':
-            if path == None: path = "data.property"
+            if path is None: path = "data.property"
         elif condtype != None:
-            if path == None: path = "data." + condtype
+            if path is None: path = "data." + condtype
 
         condition = {"comp" : operator, "operand" : operand, "path" : path}
         if all != None: condition |= {"all" : all}
@@ -91,11 +92,11 @@ class ESSearchMongo:
         self.addCondition(or_position = len(self.params), **kwargs)
 
     def removeCondition(self, condnum = None, or_position = None):
-        if or_position == None:
-            if condnum == None: self.params = {}
+        if or_position is None:
+            if condnum is None: self.params = {}
             else: self.params.pop(condnum)
         else:
-            if condnum == None: self.params.pop(or_position)
+            if condnum is None: self.params.pop(or_position)
             else: self.params[or_position].pop(condnum)
 
     def _search(self): #EN L'ÉTAT NE FONCTIONNE QUE POUR DES AGGRÉGATIONS
@@ -195,7 +196,7 @@ class ESSearchMongo:
         """
         Executes the request and returns the cursor created by pymongo.
         """
-        if self.collection == None:
+        if self.collection is None:
             raise AttributeError("self.collection not defined.")
         #print("Requête exécutée : self.collection."+self.searchtype+"(", self.request, ")")
         exec('setattr(self, "cursor", self.collection.' + self.searchtype + '(self.request))')
@@ -207,86 +208,71 @@ class ESSearchMongo:
         """
         # self.params = [[ cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
         # dico = {'data': [['datation', [date1, date2, date3], [0,1,0,2,2,1]], ['location', [loc1, loc2, loc3], [0,1,2,0]]]}
-        if self.params == None: return dico
+        if self.params is None: return dico
 
         if len(dico['data']) == 0: return dico
         else:
             iindexes = [] # list of dictionnaries where key = old iindexes, value = new iindexes
-            stack = [i for i in range(len(dico['data']))]
-            while len(stack) > 0:
-                i = stack.pop(0)
+            for i in range(len(dico['data'])):
                 iindexes.append({})
-                if not (len(dico['data'][i]) > 2 and (isinstance(dico['data'][i][2], int) or (isinstance(dico['data'][i][2], list) 
+                if not (len(dico['data'][i]) > 2 and (isinstance(dico['data'][i][2], int) or (isinstance(dico['data'][i][2], list) \
                         and len(dico['data'][i][2]) > 1 and isinstance(dico['data'][i][2][1], list)))):   # column does not depend on another column
                     if isinstance(dico['data'][i], list):
                         if len(dico['data'][i]) == 1: # condition type is not given
                             if not self._condcheck(dico['data'][i][0]):
                                 dico['data'][i] = []
                                 iindexes[i][0] = -1
-                            else:
-                                iindexes[i][0] = 0
                         elif len(dico['data'][i]) > 1: # condition type is given (with some assumptions)
-                            k = 0
                             for j in range(len(dico['data'][i][1])):
                                 if not self._condcheck(dico['data'][i][1][j], dico['data'][i][0]):
                                     iindexes[i][j] = -1
-                                else:
-                                    iindexes[i][j] = k
-                                    k += 1
-                                if j > k:
-                                    dico['data'][i][1][k] = dico['data'][i][1][j]
-                            dico['data'][i][1] = dico['data'][i][1][:k]
-                            if len(dico['data'][i]) > 2: # iindex is used
-                                L = []
-                                for item in dico['data'][i][2]:
-                                    if iindexes[item] != -1:
-                                        L.append(item)
-                                dico['data'][i][2] = L
                     else:
                         if not self._condcheck(dico['data'][i]):
-                            dico['data'][i]
+                            dico['data'][i] = []
                             iindexes[i][0] = -1
-                        else:
-                            iindexes[i][0] = 0
-                else: # column depends on another column
-                    if (isinstance(dico['data'][i][2], int) and dico['data'][i][2] > i) or \
-                            (isinstance(dico['data'][i][2], list) and dico['data'][i][2][0] > i): #column depended on not yet treated
-                        stack.append(i)
-                    elif isinstance(dico['data'][i][2], int) and dico['data'][i][2] < i: #column depended on already treated : case 1
+                else: # column depends on another column (déplaçable en sous-cas de la présence de iindex)
+                    if isinstance(dico['data'][i][2], int): # case 1 : [..., 0]
                         pass
 
                         #to do
 
-                    elif isinstance(dico['data'][i][2], list) and dico['data'][i][2][0] < i: # case 2
+                    elif isinstance(dico['data'][i][2], list): # case 2 : [..., [0, [0, 1, 2]]]
                         k = 0
                         for j in range(len(dico['data'][i][1])):
-#idée : tour à vide initialement pour savoir quelles colonnes sont liées entre elles. (puisque lien n'est marqué que dans une sur deux)
-# ensuite, traiter simultanément les colonnes liées... semble peu performant
-#idée 2 : remettre la colonne dans la stack si on s'aperçoit qu'elle doit être traitée à nouveau
-# => implique colonne parcourue autant de fois qu'il y a de dérivations, ce qui n'implique pas nécessairement une augmentation du temps de
-# calcul puisque n*3 == 3*n
-# Comment traite-t-on une colonne remise pour cette raison ? doit être indiqué clairement.
-# idée : dans un premier temps, se contenter de passer à -1 les index des éléments à enlever et faire tous les enlèvements d'un coup
-# ainsi que les repositionnenements (puisque enlèvement faits indirectement par écrasement) et les mises à jour des iindex
-# => permet de ne pas remettre dans la stack : on passe directement les index à -1 depuis la colonne dérivée.
-# potentiellement plus efficace avec ilist.setfilter(), ilist.applyfilter() ?
                             if iindexes[dico['data'][i][2][j]][j] == -1: #CONDITION NON CORRECTE : IL FAUT QUE TOUS VAILLENT -1 SIMULTANEMENT
                                 iindexes[i][j] = -1
                             elif not self._condcheck(dico['data'][i][1][j], dico['data'][i][0]):
                                 iindexes[i][j] = -1
-                                iindexes[dico['data'][i][2][0]][j] = -1 #NON CORRECT : PLUSIEURS IINDEX A METTRE A -1
-                            else:
-                                iindexes[i][j] = k
-                                k += 1
-                            if j > k:
-                                dico['data'][i][1][k] = dico['data'][i][1][j]
-                        dico['data'][i][1] = dico['data'][i][1][:k]
+                        for j in range(len(dico['data'][i][1][2][1])): # reporting remove on column derived from
+                            if iindexes[i][j] == -1:
+                                iindexes[dico['data'][i][2][0]][dico['data'][i][2][1][j]] = -1
+        # séparation plus adaptée à l'usage des méthodes de Ilist. Partie précédente peut être considérée comme la construction du filtre.
+        # potentiellement plus efficace avec Ilist.setfilter(), Ilist.applyfilter() ?
+            for i in range(len(dico['data'])):
+                if len(dico['data'][i]) > 1: # condition type is given (with some assumptions)
+                    k = 0
+                    for j in range(len(dico['data'][i][1])):
+                        if j not in iindexes[i]:
+                            #déplacement élément par élément et màj des iindex
+                            iindexes[i][j] = k
+                            dico['data'][i][1][k] = dico['data'][i][1][j]
+                            k += 1
+                    dico['data'][i][1] = dico['data'][i][1][:k]
+                    if len(dico['data'][i]) > 2: # iindex update
+        # LE CAS OU L'IINDEX EST IMPLICITE N'EST PAS GÉRÉ
                         L = []
-                        for item in dico['data'][i][2][1]:
-                            if iindexes[item] != -1:
-                                L.append(item)
-                        dico['data'][i][2][1] = L
-            
+                        if isinstance(dico['data'][i][2], list) and (len(dico['data'][i][2][1]) != 2 \
+                                or isinstance(dico['data'][i][2][1], int)): # case 1 : [..., [0, 1, 2]]
+                            for item in dico['data'][i][2]: #-> potentiellement incorrect dans le cas non considéré ici où le nom est manquant
+                                if iindexes[item] != -1:
+                                    L.append(item)
+                            dico['data'][i][2] = L
+                        elif isinstance(dico['data'][i][2], list) and isinstance(dico['data'][i][2][1], list): # case 2 : [..., [0, [0, 1, 2]]]
+                            for item in dico['data'][i][2][1]:
+                                if iindexes[item] != -1:
+                                    L.append(item)
+                            dico['data'][i][2][1] = L
+                            
     def _condcheck(self, item, type = None):
         """
         Takes an item and returns a Boolean.
@@ -307,7 +293,7 @@ class ESSearchMongo:
         Takes an item and returns a Boolean.
         """
         #cond = {"comp" : operator, "operand" : operand, "path" : path} and sometimes can contain "all" and "formatstring"
-        if cond == None: return True
+        if cond is None: return True
 
         if type == 'datation':
             pass
@@ -337,13 +323,6 @@ class ESSearchMongo:
 
     def __str__(self): #idem
         return str(self.request)
-
-    def toDataFrame(self): #idem (légerement modifié)
-        """
-        Returns a pandas DataFrame with the results of the search.
-        """
-        self.execute()
-        return pd.DataFrame(list(self.cursor))
 
 def cursor_to_Observation(cursor, filtre):
     """
