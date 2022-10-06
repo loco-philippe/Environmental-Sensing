@@ -4,7 +4,7 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `observation.ilist_structure` module contains the `IlistStructure` class 
+The `observation.ilist_structure` module contains the `IlistStructure` class
 (`observation.ilist.Ilist` methods).
 """
 
@@ -22,12 +22,12 @@ from ilist_interface import IlistError
 class IlistStructure:
     # %% methods
     def add(self, other, name=False, solve=True):
-        ''' Add other's values to self's values for each index 
+        ''' Add other's values to self's values for each index
 
         *Parameters*
 
         - **other** : Ilist object to add to self object
-        - **name** : Boolean (default False) - Add values with same index name (True) or 
+        - **name** : Boolean (default False) - Add values with same index name (True) or
         same index row (False)
 
         *Returns* : self '''
@@ -110,7 +110,7 @@ class IlistStructure:
         *Parameters*
 
         - **reverse** :  boolean (default False) - delete record with filter's value is reverse
-        - **filtname** : string (default ES.filter) - Name of the filter Iindex added 
+        - **filtname** : string (default ES.filter) - Name of the filter Iindex added
         - **delfilter** :  boolean (default True) - If True, delete filter's Iindex
         - **inplace** : boolean (default True) - if True, filter is apply to self,
 
@@ -137,7 +137,7 @@ class IlistStructure:
 
         *Parameters*
 
-        - **default** : comparison with default codec 
+        - **default** : comparison with default codec
         - **file** : string (default None) - name of the file to write the matrix
         - **att** : string - name of the info to store in the file
 
@@ -172,7 +172,7 @@ class IlistStructure:
 
         *Parameters*
 
-        - **mat** : array of array (default None) - coupling matrix 
+        - **mat** : array of array (default None) - coupling matrix
         - **rate** : integer (default 0.1) - threshold to apply coupling.
         - **derived** : boolean (default : True).If True, indexes are derived, else coupled.
 
@@ -196,7 +196,7 @@ class IlistStructure:
         *Parameters*
 
         - **record** :  list - index values to remove to Ilist
-        - **extern** : if True, compare record values to external representation of self.value, 
+        - **extern** : if True, compare record values to external representation of self.value,
         else, internal
 
         *Returns* : row deleted'''
@@ -310,7 +310,7 @@ class IlistStructure:
         *Parameters*
 
         - **record** : list - value for each Iindex
-        - **extern** : if True, compare record values to external representation of self.value, 
+        - **extern** : if True, compare record values to external representation of self.value,
         else, internal
 
         *Returns boolean* : True if found'''
@@ -331,7 +331,7 @@ class IlistStructure:
 
         - **keys** : list (default none) - list of information to return (reduct dict), all if None
         - **default** : build infos with default codec if new coupling matrix is calculated
-        - **mat** : array of array (default None) - coupling matrix 
+        - **mat** : array of array (default None) - coupling matrix
         - **base** : boolean (default False) - if True, add Iindex infos
 
         *Returns* : array'''
@@ -430,7 +430,7 @@ class IlistStructure:
         *Parameters*
 
         - **listkey** : key for each idx
-        - **extern** : boolean (default True) - if True, compare rec to val else to values 
+        - **extern** : boolean (default True) - if True, compare rec to val else to values
 
         *Returns*
 
@@ -444,7 +444,7 @@ class IlistStructure:
         *Parameters*
 
         - **rec** : list - value for each idx
-        - **extern** : boolean (default True) - if True, compare rec to val else to values 
+        - **extern** : boolean (default True) - if True, compare rec to val else to values
         - **row** : Boolean (default False) - if True, return list of row, else list of variable values
 
         *Returns*
@@ -464,9 +464,9 @@ class IlistStructure:
         *Parameters*
 
         - **name** : str (default 'merge') - name of the new Ilist object
-        - **fillvalue** : object (default nan) - value used for the additional data 
+        - **fillvalue** : object (default nan) - value used for the additional data
         - **mergeidx** : create a new index if mergeidx is False
-        - **updateidx** : if True (and mergeidx is True), update actual values if index name is present 
+        - **updateidx** : if True (and mergeidx is True), update actual values if index name is present
 
         *Returns*: merged Ilist '''
         find = True
@@ -501,16 +501,16 @@ class IlistStructure:
         '''add other Iindex not included in self and add other's values'''
         sname = set(self.lname)
         oname = set(other.lname)
-        newself = copy(self) 
-        copother = copy(other)  
+        newself = copy(self)
+        copother = copy(other)
         for name in oname - sname:
-            newself.addindex([name, [fillvalue] * len(self)])
+            newself.addindex([name, [fillvalue] * len(newself)])
         for name in sname - oname:
-            copother.addindex([name, [fillvalue] * len(self)])      
-        return newself.add(copother)
-    
+            copother.addindex([name, [fillvalue] * len(copother)])
+        return newself.add(copother, name=True, solve=False)
+
     def merging(self, listname=None):
-        ''' add a new Iindex build with Iindex define in listname. 
+        ''' add a new Iindex build with Iindex define in listname.
         Values of the new Iindex are set of values in listname Iindex'''
         self.addindex(Iindex.merging([self.nindex(name) for name in listname]))
         return None
@@ -608,7 +608,7 @@ class IlistStructure:
 
         - **filt** : list of boolean - values of the filter idx to add
         - **first** : boolean (default False) - If True insert index at the first row, else at the end
-        - **filtname** : string (default ES.filter) - Name of the filter Iindex added 
+        - **filtname** : string (default ES.filter) - Name of the filter Iindex added
 
         *Returns* : self'''
         if not filt:
@@ -623,7 +623,7 @@ class IlistStructure:
                     self.delindex(ES.filter)
         self.addindex(idx, first=first)
         return self
-    
+
     def setname(self, listname=None):
         '''Update Iindex name by the name in listname'''
         for i in range(min(self.lenindex, len(listname))):
@@ -641,12 +641,12 @@ class IlistStructure:
             raise IlistError('var is not consistent with Ilist')
 
     def sort(self, order=None, reverse=False, func=str):
-        '''Sort data following the index order and apply the ascending or descending 
+        '''Sort data following the index order and apply the ascending or descending
         sort function to values.
 
         *Parameters*
 
-        - **order** : list (default None)- new order of index to apply. If None or [], 
+        - **order** : list (default None)- new order of index to apply. If None or [],
         the sort function is applied to the existing order of indexes.
         - **reverse** : boolean (default False)- ascending if True, descending if False
         - **func**    : function (default str) - parameter key used in the sorted function
@@ -703,7 +703,7 @@ class IlistStructure:
 
         - **listvalue** : list - index values to replace
         - **index** : integer - index row to update
-        - **typevalue** : str (default None) - class to apply to the new value 
+        - **typevalue** : str (default None) - class to apply to the new value
         - **extern** : if True, the listvalue has external representation, else internal
 
         *Returns* : none '''
