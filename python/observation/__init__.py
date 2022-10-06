@@ -10,10 +10,10 @@ Created on Fri Dec 24 15:21:14 2021
 # Why a project for Environmental Data ?
 
 The project was born from the following observations:
-    
-- there is no standard format (apart from the Environmental Sensing Service Bluetooth) 
+
+- there is no standard format (apart from the Environmental Sensing Service Bluetooth)
 used by the sensors to transmit the information (binary and textual),
-- there is no data exchange format presenting at the same time a temporal, 
+- there is no data exchange format presenting at the same time a temporal,
 spatial and physical component (apart from file formats),
 - the main standards used to exchange data are CSV file or JSON object. These two
  standards are not suitable and not optimized for complex data,
@@ -22,27 +22,27 @@ spatial and physical component (apart from file formats),
 # The Environmental Sensing project
 
 The [ES project](https://github.com/loco-philippe/Environmental-Sensing#readme) is made of :
-    
-- A data model that makes it possible to represent elementary observations 
-(a simple one-off measurement), complex observations (multi-dimensions), 
+
+- A data model that makes it possible to represent elementary observations
+(a simple one-off measurement), complex observations (multi-dimensions),
 detailed levels of representation (for example, the evolution of a plume of smoke).
-- Data formats adapted to interfaces (binary payload for networks, json for requests 
+- Data formats adapted to interfaces (binary payload for networks, json for requests
 or for NoSQL API, files)
-- structured tools to structure, analyse and optimize data (e.g. control conceptual data 
+- structured tools to structure, analyse and optimize data (e.g. control conceptual data
 model cardinality in a dataset)
-- A library of connectors for different uses (sensors, database, storage, networks, etc.) 
+- A library of connectors for different uses (sensors, database, storage, networks, etc.)
 in different languages (python, C++)
 - Bidirectional interfaces to data processing tools (eg Numpy, Xarray, GIS).
 
 It allows to :
-    
+
 - accelerate standards convergence
 - Facilitate the use and sharing of environmental data
 - Standardize both data acquisition equipment (sensors) and processing applications,
-- Implement a software architecture replacing all coding / decoding operations 
+- Implement a software architecture replacing all coding / decoding operations
 (interfaces) by the use of standard connectors,
 - Respect and rely on the main existing standards
-- Collectively share and develop a set of open-source connectors responding to 
+- Collectively share and develop a set of open-source connectors responding to
 all situations (platform)
 
 # Examples of achievements
@@ -50,50 +50,56 @@ all situations (platform)
 - Bluetooth extension for Air Pollutants (available in sept-21)
 - Add 'relationship' property in TableSchema (proposal)
 - Development of 'indexed list' theory to deal with complex datasets (available)
-- standard data exchange format suitable for complex data sets (available, data size divided by 5 to 10)
+- standard data exchange format suitable for complex data sets
+(available, data size divided by 5 to 10)
 - data interoperability connectors (available in python since july-22)
 
 # Documentation
 
 Documentation is available in other pages :
-    
-- The concepts of 'observation', 'indexed list' and 'ES value' are describe in 
+
+- The concepts of 'observation', 'indexed list' and 'ES value' are describe in
 [the wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki) and in
-[the presentation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/Ilist_principles.pdf).
-- The non-regression tests are at 
+[the presentation](https://github.com/loco-philippe/Environmental-Sensing/tree/main
+/documentation/Ilist_principles.pdf).
+- The non-regression tests are at
 [this page](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Tests)
-- Examples are 
+- Examples are
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples)
-- data exchange standard for [observation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ObsJSON-Standard.pdf), 
-[indexed list](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf) and 
-[values](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ESJSON-Standard.pdf)
+- data exchange standard for [observation](https://github.com/loco-philippe/
+Environmental-Sensing/tree/main/documentation/ObsJSON-Standard.pdf),
+[indexed list](https://github.com/loco-philippe/Environmental-Sensing/tree/main/
+documentation/IlistJSON-Standard.pdf) and
+[values](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation
+/ESJSON-Standard.pdf)
 
 Modules contain the following classes:
-    
-- Observation : 
-    
+
+- Observation :
+
     - `observation.Observation`
-    
-- ESValue : 
-    
-    - `observation.esvalue`(`observation.esvalue.DatationValue`, `observation.esvalue.LocationValue`, 
-    `observation.esvalue.PropertyValue`, `observation.esvalue.NamedValue`, 
+
+- ESValue :
+
+    - `observation.esvalue`(`observation.esvalue.DatationValue`,
+    `observation.esvalue.LocationValue`,
+    `observation.esvalue.PropertyValue`, `observation.esvalue.NamedValue`,
     `observation.esvalue.ExternValue`, `observation.esvalue_base.ESValue`)
-    
-- Ilist : 
-    
+
+- Ilist :
+
     - `observation.ilist`, `observation.ilist_structure`, `observation.ilist_interface`
-    
-- Iindex : 
-    
+
+- Iindex :
+
     - `observation.iindex`, `observation.iindex_structure`, `observation.iindex_interface`
-    
-- TimeSlot : 
-    
+
+- TimeSlot :
+
     - `observation.timeslot`
 
-- ES : 
-    
+- ES :
+
     - `observation.esconstante`.
 """
 from esobservation import Observation
@@ -104,4 +110,3 @@ from iindex import Iindex
 from esconstante import ES, Es, _classval
 from util import util
 from timeslot import TimeSlot
-

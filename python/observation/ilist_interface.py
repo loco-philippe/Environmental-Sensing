@@ -8,8 +8,9 @@ The `observation.ilist_interface` module contains the `IlistInterface` class
 (`observation.ilist.Ilist` methods).
 """
 
-#%% declarations
-import datetime, cbor2
+# %% declarations
+import datetime
+import cbor2
 import json
 import csv
 import math
@@ -22,9 +23,11 @@ from esconstante import ES
 from iindex import Iindex
 from util import util, IindexEncoder
 
+
 class IlistError(Exception):
     ''' Ilist Exception'''
-    #pass
+    # pass
+
 
 class IlistInterface:
     def json(self, **kwargs):
@@ -41,7 +44,7 @@ class IlistInterface:
 
         *Returns* : string or dict'''
         return self.to_obj(**kwargs)
-    
+
     def plot(self, order=None, line=True, size=5, marker='o', maxlen=20):
         '''
         This function visualize data with line or colormesh.
@@ -57,35 +60,38 @@ class IlistInterface:
         *Returns*
 
         - **None**  '''
-        if not self.consistent : return
-        xa = self.to_xarray(numeric = True, lisfunc=[util.cast], dtype='str',
-                             npdtype='str', maxlen=maxlen)
-        if not order: order = [0,1,2]
-        
-        if   len(xa.dims) == 1:
+        if not self.consistent:
+            return
+        xa = self.to_xarray(numeric=True, lisfunc=[util.cast], dtype='str',
+                            npdtype='str', maxlen=maxlen)
+        if not order:
+            order = [0, 1, 2]
+
+        if len(xa.dims) == 1:
             xa.plot.line(x=xa.dims[0]+'_row', size=size, marker=marker)
         elif len(xa.dims) == 2 and line:
-            xa.plot.line(x=xa.dims[order[0]]+ '_row',
-                xticks=list(xa.coords[xa.dims[0]+'_row'].values),
-                #hue=xa.dims[order[1]]+'_row', size=size, marker=marker)
-                hue=xa.dims[order[1]], size=size, marker=marker)
+            xa.plot.line(x=xa.dims[order[0]] + '_row',
+                         xticks=list(xa.coords[xa.dims[0]+'_row'].values),
+                         # hue=xa.dims[order[1]]+'_row', size=size, marker=marker)
+                         hue=xa.dims[order[1]], size=size, marker=marker)
         elif len(xa.dims) == 2 and not line:
             xa.plot(x=xa.dims[order[0]]+'_row', y=xa.dims[order[1]]+'_row',
-                xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
-                yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
-                size = size)
+                    xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
+                    yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
+                    size=size)
         elif len(xa.dims) == 3 and line:
-            xa.plot.line(x=xa.dims[order[0]]+ '_row', col=xa.dims[order[1]],
-                xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
-                hue=xa.dims[order[2]], col_wrap=2, size=size, marker=marker)
+            xa.plot.line(x=xa.dims[order[0]] + '_row', col=xa.dims[order[1]],
+                         xticks=list(
+                             xa.coords[xa.dims[order[0]]+'_row'].values),
+                         hue=xa.dims[order[2]], col_wrap=2, size=size, marker=marker)
         elif len(xa.dims) == 3 and not line:
-            xa.plot(x=xa.dims[order[0]]+'_row', y=xa.dims[order[1]]+'_row', 
-                xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
-                yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
-                col=xa.dims[order[2]], col_wrap=2, size=size)
+            xa.plot(x=xa.dims[order[0]]+'_row', y=xa.dims[order[1]]+'_row',
+                    xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
+                    yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
+                    col=xa.dims[order[2]], col_wrap=2, size=size)
         plt.show()
         return {xa.dims[i]: list(xa.coords[xa.dims[i]].values) for i in range(len(xa.dims))}
-    
+
     def to_csv(self, filename, optcsv={'quoting': csv.QUOTE_NONNUMERIC}, **kwargs):
         '''
         Generate csv file to display data.
@@ -105,19 +111,20 @@ class IlistInterface:
         - **optcsv** : parameter for csv.writer
         - **ifunc** : function (default None) - function to apply to indexes
         - **other kwargs** : parameter for ifunc
-        
+
         *Returns* : size of csv file '''
         size = 0
-        if not optcsv: optcsv = {}
+        if not optcsv:
+            optcsv = {}
         tab = self._to_tab(**kwargs)
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, **optcsv)
-            for lign in tab : 
+            for lign in tab:
                 size += writer.writerow(lign)
         return size
 
     def to_dataFrame(self, info=False, idx=None, fillvalue='?', fillextern=True,
-                  lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
+                     lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
         '''
         Complete the Object and generate a Pandas dataFrame with the dimension define by idx.
 
@@ -135,13 +142,13 @@ class IlistInterface:
         - **kwargs** : parameter for lisfunc
 
         *Returns* : pandas.DataFrame '''
-        if self.consistent :
-            return self.to_xarray(info=info, idx=idx, fillvalue=fillvalue, 
+        if self.consistent:
+            return self.to_xarray(info=info, idx=idx, fillvalue=fillvalue,
                                   fillextern=fillextern, lisfunc=lisfunc, name=name,
                                   numeric=numeric, npdtype=npdtype, **kwargs
                                   ).to_dataframe(name=name)
         return None
-    
+
     def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
                   lisfunc=None, name=None, numeric=False, npdtype=None, attrs=None, **kwargs):
         '''
@@ -162,41 +169,48 @@ class IlistInterface:
         - **kwargs** : parameter for lisfunc
 
         *Returns* : DataArray '''
-        option = {'dtype': None} | kwargs 
-        if not self.consistent : raise IlistError("Ilist not consistent")
-        if len(self.lvarname) == 0 : raise IlistError("Variable is not defined")
-        if isinstance(lisfunc, list) and len(lisfunc) == 1: 
+        option = {'dtype': None} | kwargs
+        if not self.consistent:
+            raise IlistError("Ilist not consistent")
+        if len(self.lvarname) == 0:
+            raise IlistError("Variable is not defined")
+        if isinstance(lisfunc, list) and len(lisfunc) == 1:
             lisfunc = lisfunc * self.lenindex
-        elif isinstance(lisfunc, list) and len(lisfunc) != self.lenindex : 
+        elif isinstance(lisfunc, list) and len(lisfunc) != self.lenindex:
             lisfunc = [None] * self.lenindex
         elif not isinstance(lisfunc, list):
-            funcvar = lisfunc            
+            funcvar = lisfunc
             lisfunc = [None] * self.lenindex
             lisfunc[self.lvarrow[0]] = funcvar
         lisfuncname = dict(zip(self.lname, lisfunc))
-        if idx is None or idx==[] : idx = self.primary
+        if idx is None or idx == []:
+            idx = self.primary
         axesname = [self.idxname[i] for i in idx[:len(self.idxname)]]
-        ilf = self.full(indexname=axesname, fillvalue=fillvalue, 
+        ilf = self.full(indexname=axesname, fillvalue=fillvalue,
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
         idxilf = list(range(len(idx[:len(self.idxname)])))
         coord = ilf._xcoord(idxilf, lisfuncname, **option)
         dims = [ilf.idxname[i] for i in idxilf]
-        if numeric: 
+        if numeric:
             lisfunc[self.lvarrow[0]] = util.cast
-            fillvalue= math.nan
-            npdtype='float'
+            fillvalue = math.nan
+            npdtype = 'float'
             option['dtype'] = 'float'
-        data = ilf.lvar[0].to_numpy(func=lisfunc[self.lvarrow[0]], 
+        data = ilf.lvar[0].to_numpy(func=lisfunc[self.lvarrow[0]],
                                     npdtype=npdtype, **option
-                                     ).reshape([ilf.idxlen[idx] for idx in idxilf])
-        if not name: name = self.name
-        if not isinstance(attrs, dict): attrs = {}
-        for nam in self.lunicname: attrs[nam] = self.nindex(nam).codec[0]
-        if info: attrs |= ilf.indexinfos()
+                                    ).reshape([ilf.idxlen[idx] for idx in idxilf])
+        if not name:
+            name = self.name
+        if not isinstance(attrs, dict):
+            attrs = {}
+        for nam in self.lunicname:
+            attrs[nam] = self.nindex(nam).codec[0]
+        if info:
+            attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
 
-    def to_file(self, file, **kwargs) :
+    def to_file(self, file, **kwargs):
         '''Generate file to display data.
 
          *Parameters (kwargs)*
@@ -209,12 +223,14 @@ class IlistInterface:
         data = self.to_obj(**option)
         if option['encode_format'] == 'cbor':
             size = len(data)
-            with open(file, 'wb') as f: f.write(data)
+            with open(file, 'wb') as f:
+                f.write(data)
         else:
             size = len(bytes(data, 'UTF-8'))
-            with open(file, 'w', newline='') as f: f.write(data)
+            with open(file, 'w', newline='') as f:
+                f.write(data)
         return size
-    
+
     def to_obj(self, indexinfos=None, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict). 
 
@@ -228,85 +244,99 @@ class IlistInterface:
         - **name** : boolean (default False) - if False, default index name are not included
 
         *Returns* : string, bytes or dict'''
-        option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False, 
+        option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False} | kwargs
-        option2 = {'encoded': False, 'encode_format': 'json', 'codif': option['codif']}
+        option2 = {'encoded': False, 'encode_format': 'json',
+                   'codif': option['codif']}
         lis = []
-        if option['fullcodec'] or option['defaultcodec']: 
-            for idx in self.lidx: 
-                idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
+        if option['fullcodec'] or option['defaultcodec']:
+            for idx in self.lidx:
+                idxname = option['name'] or idx.name != 'i' + \
+                    str(self.lname.index(idx.name))
                 lis.append(idx.tostdcodec(full=not option['defaultcodec'])
                            .to_obj(keys=not option['fullcodec'], name=idxname, **option2))
         else:
-            if not indexinfos: indexinfos=self.indexinfos(default=False)
-            notkeyscrd = True 
-            if self.iscanonorder(): notkeyscrd = None
+            if not indexinfos:
+                indexinfos = self.indexinfos(default=False)
+            notkeyscrd = True
+            if self.iscanonorder():
+                notkeyscrd = None
             for idx, inf in zip(self.lidx, indexinfos):
-                idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
-                if   inf['typecoupl'] == 'unique' : 
-                    lis.append(idx.tostdcodec(full=False).to_obj(name=idxname, **option2))
-                elif inf['typecoupl'] == 'crossed': 
-                    lis.append(idx.to_obj(keys=notkeyscrd, name=idxname, **option2))
-                elif inf['typecoupl'] == 'coupled': 
+                idxname = option['name'] or idx.name != 'i' + \
+                    str(self.lname.index(idx.name))
+                if inf['typecoupl'] == 'unique':
+                    lis.append(idx.tostdcodec(full=False).to_obj(
+                        name=idxname, **option2))
+                elif inf['typecoupl'] == 'crossed':
+                    lis.append(idx.to_obj(keys=notkeyscrd,
+                               name=idxname, **option2))
+                elif inf['typecoupl'] == 'coupled':
                     lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                               to_obj(parent=self.lidxrow[inf['parent']], 
+                               to_obj(parent=self.lidxrow[inf['parent']],
                                       name=idxname, **option2))
-                elif inf['typecoupl'] == 'linked' : 
+                elif inf['typecoupl'] == 'linked':
                     lis.append(idx.to_obj(keys=True, name=idxname, **option2))
-                elif inf['typecoupl'] == 'derived': 
+                elif inf['typecoupl'] == 'derived':
                     if idx.iskeysfromderkeys(self.lidx[inf['parent']]):
-                        lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']], 
-                                          name=idxname, **option2))                        
+                        lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']],
+                                              name=idxname, **option2))
                     else:
-                        keys=idx.derkeys(self.lidx[inf['parent']])
-                        lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']], 
-                                          name=idxname, **option2))
-                else: raise IlistError('Iindex type undefined')
-        if self.lenindex > 1: parent = ES.variable
-        else: parent = ES.nullparent
-        for i in self.lvarrow: 
+                        keys = idx.derkeys(self.lidx[inf['parent']])
+                        lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']],
+                                              name=idxname, **option2))
+                else:
+                    raise IlistError('Iindex type undefined')
+        if self.lenindex > 1:
+            parent = ES.variable
+        else:
+            parent = ES.nullparent
+        for i in self.lvarrow:
             idx = self.lindex[i]
-            idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
+            idxname = option['name'] or idx.name != 'i' + \
+                str(self.lname.index(idx.name))
             if i != self.lenindex - 1:
                 lis.insert(i, idx.tostdcodec(full=True).
-                           to_obj(keys=False, parent=parent, name=idxname, **option2))        
+                           to_obj(keys=False, parent=parent, name=idxname, **option2))
             else:
                 lis.append(idx.tostdcodec(full=True).
-                           to_obj(keys=False, parent=parent, name=idxname, **option2))        
-        if option['encoded'] and option['encode_format'] == 'json': 
-            return  json.dumps(lis, cls=IindexEncoder)
-        if option['encoded'] and option['encode_format'] == 'cbor': 
-            return cbor2.dumps(lis, datetime_as_timestamp=True, 
+                           to_obj(keys=False, parent=parent, name=idxname, **option2))
+        if option['encoded'] and option['encode_format'] == 'json':
+            return json.dumps(lis, cls=IindexEncoder)
+        if option['encoded'] and option['encode_format'] == 'cbor':
+            return cbor2.dumps(lis, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
         return lis
 
     def voxel(self):
         '''
         Plot not null values in a cube with voxels and return indexes values.
-        
+
         *Returns* : **dict of indexes values**
         '''
-        if not self.consistent : return
-        if   self.lenidx  > 3: raise IlistError('number of idx > 3')
-        elif self.lenidx == 2: self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
-        elif self.lenidx == 1: 
+        if not self.consistent:
+            return
+        if self.lenidx > 3:
+            raise IlistError('number of idx > 3')
+        elif self.lenidx == 2:
+            self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
+        elif self.lenidx == 1:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
             self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
-        xa = self.to_xarray(idx=[0,1,2], fillvalue='?', fillextern=False,
-                             lisfunc=util.isNotEqual, tovalue='?')
+        xa = self.to_xarray(idx=[0, 1, 2], fillvalue='?', fillextern=False,
+                            lisfunc=util.isNotEqual, tovalue='?')
         ax = plt.figure().add_subplot(projection='3d')
         ax.voxels(xa, edgecolor='k')
         ax.set_xticks(np.arange(self.idxlen[self.idxname.index(xa.dims[0])]))
         ax.set_yticks(np.arange(self.idxlen[self.idxname.index(xa.dims[1])]))
         ax.set_zticks(np.arange(self.idxlen[self.idxname.index(xa.dims[2])]))
-        ax.set(xlabel=xa.dims[0][:8], 
+        ax.set(xlabel=xa.dims[0][:8],
                ylabel=xa.dims[1][:8],
                zlabel=xa.dims[2][:8])
         plt.show()
-        return {xa.dims[i]: list(xa.coords[xa.dims[i]].values) 
+        return {xa.dims[i]: list(xa.coords[xa.dims[i]].values)
                 for i in range(len(xa.dims))}
 
-    def view(self, **kwargs) :
+    def view(self, **kwargs):
         '''
         Generate tabular list to display data.
 
@@ -326,16 +356,18 @@ class IlistInterface:
         - **other kwargs** : parameter for ifunc
 
         *Returns* : list or html table (tabulate format) '''
-        #print(kwargs)
-        opttab = {'defcode': 'j', 'all': True, 'lenres': 0, 'header':True}
-        optview = {'tablefmt': 'simple', 'numalign': 'decimal', 'stralign': 'left', 'floatfmt': '.2f'}
+        # print(kwargs)
+        opttab = {'defcode': 'j', 'all': True, 'lenres': 0, 'header': True}
+        optview = {'tablefmt': 'simple', 'numalign': 'decimal',
+                   'stralign': 'left', 'floatfmt': '.2f'}
         option = opttab | optview | kwargs
         tab = self._to_tab(**option)
         width = ({'width': None} | kwargs)['width']
-        if width: tab = [[(lambda x : x[:width] if isinstance(x, str) else x)(val) 
-                           for val in lig] for lig in tab]
+        if width:
+            tab = [[(lambda x: x[:width] if isinstance(x, str) else x)(val)
+                    for val in lig] for lig in tab]
         return tabulate(tab, headers='firstrow', **{k: option[k] for k in optview})
-    
+
     def vlist(self, *args, func=None, index=-1, **kwargs):
         '''
         Apply a function to an index and return the result.
@@ -347,10 +379,12 @@ class IlistInterface:
         - **index** : integer - index to update (index=-1 for variable)
 
         *Returns* : list of func result'''
-        if index == -1 and self.lvar: return self.lvar[0].vlist(func, *args, **kwargs)
-        if index == -1 and self.lenindex == 1: index = 0        
-        return self.lindex[index].vlist(func, *args, **kwargs) 
-    
+        if index == -1 and self.lvar:
+            return self.lvar[0].vlist(func, *args, **kwargs)
+        if index == -1 and self.lenindex == 1:
+            index = 0
+        return self.lindex[index].vlist(func, *args, **kwargs)
+
     # %%internal
     def _to_tab(self, **kwargs):
         ''' data preparation (dict of dict) for view or csv export. 
@@ -370,7 +404,7 @@ class IlistInterface:
         - **other kwargs** : parameter for ifunc'''
 
         option = {'defcode': 'j', 'all': True, 'lenres': 0, 'ifunc': None,
-                  'header': True}  | kwargs
+                  'header': True} | kwargs
         tab = list()
         resList = []
         diccode = {'j': '', 'n': 'name-', 's': 'smpl-', 'f': 'func-'}
@@ -378,55 +412,75 @@ class IlistInterface:
             for name in self.lname:
                 if name in option:
                     for n, code in diccode.items():
-                        if n in option[name]: resList.append(code + name)
+                        if n in option[name]:
+                            resList.append(code + name)
                 elif option['all']:
                     for n, code in diccode.items():
-                        if n in option['defcode']: resList.append(code + name)                
+                        if n in option['defcode']:
+                            resList.append(code + name)
             tab.append(resList)
         lenres = option['lenres']
-        if lenres == 0 : lenres = len(self)
-        for i in range(min(lenres, len(self))) :
+        if lenres == 0:
+            lenres = len(self)
+        for i in range(min(lenres, len(self))):
             resList = []
             for name in self.lname:
                 if name in option:
                     for n, code in diccode.items():
-                        if n in option[name]: 
+                        if n in option[name]:
                             val = self.nindex(name).values[i]
-                            if n == 'j': resList.append(util.cast(val, dtype='json'))
-                            if n == 'n': resList.append(util.cast(val, dtype='name'))
-                            if n == 's': resList.append(util.cast(val, dtype='json', string=True))
-                            if n == 'f': resList.append(util.funclist(val, option['ifunc'], **kwargs))
+                            if n == 'j':
+                                resList.append(util.cast(val, dtype='json'))
+                            if n == 'n':
+                                resList.append(util.cast(val, dtype='name'))
+                            if n == 's':
+                                resList.append(
+                                    util.cast(val, dtype='json', string=True))
+                            if n == 'f':
+                                resList.append(util.funclist(
+                                    val, option['ifunc'], **kwargs))
                 elif option['all']:
                     for n, code in diccode.items():
-                        if n in option['defcode']: 
+                        if n in option['defcode']:
                             val = self.nindex(name).values[i]
-                            if n == 'j': resList.append(util.cast(val, dtype='json'))
-                            if n == 'n': resList.append(util.cast(val, dtype='name'))
-                            if n == 's': resList.append(util.cast(val, dtype='json', string=True))
-                            if n == 'f': resList.append(util.funclist(val, option['ifunc'], **kwargs))
+                            if n == 'j':
+                                resList.append(util.cast(val, dtype='json'))
+                            if n == 'n':
+                                resList.append(util.cast(val, dtype='name'))
+                            if n == 's':
+                                resList.append(
+                                    util.cast(val, dtype='json', string=True))
+                            if n == 'f':
+                                resList.append(util.funclist(
+                                    val, option['ifunc'], **kwargs))
             tab.append(resList)
         return tab
-    
-    def _xcoord(self, axe, lisfuncname=None, **kwargs) :
+
+    def _xcoord(self, axe, lisfuncname=None, **kwargs):
         ''' Coords generation for Xarray'''
-        if 'maxlen' in kwargs : maxlen=kwargs['maxlen']
-        else: maxlen = 20
+        if 'maxlen' in kwargs:
+            maxlen = kwargs['maxlen']
+        else:
+            maxlen = 20
         info = self.indexinfos()
         coord = {}
         for i in self.lidxrow:
             fieldi = info[i]
-            if fieldi['cat'] == 'unique': continue
-            if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex: 
-                funci= lisfuncname[self.lname[i]]
-            else : funci = None
+            if fieldi['cat'] == 'unique':
+                continue
+            if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
+                funci = lisfuncname[self.lname[i]]
+            else:
+                funci = None
             iname = self.idxname[i]
-            if i in axe :  
-                coord[iname] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
+            if i in axe:
+                coord[iname] = self.lidx[i].to_numpy(
+                    func=funci, codec=True, **kwargs)
                 coord[iname+'_row'] = (iname, np.arange(len(coord[iname])))
-                coord[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast, 
+                coord[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast,
                                        codec=True, dtype='str', maxlen=maxlen))
             else:
                 self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)
-                coord[iname] = (self.idxname[fieldi['pparent']], 
+                coord[iname] = (self.idxname[fieldi['pparent']],
                                 self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))
         return coord

@@ -46,7 +46,9 @@ Documentation is available in other pages :
 
 
 """
-import json, geojson, shapely.geometry
+import json
+import geojson
+import shapely.geometry
 import datetime
 from geopy import distance
 from copy import copy
@@ -55,9 +57,10 @@ from openlocationcode import openlocationcode
 from esconstante import ES, _classval
 from esvalue_base import ESValueEncoder, ESValue
 from timeslot import TimeSlot
-   
+
+
 class DatationValue(ESValue):   # !!! début ESValue
-#%% dat
+    # %% dat
     """
     This class represent Time (instant, interval or set of intervals).
 
@@ -73,7 +76,7 @@ class DatationValue(ESValue):   # !!! début ESValue
     - `DatationValue.Simple`  (instant)
     - `DatationValue.Box`     (interval)
     - `DatationValue.from_obj`(see  `ESValue.from_obj`)
-        
+
 
     *getters*
 
@@ -91,15 +94,17 @@ class DatationValue(ESValue):   # !!! début ESValue
     @classmethod
     def Box(cls, bounds):
         '''DatationValue built from a tuple or list box coordinates (tmin, tmax)'''
-        if isinstance(bounds, cls): bound = bounds.bounds
-        else : bound = bounds
+        if isinstance(bounds, cls):
+            bound = bounds.bounds
+        else:
+            bound = bounds
         return cls(val=TimeSlot(bound), name='interval')
 
-    @classmethod 
-    def from_obj(cls, bs): 
+    @classmethod
+    def from_obj(cls, bs):
         ''' ESValue function (see ESValue.from_obj)'''
         return ESValue.from_obj(bs, ES.dat_clsName, simple=False)
-    
+
     def __init__(self, val=ES.nullDate, name=ES.nullName):
         '''
         DatationValue constructor.
@@ -114,22 +119,27 @@ class DatationValue(ESValue):   # !!! début ESValue
             self.name = val.name
             self.value = val.value
             return
-        if not val is None: 
-            try: self.value = TimeSlot(val)
+        if not val is None:
+            try:
+                self.value = TimeSlot(val)
             except:
-                if not name: name = val
-                else: raise ESValueError('name and val inconsistent')
-        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
+                if not name:
+                    name = val
+                else:
+                    raise ESValueError('name and val inconsistent')
+        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName:
             self.name = name
 
-    def getInstant(self) :
+    def getInstant(self):
         '''return datetime if 'instant', none else'''
-        if self.value.stype == 'instant': return self.value. slot[0][0]
+        if self.value.stype == 'instant':
+            return self.value. slot[0][0]
         return None
 
-    def getInterval(self) :
+    def getInterval(self):
         '''return [datetime t1, datetime t2] if 'interval', none else'''
-        if self.value.stype == 'interval': return self.value. slot[0]
+        if self.value.stype == 'interval':
+            return self.value. slot[0]
         return None
 
     def link(self, other):
@@ -140,11 +150,12 @@ class DatationValue(ESValue):   # !!! début ESValue
         - within     : if all self's intervals are included in other's intervals
         - contains   : if all other's intervals are included in self's intervals
         - intersects : in the others cases'''
-        if self.isEqual(other, name=False) : return 'equals'
+        if self.isEqual(other, name=False):
+            return 'equals'
         return self.value.link(other.value)[0]
 
     @staticmethod
-    def nullValue() : 
+    def nullValue():
         ''' return nullDate value'''
         return TimeSlot(ES.nullDate)
 
@@ -161,17 +172,19 @@ class DatationValue(ESValue):   # !!! début ESValue
         """
         return self.value.Bounds.json(encoded=encoded, encode_format=encode_format)
 
-    def vSimple(self, string=False, **kwargs) :
+    def vSimple(self, string=False, **kwargs):
         """return a datetime : middle of the TimeSlot."""
-        if string : return self.value.instant.isoformat(**kwargs)
+        if string:
+            return self.value.instant.isoformat(**kwargs)
         return self.value.instant
 
     def _jsonValue(self, **option):
         '''return a json/cbor/dict for the value (TimeSlot) '''
         return self.value.json(**option)
 
+
 class LocationValue(ESValue):              # !!! début LocationValue
-#%% loc
+    # %% loc
     """
     This class represent the Location of an Observation (point, polygon).
 
@@ -187,7 +200,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
     - `LocationValue.Simple`   (point)
     - `LocationValue.Box`
     - `LocationValue.from_obj` (see  `ESValue.from_obj`)
-    
+
     *getters (@property)*
 
     - `LocationValue.coords`
@@ -211,15 +224,17 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @classmethod
     def Box(cls, bounds, ccw=True):
         '''return LocationValue built with tuple or list box coordinates (minx, miny, maxx, maxy)'''
-        if isinstance(bounds, cls): bound = bounds.bounds
-        else : bound = bounds
+        if isinstance(bounds, cls):
+            bound = bounds.bounds
+        else:
+            bound = bounds
         return cls(val=shapely.geometry.box(*bound, ccw), name='box')
 
-    @classmethod 
-    def from_obj(cls, bs): 
+    @classmethod
+    def from_obj(cls, bs):
         ''' ESValue function (see ESValue.from_obj)'''
         return ESValue.from_obj(bs, ES.loc_clsName, simple=False)
-    
+
     def __init__(self, val=ES.nullCoor, name=ES.nullName):
         '''
         LocationValue constructor.
@@ -228,33 +243,37 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
         - **val** :  compatible shapely.geometry.Point (or Polygon) Value (default nullCoor)
         - **name** :  string (default nullName)
-        '''        
+        '''
         ESValue.__init__(self)
         if isinstance(val, self.__class__):
             self.name = val.name
             self.value = val.value
             return
-        if isinstance(val, (shapely.geometry.multipoint.MultiPoint, 
-                              shapely.geometry.point.Point,
-                              shapely.geometry.polygon.Polygon, 
-                              shapely.geometry.multipolygon.MultiPolygon)):
+        if isinstance(val, (shapely.geometry.multipoint.MultiPoint,
+                            shapely.geometry.point.Point,
+                            shapely.geometry.polygon.Polygon,
+                            shapely.geometry.multipolygon.MultiPolygon)):
             self.value = val
-        elif not val is None: 
-            if isinstance(val, str) and not name: name = val
-            else: self.value = self._gshape(val)
+        elif not val is None:
+            if isinstance(val, str) and not name:
+                name = val
+            else:
+                self.value = self._gshape(val)
             #value = self._gshape(val)
-            #if value: self.value = value 
-            #else: raise ESValueError('val inconsistent')
-            #elif not value and not name: name = val
-            #elif not value and name: raise ESValueError('name and val inconsistent')
-        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
+            #if value: self.value = value
+            # else: raise ESValueError('val inconsistent')
+            # elif not value and not name: name = val
+            # elif not value and name: raise ESValueError('name and val inconsistent')
+        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName:
             self.name = name
 
     def __lt__(self, other):
         ''' return minimal distance between a fixed point'''
-        if self.coorInv==ES.nullCoor : return self.name <  other.name
+        if self.coorInv == ES.nullCoor:
+            return self.name < other.name
         return distance.distance(self.coorInv, ES.distRef) <  \
-                      distance.distance(other.coorInv, ES.distRef)
+            distance.distance(other.coorInv, ES.distRef)
+
     @property
     def __geo_interface__(self):
         return json.loads(json.dumps(self.value.__geo_interface__, cls=ESValueEncoder))
@@ -268,7 +287,8 @@ class LocationValue(ESValue):              # !!! début LocationValue
             coords = list(self.value.coords)[0]
         elif isinstance(self.value, shapely.geometry.linestring.LineString):
             coords = list(self.value.coords)
-        else : coords = ES.nullCoor
+        else:
+            coords = ES.nullCoor
         return json.loads(json.dumps(coords, cls=ESValueEncoder))
 
     @property
@@ -276,9 +296,10 @@ class LocationValue(ESValue):              # !!! début LocationValue
         '''list (@property) : vSimple inverse coordinates [vSimple[1], vSimple[0]]'''
         return [self.vSimple()[1], self.vSimple()[0]]
 
-    def getPoint(self) :
+    def getPoint(self):
         ''' return a list with point coordinates [x, y] if the shape is a point, else none'''
-        if isinstance(self.value, shapely.geometry.point.Point) : return [self.value.x, self.value.y]
+        if isinstance(self.value, shapely.geometry.point.Point):
+            return [self.value.x, self.value.y]
         return None
 
     def link(self, other):
@@ -289,65 +310,78 @@ class LocationValue(ESValue):              # !!! début LocationValue
         - within     : if other's shape contains self's shape
         - contains   : if self's shape contains other's shape
         - intersects : in the others cases'''
-        if self.isEqual(other, name=False) :        return 'equals'
-        if self.value.equals(other.value) :         return 'equals'
-        if self.value.contains(other.value) :       return 'contains'
-        if self.value.within(other.value) :         return 'within'
-        if self.value.disjoint(other.value) :       return 'disjoint'
-        if self.value.intersects(other.value) :     return 'intersects'
+        if self.isEqual(other, name=False):
+            return 'equals'
+        if self.value.equals(other.value):
+            return 'equals'
+        if self.value.contains(other.value):
+            return 'contains'
+        if self.value.within(other.value):
+            return 'within'
+        if self.value.disjoint(other.value):
+            return 'disjoint'
+        if self.value.intersects(other.value):
+            return 'intersects'
 
     @staticmethod
-    def nullValue() :
+    def nullValue():
         ''' return nullPosition value'''
         return LocationValue._gshape(ES.nullCoor)
 
-    def vCodePlus(self) :
+    def vCodePlus(self):
         ''' return CodePlus value (string) of the point property value'''
         return openlocationcode.encode(self.vSimple(False)[1], self.vSimple(False)[0])
 
     def vSimple(self, string=False):
         ''' return simple value (centroid coordinates for the shape : 
             [x, y]) in a string format or in a object format'''
-        if string :
-            return json.dumps([round(self.value.centroid.x, 5), round(self.value.centroid.y,5)], cls=ESValueEncoder)
+        if string:
+            return json.dumps([round(self.value.centroid.x, 5), round(self.value.centroid.y, 5)], cls=ESValueEncoder)
         return [round(self.value.centroid.x, 5), round(self.value.centroid.y, 5)]
 
     def vPointInv(self, string=False):
         ''' return point (property) with inversed vSimple coordinates in a string format or
         in a list format [y, x]'''
-        if string :
+        if string:
             return json.dumps([self.vSimple()[1], self.vSimple()[0]], cls=ESValueEncoder)
         return [self.vSimple()[1], self.vSimple()[0]]
 
-    def vPointX(self) :
+    def vPointX(self):
         ''' return point (property) coordinates x '''
         return self.vSimple()[0]
 
-    def vPointY(self) :
+    def vPointY(self):
         ''' return point (property) coordinates y '''
         return self.vSimple()[1]
 
     def _jsonValue(self, **kwargs):
         ''' return geoJson coordinates'''
-        if 'geojson' in kwargs and kwargs['geojson'] : return self.__geo_interface__
+        if 'geojson' in kwargs and kwargs['geojson']:
+            return self.__geo_interface__
         return self.coords
 
     @staticmethod
     def _gshape(coord):
         ''' transform a GeoJSON coordinates (list) into a shapely geometry'''
-        if   isinstance(coord, tuple): coor = json.dumps(list(coord), cls=ESValueEncoder)
-        elif isinstance(coord, list):  coor = json.dumps(coord, cls=ESValueEncoder)
-        elif isinstance(coord, str):   coor = coord
-        else: coor = copy(coord)
+        if isinstance(coord, tuple):
+            coor = json.dumps(list(coord), cls=ESValueEncoder)
+        elif isinstance(coord, list):
+            coor = json.dumps(coord, cls=ESValueEncoder)
+        elif isinstance(coord, str):
+            coor = coord
+        else:
+            coor = copy(coord)
         for tpe in ["Point", "MultiPoint", "Polygon", "MultiPolygon"]:
             try:
                 return shapely.geometry.shape(geojson.loads('{"type":"' + tpe + '","coordinates":' + coor + '}'))
-            except: pass
+            except:
+                pass
         raise ESValueError('coordinates unconsistent')
         return None
 
+
 class PropertyValue(ESValue):              # !!! début ESValue
-#%% prp
+    # %% prp
     """
     This class represents the Property of an Observation.
 
@@ -363,7 +397,7 @@ class PropertyValue(ESValue):              # !!! début ESValue
     - `PropertyValue.Simple`   (property type)
     - `PropertyValue.Box`      (set of property type)
     - `PropertyValue.from_obj` (see  `ESValue.from_obj`)
-    
+
     *getters*
 
     - `PropertyValue.vSimple`
@@ -372,18 +406,18 @@ class PropertyValue(ESValue):              # !!! début ESValue
     @classmethod
     def Simple(cls, prp, name='simple', prp_dict=False):
         '''PropertyValue built with a value (property type) '''
-        return cls(val = {ES.prp_type: prp}, name=name, prp_dict=prp_dict)
+        return cls(val={ES.prp_type: prp}, name=name, prp_dict=prp_dict)
 
     @classmethod
     def Box(cls, prp, name='box', prp_dict=False):
         '''PropertyValue built with a value (property type) '''
-        return cls(val = {ES.prp_type: prp}, name=name, prp_dict=prp_dict)
+        return cls(val={ES.prp_type: prp}, name=name, prp_dict=prp_dict)
 
-    @classmethod 
+    @classmethod
     def from_obj(cls, bs):
         ''' ESValue function (see ESValue.from_obj)'''
         return ESValue.from_obj(bs, ES.prp_clsName, simple=False)
-    
+
     def __init__(self, val=ES.nullPrp, name=ES.nullName, prp_dict=False):
         '''
         PropertyValue constructor.
@@ -402,24 +436,29 @@ class PropertyValue(ESValue):              # !!! début ESValue
         if not val is None and name == ES.prp_type:
             name = None
             val = {ES.prp_type: val}
-        elif isinstance(val, str) and isinstance(name, str) and name != ES.nullName :
+        elif isinstance(val, str) and isinstance(name, str) and name != ES.nullName:
             val = {name: val}
         if isinstance(val, dict):
             if len(val) > 0 and isinstance(list(val.values())[0], dict):
-                    self.name = list(val.keys())[0]
-                    self.value |= val[list(val.keys())[0]]
-            else:   self.value |= val
-        elif isinstance(val, str): name = val
-        #elif not val is None: raise ESValueError('type data not compatible with PropertyValue')
-        #else: raise ESValueError('type data not compatible with PropertyValue')
-        
-        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
+                self.name = list(val.keys())[0]
+                self.value |= val[list(val.keys())[0]]
+            else:
+                self.value |= val
+        elif isinstance(val, str):
+            name = val
+        # elif not val is None: raise ESValueError('type data not compatible with PropertyValue')
+        # else: raise ESValueError('type data not compatible with PropertyValue')
+
+        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName:
             self.name = name
-        if not ES.prp_type in self.value: raise ESValueError("type property not defined")
+        if not ES.prp_type in self.value:
+            raise ESValueError("type property not defined")
         if not isinstance(self.value[ES.prp_type], list):
             if prp_dict and not self.value[ES.prp_type] in ES.prop:
-                raise ESValueError("property not present in standard dictionnary")
-            if prp_dict : self.value[ES.prp_unit] = ES.prop[self.value[ES.prp_type]][5]
+                raise ESValueError(
+                    "property not present in standard dictionnary")
+            if prp_dict:
+                self.value[ES.prp_unit] = ES.prop[self.value[ES.prp_type]][5]
 
     def __lt__(self, other):
         """lower if string simple value + name is lower"""
@@ -433,54 +472,69 @@ class PropertyValue(ESValue):              # !!! début ESValue
         - within     : if all self's key/val are included in other's key/val
         - contains   : if all other's key/val are included in self's key/val
         - intersects : in the others cases'''
-        if self.isEqual(other, name=False) : return 'equals'
-        sprp =self._setprp(self.value[ES.prp_type])
-        oprp =self._setprp(other.value[ES.prp_type])
+        if self.isEqual(other, name=False):
+            return 'equals'
+        sprp = self._setprp(self.value[ES.prp_type])
+        oprp = self._setprp(other.value[ES.prp_type])
         if oprp == sprp:
             union = other.value | self.value
             union2 = self.value | other.value
-            if union == self.value and union2 == self.value:   return 'within'
-            if union == other.value and union2 == other.value: return 'contains'
-            if union == union2:                                return 'disjoint'
+            if union == self.value and union2 == self.value:
+                return 'within'
+            if union == other.value and union2 == other.value:
+                return 'contains'
+            if union == union2:
+                return 'disjoint'
             return 'intersects'
-        if sprp == sprp | oprp: return 'contains'
-        if oprp == sprp | oprp: return 'within'
-        if oprp & sprp == set(): return 'disjoint'
-        else: return 'intersects'
+        if sprp == sprp | oprp:
+            return 'contains'
+        if oprp == sprp | oprp:
+            return 'within'
+        if oprp & sprp == set():
+            return 'disjoint'
+        else:
+            return 'intersects'
         return 'undefined'
 
     @staticmethod
-    def nullValue() : 
+    def nullValue():
         ''' return nullPrp value'''
         return {ES.prp_type: ES.nullDict, ES.prp_unit: ES.prop[ES.nullDict][5]}
 
     def vSimple(self, string=False):
         ''' return simple value (type for the property) in a string format or in a object format'''
         simple = ES.nullDict
-        if ES.prp_type in self.value : simple = self.value[ES.prp_type]
-        if string : return json.dumps(simple, cls=ESValueEncoder)
+        if ES.prp_type in self.value:
+            simple = self.value[ES.prp_type]
+        if string:
+            return json.dumps(simple, cls=ESValueEncoder)
         return simple
 
     def _jsonValue(self, **kwargs):
-        option = {'encoded' : False} | kwargs
+        option = {'encoded': False} | kwargs
         li = {}
-        for k, v in self.value.items() :
-            if   k in [ES.prp_type, ES.prp_unit, ES.prp_sampling, ES.prp_appli, ES.prp_EMFId] :
-                if v != ES.nullDict: li[k] = v
-            elif k in [ES.prp_period, ES.prp_interval, ES.prp_uncertain] :
-                if v != ES.nullInt : li[k] = v
-            else : li[k] = v
-        if option['encoded']: return json.dumps(li, ensure_ascii=False, cls=ESValueEncoder)
+        for k, v in self.value.items():
+            if k in [ES.prp_type, ES.prp_unit, ES.prp_sampling, ES.prp_appli, ES.prp_EMFId]:
+                if v != ES.nullDict:
+                    li[k] = v
+            elif k in [ES.prp_period, ES.prp_interval, ES.prp_uncertain]:
+                if v != ES.nullInt:
+                    li[k] = v
+            else:
+                li[k] = v
+        if option['encoded']:
+            return json.dumps(li, ensure_ascii=False, cls=ESValueEncoder)
         return li
 
     @staticmethod
     def _setprp(val):
-        if isinstance(val, list): return set(val)
+        if isinstance(val, list):
+            return set(val)
         return {val}
 
 
 class NamedValue (ESValue):               # !!! début ResValue
-#%% nam
+    # %% nam
     '''This class represent a simple value with an associated string.
 
     *Attributes (for @property see methods)* :
@@ -493,17 +547,17 @@ class NamedValue (ESValue):               # !!! début ResValue
     *constructor*
 
     - `NamedValue.from_obj` (see  `ESValue.from_obj`)
-    
+
     *getters*
 
     - `NamedValue.vSimple`
     '''
-    @classmethod 
-    def from_obj(cls, bs): 
+    @classmethod
+    def from_obj(cls, bs):
         ''' ESValue function (see ESValue.from_obj)'''
         return ESValue.from_obj(bs, ES.nam_clsName, simple=False)
-    
-    def __init__(self, val = ES.nullVal, name=ES.nullName):
+
+    def __init__(self, val=ES.nullVal, name=ES.nullName):
         '''
         NamedValue constructor.
 
@@ -518,31 +572,32 @@ class NamedValue (ESValue):               # !!! début ResValue
             self.value = val.value
             return
         self.value = ESValue._castsimple(val)
-        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
+        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName:
             self.name = name
 
     @staticmethod
-    def nullValue() : 
+    def nullValue():
         ''' return nullVal value'''
         return ES.nullVal
 
-    def vSimple(self, string=False) :
+    def vSimple(self, string=False):
         '''return float value in string or object format'''
         from util import util
-        if string : return str(util.cast(self.value, dtype='simple'))
+        if string:
+            return str(util.cast(self.value, dtype='simple'))
         return util.cast(self.value, dtype='simple')
 
-    def _jsonValue(self, **option) :
+    def _jsonValue(self, **option):
         '''return the value '''
-        if isinstance(self.value, (int, str, float, bool, list, dict, 
+        if isinstance(self.value, (int, str, float, bool, list, dict,
                                    datetime.datetime, type(None), bytes)):
             return self.value
-        if isinstance(self.value, tuple): 
+        if isinstance(self.value, tuple):
             return list(self.value)
 
 
 class ExternValue (ESValue):               # !!! début ResValue
-#%% ext
+    # %% ext
     '''This class represent a complex (extern) value with an associated string.
 
     *Attributes (for @property see methods)* :
@@ -555,17 +610,17 @@ class ExternValue (ESValue):               # !!! début ResValue
     *constructor*
 
     - `ExternValue.from_obj` (see  `ESValue.from_obj`)
-    
+
     *getters*
 
     - `ExternValue.vSimple`
     '''
-    @classmethod 
+    @classmethod
     def from_obj(cls, bs):
         ''' ESValue function (see ESValue.from_obj)'''
         return ESValue.from_obj(bs, ES.ext_clsName, simple=False)
-    
-    def __init__(self, val = ES.nullExternVal, name=ES.nullName, className=None):
+
+    def __init__(self, val=ES.nullExternVal, name=ES.nullName, className=None):
         '''
         ExternValue constructor.
 
@@ -581,39 +636,45 @@ class ExternValue (ESValue):               # !!! début ResValue
             self.value = val.value
             return
         #self.value = ESValue.from_obj(val, classname=className)
-        if val == ES.nullExternVal and name == ES.nullName: return
-        if not className : className = val.__class__.__name__ 
+        if val == ES.nullExternVal and name == ES.nullName:
+            return
+        if not className:
+            className = val.__class__.__name__
         if className in _classval():
             self.value = _classval()[className](val)
-        else: raise ESValueError('class name inconsistent with ExternValue')
-        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName : 
+        else:
+            raise ESValueError('class name inconsistent with ExternValue')
+        if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName:
             self.name = name
 
     @staticmethod
-    def nullValue() : 
+    def nullValue():
         ''' return nullVal value'''
         return ES.nullExternVal
 
-    def vSimple(self, string=False) :
+    def vSimple(self, string=False):
         '''return conversion from value to float'''
         from util import util
-        if string : return str(util.cast(self.value, dtype='simple'))
+        if string:
+            return str(util.cast(self.value, dtype='simple'))
         return util.cast(self.value, dtype='simple')
 
-    def _jsonValue(self, **option) :
+    def _jsonValue(self, **option):
         '''return a json object for the value '''
-        if self.value.__class__.__name__ in ['Iindex', 'Ilist', 'Observation']: 
+        if self.value.__class__.__name__ in ['Iindex', 'Ilist', 'Observation']:
             return self.value.json(encoded=False, encode_format='json')
         if isinstance(self.value, (int, str, float, bool, list, tuple, dict, datetime.datetime, type(None), bytes)):
             return self.value
         if isinstance(self.value, (DatationValue, LocationValue, PropertyValue, NamedValue, ExternValue)):
             return self.value.json(encoded=False, encode_format='json')
-        try: return self.value.to_json(encoded=False, encode_format='json',
-                                    json_info=False, json_res_index=True, json_param=True)
-        except : return object.__repr__(self.value)
+        try:
+            return self.value.to_json(encoded=False, encode_format='json',
+                                      json_info=False, json_res_index=True, json_param=True)
+        except:
+            return object.__repr__(self.value)
 
 
 class ESValueError(Exception):
-#%% ES except
+    # %% ES except
     ''' ESValue Exception'''
     pass
