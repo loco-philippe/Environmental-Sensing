@@ -115,19 +115,28 @@ class IlistStructure:
         - **inplace** : boolean (default True) - if True, filter is apply to self,
 
         *Returns* : self or new Ilist'''
+        if not filtname in self.lname:
+            return None
         if inplace:
             il = self
         else:
             il = copy(self)
-        if not filtname in il.lname:
-            return False
         ifilt = il.lname.index(filtname)
         il.sort([ifilt], reverse=not reverse, func=None)
-        minind = min(il.lindex[ifilt].recordfromvalue(reverse))
-        for idx in il.lindex:
-            del(idx.keys[minind:])
-        if delfilter:
+        #lisind = None
+        #if reverse in il.lindex[ifilt].codec:
+        #    lisind = il.lindex[ifilt].recordfromvalue(reverse)
+        lisind = il.lindex[ifilt].recordfromvalue(reverse)
+        if lisind: 
+            minind = min(lisind)      
+            for idx in il.lindex:
+                del(idx.keys[minind:])
+        if inplace:
             self.delindex(filtname)
+        else:
+            il.delindex(filtname)
+            if delfilter:
+                self.delindex(filtname)
         il.reindex()
         return il
 

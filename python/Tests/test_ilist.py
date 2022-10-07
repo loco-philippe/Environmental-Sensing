@@ -541,7 +541,14 @@ class Test_Ilist(unittest.TestCase):
         il.setfilter([True, False, True, False])
         il.applyfilter(reverse=True)
         self.assertEqual(il.lindex[1].val,   [2, 2])
-
+        il1 = Ilist.Iext([['er', 'rt', 'er', 'ry', 'ry', 'er'], 
+                          [0, 2, 0, 2, 0, 2], [30, 12, 20, 15, 30, 12]])
+        ilft1 = il1.setfilter([True, True, True, True, True, True]).applyfilter(inplace=False)
+        ilfr1 = il1.setfilter([True, True, True, True, True, True]).applyfilter(reverse=True, inplace=False)
+        ilfr2 = il1.setfilter([False, False, False, False, False, False]).applyfilter(inplace=False)
+        ilft2 = il1.setfilter([False, False, False, False, False, False]).applyfilter(reverse=True, inplace=False)
+        self.assertTrue(il1.sort() == ilft1.sort() == ilft2.sort())
+        self.assertTrue(Ilist.Iext([[], [], []]) == ilfr1 == ilfr2)
         '''
         il = Ilist.Iext(f,l).setfilter([[0, 2], [12, 20, 30]], inplace=False, index=False)
         self.assertEqual( il.setidx, [[0, 2], [30, 12, 20]])
