@@ -95,14 +95,22 @@ class Test_Ilist(unittest.TestCase):
         self.assertTrue(iidx == iidx1 == iidx4)
         self.assertTrue(Ilist.Idic({}) == Ilist.Idic() == Ilist() ==
                         Ilist.Iext([]) == Ilist.Iext())
-        il = Ilist.Iext([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
-                        [[11, 12, 13, 14, 15, 16], -1]])
-        il1 = Ilist([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
-                    [[11, 12, 13, 14, 15, 16], -1]])
-        il2 = Ilist.Idic({'i0': [1, 2, 3], 'i1': [[4, 5, 6], 0], 'i2': [
-                         7, 8], 'i3': [[11, 12, 13, 14, 15, 16], -1]})
-        self.assertTrue(il == il1 == il2)
-        self.assertTrue(len(il) == len(il1) == len(il2) == 6)
+        try: 
+            il1 = Ilist.Iext([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
+                               [[11, 12, 13, 14, 15, 16], -1]])
+            res1 = True
+        except: res1 = False
+        try: 
+            il2 = Ilist([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
+                         [[11, 12, 13, 14, 15, 16], -1]])
+            res2 = True
+        except: res2 = False
+        try:
+            il3 = Ilist.Idic({'i0': [1, 2, 3], 'i1': [[4, 5, 6], 0], 'i2': [
+                              7, 8], 'i3': [[11, 12, 13, 14, 15, 16], -1]})
+            res3 = True
+        except: res3 = False
+        self.assertTrue(not res1 and res2 and not res3 and len(il2) == 6)
 
     def test_var(self):
         il2 = Ilist([['namvalue', ["a", "b", "c", "d", "e", "f"], -1],
@@ -141,9 +149,12 @@ class Test_Ilist(unittest.TestCase):
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
         self.assertTrue(iidx == iidx1 == iidx2 == iidx4)
-        ilx = Ilist.Iext(
-            [20, ['a', 'b', 'b', 'c', 'c', 'a'], [1, 1, 2, 2, 3, 3]])
-        self.assertTrue(ilx.lindex[0].values == [20, 20, 20, 20, 20, 20])
+        try: 
+            ilx = Ilist.Iext(
+                [20, ['a', 'b', 'b', 'c', 'c', 'a'], [1, 1, 2, 2, 3, 3]])
+            res=True
+        except: res=False
+        self.assertFalse(res)
 
     def test_properties(self):
         il = Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2],
@@ -582,14 +593,22 @@ class Test_Ilist(unittest.TestCase):
                          float(ilm.loc(['fruit', '10 kg', 'apple'])[0]))
         self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])[0]) in
                         str(ilx2.sel(quantity='10 kg', product='banana').values))
-        il = Ilist.Idic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+        '''il = Ilist.Iext({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
                          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
                                       '2021-07-04T10:05:00+00:00',
                                       '2021-05-04T10:05:00+00:00'],
                                      0],
                          'propert': [{'prp': 'PM25', 'unit': 'kg/m3'},
                                      {'prp': 'PM10', 'unit': 'kg/m3'}],
-                         'result': [[{'ert': 0}, 1, 2, 3, 4, 5], -1]})
+                         'result': [[{'ert': 0}, 1, 2, 3, 4, 5], -1]})'''
+        il = Ilist([['locatio', [0, [4.83, 45.76], [5.38, 43.3]]],
+                    ['datatio', [{'date1': '2021-02-04T11:05:00+00:00'},
+                                  '2021-07-04T10:05:00+00:00',
+                                  '2021-05-04T10:05:00+00:00'],
+                                  0],
+                    ['propert', [{'prp': 'PM25', 'unit': 'kg/m3'},
+                                 {'prp': 'PM10', 'unit': 'kg/m3'}]],
+                    ['result', [{'ert': 0}, 1, 2, 3, 4, 5], -1]])
         ilx1 = il.to_xarray(lisfunc=[None, None, None, ESValue.to_float])
         ilx2 = il.to_xarray(
             lisfunc=[None, None, None, util.cast], dtype='float')
