@@ -4,13 +4,12 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `observation.ilist_interface` module contains the `IlistInterface` class 
+The `observation.ilist_interface` module contains the `IlistInterface` class
 (`observation.ilist.Ilist` methods).
 """
 
 # %% declarations
 import datetime
-import cbor2
 import json
 import csv
 import math
@@ -18,6 +17,7 @@ import xarray
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
+import cbor2
 
 from esconstante import ES
 from iindex import Iindex
@@ -30,14 +30,18 @@ class IlistError(Exception):
 
 
 class IlistInterface:
+    '''this class includes Iindex methods'''
+
     def json(self, **kwargs):
         '''
         Return json dict, json string or Cbor binary.
 
         *Parameters (kwargs)*
 
-        - **encoded** : boolean (default False) - choice for return format (bynary if True, dict else)
-        - **encode_format** : string (default 'json') - choice for return format (json, bson or cbor)
+        - **encoded** : boolean (default False) - choice for return format
+        (bynary if True, dict else)
+        - **encode_format** : string (default 'json') - choice for return format
+        (json, bson or cbor)
         - **json_res_index** : default False - if True add the index to the value
         - **order** : default [] - list of ordered index
         - **codif** : dict (default {}). Numerical value for string in CBOR encoder
@@ -61,36 +65,36 @@ class IlistInterface:
 
         - **None**  '''
         if not self.consistent:
-            return
-        xa = self.to_xarray(numeric=True, lisfunc=[util.cast], dtype='str',
-                            npdtype='str', maxlen=maxlen)
+            return None
+        xar = self.to_xarray(numeric=True, lisfunc=[util.cast], dtype='str',
+                             npdtype='str', maxlen=maxlen)
         if not order:
             order = [0, 1, 2]
 
-        if len(xa.dims) == 1:
-            xa.plot.line(x=xa.dims[0]+'_row', size=size, marker=marker)
-        elif len(xa.dims) == 2 and line:
-            xa.plot.line(x=xa.dims[order[0]] + '_row',
-                         xticks=list(xa.coords[xa.dims[0]+'_row'].values),
-                         # hue=xa.dims[order[1]]+'_row', size=size, marker=marker)
-                         hue=xa.dims[order[1]], size=size, marker=marker)
-        elif len(xa.dims) == 2 and not line:
-            xa.plot(x=xa.dims[order[0]]+'_row', y=xa.dims[order[1]]+'_row',
-                    xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
-                    yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
-                    size=size)
-        elif len(xa.dims) == 3 and line:
-            xa.plot.line(x=xa.dims[order[0]] + '_row', col=xa.dims[order[1]],
-                         xticks=list(
-                             xa.coords[xa.dims[order[0]]+'_row'].values),
-                         hue=xa.dims[order[2]], col_wrap=2, size=size, marker=marker)
-        elif len(xa.dims) == 3 and not line:
-            xa.plot(x=xa.dims[order[0]]+'_row', y=xa.dims[order[1]]+'_row',
-                    xticks=list(xa.coords[xa.dims[order[0]]+'_row'].values),
-                    yticks=list(xa.coords[xa.dims[order[1]]+'_row'].values),
-                    col=xa.dims[order[2]], col_wrap=2, size=size)
+        if len(xar.dims) == 1:
+            xar.plot.line(x=xar.dims[0]+'_row', size=size, marker=marker)
+        elif len(xar.dims) == 2 and line:
+            xar.plot.line(x=xar.dims[order[0]] + '_row',
+                          xticks=list(xar.coords[xar.dims[0]+'_row'].values),
+                          # hue=xar.dims[order[1]]+'_row', size=size, marker=marker)
+                          hue=xar.dims[order[1]], size=size, marker=marker)
+        elif len(xar.dims) == 2 and not line:
+            xar.plot(x=xar.dims[order[0]]+'_row', y=xar.dims[order[1]]+'_row',
+                     xticks=list(xar.coords[xar.dims[order[0]]+'_row'].values),
+                     yticks=list(xar.coords[xar.dims[order[1]]+'_row'].values),
+                     size=size)
+        elif len(xar.dims) == 3 and line:
+            xar.plot.line(x=xar.dims[order[0]] + '_row', col=xar.dims[order[1]],
+                          xticks=list(
+                xar.coords[xar.dims[order[0]]+'_row'].values),
+                hue=xar.dims[order[2]], col_wrap=2, size=size, marker=marker)
+        elif len(xar.dims) == 3 and not line:
+            xar.plot(x=xar.dims[order[0]]+'_row', y=xar.dims[order[1]]+'_row',
+                     xticks=list(xar.coords[xar.dims[order[0]]+'_row'].values),
+                     yticks=list(xar.coords[xar.dims[order[1]]+'_row'].values),
+                     col=xar.dims[order[2]], col_wrap=2, size=size)
         plt.show()
-        return {xa.dims[i]: list(xa.coords[xa.dims[i]].values) for i in range(len(xa.dims))}
+        return {xar.dims[i]: list(xar.coords[xar.dims[i]].values) for i in range(len(xar.dims))}
 
     def to_csv(self, filename, optcsv={'quoting': csv.QUOTE_NONNUMERIC}, **kwargs):
         '''
@@ -105,7 +109,7 @@ class IlistInterface:
 
         - **name=listcode** : element (default None) - eg location='ns'
             - listcode : string with Code for each index (j: json, n: name, s: simple).
-            - name : name of the index 
+            - name : name of the index
         - **lenres** : Integer (default : 0) - Number of raws (all if 0)
         - **header** : Boolean (default : True) - If True, first line with names
         - **optcsv** : parameter for csv.writer
@@ -117,7 +121,7 @@ class IlistInterface:
         if not optcsv:
             optcsv = {}
         tab = self._to_tab(**kwargs)
-        with open(filename, 'w', newline='') as csvfile:
+        with open(filename, 'w', newline='', encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile, **optcsv)
             for lign in tab:
                 size += writer.writerow(lign)
@@ -210,12 +214,12 @@ class IlistInterface:
             attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
 
-    def to_file(self, file, **kwargs):
+    def to_file(self, filename, **kwargs):
         '''Generate file to display data.
 
          *Parameters (kwargs)*
 
-        - **file** : string - file name (with path)
+        - **filename** : string - file name (with path)
         - **kwargs** : see 'to_obj' parameters
 
         *Returns* : Integer - file lenght (bytes)  '''
@@ -223,20 +227,21 @@ class IlistInterface:
         data = self.to_obj(**option)
         if option['encode_format'] == 'cbor':
             size = len(data)
-            with open(file, 'wb') as f:
-                f.write(data)
+            with open(filename, 'wb') as file:
+                file.write(data)
         else:
             size = len(bytes(data, 'UTF-8'))
-            with open(file, 'w', newline='') as f:
-                f.write(data)
+            with open(filename, 'w', newline='', encoding="utf-8") as file:
+                file.write(data)
         return size
 
     def to_obj(self, indexinfos=None, **kwargs):
-        '''Return a formatted object (json string, cbor bytes or json dict). 
+        '''Return a formatted object (json string, cbor bytes or json dict).
 
         *Parameters (kwargs)*
 
-        - **encoded** : boolean (default False) - choice for return format (string/bytes if True, dict else)
+        - **encoded** : boolean (default False) - choice for return format
+        (string/bytes if True, dict else)
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **fullcodec** : boolean (default False) - if True, each index is with a full codec
@@ -314,10 +319,10 @@ class IlistInterface:
         *Returns* : **dict of indexes values**
         '''
         if not self.consistent:
-            return
+            return None
         if self.lenidx > 3:
             raise IlistError('number of idx > 3')
-        elif self.lenidx == 2:
+        if self.lenidx == 2:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
         elif self.lenidx == 1:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
@@ -344,15 +349,16 @@ class IlistInterface:
 
         - **name=listcode** : element (default None) - eg location='ns'
             - listcode : string with Code for each index (j: json, n: name, s: simple).
-            - name : name of the index 
+            - name : name of the index
         - **defcode** : String (default : 'j') - default list code (if 'all' is True)
         - **all** : Boolean (default : True) - 'defcode apply to all indexes or none
         - **lenres** : Integer (default : 0) - Number of raws (all if 0)
         - **header** : Boolean (default : True) - First line with names
-        - **width** : Integer (default None) - Number of characters displayed for each attribute (all if None)
+        - **width** : Integer (default None) - Number of characters displayed for each
+        attribute (all if None)
         - **ifunc** : function (default None) - function to apply to indexes
-        - **tabulate params** : default 'tablefmt': 'simple', 'numalign': 'left', 'stralign': 'left',
-                   'floatfmt': '.3f' - See tabulate module
+        - **tabulate params** : default 'tablefmt': 'simple', 'numalign': 'left',
+        'stralign': 'left', 'floatfmt': '.3f' - See tabulate module
         - **other kwargs** : parameter for ifunc
 
         *Returns* : list or html table (tabulate format) '''
@@ -387,7 +393,7 @@ class IlistInterface:
 
     # %%internal
     def _to_tab(self, **kwargs):
-        ''' data preparation (dict of dict) for view or csv export. 
+        ''' data preparation (dict of dict) for view or csv export.
         Representation is included if :
             - code is definie in the name element of the field
             - or code is defined in 'defcode' element and 'all' element is True
@@ -396,7 +402,7 @@ class IlistInterface:
 
         - **name=listcode** : element (default None) - eg location='ns'
             - listcode : string with Code for each index (j: json, n: name, s: simple, f: ifunc).
-            - name : name of the index 
+            - name : name of the index
         - **defcode** : String (default : 'j') - default list code (if 'all' is True)
         - **all** : Boolean (default : True) - 'defcode apply to all indexes or none
         - **lenres** : Integer (default : 0) - Number of raws (all if 0)
@@ -405,7 +411,7 @@ class IlistInterface:
 
         option = {'defcode': 'j', 'all': True, 'lenres': 0, 'ifunc': None,
                   'header': True} | kwargs
-        tab = list()
+        tab = []
         resList = []
         diccode = {'j': '', 'n': 'name-', 's': 'smpl-', 'f': 'func-'}
         if option['header']:
@@ -431,12 +437,12 @@ class IlistInterface:
                             val = self.nindex(name).values[i]
                             if n == 'j':
                                 resList.append(util.cast(val, dtype='json'))
-                            if n == 'n':
+                            elif n == 'n':
                                 resList.append(util.cast(val, dtype='name'))
-                            if n == 's':
+                            elif n == 's':
                                 resList.append(
                                     util.cast(val, dtype='json', string=True))
-                            if n == 'f':
+                            elif n == 'f':
                                 resList.append(util.funclist(
                                     val, option['ifunc'], **kwargs))
                 elif option['all']:
@@ -445,12 +451,12 @@ class IlistInterface:
                             val = self.nindex(name).values[i]
                             if n == 'j':
                                 resList.append(util.cast(val, dtype='json'))
-                            if n == 'n':
+                            elif n == 'n':
                                 resList.append(util.cast(val, dtype='name'))
-                            if n == 's':
+                            elif n == 's':
                                 resList.append(
                                     util.cast(val, dtype='json', string=True))
-                            if n == 'f':
+                            elif n == 'f':
                                 resList.append(util.funclist(
                                     val, option['ifunc'], **kwargs))
             tab.append(resList)
@@ -458,10 +464,7 @@ class IlistInterface:
 
     def _xcoord(self, axe, lisfuncname=None, **kwargs):
         ''' Coords generation for Xarray'''
-        if 'maxlen' in kwargs:
-            maxlen = kwargs['maxlen']
-        else:
-            maxlen = 20
+        maxlen = kwargs.get('maxlen', 20)
         info = self.indexinfos()
         coord = {}
         for i in self.lidxrow:

@@ -167,17 +167,17 @@ class Ilist(IlistStructure, IlistInterface):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable'''
         if not idxdic:
-            return cls.Iext(idxval=None, idxname=None, typevalue=typevalue, var=var, 
+            return cls.Iext(idxval=None, idxname=None, typevalue=typevalue, var=var,
                             reindex=reindex)
         if isinstance(idxdic, Ilist):
             return idxdic
         if not isinstance(idxdic, dict):
             raise IlistError("idxdic not dict")
-        return cls.Iext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()), 
+        return cls.Iext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
                         typevalue=typevalue, var=var, reindex=reindex)
 
     @classmethod
-    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None, 
+    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None,
              reindex=True):
         '''
         Ilist constructor (external index).
@@ -203,13 +203,9 @@ class Ilist(IlistStructure, IlistInterface):
                 val.append([idx])
             else:
                 val.append(idx)
-        lenval=[len(idx) for idx in val]
+        lenval = [len(idx) for idx in val]
         if lenval and max(lenval) != min(lenval):
             raise IlistError('the length of Iindex are different')
-        '''length = len(val[0])
-        for idx in val:
-            if len(idx) != length:
-                raise IlistError('the length of Iindex are different')'''
         return cls(listidx=val, name=idxname, var=var, typevalue=typevalue,
                    context=False, reindex=reindex)
 
@@ -376,7 +372,7 @@ class Ilist(IlistStructure, IlistInterface):
     def _init_internal(listidx, typevalue, name, context, idxvar, length):
         '''creation of internal data'''
         typeval = [typevalue for i in range(len(listidx))]
-        #for i in range(len(name)):
+        # for i in range(len(name)):
         #    typeval[i] = util.typename(name[i], typeval[i])
         for i, nam in enumerate(name):
             typeval[i] = util.typename(nam, typeval[i])
