@@ -234,7 +234,7 @@ class ESSearchMongo:
             boolean = boolean and self._condcheck_0(item, cond, type)
         return boolean
 
-    def _condcheck_0(self, item, cond = None, type = None): #to do
+    def _condcheck_0(self, item, cond = None, type = None):
         """
         Takes an item and returns a Boolean.
         """
