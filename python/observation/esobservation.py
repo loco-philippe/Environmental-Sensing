@@ -201,10 +201,14 @@ class Observation(Ilist):
         if not listidx:
             Ilist.__init__(self)
         else:
+            for i, idx in enumerate(listidx):
+                if isinstance(idx, list) and len(idx) > 1 and idx[0]==ES.res_classES:
+                    var=i
+                    break
             Ilist.__init__(self, listidx=listidx, length=length, var=var,
                            reindex=reindex, typevalue=typevalue, context=context)
-        if ES.res_classES in self.lname:
-            self.lvarname = [ES.res_classES]
+        #if ES.res_classES in self.lname:
+        #    self.lvarname = [ES.res_classES]
         self.name = name
         self.id = id
         self.param = param

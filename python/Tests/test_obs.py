@@ -92,7 +92,7 @@ r3 = NamedValue("coucou")
 r4 = NamedValue(41.2)
 r5 = NamedValue(18)
 s1 = [t1, t2]
-dat1 = (ES.dat_classES, {'date1': t1.isoformat()})
+dat1 = (ES.dat_classES, [{'date1': t1.isoformat()}])
 dat2 = (ES.dat_classES, [t1.isoformat(), t2.isoformat()])
 dat3 = (ES.dat_classES, [{'date1': t1.isoformat()},
         t2.isoformat(), t3.isoformat()])
@@ -109,8 +109,8 @@ prop3 = (ES.prp_classES, [prop_pm25, prop_pm10, prop_co2])
 prop3d0 = (prop3[0], [prop3[1], 0])
 prop3d1 = (prop3[0], [prop3[1], 1])
 pprop2 = (ES.prp_classES, [pprop_pm25, pprop_pm10])
-loc1 = (ES.loc_classES, {'paris': paris})
-loc1sn = (ES.loc_classES, paris)
+loc1 = (ES.loc_classES, [{'paris': paris}])
+loc1sn = (ES.loc_classES, [paris])
 loc2 = (ES.loc_classES, [paris, lyon])
 loc3 = (ES.loc_classES, [{'paris': paris}, lyon, marseille])
 loc3d = (loc3[0], [loc3[1], 0])
@@ -404,10 +404,10 @@ class TestExamples(unittest.TestCase):
         coord = [2.3, 48.9]
         prop1 = {"prp": "PM25"}
         prop2 = {"prp": "PM10"}
-        ob_init = Obs.Idic({'location': [coord], 'property': [prop1, prop2]})
+        ob_init =  Obs([['location', [coord]], ['property', [prop1, prop2]]])
         # sensor : Ilist acquisition
-        il_sensor = Ilist.Idic({'res': [], 'datation': [],
-                                'property': [[prop1, prop2], []]}, var=0)
+        il_sensor = Ilist([['res', []], ['datation', []], 
+                           ['property', [prop1, prop2], []]], var=0)
         for i in range(6):  # simule une boucle de mesure
             date = datetime.datetime(2021, 6, 4+i, 12, 5)
             il_sensor.append([45 + i, date, prop1])
@@ -448,17 +448,18 @@ class TestObservation(unittest.TestCase):
                           'prp1', name='truc'),
                   Obs.Std(result=[10, 20], datation='dat1',
                           location=['loc1', 'loc2'], name='truc'),
-                  Obs.Idic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
-                  Obs.Idic(dict((loc3, dat3d, prop2,
-                                 ('result', [{'file': 'truc', 'path': 'ertert'}, 1, 2, 3, 4, ['truc', 'rt']]))))]
+                  #Obs.Idic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
+                  Obs([list(dat1), list(loc1), list(prop3), list(_res(3))], name='truc'),
+                  Obs([list(loc3), list(dat3)+[0], list(prop2),
+                       ['result', [{'file': 'truc', 'path': 'ertert'}, 1, 2, 3, 4, ['truc', 'rt']]]])]
         for ob in listob:
             self.assertEqual(Obs.Iobj(ob.to_obj()), ob)
             self.assertEqual(copy.copy(ob), ob)
 
-        ob1 = Obs.Idic(dict((dat1, loc1, prop3, _res(3))))
+        ob1 = Obs([list(dat1), list(loc1), list(prop3), list(_res(3))])
         ob3 = Obs.Std(datation=dat1[1], location=loc1[1], property=prop3[1],
                       result=_res(3)[1])
-        ob6 = Obs.Std(datation=[dat1[1]], location=[loc1[1]],
+        ob6 = Obs.Std(datation=dat1[1][0], location=loc1[1][0],
                       property=prop3[1], result=_res(3)[1])
         self.assertTrue(ob1 == ob3 == ob6)
         ob = Obs()
@@ -473,7 +474,7 @@ class TestObservation(unittest.TestCase):
         self.assertTrue(ob == ob1 == ob2)
 
     def test_obs_loc_iloc_maj(self):
-        ob = Obs.Idic(dict((dat3, loc3d, prop2, _res(6))), param=truc_mach)
+        ob = Obs([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))], param=truc_mach)
         self.assertTrue([ob[3][3]] ==
                         ob.loc([datetime.datetime.fromisoformat(dat3[1][1]), loc3[1][1],
                                 prop2[1][1]]) ==
@@ -498,14 +499,15 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob.nindex('location').vSimple(),
                          [paris, lyon, marseille])
         self.assertEqual(ob.nindex('datation').vSimple(), [t1, t2, t3])
-        ob = Obs.Idic(dict((dat3, dpt2)), param=truc_mach)
+        #ob = Obs.Idic(dict((dat3, dpt2)), param=truc_mach)
+        ob = Obs([list(dat3), list(dpt2)], param=truc_mach)
         self.assertEqual(ob.nindex('location').vSimple()[0], pol1centre)
-        ob = Obs.Idic(dict((dat3, loc3d, prop2, _res(6))))
+        ob = Obs([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
         self.assertEqual(ob.nindex('result').vName(default='res'), ['res']*6)
         self.assertEqual(ob.nindex('result').vSimple(), [0, 1, 2, 3, 4, 5])
 
     def test_obs_options(self):
-        ob = Obs.Idic(dict((dat3, loc3d, prop2, _res(6))))
+        ob = Obs([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
         self.assertTrue(Obs.Iobj(ob.json()) == ob)
         option = dict()
         option["json_res_index"] = True
@@ -519,18 +521,19 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob2.json(**option), ob.json(**option))
 
     def test_obs_dim(self):
-        ob1 = Obs.Idic(dict((dat2, loc3, prop3d1, _res(6))))
+        ob1 = Obs([list(dat2), list(loc3), list(prop3)+[1], list(_res(6))])
         self.assertTrue(ob1.dimension ==
                         2 and ob1.complete and ob1.primary == [0, 1])
-        ob1 = Obs.Idic(dict((dat3, loc2, prop3d0, _res(6))))
+        ob1 = Obs([list(dat3), list(loc2), list(prop3)+[0], list(_res(6))])
         self.assertTrue(ob1.dimension ==
                         2 and ob1.complete and ob1.primary == [0, 1])
+        #ob1 = Obs([list(dat3), list(loc3), list(prop3), list(_res(3))])
         ob1 = Obs.Idic(dict((dat3, loc3, prop3, _res(3))))
         self.assertTrue(ob1.dimension ==
                         1 and ob1.complete and ob1.primary == [0])
 
     def test_obs_majListName_majListValue(self):
-        ob = Obs.Idic(dict((dat3, loc3, prop2, _res(18))))
+        ob = Obs([list(dat3), list(loc3), list(prop2), list(_res(18))])
         ob.nindex('location').setcodeclist(
             [pparis, plyon, pmarseille], valueonly=True)
         self.assertEqual(ob.setLocation[2].vSimple(), pmarseille)
@@ -541,7 +544,7 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob.setLocation[2].name, 'marseille')
 
     def test_append_obs(self):
-        ob = Obs.Idic(dict((dat3, loc3d, prop2, _res(6))))
+        ob = Obs([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
         ob1 = copy.copy(ob)
         ind = ob1.appendObs(ob)
         self.assertEqual(ob1.setResult[ind[3]].value, ob)
@@ -555,10 +558,11 @@ class TestObservation(unittest.TestCase):
         dat = d1, c2, d3 = [{'d1': t1}, {'c2': t2}, {'d3': t3}]
         loc = l1, m2, l3 = [{'l1': [1, 2]}, {'m2': [2, 3]}, {'l3': [3, 4]}]
         prp = p2, p1 = [{'p2': prop_pm10}, {'p1': prop_pm25}]
-        res = [[10, 11, 12, 13, 14, 15], -1]
-        dic = {'location': [loc, 2], 'property': prp,
-               'datation': dat, 'result': res}
-        ob = Obs.Idic(dic)
+        #res = [[10, 11, 12, 13, 14, 15], -1]
+        res = [10, 11, 12, 13, 14, 15]
+        lis = [['location', loc, 2], ['property', prp],
+               ['datation', dat], ['result', res]]
+        ob = Obs(lis)
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
         ob.sort(order=[0, 2, 1])
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
@@ -574,8 +578,8 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob.lindex[1].vName()[:4], ['p1', 'p1', 'p1', 'p2'])
 
     def test_obs_add(self):
-        ob = Obs.Idic(dict((dat3,  loc3,  prop2, _res(18))), var=3)
-        obp = Obs.Idic(dict((pdat3, ploc3, pprop2, _res(18))), var=3)
+        ob = Obs([list(dat3), list(loc3), list(prop2), list(_res(18))], var=3)
+        obp = Obs([list(pdat3), list(ploc3), list(pprop2), list(_res(18))], var=3)
         obc = obp + ob
         self.assertEqual(set(obc.lindex[0].codec), set(
             obp.lindex[0].codec + ob.lindex[0].codec))
@@ -604,9 +608,9 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob, ob1)
 
     def test_obs_extend(self):
-        obp = Obs.Idic(dict((_res(6), loc3, prop2)))
-        obc = Obs.Idic(dict((_res(6), dat3, prop2)))
-        ob = Obs.Idic(dict((_res(6), dat3, (loc3[0], [loc3[1], 1]), prop2)))
+        obp = Obs([list(_res(6)), list(loc3), list(prop2)])
+        obc = Obs([list(_res(6)), list(dat3), list(prop2)])
+        ob = Obs([list(_res(6)), list(dat3), list(loc3)+[1], list(prop2)])
         obcc = obp | obc
         self.assertEqual(obcc, ob)
         ob = Obs.Iobj({'data': [list(_res(6))]})
@@ -657,12 +661,12 @@ class TestExports(unittest.TestCase):
         _resloc = set((tuple(lyon), tuple(paris), tuple(marseille)))
         self.assertEqual(ob.__geo_interface__['type'], "MultiPoint")
         self.assertEqual(set(ob.__geo_interface__["coordinates"]), _resloc)
-        ob = Obs.Idic(dict((dpt2, dat1)))
+        ob = Obs([list(dpt2), list(dat1)])
         dpt2pt = {'type': 'Polygon', 'coordinates': (((0.5, 1.5), (0.0, 2.0),
                                                       (1.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)}
         self.assertEqual(set(ob.__geo_interface__['coordinates'][0]), set(
             dpt2pt['coordinates'][0]))
-        ob = Obs.Idic(dict((dat3, dpt2, _res(6))))
+        ob = Obs([list(dat3), list(dpt2), list(_res(6))])
         self.assertEqual(set(ob.__geo_interface__['coordinates'][0]), set(
             dpt2pt['coordinates'][0]))
         '''{'type': 'Polygon',
