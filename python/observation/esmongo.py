@@ -3,6 +3,7 @@ import shapely
 from pymongo import MongoClient
 from esobservation import Observation
 import util
+from timeslot import TimeSlot
 
 
 # ajouter des vérifications sur le format des données entrées.
@@ -108,7 +109,7 @@ class ESSearchMongo:
             for cond in param:
                 self._cond(**cond)
 
-    def _cond(self, operand, comp, path, all = True):
+    def _cond(self, operand, comp, path, all = False):
         """
         Prend en entrée des paramètres et retourne un dictionnaire de la condition pour la recherche MongoDB.
         Tri par dates : (Tout) / (au moins une date) est (supérieur à) / (inférieur à) / (égal à) / (dans) [date(s) en paramètre]
@@ -212,7 +213,7 @@ class ESSearchMongo:
         for i in range(len(self.params)):
             for j in range(obs.lenidx):
                 next_filter = util.funclist(obs.lindex[j].cod, (lambda x: self._condcheck(x, self.params[i], obs.lindex[0].name)))
-                next_filter_full = [next_filter[k] for k in obs.lindex[i].keys]
+                next_filter_full = util.tovalues(obs.lindex[i].keys, next_filter)
                 if j == 0: full_filter = next_filter_full
                 else: full_filter = [full_filter[k] and next_filter_full[k] for k in range(obs.lenidx)]
             if i == 0: final_filter = full_filter
@@ -241,12 +242,43 @@ class ESSearchMongo:
         if cond is None: return True
 
         if type == 'datation':
-            pass
-        if type == 'location': # voir si ces cas peuvent être traités avec shapely
-            if cond['comp'] in {"$geowithin", "geowithin", "$geoWithin", "geoWithin"}:
-                pass
-            if cond['comp'] in {"$geonear", "geonear", "$geoNear", "geoNear"}:
-                pass
+            if 'formatstring' in cond:
+                if not isinstance(item, datetime):
+                    item = datetime.strptime(item, cond['formatstring'])
+                if not isinstance(cond['operand'], datetime):
+                    cond['operand'] = datetime.strptime(cond['operand'], cond['formatstring'])
+            elif isinstance(item, TimeSlot):
+                if cond['comp']   in {"$eq", "eq", "=", "==", "$equals", "equals"}  : cond['comp'] = "equals"
+                elif cond['comp'] == "$contains"                                    : cond['comp'] = "contains"
+                elif cond['comp'] in {"$in", "in", "$whitin"}                       : cond['comp'] = "whitin"
+                elif cond['comp'] == "$disjoint"                                    : cond['comp'] = "disjoint"
+                elif cond['comp'] == "$intersects"                                  : cond['comp'] = "intersects"
+                if cond['comp'] in {"equals", "contains", "whitin", "disjoint", "intersects"}:
+                    return item.link(cond['operand'])[0] == cond['comp']
+                else:
+                    if cond['comp'] in {"$gte", "gte", ">=", "=>"}:
+                        if 'all' in cond and cond['all']: return item.bounds[0] >= cond['operand']
+                        else: return item.bounds[1] >= cond['operand']
+                    elif cond['comp'] in {"$gt", "gt", ">"}         :
+                        if 'all' in cond and cond['all']: return item.bounds[0] > cond['operand']
+                        else: return item.bounds[1] > cond['operand']
+                    elif cond['comp'] in {"$lte", "lte", "<=", "=<"}:
+                        if 'all' in cond and cond['all']: return item.bounds[1] <= cond['operand']
+                        else: return item.bounds[0] <= cond['operand']
+                    elif cond['comp'] in {"$lt", "lt", "<"}         :
+                        if 'all' in cond and cond['all']: return item.bounds[1] < cond['operand']
+                        else: return item.bounds[0] < cond['operand']
+                    else: raise ValueError("Comparator not supported for TimeSlot.")
+        if type == 'location':
+            if cond['comp'] in {"$eq", "eq", "=", "==", "$equals", "equals"}            : return item.equals(cond['operand'])
+            elif cond['comp'] in {"$geowithin", "geowithin", "$geoWithin", "geoWithin"} : return item.within(cond['operand'])
+            elif cond['comp'] in {"$disjoint", "disjoint"}                              : return item.disjoint(cond['operand'])
+            elif cond['comp'] in {"$intersects", "intersects"}                          : return item.intersects(cond['operand'])
+            elif cond['comp'] in {"$touches", "touches"}                                : return item.touches(cond['operand'])
+            elif cond['comp'] in {"$overlaps", "overlaps"}                              : return item.overlaps(cond['operand'])
+            elif cond['comp'] in {"$contains", "contains"}                              : return item.contains(cond['operand'])
+            elif cond['comp'] in {"$geonear", "geonear", "$geoNear", "geoNear"}         : return True # no equivalent for this MongoDB operator in shapely
+
 
         if cond['comp'] in {"$eq", "eq", "=", "=="}     : return item == cond['operand']
         elif cond['comp'] in {"$gte", "gte", ">=", "=>"}: return item >= cond['operand']
@@ -255,7 +287,8 @@ class ESSearchMongo:
         elif cond['comp'] in {"$lt", "lt", "<"}         : return item <  cond['operand']
         elif cond['comp'] in {"$in", "in"}              : return item in cond['operand']
         else:
-            raise ValueError("Comparator not supported.")
+            return True
+            #raise ValueError("Comparator not supported.")
 
     def __iter__(self): # suggéré par Copilot. Ne semble pas fonctionner.
         return self.execute()
@@ -269,17 +302,6 @@ class ESSearchMongo:
     def __str__(self): #idem
         return str(self.request)
 
-def cursor_to_Observation(cursor, filtre):
-    """
-    Takes a pymongo cursor and returns a filtered Observation object.
-    """
-    L = []
-    for dico in cursor:
-        del dico["_id"]
-        obs = Observation.filtrage(obs, filtre) #éventuellement, filtrage du dictionnaire puis passage en Observation
-        L.append()
-    return Observation.fusion(L)
-
 if __name__ == "__main__":
     #from dotenv import dotenv_values
 
@@ -292,8 +314,8 @@ if __name__ == "__main__":
 
     #2. Exemple de requête avec condition sur la date :
     research = ESSearchMongo(collection=coll)
-    research.addCondition('datation', datetime(2022, 9, 19, 1), ">=", path="datation.dateTime")
-    #research.addCondition('datation', datetime(2022, 9, 20, 3), ">=", all = False)
+    research.addCondition('datation', datetime(2022, 9, 19, 1), ">=", path="datation.dateTime", all = True)
+    #research.addCondition('datation', datetime(2022, 9, 20, 3), ">=")
     #research.addCondition('location', [2.1, 45.1])
     print("Requête effectuée :", research.request)
     curseur = research.execute()
@@ -304,6 +326,6 @@ if __name__ == "__main__":
     #print(obs[1].to_obj())
 
     # équivalent à :
-    research = ESSearchMongo([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte"},
-                {"condtype" : 'datation', "operand" : datetime(2022, 9, 20, 3), 'operator' : "$gte", 'all' : False}], collection = coll)
+    research = ESSearchMongo([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte", 'all' : True},
+                {"condtype" : 'datation', "operand" : datetime(2022, 9, 20, 3), 'operator' : "$gte"}], collection = coll)
     print("Requête effectuée :", research.request)
