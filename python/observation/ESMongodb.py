@@ -1,10 +1,8 @@
 from datetime import datetime
-from xmlrpc.client import boolean
 import shapely
-import pymongo
 from pymongo import MongoClient
 from esobservation import Observation
-import pandas as pd
+import util
 
 
 # ajouter des vérifications sur le format des données entrées.
@@ -202,93 +200,40 @@ class ESSearchMongo:
         exec('setattr(self, "cursor", self.collection.' + self.searchtype + '(self.request))')
         return [self._filtered(item) for item in self.cursor]
 
-    def _filtered(self, dico):
+    def _filtered_observation(self, obs):
         """
-        Takes a dictionary corresponding to an Observation and returns a filtered dictionary corresponding to a filtered Observation.
+        Takes an Observation and returns a filtered Observation with self.params as a filter.
         """
         # self.params = [[ cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
         # dico = {'data': [['datation', [date1, date2, date3], [0,1,0,2,2,1]], ['location', [loc1, loc2, loc3], [0,1,2,0]]]}
-        if self.params is None: return dico
+        if self.params is None: return obs
+        if len(obs) == 0: return obs
+        
+        for i in range(len(self.params)):
+            for j in range(obs.lenidx):
+                next_filter = util.funclist(obs.lindex[j].cod, (lambda x: self._condcheck(x, self.params[i], obs.lindex[0].name)))
+                next_filter_full = [next_filter[k] for k in obs.lindex[i].keys]
+                if j == 0: full_filter = next_filter_full
+                else: full_filter = [full_filter[k] and next_filter_full[k] for k in range(obs.lenidx)]
+            if i == 0: final_filter = full_filter
+            else: final_filter = [full_filter[j] or final_filter[j] for j in range(obs.lenidx)]
+        obs.setfilter(final_filter)
+        obs.applyfilter()
+        return obs
 
-        if len(dico['data']) == 0: return dico
-        else:
-            iindexes = [] # list of dictionnaries where key = old iindexes, value = new iindexes
-            for i in range(len(dico['data'])):
-                iindexes.append({})
-                if not (len(dico['data'][i]) > 2 and (isinstance(dico['data'][i][2], int) or (isinstance(dico['data'][i][2], list) \
-                        and len(dico['data'][i][2]) > 1 and isinstance(dico['data'][i][2][1], list)))):   # column does not depend on another column
-                    if isinstance(dico['data'][i], list):
-                        if len(dico['data'][i]) == 1: # condition type is not given
-                            if not self._condcheck(dico['data'][i][0]):
-                                dico['data'][i] = []
-                                iindexes[i][0] = -1
-                        elif len(dico['data'][i]) > 1: # condition type is given (with some assumptions)
-                            for j in range(len(dico['data'][i][1])):
-                                if not self._condcheck(dico['data'][i][1][j], dico['data'][i][0]):
-                                    iindexes[i][j] = -1
-                    else:
-                        if not self._condcheck(dico['data'][i]):
-                            dico['data'][i] = []
-                            iindexes[i][0] = -1
-                else: # column depends on another column (déplaçable en sous-cas de la présence de iindex)
-                    if isinstance(dico['data'][i][2], int): # case 1 : [..., 0]
-                        pass
 
-                        #to do
-
-                    elif isinstance(dico['data'][i][2], list): # case 2 : [..., [0, [0, 1, 2]]]
-                        k = 0
-                        for j in range(len(dico['data'][i][1])):
-                            if iindexes[dico['data'][i][2][j]][j] == -1: #CONDITION NON CORRECTE : IL FAUT QUE TOUS VAILLENT -1 SIMULTANEMENT
-                                iindexes[i][j] = -1
-                            elif not self._condcheck(dico['data'][i][1][j], dico['data'][i][0]):
-                                iindexes[i][j] = -1
-                        for j in range(len(dico['data'][i][1][2][1])): # reporting remove on column derived from
-                            if iindexes[i][j] == -1:
-                                iindexes[dico['data'][i][2][0]][dico['data'][i][2][1][j]] = -1
-        # séparation plus adaptée à l'usage des méthodes de Ilist. Partie précédente peut être considérée comme la construction du filtre.
-        # potentiellement plus efficace avec Ilist.setfilter(), Ilist.applyfilter() ?
-            for i in range(len(dico['data'])):
-                if len(dico['data'][i]) > 1: # condition type is given (with some assumptions)
-                    k = 0
-                    for j in range(len(dico['data'][i][1])):
-                        if j not in iindexes[i]:
-                            #déplacement élément par élément et màj des iindex
-                            iindexes[i][j] = k
-                            dico['data'][i][1][k] = dico['data'][i][1][j]
-                            k += 1
-                    dico['data'][i][1] = dico['data'][i][1][:k]
-                    if len(dico['data'][i]) > 2: # iindex update
-        # LE CAS OU L'IINDEX EST IMPLICITE N'EST PAS GÉRÉ
-                        L = []
-                        if isinstance(dico['data'][i][2], list) and (len(dico['data'][i][2][1]) != 2 \
-                                or isinstance(dico['data'][i][2][1], int)): # case 1 : [..., [0, 1, 2]]
-                            for item in dico['data'][i][2]: #-> potentiellement incorrect dans le cas non considéré ici où le nom est manquant
-                                if iindexes[item] != -1:
-                                    L.append(item)
-                            dico['data'][i][2] = L
-                        elif isinstance(dico['data'][i][2], list) and isinstance(dico['data'][i][2][1], list): # case 2 : [..., [0, [0, 1, 2]]]
-                            for item in dico['data'][i][2][1]:
-                                if iindexes[item] != -1:
-                                    L.append(item)
-                            dico['data'][i][2][1] = L
-                            
-    def _condcheck(self, item, type = None):
+    def _condcheck(self, item, param = None, type = None):
         """
         Takes an item and returns a Boolean.
         """
-        # self.params = [[ cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
-        if self.params: return True
-        booleans = [True] * len(self.params)
-        for i in range(len(self.params)):
-            for param in self.params[i]:
-                booleans[i] = booleans[i] and self._condcheck_0(item, param, type)
-        boolean = False
-        for item in booleans:
-            boolean = boolean or item
+        # params = [ cond1 AND cond 2 AND cond 3]
+        if not param: return True
+        boolean = True
+        for cond in param:
+            boolean = boolean and self._condcheck_0(item, cond, type)
         return boolean
 
-    def _condcheck_0(self, item, cond = None, type = None):
+    def _condcheck_0(self, item, cond = None, type = None): #to do
         """
         Takes an item and returns a Boolean.
         """
