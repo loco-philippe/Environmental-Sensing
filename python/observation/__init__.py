@@ -110,3 +110,4 @@ from iindex import Iindex
 from esconstante import ES, Es, _classval
 from util import util
 from timeslot import TimeSlot
+print('package :', __package__)

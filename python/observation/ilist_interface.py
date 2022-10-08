@@ -23,6 +23,10 @@ from esconstante import ES
 from iindex import Iindex
 from util import util, IindexEncoder
 
+#import sys
+#print("In module ilist_interface sys.path[0], __package__ ==", sys.path[0], __package__)
+#print("In module ilist_interface __package__, __name__ ==", __package__, __name__)
+
 
 class IlistError(Exception):
     ''' Ilist Exception'''
@@ -127,10 +131,10 @@ class IlistInterface:
                 size += writer.writerow(lign)
         return size
 
-    def to_dataFrame(self, info=False, idx=None, fillvalue='?', fillextern=True,
+    def to_dataframe(self, info=False, idx=None, fillvalue='?', fillextern=True,
                      lisfunc=None, name=None, numeric=False, npdtype=None, **kwargs):
         '''
-        Complete the Object and generate a Pandas dataFrame with the dimension define by idx.
+        Complete the Object and generate a Pandas DataFrame with the dimension define by idx.
 
         *Parameters*
 
@@ -327,19 +331,19 @@ class IlistInterface:
         elif self.lenidx == 1:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
             self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
-        xa = self.to_xarray(idx=[0, 1, 2], fillvalue='?', fillextern=False,
+        xar = self.to_xarray(idx=[0, 1, 2], fillvalue='?', fillextern=False,
                             lisfunc=util.isNotEqual, tovalue='?')
-        ax = plt.figure().add_subplot(projection='3d')
-        ax.voxels(xa, edgecolor='k')
-        ax.set_xticks(np.arange(self.idxlen[self.idxname.index(xa.dims[0])]))
-        ax.set_yticks(np.arange(self.idxlen[self.idxname.index(xa.dims[1])]))
-        ax.set_zticks(np.arange(self.idxlen[self.idxname.index(xa.dims[2])]))
-        ax.set(xlabel=xa.dims[0][:8],
-               ylabel=xa.dims[1][:8],
-               zlabel=xa.dims[2][:8])
+        axe = plt.figure().add_subplot(projection='3d')
+        axe.voxels(xar, edgecolor='k')
+        axe.set_xticks(np.arange(self.idxlen[self.idxname.index(xar.dims[0])]))
+        axe.set_yticks(np.arange(self.idxlen[self.idxname.index(xar.dims[1])]))
+        axe.set_zticks(np.arange(self.idxlen[self.idxname.index(xar.dims[2])]))
+        axe.set(xlabel=xar.dims[0][:8],
+                ylabel=xar.dims[1][:8],
+                zlabel=xar.dims[2][:8])
         plt.show()
-        return {xa.dims[i]: list(xa.coords[xa.dims[i]].values)
-                for i in range(len(xa.dims))}
+        return {xar.dims[i]: list(xar.coords[xar.dims[i]].values)
+                for i in range(len(xar.dims))}
 
     def view(self, **kwargs):
         '''
@@ -412,54 +416,54 @@ class IlistInterface:
         option = {'defcode': 'j', 'all': True, 'lenres': 0, 'ifunc': None,
                   'header': True} | kwargs
         tab = []
-        resList = []
+        reslist = []
         diccode = {'j': '', 'n': 'name-', 's': 'smpl-', 'f': 'func-'}
         if option['header']:
             for name in self.lname:
                 if name in option:
-                    for n, code in diccode.items():
-                        if n in option[name]:
-                            resList.append(code + name)
+                    for char, code in diccode.items():
+                        if char in option[name]:
+                            reslist.append(code + name)
                 elif option['all']:
-                    for n, code in diccode.items():
-                        if n in option['defcode']:
-                            resList.append(code + name)
-            tab.append(resList)
+                    for char, code in diccode.items():
+                        if char in option['defcode']:
+                            reslist.append(code + name)
+            tab.append(reslist)
         lenres = option['lenres']
         if lenres == 0:
             lenres = len(self)
         for i in range(min(lenres, len(self))):
-            resList = []
+            reslist = []
             for name in self.lname:
                 if name in option:
-                    for n, code in diccode.items():
-                        if n in option[name]:
+                    for char, code in diccode.items():
+                        if char in option[name]:
                             val = self.nindex(name).values[i]
-                            if n == 'j':
-                                resList.append(util.cast(val, dtype='json'))
-                            elif n == 'n':
-                                resList.append(util.cast(val, dtype='name'))
-                            elif n == 's':
-                                resList.append(
+                            if char == 'j':
+                                reslist.append(util.cast(val, dtype='json'))
+                            elif char == 'n':
+                                reslist.append(util.cast(val, dtype='name'))
+                            elif char == 's':
+                                reslist.append(
                                     util.cast(val, dtype='json', string=True))
-                            elif n == 'f':
-                                resList.append(util.funclist(
+                            elif char == 'f':
+                                reslist.append(util.funclist(
                                     val, option['ifunc'], **kwargs))
                 elif option['all']:
-                    for n, code in diccode.items():
-                        if n in option['defcode']:
+                    for char, code in diccode.items():
+                        if char in option['defcode']:
                             val = self.nindex(name).values[i]
-                            if n == 'j':
-                                resList.append(util.cast(val, dtype='json'))
-                            elif n == 'n':
-                                resList.append(util.cast(val, dtype='name'))
-                            elif n == 's':
-                                resList.append(
+                            if char == 'j':
+                                reslist.append(util.cast(val, dtype='json'))
+                            elif char == 'n':
+                                reslist.append(util.cast(val, dtype='name'))
+                            elif char == 's':
+                                reslist.append(
                                     util.cast(val, dtype='json', string=True))
-                            elif n == 'f':
-                                resList.append(util.funclist(
+                            elif char == 'f':
+                                reslist.append(util.funclist(
                                     val, option['ifunc'], **kwargs))
-            tab.append(resList)
+            tab.append(reslist)
         return tab
 
     def _xcoord(self, axe, lisfuncname=None, **kwargs):
