@@ -761,7 +761,7 @@ class TestExports(unittest.TestCase):
         #ob = Observation(dict((obs_1, dat3, dpt3, prop1, _res(3))), idxref={'location':'datation'})
         ob = Observation(dict((obs_1, dat3, dpt3, prop1, _res(3))), idxref={'location':'datation'})
         self.assertTrue(type(ob.to_xarray()) != type(None))
-        self.assertTrue(type(ob.to_dataFrame()) != type(None))
+        self.assertTrue(type(ob.to_dataframe()) != type(None))
         self.assertTrue(ob.choropleth() != None)
         #self.assertTrue(type(ob.to_geoDataFrame()) != type(None))
         self.assertTrue(ob.jsonFeature != '')

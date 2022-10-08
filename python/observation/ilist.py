@@ -151,7 +151,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.to_csv`
     - `Ilist.to_file`
     - `Ilist.to_xarray`
-    - `Ilist.to_dataFrame`
+    - `Ilist.to_dataframe`
     - `Ilist.view`
     - `Ilist.vlist`
     - `Ilist.voxel`

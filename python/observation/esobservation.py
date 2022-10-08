@@ -157,7 +157,7 @@ class Observation(Ilist):
     - `observation.ilist.Ilist.to_file`
     - `Observation.to_obj`
     - `Observation.to_xarray`
-    - `observation.ilist.Ilist.to_dataFrame`
+    - `observation.ilist.Ilist.to_dataframe`
     - `observation.ilist.Ilist.view`
     - `observation.ilist.Ilist.vlist`
     - `observation.ilist.Ilist.voxel`
