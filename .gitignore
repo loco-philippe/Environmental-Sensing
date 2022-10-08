@@ -9,5 +9,5 @@ __pycache__/
 *.py[cod]
 *.stats
 *~
-
+.pylint.d/
 .cache
