@@ -550,6 +550,8 @@ class Ilist(IlistStructure, IlistInterface):
     @property
     def consistent(self):
         ''' True if all the record are different'''
+        if not self.iidx:
+            return True
         return max(Counter(zip(*self.iidx)).values()) == 1
 
     @property
@@ -684,4 +686,6 @@ class Ilist(IlistStructure, IlistInterface):
     def zip(self):
         '''return a zip format for textidx : tuple(tuple(rec))'''
         textidx = self.textidx
+        if not textidx:
+            return None
         return tuple(tuple(idx) for idx in textidx)
