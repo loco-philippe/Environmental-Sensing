@@ -1,13 +1,68 @@
 from datetime import datetime
-import shapely
+import re
+import shapely.geometry
 from pymongo import MongoClient
 from esobservation import Observation
-import util
+from util import util
 from timeslot import TimeSlot
 
 
 # ajouter des vérifications sur le format des données entrées.
 # (actuellement, on peut entrer n'importe quoi sans déclencher d'erreur)
+
+# tout comparateur non présent dans ces dictionnaires est considéré invalide
+# pas besoin de faire tuple = ("$eq", "==") puisque de toute façon il faudra encore un if côté Python. (exec pas rentable)
+dico_alias = {
+    str : {
+        None:"$eq",
+        "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
+        "in":"$in", "$in":"$in"
+    },
+    int : {
+        None:"$eq",
+        "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
+        "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
+        "gt":"$gt", ">":"$gt", "$gt":"$gt",
+        "lte":"$lte", "<=":"$lte", "=<":"$lte",
+        "lt":"$lt", "<":"$lt", "$lt":"$lt",
+        "in":"$in", "$in":"$in"
+    },
+    datetime : {
+        None:"$eq",
+        "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
+        "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
+        "gt":"$gt", ">":"$gt", "$gt":"$gt",
+        "lte":"$lte", "<=":"$lte", "=<":"$lte",
+        "lt":"$lt", "<":"$lt", "$lt":"$lt",
+        "in":"$in", "$in":"$in"
+    },
+    TimeSlot : { #only works in Python part
+        None:"equals",
+        "eq":"equals", "=":"equals", "==":"equals", "eq":"equals", "equals":"equals", "$equals":"equals",
+        "contains":"contains", "$contains":"contains",
+        "in":"within", "$in":"within", "within":"within", "$within":"within",
+        "disjoint":"disjoint", "$disjoint":"disjoint",
+        "intersects":"intersects", "$intersects":"intersects"
+    },
+    "geometry" : {
+        None:"$eq",
+        "eq":"equals", "=":"equals", "==":"equals", "eq":"equals", "equals":"equals", "$equals":"equals",
+        "$geowithin":"$geoWithin", "geowithin":"$geoWithin", "$geoWithin":"$geoWithin", "geoWithin":"$geoWithin", "within":"$geoWithin", "$within":"$geoWithin",
+        "disjoint":"disjoint", "$disjoint":"disjoint",
+        "intersects":"intersects", "$intersects":"intersects",
+        "touches":"touches", "$touches":"touches",
+        "overlaps":"overlaps", "$overlaps":"overlaps",
+        "contains":"contains", "$contains":"contains",
+        "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear" #nécessite la présence d'un index 2dsphere
+    }
+}
+dico_alias[shapely.geometry.Point]          = dico_alias["geometry"]
+dico_alias[shapely.geometry.LineString]     = dico_alias["geometry"]
+dico_alias[shapely.geometry.LinearRing]     = dico_alias["geometry"]
+dico_alias[shapely.geometry.Polygon]        = dico_alias["geometry"]
+dico_alias[shapely.geometry.MultiPoint]     = dico_alias["geometry"]
+dico_alias[shapely.geometry.MultiLineString]= dico_alias["geometry"]
+dico_alias[shapely.geometry.MultiPolygon]   = dico_alias["geometry"]
 
 def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.net/test'):
     auth        = 'authSource=admin'
@@ -23,8 +78,20 @@ def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.n
             '&' + ssl    
     return MongoClient(st)
 
+def f(num=5):
+    client = clientMongo()
+    return client["test_obs"]['observation' + str(num)]
 
-class ESSearchMongo:
+def insert_to_mongo(collection, obj, info=True):
+    """Takes an object and inserts it into a MongoDB collection with info.
+    Just use collection.insert_one(obj) if you don't need to add query helpers"""
+    #casser les observations à l'entrée dans Mongo pour permettre des recherches intéressantes. (implique recréation de la redondance)
+    #corriger pour que dates restent au format date en entrée, idem Polygon
+    obs = Observation.from_obj(obj)
+    dico2 = obs.json(json_info=info)
+    collection.insert_one(dico2)
+
+class ESSearch:
     #Modifier en une classe ESSearch qui peut faire la recherche sur une liste qui n'est pas dans MongoDB
     """
     Prend en entrée les paramètres de la requête et retourne la requête à effectuer.
@@ -36,25 +103,24 @@ class ESSearchMongo:
     """
     def __init__(self, 
                     parameters = None,
+                    data = None,
                     collection = None,
-                    searchtype = "aggregate",
                     **kwargs
                     ):
-        self.collection = collection
-        self.searchtype = searchtype # devrait être fonction des critères de recherche
         self.params = [[]]
-        self.datation = False
+        if isinstance(data, Observation):
+            self.data = [data]
+        else:
+            self.data = data            # list of observations 
+        self.collection = collection    # MongoDB collection of observations
         if parameters: self.addParams(parameters)
-        if kwargs: #syntaxe à vérifier
-            self.addCondition(**kwargs)
+        if kwargs: self.addCondition(**kwargs)
 
 
-# params = [[ cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
-
-# -> si présence de dates, nécessité d'un $unwind. Mais également pour tous les autres array correspondant à des séries de mesures.
+# params = [[cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
 
     def __repr__(self):
-        return {"collection" : self.collection, "searchtype" : self.searchtype, "parameters" : self.params}
+        return {"collection" : self.collection, "parameters" : self.params}
 
     def addParams(self, params):
         if isinstance(params, dict):
@@ -63,21 +129,24 @@ class ESSearchMongo:
             for param in params: # On suppose ici que tous les paramètres sont correctement entrés.
                 self.addCondition(**param)
             
-    def addCondition(self, condtype = None, operand = None, operator = "$eq", path = None, all = None, or_position = -1, formatstring = None):
+    def addCondition(self, condtype = None, operand = None, operator = None, path = None, or_position = -1, **kwargs):
 
         if condtype == 'datation':
+            operator = dico_alias[datetime][operator]
             self.datation = True
-            if path is None: path = "data.datation"
+            if path is None: # quand ce sont des TimeSlot (et donc par défaut), faire sur la datationBox
+                path = "information.datationBox"
+                if operator in {"$eq", "$in"}: #déplacer ça dans la partie qui ne concerne que MongoDB
+                    pass #le changer en une combinaison de >= et <= appropriée
         elif condtype == 'location':
-            if path is None: path = "data.location"
+            if path is None: path = "information.geobox.coordinates" #seems better than information.locationBox
         elif condtype == 'property':
-            if path is None: path = "data.property"
+            if path is None: path = "information.propertyBox"
         elif condtype != None:
-            if path is None: path = "data." + condtype
+            if path is None: path = "data"
 
-        condition = {"comp" : operator, "operand" : operand, "path" : path}
-        if all != None: condition |= {"all" : all}
-        if formatstring: condition |= {"formatstring" : formatstring} #paramètre actuellement sans effet. Lorsque entré, s'applique d'abord aux dates de la base de donnée, et ensuite éventuellement sur la date en paramètre de la condition.
+        condition = {"comp" : operator, "operand" : operand, "path" : path} | kwargs
+        if not condtype is None: condition |= condtype
 
         if or_position >= len(self.params):
             self.params.append([condition])
@@ -98,38 +167,21 @@ class ESSearchMongo:
             if condnum is None: self.params.pop(or_position)
             else: self.params[or_position].pop(condnum)
 
-    def _search(self): #EN L'ÉTAT NE FONCTIONNE QUE POUR DES AGGRÉGATIONS
-
-        if self.datation:
-            #self._match_1 = {"datation.dateType" : "datetime"}
-            self._match_1 = {"$or":[{"datation.datationType":"simple"}, {"datation.datationType":"multi"}]}
-            self._unwind.append("datation.dateTime")
-
-        for param in self.params:
-            for cond in param:
-                self._cond(**cond)
-
     def _cond(self, operand, comp, path, all = False):
         """
         Prend en entrée des paramètres et retourne un dictionnaire de la condition pour la recherche MongoDB.
         Tri par dates : (Tout) / (au moins une date) est (supérieur à) / (inférieur à) / (égal à) / (dans) [date(s) en paramètre]
         (syntaxe à vérifier) -> Dans le cas d'un intervalle, cette fonction est appelée plusieurs fois.
-        -> Traiter le cas de conditions redondantes (ex <4 => <8) (actuelleme,t, le dernier arrivé l'emporte)
-        -> Max actuel : 4 conditions : "tout" dans un intervalle et "au moins un" dans un intervalle inclus dans celui-ci.
-        L'utilisation de OR est gérée par _search.
-        Format dates : array de 2^k valeurs, kcN [date1, date2, date3, date3] <-> Timeslot([[date1, date2], date3])
+        -> Traiter le cas de conditions redondantes (ex <4 => <8) (actuellement, le dernier arrivé l'emporte)
+        L'utilisation de OR est gérée par _fullSearchMongo.
         """
+        #TimeSlot à transformer en une liste de conditions
         
-        if isinstance(comp, str) and comp[0] != "$":
-            if comp in {"eq", "=", "=="}        : comp = "$eq"
-            elif comp in {"gte", ">=", "=>"}    : comp = "$gte"
-            elif comp in {"gt", ">"}            : comp = "$gt"
-            elif comp in {"lte", "<=", "=<"}    : comp = "$lte"
-            elif comp in {"lt", "<"}            : comp = "$lt"
-            elif comp == "in"                   : comp = "$in"
-            else:
-                raise ValueError("Comparators allowed are =, <, >, <=, >=, in and MongoDB equivalents.")
-        
+        try: comp = dico_alias[type(comp)][comp] #global variable
+        except: pass #raise ValueError("Comparators allowed are =, <, >, <=, >=, in and MongoDB equivalents.")
+
+        if comp is None : return #si on ne peut pas utiliser un comparateur, juste vérifier la présence.
+
         if all and type(operand) in {datetime, int}:
             if comp == "$eq"    :   cond_0 = {"$nor" : [{"$lt" : operand}, {"$gt" : operand}]}
             elif comp == "$gte" :   cond_0 = {"$not" : {"$lt"  : operand}}
@@ -138,37 +190,28 @@ class ESSearchMongo:
             elif comp == "$lt"  :   cond_0 = {"$not" : {"$gte" : operand}}
         else:                                 cond_0 = {comp : operand}
 
-        if self.searchtype == "aggregate":
-            if path not in self._match_2:
-                self._match_2[path] = cond_0
-            else:
-                self._match_2[path] |= cond_0
+        if path not in self._match_2:
+            self._match_2[path] = cond_0
+        else:
+            self._match_2[path] |= cond_0
         
         return { path : cond_0 }
-    
-    def _fullSearchQuery(self):
-        
-        self._request = {}
 
-        self._search()
-
-
-    def _fullSearchAggregation(self):
+    def _fullSearchMongo(self):
         
         self._request = []
         self._match_1 = {'type' : 'obs'}
-        self._unwind = []
         self._match_2 = {}
         #self._group = {"_id" : '$_id'} # ne renvoie rien d'autre que les _id mais évite de renvoyer des doublons
         self._project = {} #{"data" : 1}
         self._sort = {}
         
-        self._search()
+        for param in self.params:
+            for cond in param:
+                self._cond(**cond)
+
         if self._match_1 != {}:
             self._request.append({"$match" : self._match_1})
-        if self._unwind != {}:
-            for unwind in self._unwind:
-                self._request.append({"$unwind" : "$" + unwind})
         if self._match_2 != {}:
             self._request.append({"$match" : self._match_2})
         #if self._group != {}:
@@ -179,51 +222,56 @@ class ESSearchMongo:
             self._request.append({"$sort" : self._sort})
         return self._request
 
-    def _fullSearch(self):
-        if self.searchtype in {"find", "find_one"}:
-            return self._fullSearchQuery()
-        elif self.searchtype in {"aggregate", "update"}:
-            return self._fullSearchAggregation()
-        else:
-            raise ValueError("This type of resarch does not exist.")
-
     @property
     def request(self):
-        return self._fullSearch()
+        return self._fullSearchMongo()
 
-    def execute(self):
+    def execute(self, single = True):
         """
-        Executes the request and returns the cursor created by pymongo.
+        Executes the request and returns its result.
         """
-        if self.collection is None:
-            raise AttributeError("self.collection not defined.")
-        #print("Requête exécutée : self.collection."+self.searchtype+"(", self.request, ")")
-        exec('setattr(self, "cursor", self.collection.' + self.searchtype + '(self.request))')
-        return [self._filtered(item) for item in self.cursor]
+        if self.collection is None: cursor = []
+        else: cursor = self.collection.aggregate(self.request)
+        if not self.data: self.data = []
+        if self.params == [[]]:
+            result = self.data
+            for item in cursor: result.append(Observation.from_obj(item))
+        else:
+            result = [self._filtered_observation(item) for item in self.data]            
+            for item in cursor: result.append(self._filtered_observation(Observation.from_obj(item)))
+        if single: return self._fusion(result)
+        else: return result
 
     def _filtered_observation(self, obs):
         """
         Takes an Observation and returns a filtered Observation with self.params as a filter.
         """
-        # self.params = [[ cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
+        # self.params = [[cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
         # dico = {'data': [['datation', [date1, date2, date3], [0,1,0,2,2,1]], ['location', [loc1, loc2, loc3], [0,1,2,0]]]}
-        if self.params is None: return obs
         if len(obs) == 0: return obs
         
+        if not(isinstance(obs, Observation)):
+            try: Observation(obs)
+            except: raise TypeError("Could not convert argument to an Observation.")
+
         for i in range(len(self.params)):
-            for j in range(obs.lenidx):
-                next_filter = util.funclist(obs.lindex[j].cod, (lambda x: self._condcheck(x, self.params[i], obs.lindex[0].name)))
-                next_filter_full = util.tovalues(obs.lindex[i].keys, next_filter)
-                if j == 0: full_filter = next_filter_full
-                else: full_filter = [full_filter[k] and next_filter_full[k] for k in range(obs.lenidx)]
-            if i == 0: final_filter = full_filter
-            else: final_filter = [full_filter[j] or final_filter[j] for j in range(obs.lenidx)]
+            if self.params[i] != []:
+                filter = util.funclist(obs.lindex[0].cod, (lambda x: self._condcheck(x, self.params[i], obs.lindex[0].name)))
+                if not isinstance(filter, list): filter = [filter]
+                full_filter = util.tovalues(obs.lindex[0].keys, filter)
+                for j in range(1, obs.lenidx):
+                    next_filter = util.funclist(obs.lindex[j].cod, (lambda x: self._condcheck(x, self.params[i], obs.lindex[0].name)))
+                    if not isinstance(next_filter, list): next_filter = [next_filter]
+                    next_filter_full = util.tovalues(obs.lindex[j].keys, next_filter)
+                    full_filter = [full_filter[k] and next_filter_full[k] for k in range(len(full_filter))]
+                if i == 0: final_filter = full_filter
+                else: final_filter = [full_filter[j] or final_filter[j] for j in range(len(full_filter))]
         obs.setfilter(final_filter)
         obs.applyfilter()
         return obs
 
 
-    def _condcheck(self, item, param = None, type = None):
+    def _condcheck(self, item, param = None, condtype = None):
         """
         Takes an item and returns a Boolean.
         """
@@ -231,29 +279,33 @@ class ESSearchMongo:
         if not param: return True
         boolean = True
         for cond in param:
-            boolean = boolean and self._condcheck_0(item, cond, type)
+            boolean = boolean and self._condcheck_0(item, cond, condtype)
         return boolean
 
-    def _condcheck_0(self, item, cond = None, type = None):
+    def _condcheck_0(self, item, cond = None, condtype = None):
+#EN L'ÉTAT, COMPARE TOUT AVEC TOUT => AUGMENTATION DU TEMPS DE CALCUL + ERREURS LEVÉES CAR COMPARAISON SANS RAPPORT (ex: "chien" < 3)
+#que faire dans ce dernier cas quand on ne sait pas si l'un des champs concernés est présent ?
+#existence traitable par MongoDB ?
+#On traitera ce cas plus tard.
+#à part dans le cas de in ou de str à transformer, objets comparés doivent être du même type.
         """
         Takes an item and returns a Boolean.
         """
         #cond = {"comp" : operator, "operand" : operand, "path" : path} and sometimes can contain "all" and "formatstring"
         if cond is None: return True
+        if type(item) != type(cond["operand"]): return True
 
-        if type == 'datation':
+        if 'condtype' in cond: condtype = cond['condtype']
+
+        if condtype == 'datation':
             if 'formatstring' in cond:
                 if not isinstance(item, datetime):
                     item = datetime.strptime(item, cond['formatstring'])
                 if not isinstance(cond['operand'], datetime):
                     cond['operand'] = datetime.strptime(cond['operand'], cond['formatstring'])
             elif isinstance(item, TimeSlot):
-                if cond['comp']   in {"$eq", "eq", "=", "==", "$equals", "equals"}  : cond['comp'] = "equals"
-                elif cond['comp'] == "$contains"                                    : cond['comp'] = "contains"
-                elif cond['comp'] in {"$in", "in", "$whitin"}                       : cond['comp'] = "whitin"
-                elif cond['comp'] == "$disjoint"                                    : cond['comp'] = "disjoint"
-                elif cond['comp'] == "$intersects"                                  : cond['comp'] = "intersects"
-                if cond['comp'] in {"equals", "contains", "whitin", "disjoint", "intersects"}:
+                if cond['comp'] in dico_alias[type(cond['comp'])]:
+                    cond['comp'] = dico_alias[type(cond['comp'])][cond['comp']]
                     return item.link(cond['operand'])[0] == cond['comp']
                 else:
                     if cond['comp'] in {"$gte", "gte", ">=", "=>"}:
@@ -269,16 +321,15 @@ class ESSearchMongo:
                         if 'all' in cond and cond['all']: return item.bounds[1] < cond['operand']
                         else: return item.bounds[0] < cond['operand']
                     else: raise ValueError("Comparator not supported for TimeSlot.")
-        if type == 'location':
+        if condtype == 'location':
             if cond['comp'] in {"$eq", "eq", "=", "==", "$equals", "equals"}            : return item.equals(cond['operand'])
-            elif cond['comp'] in {"$geowithin", "geowithin", "$geoWithin", "geoWithin"} : return item.within(cond['operand'])
+            elif cond['comp'] in {"$geowithin", "geowithin", "$geoWithin", "geoWithin", "$within", "within"} : return item.within(cond['operand'])
             elif cond['comp'] in {"$disjoint", "disjoint"}                              : return item.disjoint(cond['operand'])
             elif cond['comp'] in {"$intersects", "intersects"}                          : return item.intersects(cond['operand'])
             elif cond['comp'] in {"$touches", "touches"}                                : return item.touches(cond['operand'])
             elif cond['comp'] in {"$overlaps", "overlaps"}                              : return item.overlaps(cond['operand'])
             elif cond['comp'] in {"$contains", "contains"}                              : return item.contains(cond['operand'])
             elif cond['comp'] in {"$geonear", "geonear", "$geoNear", "geoNear"}         : return True # no equivalent for this MongoDB operator in shapely
-
 
         if cond['comp'] in {"$eq", "eq", "=", "=="}     : return item == cond['operand']
         elif cond['comp'] in {"$gte", "gte", ">=", "=>"}: return item >= cond['operand']
@@ -290,16 +341,34 @@ class ESSearchMongo:
             return True
             #raise ValueError("Comparator not supported.")
 
-    def __iter__(self): # suggéré par Copilot. Ne semble pas fonctionner.
-        return self.execute()
+    def _fusion(self, obsList):
+        """
+        Takes a list of observations and returns one Observation.
+        """
+        if len(obsList) == 1:
+            return obsList[0]
+        elif len(obsList) > 1:
+            obs = obsList[0].mix(obsList[1])
+            for item in obsList[2:]:
+                obs = obs.mix(item)
+            return obs
 
-    def __next__(self): # idem
-        return next(self.cursor)
 
-    def __getitem__(self, key): # idem
-        return self.cursor[key]
+    def __iter__(self):
+        self.n = -1
+        return self
 
-    def __str__(self): #idem
+    def __next__(self):
+        if self.n < len(self.params)-1:
+            self.n += 1
+            return self.params[self.n]
+        else:
+            raise StopIteration
+
+    def __getitem__(self, key):
+        return self.params[key]
+
+    def __str__(self):
         return str(self.request)
 
 if __name__ == "__main__":
@@ -310,22 +379,18 @@ if __name__ == "__main__":
     #client = clientMongo(config["USER"], config["PWD"], config["SITE"])
     client = clientMongo()
     db = client['test_obs']
-    coll = db['observation3']
+    coll = db['observation5']
 
     #2. Exemple de requête avec condition sur la date :
-    research = ESSearchMongo(collection=coll)
-    research.addCondition('datation', datetime(2022, 9, 19, 1), ">=", path="datation.dateTime", all = True)
-    #research.addCondition('datation', datetime(2022, 9, 20, 3), ">=")
-    #research.addCondition('location', [2.1, 45.1])
+    research = ESSearch(collection=coll)
+    research.addCondition('datation', datetime(2022, 9, 1, 1), ">=", all = True)
+    research.addCondition('datation', datetime(2022, 9, 2, 3), ">=")
+    research.addCondition('location', [2.1, 45.1])
     print("Requête effectuée :", research.request)
     curseur = research.execute()
     for el in curseur: print(el)
-    #obs = cursor_to_Observation(research.execute())
-    #print(obs)
-    #print(obs[1])
-    #print(obs[1].to_obj())
 
     # équivalent à :
-    research = ESSearchMongo([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte", 'all' : True},
+    research = ESSearch([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte", 'all' : True},
                 {"condtype" : 'datation', "operand" : datetime(2022, 9, 20, 3), 'operator' : "$gte"}], collection = coll)
     print("Requête effectuée :", research.request)
