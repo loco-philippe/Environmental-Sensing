@@ -541,7 +541,7 @@ class IindexStructure:
 
         - **int** : first key finded (None else)'''
         if extern:
-            value = util.castval(value, util.typename(self.name, ES.def_dtype))
+            value = util.castval(value, util.typename(self.name, ES.def_clsName))
         if value in self.codec:
             return self.codec.index(value)
         return None

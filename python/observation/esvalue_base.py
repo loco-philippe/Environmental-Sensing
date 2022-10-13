@@ -148,10 +148,6 @@ class ESValue:
             classn = ES.ext_clsName
         if not classn and classname != ES.ES_clsName:
             classn = classname
-        '''if not simple and not classn:
-            classESval = ESValue._decodeclass(val)
-            if classESval == ES.ili_clsName and name:
-                classn = ES.ext_clsName'''
         if not simple and not classn:
             classn = ESValue.valClassName(val)
         if classn in ES.ESvalName:

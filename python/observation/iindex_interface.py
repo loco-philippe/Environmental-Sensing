@@ -110,6 +110,7 @@ class IindexInterface:
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **untyped** : boolean (default False) - include dtype if True
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
         if keys and isinstance(keys, list):

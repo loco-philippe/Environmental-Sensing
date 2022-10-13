@@ -251,12 +251,14 @@ class IlistInterface:
         - **fullcodec** : boolean (default False) - if True, each index is with a full codec
         - **defaultcodec** : boolean (default False) - if True, each index is whith a default codec
         - **name** : boolean (default False) - if False, default index name are not included
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
         option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False,
-                  'encode_format': 'json', 'codif': ES.codeb, 'name': False} | kwargs
+                  'encode_format': 'json', 'codif': ES.codeb, 'name': False,
+                  'geojson': False} | kwargs
         option2 = {'encoded': False, 'encode_format': 'json',
-                   'codif': option['codif']}
+                   'codif': option['codif'], 'geojson': option['geojson']}
         lis = []
         if option['fullcodec'] or option['defaultcodec']:
             for idx in self.lidx:
