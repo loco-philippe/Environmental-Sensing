@@ -496,17 +496,13 @@ class Observation(Ilist):
         - **json_res_index** : Boolean - include index for Variable
         - **json_param**     : Boolean - include Obs Param
         - **json_info**      : Boolean - include all infos
-        - **json_info_type** : Boolean - include info_type
-        - **json_info_nval** : Boolean - include the lenght of Iindex
-        - **json_info_box**  : Boolean - include the bounding box
-        - **json_info_other**: Boolean - include the other infos
+        - **json_info_detail**: Boolean - include the other infos
 
         *Returns* : string, bytes or dict'''
         option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'json_param': False, 'json_info': False, 'json_info_type': False,
-                  'json_info_nval': False, 'json_info_box': False,
-                  'json_info_other': False} | kwargs
+                  'json_param': False, 'json_info': False, 'json_info_detail': False
+                  } | kwargs
         option2 = option | {'encoded': False, 'encode_format': 'json'}
         dic = {ES.type: ES.obs_classES}
         if self.id:
@@ -559,58 +555,50 @@ class Observation(Ilist):
 # %% internal
 
     def _info(self, **kwargs):
-        ''' Create json dict with info datas'''
+        ''' Create json dict with info datas'''    
         option = ES.mOption | kwargs
-        dcinf = dict()
-        if option["json_info"] or option["json_info_nval"]:
-            dcinf |= dict(
-                zip(['len-'+name for name in self.lname], self.indexlen))
-        if option["json_info"] or option["json_info_box"]:
-            dcinf |= self._infoBox(**option)
-        if option["json_info"] or option["json_info_other"]:
-            dcinf |= self._infoOther()
-        ldel = []
-        for k, v in dcinf.items():
-            if isinstance(v, str) and (v == "null" or v == ''):
-                ldel.append(k)
-            if isinstance(v, list) and v == ES.nullCoor:
-                ldel.append(k)
-        for k in ldel:
-            del dcinf[k]
-        if len(dcinf) == 0:
-            return ""
-        return {ES.information: dcinf}
+        dcobs = {}
+        dcindex = {}
+        if not option['json_info']:
+            return dcobs
+        dcobs[ES.name]              = self.name
+        dcobs[ES.length]            = len(self)
+        dcobs[ES.lenindex]          = self.lenindex
+        dcobs[ES.complete]          = self.complete
+        dcobs[ES.dimension]         = self.dimension
+        if option['json_info_detail']:
+            infos = self.indexinfos()        
+        for ind, idx in enumerate(self.lindex):
+            dcidx = {}
+            dcidx[ES.num]           = ind
+            dcidx[ES.typevalue]     = idx.typevalue
+            dcidx[ES.lencodec]      = len(idx.codec)
+            dcidx[ES.box]           = Observation._info_box(idx, **option)
+            if option['json_info_detail']:
+                dcidx[ES.typecoupl] = infos[ind][ES.typecoupl]
+                dcidx[ES.cat]       = infos[ind][ES.cat]
+                dcidx[ES.pname]     = infos[ind][ES.pname]
+                dcidx[ES.typecodec] = idx.infos[ES.typecodec]
+                dcidx[ES.linkrate]  = infos[ind][ES.linkrate]
+                dcidx[ES.disttomin] = idx.infos[ES.disttomin]
+                dcidx[ES.disttomax] = idx.infos[ES.disttomax]
+            dcindex[idx.name] = dcidx
+        return {ES.information: {ES.observation: dcobs, ES.index: dcindex}}
 
-    def _infoBox(self, **option):
-        ''' Add box informations's key-value to dict dcinf'''
-        dcinf = dict()
-        if self.setLocation:
-            dcinf[ES.loc_box] = list(
-                ESValue.boundingBox(self.setLocation).bounds)
-            dcinf[ES.geo_box] = ESValue.boundingBox(
-                self.setLocation).__geo_interface__
-        if self.setProperty:
-            dcinf[ES.prp_box] = list(
-                ESValue.boundingBox(self.setProperty).bounds)
-        if self.setDatation:
-            bound = ESValue.boundingBox(self.setDatation).bounds
-            if option["encode_format"] == 'json':
-                dcinf[ES.dat_box] = list(bound)
-            else:
-                dcinf[ES.dat_box] = [datetime.datetime.fromisoformat(bound[0]),
-                                     datetime.datetime.fromisoformat(bound[1])]
-        return dcinf
-
-    def _infoOther(self):
-        ''' Add other's information key-value to dict dcinf'''
-        dcinf = dict()
-        dcinf[ES.obs_complet] = self.complete
-        #dcinf[ES.obs_score]   = self.score
-        #dcinf[ES.res_mRate]   = self.rate
-        dcinf[ES.res_dim] = self.dimension
-        dcinf[ES.res_axes] = [self.idxname[i] for i in self.primary]
-        return dcinf
-
+    @staticmethod
+    def _info_box(idx, **option):
+        ''' return box informations's'''
+        if idx.typevalue == ES.loc_clsName and option['geojson']:
+            return ESValue.boundingBox(idx).__geo_interface__
+        if (idx.typevalue == ES.loc_clsName and not option['geojson']) \
+            or idx.typevalue == ES.prp_clsName \
+            or (idx.typevalue == ES.dat_clsName and option["encoded"]):
+            return list(ESValue.boundingBox(idx).bounds)
+        if (idx.typevalue == ES.dat_clsName and not option["encoded"]):
+            bound = ESValue.boundingBox(idx).bounds
+            return [datetime.datetime.fromisoformat(bound[0]),
+                    datetime.datetime.fromisoformat(bound[1])]
+        return None
 
 class ObsError(Exception):
     pass

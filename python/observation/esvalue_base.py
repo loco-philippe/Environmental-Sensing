@@ -273,7 +273,6 @@ class ESValue:
         - PropertyValue : boundingBox (list of type property)
         - Other ESValue : () '''
         try:
-            # if isinstance(self, PropertyValue): return tuple(self.value[ES.prp_type])
             if self.__class__.__name__ == 'PropertyValue':
                 return tuple(self.value[ES.prp_type])
             return self.value.bounds

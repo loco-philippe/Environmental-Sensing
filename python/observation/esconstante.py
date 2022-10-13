@@ -75,11 +75,13 @@ class Es:
                       "json_dat_name"       : False, # affiche name ou instant/slot
                       "json_loc_name"       : False, # affiche name ou instant/slot
                       "json_param"          : False, # ok
+                      "geojson"             : False, # ok
                       "json_info"           : False, # si True, ok pour tous les info_
-                      "json_info_type"      : False,
-                      "json_info_nval"      : False,
-                      "json_info_box"       : False,
-                      "json_info_other"     : False,
+                      "json_info_detail"    : False,
+                      #"json_info_type"      : False,
+                      #"json_info_nval"      : False,
+                      ##"json_info_box"       : False,
+                      #"json_info_other"     : False,
                       "unic_index"          : True,  # dans add
                       #"add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
@@ -393,6 +395,7 @@ class Es:
         self.id               = "id"
         self.param            = "param"
         self.information      = "information"
+        self.observation      = "observation"
         self.type             = "type"
         self.multi            = "Multi"
         self.obs              = "obs"
@@ -406,6 +409,21 @@ class Es:
         self.variable         = "variable"
         self.order            = "order"
         self.name             = "name"
+        self.length           = "length"
+        self.lenindex         = "lenindex"
+        self.complete         = "complete"
+        self.dimension        = "dimension"
+        self.num              = "num"
+        self.typevalue        = "typevalue"
+        self.lencodec         = "lencodec"
+        self.box              = "box"
+        self.cat              = "cat"
+        self.typecoupl        = "typecoupl"
+        self.pname            = "pname"
+        self.typecodec        = "typecodec"
+        self.linkrate         = "linkrate"
+        self.disttomin        = "disttomin"
+        self.disttomax        = "disttomax"
 
         self.nul_classES      = "nullClass"
         self.obs_classES      = "obs"
