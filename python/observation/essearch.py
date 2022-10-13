@@ -1,5 +1,5 @@
 from datetime import datetime
-import re
+from sqlite3 import Cursor
 import shapely.geometry
 from pymongo import MongoClient
 from esobservation import Observation
@@ -44,25 +44,19 @@ dico_alias = {
         "disjoint":"disjoint", "$disjoint":"disjoint",
         "intersects":"intersects", "$intersects":"intersects"
     },
-    "geometry" : {
-        None:"$eq",
+    list : {
+        None:"$geoIntersects",
         "eq":"equals", "=":"equals", "==":"equals", "eq":"equals", "equals":"equals", "$equals":"equals",
         "$geowithin":"$geoWithin", "geowithin":"$geoWithin", "$geoWithin":"$geoWithin", "geoWithin":"$geoWithin", "within":"$geoWithin", "$within":"$geoWithin",
         "disjoint":"disjoint", "$disjoint":"disjoint",
-        "intersects":"intersects", "$intersects":"intersects",
+        "intersects":"$geoIntersects", "$intersects":"$geoIntersects", "geoIntersects":"$geoIntersects", "$geointersects":"$geoIntersects", "geoIntersects":"$geoIntersects", "$geoIntersects":"$geoIntersects",
         "touches":"touches", "$touches":"touches",
         "overlaps":"overlaps", "$overlaps":"overlaps",
         "contains":"contains", "$contains":"contains",
         "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear" #nécessite la présence d'un index 2dsphere
     }
 }
-dico_alias[shapely.geometry.Point]          = dico_alias["geometry"]
-dico_alias[shapely.geometry.LineString]     = dico_alias["geometry"]
-dico_alias[shapely.geometry.LinearRing]     = dico_alias["geometry"]
-dico_alias[shapely.geometry.Polygon]        = dico_alias["geometry"]
-dico_alias[shapely.geometry.MultiPoint]     = dico_alias["geometry"]
-dico_alias[shapely.geometry.MultiLineString]= dico_alias["geometry"]
-dico_alias[shapely.geometry.MultiPolygon]   = dico_alias["geometry"]
+dico_alias[float] = dico_alias[int]
 
 def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.net/test'):
     auth        = 'authSource=admin'
@@ -82,13 +76,21 @@ def f(num=5):
     client = clientMongo()
     return client["test_obs"]['observation' + str(num)]
 
+def insert_from_doc(collection, document = '..//Tests//json_examples.obs', info=True):
+    with open(document, 'r') as doc:
+        for line in doc:
+            try: insert_to_mongo(collection, line, info)
+            except: pass
+
 def insert_to_mongo(collection, obj, info=True):
     """Takes an object and inserts it into a MongoDB collection with info.
     Just use collection.insert_one(obj) if you don't need to add query helpers"""
     #casser les observations à l'entrée dans Mongo pour permettre des recherches intéressantes. (implique recréation de la redondance)
-    #corriger pour que dates restent au format date en entrée, idem Polygon
+    #corriger pour que dates restent au format date en entrée
     obs = Observation.from_obj(obj)
+#### A REPRENDRE CAR NE PERMET PAS DE RENTRER datetime EN DATES ET shapely.geometry EN GEOMETRIE DANS MONGODB TEL QUEL
     dico2 = obs.json(json_info=info)
+####
     collection.insert_one(dico2)
 
 class ESSearch:
@@ -107,20 +109,34 @@ class ESSearch:
                     collection = None,
                     **kwargs
                     ):
-        self.params = [[]]
+        self.params = [[]]                      # params = [[cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
         if isinstance(data, Observation):
             self.data = [data]
         else:
-            self.data = data            # list of observations 
-        self.collection = collection    # MongoDB collection of observations
+            self.data = data                    # list of observations 
+        self.collection = collection            # MongoDB collection of observations
         if parameters: self.addParams(parameters)
         if kwargs: self.addCondition(**kwargs)
 
-
-# params = [[cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
-
     def __repr__(self):
         return {"collection" : self.collection, "parameters" : self.params}
+
+    def __str__(self):
+        return str(self.request)
+
+    def __iter__(self):
+        self.n = -1
+        return self
+
+    def __next__(self):
+        if self.n < len(self.params)-1:
+            self.n += 1
+            return self.params[self.n]
+        else:
+            raise StopIteration
+
+    def __getitem__(self, key):
+        return self.params[key]
 
     def addParams(self, params):
         if isinstance(params, dict):
@@ -130,9 +146,12 @@ class ESSearch:
                 self.addCondition(**param)
             
     def addCondition(self, condtype = None, operand = None, operator = None, path = None, or_position = -1, **kwargs):
+        # pas d'operator => on prend celui par défaut dans dico_alias (l'égalité) -> OK
+        # pas d'operand => on teste juste l'existence de l'objet trouvé par condtype ou path -> TO DO
+        if condtype is None and operand is None and operator is None and path is None:
+            raise TypeError("ESSearch.addcondition() requires at least one of these parameters : condtype, operand or path.")
 
         if condtype == 'datation':
-            operator = dico_alias[datetime][operator]
             self.datation = True
             if path is None: # quand ce sont des TimeSlot (et donc par défaut), faire sur la datationBox
                 path = "information.datationBox"
@@ -140,13 +159,19 @@ class ESSearch:
                     pass #le changer en une combinaison de >= et <= appropriée
         elif condtype == 'location':
             if path is None: path = "information.geobox.coordinates" #seems better than information.locationBox
+
         elif condtype == 'property':
             if path is None: path = "information.propertyBox"
         elif condtype != None:
             if path is None: path = "data"
 
-        condition = {"comp" : operator, "operand" : operand, "path" : path} | kwargs
-        if not condtype is None: condition |= condtype
+        if operand:
+            try: operator = dico_alias[type(operand)][operator]
+            except: raise ValueError('Incompatible values for operator and operand.')
+        elif operator:
+            raise ValueError('operand must be defined when operator is used.')
+
+        condition = {"comp" : operator, "operand" : operand, "path" : path, "condtype" : condtype} | kwargs
 
         if or_position >= len(self.params):
             self.params.append([condition])
@@ -160,6 +185,9 @@ class ESSearch:
         self.addCondition(or_position = len(self.params), **kwargs)
 
     def removeCondition(self, condnum = None, or_position = None):
+        """
+        Removes a condition from self.params
+        """
         if or_position is None:
             if condnum is None: self.params = {}
             else: self.params.pop(condnum)
@@ -167,7 +195,7 @@ class ESSearch:
             if condnum is None: self.params.pop(or_position)
             else: self.params[or_position].pop(condnum)
 
-    def _cond(self, operand, comp, path, all = False):
+    def _cond(self, operand, comp, path, all = False, condtype = None, formatstring = None):
         """
         Prend en entrée des paramètres et retourne un dictionnaire de la condition pour la recherche MongoDB.
         Tri par dates : (Tout) / (au moins une date) est (supérieur à) / (inférieur à) / (égal à) / (dans) [date(s) en paramètre]
@@ -176,13 +204,20 @@ class ESSearch:
         L'utilisation de OR est gérée par _fullSearchMongo.
         """
         #TimeSlot à transformer en une liste de conditions
+        #Dans le cas d'un point,
         
         try: comp = dico_alias[type(comp)][comp] #global variable
         except: pass #raise ValueError("Comparators allowed are =, <, >, <=, >=, in and MongoDB equivalents.")
 
         if comp is None : return #si on ne peut pas utiliser un comparateur, juste vérifier la présence.
 
-        if all and type(operand) in {datetime, int}:
+        if comp == "$geoIntersects":
+            cond_0 = {"$geoIntersects" :{"$geometry": {
+             "type": "Point", # à détecter
+             "coordinates": operand
+          }}}
+
+        elif all and type(operand) in {datetime, int, float}:
             if comp == "$eq"    :   cond_0 = {"$nor" : [{"$lt" : operand}, {"$gt" : operand}]}
             elif comp == "$gte" :   cond_0 = {"$not" : {"$lt"  : operand}}
             elif comp == "$gt"  :   cond_0 = {"$not" : {"$lte" : operand}}
@@ -202,9 +237,7 @@ class ESSearch:
         self._request = []
         self._match_1 = {'type' : 'obs'}
         self._match_2 = {}
-        #self._group = {"_id" : '$_id'} # ne renvoie rien d'autre que les _id mais évite de renvoyer des doublons
-        self._project = {} #{"data" : 1}
-        self._sort = {}
+        self._project = {"data" : 1}
         
         for param in self.params:
             for cond in param:
@@ -214,12 +247,8 @@ class ESSearch:
             self._request.append({"$match" : self._match_1})
         if self._match_2 != {}:
             self._request.append({"$match" : self._match_2})
-        #if self._group != {}:
-        #    self._request.append({"$group" : self._group})
         if self._project != {}:
             self._request.append({"$project" : self._project})
-        if self._sort != {}:
-            self._request.append({"$sort" : self._sort})
         return self._request
 
     @property
@@ -251,53 +280,73 @@ class ESSearch:
         if len(obs) == 0: return obs
         
         if not(isinstance(obs, Observation)):
-            try: Observation(obs)
+            try: Observation(obs)   #pas parfait puisque Observation.from_obj(obs) ne sera pas fait implicitement.
             except: raise TypeError("Could not convert argument to an Observation.")
 
         for i in range(len(self.params)):
             if self.params[i] != []:
-                filter = util.funclist(obs.lindex[0].cod, (lambda x: self._condcheck(x, self.params[i], obs.lindex[0].name)))
+                conds, next_relevant = self._newconds(obs, self.params[i])
+                filter = util.funclist(obs.lindex[0].cod, self._condcheck, conds[0], obs.lindex[0].name)
                 if not isinstance(filter, list): filter = [filter]
                 full_filter = util.tovalues(obs.lindex[0].keys, filter)
                 for j in range(1, obs.lenidx):
-                    next_filter = util.funclist(obs.lindex[j].cod, (lambda x: self._condcheck(x, self.params[i], obs.lindex[0].name)))
+                    next_filter = util.funclist(obs.lindex[j].cod, self._condcheck, conds[j], obs.lindex[j].name)
                     if not isinstance(next_filter, list): next_filter = [next_filter]
                     next_filter_full = util.tovalues(obs.lindex[j].keys, next_filter)
                     full_filter = [full_filter[k] and next_filter_full[k] for k in range(len(full_filter))]
-                if i == 0: final_filter = full_filter
-                else: final_filter = [full_filter[j] or final_filter[j] for j in range(len(full_filter))]
-        obs.setfilter(final_filter)
-        obs.applyfilter()
-        return obs
+                if i == 0:
+                    final_filter = full_filter
+                    relevant = next_relevant
+                else:
+                    final_filter = [full_filter[j] or final_filter[j] for j in range(len(full_filter))]
+                    relevant = relevant and next_relevant
+        if relevant:
+            obs.setfilter(final_filter)
+            obs.applyfilter()
+            return obs
+        else:
+            return Observation()
 
+    def _newconds(self, obs, param):
+        """
+        Takes parameters and returns a function which takes an item and returns a Boolean which is True iif item verifies all parameters.
+        It also changes self._relevant so that it equals True when relevant criteria are applied (i.e. of the same type as the item)
+        """
+        # param = [cond1 AND cond 2 AND cond 3]
+        new_conds = []
+        relevant =  False
+        for i in range(obs.lenidx):
+            new_conds.append([])
+            for cond in param:
+                if ('condtype' not in cond and ('path' not in cond or ('path' in cond and cond['path'] == 'data.' + obs.lindex[i].name) ) \
+                        or ('condtype' in cond and cond['condtype'] == obs.lindex[i].name)) \
+                        and ('operand' not in cond or ('operand' in cond and self._compatibletypes(obs.lindex[i].cod[0], cond))):
+                    new_conds[i].append(cond)
+                    relevant = True
+                elif 'condtype' not in cond and 'path' in cond and cond['path'][:11] == 'information' : #Les vérifications sur les path commençant par information ne se font que dans MongoDB
+                    relevant = True
+        return new_conds, relevant
 
-    def _condcheck(self, item, param = None, condtype = None):
+    def _condcheck(self, item, param = None, datatype = None):
         """
         Takes an item and returns a Boolean.
         """
-        # params = [ cond1 AND cond 2 AND cond 3]
+        # params = [cond1 AND cond 2 AND cond 3]
         if not param: return True
         boolean = True
         for cond in param:
-            boolean = boolean and self._condcheck_0(item, cond, condtype)
+            boolean = boolean and self._condcheck_0(item, cond, datatype)
         return boolean
 
-    def _condcheck_0(self, item, cond = None, condtype = None):
-#EN L'ÉTAT, COMPARE TOUT AVEC TOUT => AUGMENTATION DU TEMPS DE CALCUL + ERREURS LEVÉES CAR COMPARAISON SANS RAPPORT (ex: "chien" < 3)
-#que faire dans ce dernier cas quand on ne sait pas si l'un des champs concernés est présent ?
-#existence traitable par MongoDB ?
-#On traitera ce cas plus tard.
-#à part dans le cas de in ou de str à transformer, objets comparés doivent être du même type.
+    def _condcheck_0(self, item, cond = None, datatype = None):
         """
         Takes an item and returns a Boolean.
         """
-        #cond = {"comp" : operator, "operand" : operand, "path" : path} and sometimes can contain "all" and "formatstring"
+        #cond = {"comp" : operator, "operand" : operand, "path" : path, "condtype" : condtype} and sometimes can contain "all" or "formatstring"
         if cond is None: return True
-        if type(item) != type(cond["operand"]): return True
+        if cond['comp'] is None and cond['operand'] is None: return True
 
-        if 'condtype' in cond: condtype = cond['condtype']
-
-        if condtype == 'datation':
+        if cond['condtype'] == 'datation':
             if 'formatstring' in cond:
                 if not isinstance(item, datetime):
                     item = datetime.strptime(item, cond['formatstring'])
@@ -321,7 +370,7 @@ class ESSearch:
                         if 'all' in cond and cond['all']: return item.bounds[1] < cond['operand']
                         else: return item.bounds[0] < cond['operand']
                     else: raise ValueError("Comparator not supported for TimeSlot.")
-        if condtype == 'location':
+        elif cond['condtype'] == 'location':
             if cond['comp'] in {"$eq", "eq", "=", "==", "$equals", "equals"}            : return item.equals(cond['operand'])
             elif cond['comp'] in {"$geowithin", "geowithin", "$geoWithin", "geoWithin", "$within", "within"} : return item.within(cond['operand'])
             elif cond['comp'] in {"$disjoint", "disjoint"}                              : return item.disjoint(cond['operand'])
@@ -330,6 +379,12 @@ class ESSearch:
             elif cond['comp'] in {"$overlaps", "overlaps"}                              : return item.overlaps(cond['operand'])
             elif cond['comp'] in {"$contains", "contains"}                              : return item.contains(cond['operand'])
             elif cond['comp'] in {"$geonear", "geonear", "$geoNear", "geoNear"}         : return True # no equivalent for this MongoDB operator in shapely
+        elif cond['condtype'] == 'property': # assuming property contains dict and the search targets one of its values
+            for val in item.values():
+                if self._condcheck_0(val, cond | {'condtype' : None}, datatype):
+                    return True
+            return False
+
 
         if cond['comp'] in {"$eq", "eq", "=", "=="}     : return item == cond['operand']
         elif cond['comp'] in {"$gte", "gte", ">=", "=>"}: return item >= cond['operand']
@@ -341,9 +396,33 @@ class ESSearch:
             return True
             #raise ValueError("Comparator not supported.")
 
-    def _fusion(self, obsList):
+    def _compatibletypes(self, item, cond):
         """
-        Takes a list of observations and returns one Observation.
+        Takes three parameters and returns True if they are compatible.
+        """
+        #NE FONCTIONNE PAS
+        if type(item) == type(cond['operand']): return True
+        elif cond['comp'] == "$in":
+            if isinstance(cond['operand'], list) and len(cond['operand']) > 0:
+                return self._compatibletypes(item, cond | {'operand' : cond['operand'][0], 'comp' : None})
+            elif len(cond['operand']) == 0: return True
+            else: return False
+        elif 'formatstring' in cond:
+            if isinstance(item, str):
+                return type(cond['operand']) in {str, datetime, TimeSlot}
+            elif isinstance(cond['operand'], str):
+                return type(item) in {datetime, TimeSlot}
+        elif isinstance(item, dict):
+            for val in item.values():
+                if self._compatibletypes(val, cond):
+                    return True
+            return False
+        else:
+            return False
+
+    def _fusion(self, obsList): #n'a pas sa place ici, à déplacer comme constructeur d'Observation ou ailleurs
+        """
+        Takes a list of observations and returns one observation mixing them.
         """
         if len(obsList) == 1:
             return obsList[0]
@@ -354,25 +433,9 @@ class ESSearch:
             return obs
 
 
-    def __iter__(self):
-        self.n = -1
-        return self
-
-    def __next__(self):
-        if self.n < len(self.params)-1:
-            self.n += 1
-            return self.params[self.n]
-        else:
-            raise StopIteration
-
-    def __getitem__(self, key):
-        return self.params[key]
-
-    def __str__(self):
-        return str(self.request)
-
 if __name__ == "__main__":
     #from dotenv import dotenv_values
+    from pymongo import cursor
 
     # 1. Connection à la base de donnée
     #config = dotenv_values(".env")
@@ -383,12 +446,18 @@ if __name__ == "__main__":
 
     #2. Exemple de requête avec condition sur la date :
     research = ESSearch(collection=coll)
-    research.addCondition('datation', datetime(2022, 9, 1, 1), ">=", all = True)
-    research.addCondition('datation', datetime(2022, 9, 2, 3), ">=")
-    research.addCondition('location', [2.1, 45.1])
-    print("Requête effectuée :", research.request)
-    curseur = research.execute()
-    for el in curseur: print(el)
+    #research.addCondition('datation', datetime(2022, 1, 1, 0), ">=")#, all = True) #ACTUELLEMENT NE FONCTIONNE PAS CAR DONNÉES MAL RENTRÉES DANS LA BASE
+    #research.addCondition('datation', datetime(2022, 9, 2, 3), ">=")
+    #research.addCondition('location', [2.1, 45.1]) #ACTUELLEMENT NE FONCTIONNE PAS CAR DONNÉES MAL RENTRÉES DANS LA BASE
+    research.addCondition('property', 'PM1')
+    print("Requête effectuée :", research.request, '\n')
+    search_result = research.execute()
+    if not search_result is None:
+        if isinstance(search_result, cursor.Cursor):
+            for el in search_result[:10]: print(el)
+        else:
+            print(search_result.to_obj(), '\n')
+    else: print(None)
 
     # équivalent à :
     research = ESSearch([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte", 'all' : True},
