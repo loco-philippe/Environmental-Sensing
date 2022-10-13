@@ -671,10 +671,13 @@ class IlistStructure:
 
         *Returns* : self'''
         if not order:
-            order = []
+            order = list(range(self.lenindex))
+            #order = []
         orderfull = order + list(set(range(self.lenindex)) - set(order))
-        for idx in [self.lindex[i] for i in order]:
-            idx.reindex(codec=sorted(idx.codec, key=func))
+        #for idx in [self.lindex[i] for i in order]:
+        #    idx.reindex(codec=sorted(idx.codec, key=func))
+        for i in order:
+            self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
         newidx = util.transpose(sorted(util.transpose(
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]),
             reverse=reverse))

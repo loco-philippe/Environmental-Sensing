@@ -9,12 +9,13 @@ The `observation.test_ilist` module contains the unit tests (class unittest) for
 """
 import unittest
 from copy import copy
-from util import util
+#from util import util
 import csv  # , os
 from datetime import datetime
 from math import nan
 from itertools import product
-from observation import Observation, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
+from observation import Observation, NamedValue, DatationValue, LocationValue, \
+    PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
 from test_obs import dat3, loc3, prop2, _res
 
 l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]

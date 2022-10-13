@@ -259,11 +259,6 @@ class LocationValue(ESValue):              # !!! début LocationValue
                 name = val
             else:
                 self.value = self._gshape(val)
-            #value = self._gshape(val)
-            #if value: self.value = value
-            # else: raise ESValueError('val inconsistent')
-            # elif not value and not name: name = val
-            # elif not value and name: raise ESValueError('name and val inconsistent')
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName:
             self.name = name
 
@@ -366,6 +361,8 @@ class LocationValue(ESValue):              # !!! début LocationValue
         if isinstance(coord, tuple):
             coor = json.dumps(list(coord), cls=ESValueEncoder)
         elif isinstance(coord, list):
+            coor = json.dumps(coord, cls=ESValueEncoder)        
+        elif isinstance(coord, dict):
             coor = json.dumps(coord, cls=ESValueEncoder)
         elif isinstance(coord, str):
             coor = coord

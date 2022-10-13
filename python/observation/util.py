@@ -347,10 +347,11 @@ class util:
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **untyped** : boolean (default False) - include dtype in the json if True
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
         option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
-                  'codif': {}, 'typevalue': typevalue} | kwargs
+                  'codif': {}, 'typevalue': typevalue, 'geojson': False} | kwargs
         js = []
         if not codecval:
             if name and typevalue:
@@ -360,7 +361,8 @@ class util:
             elif typevalue:
                 js.append(typevalue)
         codlis = [util.json(cc, encoded=False, typevalue=None, simpleval=simpleval,
-                            fullcodec=fullcodec, untyped=option['untyped']) for cc in codeclist]
+                            fullcodec=fullcodec, untyped=option['untyped'],
+                            geojson=option['geojson']) for cc in codeclist]
         if len(js) == 1 and isinstance(js[0], str):
             listunic = True
         if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):

@@ -491,6 +491,7 @@ class Observation(Ilist):
         - **fullcodec** : boolean (default False) - if True, each index is with a full codec
         - **defaultcodec** : boolean (default False) - if True, each index is whith a default codec
         - **name** : boolean (default False) - if False, default index name are not included
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         - **json_res_index** : Boolean - include index for Variable
         - **json_param**     : Boolean - include Obs Param
