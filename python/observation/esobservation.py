@@ -607,8 +607,7 @@ class Observation(Ilist):
         #dcinf[ES.obs_score]   = self.score
         #dcinf[ES.res_mRate]   = self.rate
         dcinf[ES.res_dim] = self.dimension
-        #dcinf[ES.res_axes] = [self.idxname[i] for i in self.primary]
-        dcinf[ES.res_axes] = {self.lindex[i].name:i for i in range(len(self.lindex))}
+        dcinf[ES.res_axes] = [self.idxname[i] for i in self.primary]
         return dcinf
 
 
