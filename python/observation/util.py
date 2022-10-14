@@ -61,25 +61,6 @@ class CborDecoder(json.JSONDecoder):
         return dic2
 
 
-class IindexEncoder(json.JSONEncoder):
-    """new json encoder for Iindex and Ilist"""
-
-    def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-        option = {'encoded': False, 'encode_format': 'json'}
-        if o.__class__.__name__ in ('Ilist', 'TimeSlot'):
-            return o.json(**option)
-        if issubclass(o.__class__, ESValue):
-            return o.json(**option)
-        try:
-            return o.to_json(**option)
-        except:
-            try:
-                return o.__to_json__()
-            except:
-                return json.JSONEncoder.default(self, o)
-
 
 class util:
     ''' common functions for Iindex and Ilist class'''
@@ -322,67 +303,7 @@ class util:
             return (ES.nullparent, keys)
         raise utilError('parent or keys is unconsistent')
 
-    @staticmethod
-    def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False,
-                  codecval=False, typevalue=None, parent=ES.nullparent, listunic=False, **kwargs):
-        '''
-        Return a formatted object with values, keys and codec.
-        - Format can be json, bson or cbor
-        - object can be string, bytes or dict
 
-        *Parameters*
-        - **codeclist** : list of codec ESValue to encode
-        - **keyslist** : list (default = None) - int keys to encode, None if no keys 
-        - **name** : string (default = None) - name to encode, None if no name 
-        - **fullcodec** : boolean (default False) - if True, use a full codec
-        - **typevalue** : string (default None) - type to convert values
-        - **parent** : int (default ES.nullparent) - Ilist index linked to
-        - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
-        - **codecval** : boolean (default False) - if True, only list of codec values is included
-        - **simpleval** : boolean (default False) - if True, only value (without name) is included
-
-        *Parameters (kwargs)*
-
-        - **encoded** : boolean (default False) - choice for return format (string/bytes if True, dict else)
-        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
-        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
-        - **untyped** : boolean (default False) - include dtype in the json if True
-        - **geojson** : boolean (default False) - geojson for LocationValue if True
-
-        *Returns* : string, bytes or dict'''
-        option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
-                  'codif': {}, 'typevalue': typevalue, 'geojson': False} | kwargs
-        js = []
-        if not codecval:
-            if name and typevalue:
-                js.append({name: typevalue})
-            elif name:
-                js.append(name)
-            elif typevalue:
-                js.append(typevalue)
-        codlis = [util.json(cc, encoded=False, typevalue=None, simpleval=simpleval,
-                            fullcodec=fullcodec, untyped=option['untyped'],
-                            geojson=option['geojson']) for cc in codeclist]
-        if len(js) == 1 and isinstance(js[0], str):
-            listunic = True
-        if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):
-            codlis = codlis[0]
-        js.append(codlis)
-        if not codecval:
-            if parent >= 0 and keyslist:
-                js.append([parent, keyslist])
-            elif parent != ES.nullparent:
-                js.append(parent)
-            elif keyslist:
-                js.append(keyslist)
-        if len(js) == 1:
-            js = js[0]
-        if option['encoded'] and option['encode_format'] == 'json':
-            return json.dumps(js, cls=IindexEncoder)
-        if option['encoded'] and option['encode_format'] == 'cbor':
-            return cbor2.dumps(js, datetime_as_timestamp=True,
-                               timezone=datetime.timezone.utc, canonical=True)
-        return js
 
     @staticmethod
     def filter(func, lis, res, *args, **kwargs):

@@ -37,7 +37,8 @@ from copy import copy
 
 from ilist import Ilist
 from iindex import Iindex
-from util import util, IindexEncoder, CborDecoder
+from util import util, CborDecoder
+from iindex_interface import IindexEncoder
 from esconstante import ES
 from esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from esvalue_base import ESValue, ESValueEncoder
