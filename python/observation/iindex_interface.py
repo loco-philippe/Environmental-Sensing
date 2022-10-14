@@ -14,13 +14,31 @@ import numpy as np
 import cbor2
 
 from esconstante import ES
-from esvalue_base import ESValueEncoder
+from esvalue_base import ESValueEncoder, ESValue
 from util import util, identity
+
+
+class CborDecoder(json.JSONDecoder):
+    ''' Cbor extension for integer keys (codification keys)'''
+
+    def __init__(self):
+        json.JSONDecoder.__init__(self, object_hook=self.codecbor)
+
+    def codecbor(self, dic):
+        dic2 = {}
+        for k, v in dic.items():
+            try:
+                k2 = int(k)
+            except:
+                k2 = k
+            dic2[k2] = v
+        return dic2
 
 
 class IindexError(Exception):
     ''' Iindex Exception'''
     # pass
+
 
 class IindexEncoder(json.JSONEncoder):
     """new json encoder for Iindex and Ilist"""
@@ -42,9 +60,115 @@ class IindexEncoder(json.JSONEncoder):
                 return json.JSONEncoder.default(self, o)
 
 
-
 class IindexInterface:
     '''this class includes Iindex methods'''
+
+    @staticmethod
+    def decodeobj(bs=None, classname=None, context=True):
+        '''Generate an Iindex data from a bytes, json or dict value
+
+        *Parameters*
+
+        - **bs** : bytes, string or dict data to convert
+        - **classname** : string(default None) - classname to convert codec data
+        - **context** : boolean (default True) - if False, only codec and keys are included
+
+        *Returns* : tuple - name, typevaluedec, codec, parent, keys'''
+        if bs is None:
+            return (None, None, [], ES.nullparent, None)
+        if isinstance(bs, bytes):
+            lis = cbor2.loads(bs)
+        elif isinstance(bs, str) and bs[0] in ['{', '[']:
+            lis = json.loads(bs, object_hook=CborDecoder().codecbor)
+        elif isinstance(bs, list):
+            lis = bs
+        else:
+            lis = [bs]
+        if not isinstance(lis, list):
+            raise IindexError("the parameter has to be a list")
+
+        if not lis:
+            return (None, None, [], ES.nullparent, None)
+        if context and (not isinstance(lis[0], (str, dict, list)) or len(lis) > 3):
+            return (None, None, IindexInterface.decodecodec(lis, classname),
+                    ES.nullparent, None)
+        if not context and len(lis) > 2:
+            return (None, None, IindexInterface.decodecodec(lis, classname),
+                    ES.nullparent, None)
+        if len(lis) == 3 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
+                and isinstance(lis[2], (list, int)) and context:
+            return (*IindexInterface.decodecontext(lis[0]),
+                    IindexInterface.decodecodec(lis[1], classname),
+                    *IindexInterface.decodekeys(lis[2]))
+        if len(lis) == 2 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
+                and context:
+            return (*IindexInterface.decodecontext(lis[0]),
+                    IindexInterface.decodecodec(lis[1], classname), ES.nullparent, None)
+        if len(lis) == 2 and isinstance(lis[0], (tuple, list)) \
+                and IindexInterface.iskeysobj(lis[1]):
+            return (None, None, IindexInterface.decodecodec(lis[0], classname),
+                    *IindexInterface.decodekeys(lis[1]))
+        return (None, None, IindexInterface.decodecodec(lis, classname), ES.nullparent, None)
+
+    @staticmethod
+    def iskeysobj(obj):
+        if isinstance(obj, int):
+            return True
+        if not isinstance(obj, list):
+            return False
+        if len(obj) == 0:
+            return True
+        if not isinstance(obj[0], int):
+            return False
+        if len(obj) == 1:
+            return True
+        if len(obj) > 2 and not isinstance(obj[1], int):
+            return False
+        if len(obj) == 2 and isinstance(obj[1], int):
+            return True
+        if len(obj) == 2 and isinstance(obj[1], list):
+            obj = obj[1]
+        if not isinstance(obj, list):
+            return False
+        for i in range(len(obj)):
+            if not isinstance(obj[i], int):
+                return False
+        return True
+
+    @staticmethod
+    def decodecodec(codecobj, classname=ES.nam_clsName):
+        '''Generate a codec list from a json value'''
+        return [ESValue.from_obj(val, classname=classname) for val in codecobj]
+
+    @staticmethod
+    def decodecontext(context):
+        '''Generate a tuple (name, dtype) from a json value'''
+        if isinstance(context, dict) and len(context) == 1:
+            name, dtype = list(context.items())[0][0]
+            if isinstance(name, str) and isinstance(dtype, str) and dtype in ES.typeName.keys():
+                return (name, ES.typeName[dtype])
+            raise IindexError('name or typevalue is unconsistent')
+        if context in ES.typeName.keys():
+            return (context, ES.typeName[context])
+        if isinstance(context, str):
+            return (context, None)
+        raise IindexError('name or typevalue is unconsistent')
+
+    @staticmethod
+    def decodekeys(keys):
+        '''Generate a tuple (parent, keys) from a json value'''
+        if isinstance(keys, int):
+            return (keys, None)
+        if isinstance(keys, list) and len(keys) == 0:
+            return (ES.nullparent, keys)
+        if isinstance(keys, list) and len(keys) == 1 and isinstance(keys[0], int):
+            return (keys[0], None)
+        if isinstance(keys, list) and len(keys) == 2 and isinstance(keys[0], int) \
+                and isinstance(keys[1], list):
+            return (keys[0], keys[1])
+        if isinstance(keys, list) and len(keys) > 1:
+            return (ES.nullparent, keys)
+        raise IindexError('parent or keys is unconsistent')
 
     @staticmethod
     def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False,
@@ -56,8 +180,8 @@ class IindexInterface:
 
         *Parameters*
         - **codeclist** : list of codec ESValue to encode
-        - **keyslist** : list (default = None) - int keys to encode, None if no keys 
-        - **name** : string (default = None) - name to encode, None if no name 
+        - **keyslist** : list (default = None) - int keys to encode, None if no keys
+        - **name** : string (default = None) - name to encode, None if no name
         - **fullcodec** : boolean (default False) - if True, use a full codec
         - **typevalue** : string (default None) - type to convert values
         - **parent** : int (default ES.nullparent) - Ilist index linked to
@@ -217,7 +341,7 @@ class IindexInterface:
         else:
             dtype = None
         return IindexInterface.encodeobj(codeclist, keyslist, idxname, fullcodec, simpleval,
-                              codecval, dtype, parent, listunic, **kwargs)
+                                         codecval, dtype, parent, listunic, **kwargs)
 
     def vlist(self, func, *args, extern=True, **kwargs):
         '''

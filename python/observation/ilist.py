@@ -41,7 +41,7 @@ import cbor2
 
 from esconstante import ES
 from iindex import Iindex
-from util import util, CborDecoder
+from iindex_interface import util, CborDecoder
 from ilist_interface import IlistInterface, IlistError
 from ilist_structure import IlistStructure
 

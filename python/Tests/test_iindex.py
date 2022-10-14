@@ -393,9 +393,9 @@ class Test_iindex(unittest.TestCase):
         isfalse = ['a', [[1, 2]], [[1, 2], [2, 3]], [1, 2, [2, 3]], [[1], 2, 3], [1, [1, 2, 0.1]],
                    [-1.5, [1, 2, 3]], [1, 2, 3.2]]
         for isT in istrue:
-            self.assertTrue(util.iskeysobj(isT))
+            self.assertTrue(Iindex.iskeysobj(isT))
         for isF in isfalse:
-            self.assertFalse(util.iskeysobj(isF))
+            self.assertFalse(Iindex.iskeysobj(isF))
 
 
 if __name__ == '__main__':
