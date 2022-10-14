@@ -21,7 +21,8 @@ import cbor2
 
 from esconstante import ES
 from iindex import Iindex
-from util import util, IindexEncoder
+from iindex_interface import IindexEncoder
+from util import util
 
 #import sys
 #print("In module ilist_interface sys.path[0], __package__ ==", sys.path[0], __package__)

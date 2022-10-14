@@ -262,7 +262,7 @@ class Iindex(IindexStructure, IindexInterface):
         *Returns* : tuple(code, Iindex) '''
         if isinstance(bsd, Iindex):
             return (ES.nullparent, copy(bsd))
-        name, typevaluedec, codec, parent, keys = util.decodeobj(
+        name, typevaluedec, codec, parent, keys = Iindex.decodeobj(
             bsd, typevalue, context)
         if extkeys and parent >= 0:
             keys = Iindex.keysfromderkeys(extkeys, keys)

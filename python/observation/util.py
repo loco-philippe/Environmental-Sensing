@@ -2,23 +2,18 @@
 """
 Created on Fri Jul 29 12:48:16 2022
 
-@author: a179227
+@author: philippe@loco-labs.io
 """
 
 from collections import Counter
 from itertools import product
-from copy import copy
 import datetime
-import cbor2
-import json
 import re
 import numpy as np
 import math
-from json import JSONDecodeError
 
-from timeslot import TimeSlot, TimeInterval
+from timeslot import TimeInterval
 from esconstante import ES, _classval
-from esvalue import LocationValue, DatationValue, PropertyValue, NamedValue, ExternValue
 from esvalue_base import ESValue
 
 
@@ -29,57 +24,6 @@ def identity(*args, **kwargs):
     if len(kwargs) > 0:
         return kwargs[list(kwargs.keys())[0]]
     return None
-
-
-_castfunc = {'datvalue':        DatationValue,
-             'locvalue':        LocationValue,
-             'prpvalue':        PropertyValue,
-             'namvalue':        NamedValue,
-             'extvalue':        ExternValue,
-             'slot':            TimeSlot,
-             # 'ilist':           Ilist.from_obj,
-             # 'observation':     Observation,
-             'datetime':        datetime.datetime.fromisoformat,
-             'coordinates':     LocationValue._gshape}
-_invcastfunc = {val: key for key, val in _castfunc.items()}
-
-
-class CborDecoder(json.JSONDecoder):
-    ''' Cbor extension for integer keys (codification keys)'''
-
-    def __init__(self):
-        json.JSONDecoder.__init__(self, object_hook=self.codecbor)
-
-    def codecbor(self, dic):
-        dic2 = {}
-        for k, v in dic.items():
-            try:
-                k2 = int(k)
-            except:
-                k2 = k
-            dic2[k2] = v
-        return dic2
-
-
-class IindexEncoder(json.JSONEncoder):
-    """new json encoder for Iindex and Ilist"""
-
-    def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return o.isoformat()
-        option = {'encoded': False, 'encode_format': 'json'}
-        if o.__class__.__name__ in ('Ilist', 'TimeSlot'):
-            return o.json(**option)
-        if issubclass(o.__class__, ESValue):
-            return o.json(**option)
-        try:
-            return o.to_json(**option)
-        except:
-            try:
-                return o.__to_json__()
-            except:
-                return json.JSONEncoder.default(self, o)
-
 
 class util:
     ''' common functions for Iindex and Ilist class'''
@@ -177,11 +121,9 @@ class util:
 
         if dtype is None:
             return util.cast(val)
-        if classvalue in ES.ESclassName:  # or dtype is None:
-            # ESValue.cast()
+        if classvalue in ES.ESclassName:  # ESValue.cast()
             return util.cast(ESValue.from_obj(val, classvalue), dtype)
-        if classvalue == ES.ES_clsName:
-            # cast auto ESValue
+        if classvalue == ES.ES_clsName:   # cast auto ESValue
             return _classval()[ESValue.valClassName(val)](val)
         if classvalue in ES.className:
             return _classval()[classvalue](value)
@@ -222,167 +164,6 @@ class util:
         else:
             dic['typecoupl'] = 'link'
         return dic
-
-    @staticmethod
-    def decodeobj(bs=None, classname=None, context=True):
-        '''Generate an Iindex data from a bytes, json or dict value
-
-        *Parameters*
-
-        - **bs** : bytes, string or dict data to convert
-        - **classname** : string(default None) - classname to convert codec data
-        - **context** : boolean (default True) - if False, only codec and keys are included
-
-        *Returns* : tuple - name, typevaluedec, codec, parent, keys'''
-        if bs is None:
-            return (None, None, [], ES.nullparent, None)
-        if isinstance(bs, bytes):
-            lis = cbor2.loads(bs)
-        elif isinstance(bs, str) and bs[0] in ['{', '[']:
-            lis = json.loads(bs, object_hook=CborDecoder().codecbor)
-        elif isinstance(bs, list):
-            lis = bs
-        else:
-            lis = [bs]
-        if not isinstance(lis, list):
-            raise utilError("the parameter has to be a list")
-
-        if not lis:
-            return (None, None, [], ES.nullparent, None)
-        if context and (not isinstance(lis[0], (str, dict, list)) or len(lis) > 3):
-            return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
-        if not context and len(lis) > 2:
-            return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
-        if len(lis) == 3 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
-                and isinstance(lis[2], (list, int)) and context:
-            return (*util.decodecontext(lis[0]), util.decodecodec(lis[1], classname), *util.decodekeys(lis[2]))
-        if len(lis) == 2 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) and context:
-            return (*util.decodecontext(lis[0]), util.decodecodec(lis[1], classname), ES.nullparent, None)
-        if len(lis) == 2 and isinstance(lis[0], (tuple, list)) and util.iskeysobj(lis[1]):
-            return (None, None, util.decodecodec(lis[0], classname), *util.decodekeys(lis[1]))
-        return (None, None, util.decodecodec(lis, classname), ES.nullparent, None)
-
-    @staticmethod
-    def iskeysobj(obj):
-        if isinstance(obj, int):
-            return True
-        if not isinstance(obj, list):
-            return False
-        if len(obj) == 0:
-            return True
-        if not isinstance(obj[0], int):
-            return False
-        if len(obj) == 1:
-            return True
-        if len(obj) > 2 and not isinstance(obj[1], int):
-            return False
-        if len(obj) == 2 and isinstance(obj[1], int):
-            return True
-        if len(obj) == 2 and isinstance(obj[1], list):
-            obj = obj[1]
-        if not isinstance(obj, list):
-            return False
-        for i in range(len(obj)):
-            if not isinstance(obj[i], int):
-                return False
-        return True
-
-    @staticmethod
-    def decodecodec(codecobj, classname=ES.nam_clsName):
-        '''Generate a codec list from a json value'''
-        return [ESValue.from_obj(val, classname=classname) for val in codecobj]
-
-    @staticmethod
-    def decodecontext(context):
-        '''Generate a tuple (name, dtype) from a json value'''
-        if isinstance(context, dict) and len(context) == 1:
-            name, dtype = list(context.items())[0][0]
-            if isinstance(name, str) and isinstance(dtype, str) and dtype in ES.typeName.keys():
-                return (name, ES.typeName[dtype])
-            raise utilError('name or typevalue is unconsistent')
-        if context in ES.typeName.keys():
-            return (context, ES.typeName[context])
-        if isinstance(context, str):
-            return (context, None)
-        raise utilError('name or typevalue is unconsistent')
-
-    @staticmethod
-    def decodekeys(keys):
-        '''Generate a tuple (parent, keys) from a json value'''
-        if isinstance(keys, int):
-            return (keys, None)
-        if isinstance(keys, list) and len(keys) == 0:
-            return (ES.nullparent, keys)
-        if isinstance(keys, list) and len(keys) == 1 and isinstance(keys[0], int):
-            return (keys[0], None)
-        if isinstance(keys, list) and len(keys) == 2 and isinstance(keys[0], int) \
-                and isinstance(keys[1], list):
-            return (keys[0], keys[1])
-        if isinstance(keys, list) and len(keys) > 1:
-            return (ES.nullparent, keys)
-        raise utilError('parent or keys is unconsistent')
-
-    @staticmethod
-    def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False,
-                  codecval=False, typevalue=None, parent=ES.nullparent, listunic=False, **kwargs):
-        '''
-        Return a formatted object with values, keys and codec.
-        - Format can be json, bson or cbor
-        - object can be string, bytes or dict
-
-        *Parameters*
-        - **codeclist** : list of codec ESValue to encode
-        - **keyslist** : list (default = None) - int keys to encode, None if no keys 
-        - **name** : string (default = None) - name to encode, None if no name 
-        - **fullcodec** : boolean (default False) - if True, use a full codec
-        - **typevalue** : string (default None) - type to convert values
-        - **parent** : int (default ES.nullparent) - Ilist index linked to
-        - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
-        - **codecval** : boolean (default False) - if True, only list of codec values is included
-        - **simpleval** : boolean (default False) - if True, only value (without name) is included
-
-        *Parameters (kwargs)*
-
-        - **encoded** : boolean (default False) - choice for return format (string/bytes if True, dict else)
-        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
-        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
-        - **untyped** : boolean (default False) - include dtype in the json if True
-        - **geojson** : boolean (default False) - geojson for LocationValue if True
-
-        *Returns* : string, bytes or dict'''
-        option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
-                  'codif': {}, 'typevalue': typevalue, 'geojson': False} | kwargs
-        js = []
-        if not codecval:
-            if name and typevalue:
-                js.append({name: typevalue})
-            elif name:
-                js.append(name)
-            elif typevalue:
-                js.append(typevalue)
-        codlis = [util.json(cc, encoded=False, typevalue=None, simpleval=simpleval,
-                            fullcodec=fullcodec, untyped=option['untyped'],
-                            geojson=option['geojson']) for cc in codeclist]
-        if len(js) == 1 and isinstance(js[0], str):
-            listunic = True
-        if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):
-            codlis = codlis[0]
-        js.append(codlis)
-        if not codecval:
-            if parent >= 0 and keyslist:
-                js.append([parent, keyslist])
-            elif parent != ES.nullparent:
-                js.append(parent)
-            elif keyslist:
-                js.append(keyslist)
-        if len(js) == 1:
-            js = js[0]
-        if option['encoded'] and option['encode_format'] == 'json':
-            return json.dumps(js, cls=IindexEncoder)
-        if option['encoded'] and option['encode_format'] == 'cbor':
-            return cbor2.dumps(js, datetime_as_timestamp=True,
-                               timezone=datetime.timezone.utc, canonical=True)
-        return js
 
     @staticmethod
     def filter(func, lis, res, *args, **kwargs):
