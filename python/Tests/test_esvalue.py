@@ -68,7 +68,9 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(NamedValue.from_obj('{"er":0}').json(), '{"er": 0}')
         self.assertEqual(NamedValue(21).json(), '21')
         self.assertEqual(NamedValue(2.1).json(), '2.1')
-
+        self.assertEqual(ESValue.from_obj({'result': [0, 1]}, 'NamedValue'), NamedValue([0,1]))
+        self.assertEqual(ESValue.from_obj({'res': [0, 1]}, 'NamedValue'), NamedValue([0,1], 'res'))
+        
     def test_locationValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(LocationValue(lyon).json(), json.dumps(lyon))

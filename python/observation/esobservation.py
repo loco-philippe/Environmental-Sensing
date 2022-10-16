@@ -166,8 +166,8 @@ class Observation(Ilist):
     """
 
 # %% constructor
-    def __init__(self, listidx=None, name=None, id=None, param=None, length=None, var=None, reindex=True,
-                 typevalue=ES.def_clsName, context=True):
+    def __init__(self, listidx=None, name=None, id=None, param=None, length=None, var=None, 
+                 reindex=True, typevalue=ES.def_clsName, context=True):
         '''
         Observation constructor
 

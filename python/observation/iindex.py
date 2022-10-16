@@ -146,8 +146,7 @@ class Iindex(IindexStructure, IindexInterface):
             leng = len(keys)
         if not name:
             name = ES.defaultindex
-        else:
-            typevalue = util.typename(name, typevalue)
+        typevalue = util.typename(name, typevalue)
         if not (keys is None or isinstance(keys, list)):
             raise IindexError("keys not list")
         if keys is None and leng == 0:
@@ -158,7 +157,8 @@ class Iindex(IindexStructure, IindexInterface):
             raise IindexError("codec not list")
         if codec == []:
             codec = util.tocodec(keys)
-        codec = [ESValue.from_obj(val, typevalue) for val in codec]
+        #codec = [ESValue.from_obj(val, typevalue) for val in codec]
+        codec = util.castobj(codec, typevalue)
         self.keys = keys
         self.codec = codec
         self.name = name

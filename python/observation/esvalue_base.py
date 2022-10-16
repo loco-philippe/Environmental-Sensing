@@ -146,8 +146,10 @@ class ESValue:
             return val
         if not simple and classn in [ES.ili_clsName, ES.iin_clsName, ES.obs_clsName]:
             classn = ES.ext_clsName
-        if not classn and classname != ES.ES_clsName:
+        if (not classn or classn == ES.ES_clsName) and classname != ES.ES_clsName:
             classn = classname
+        if (not classn or classn == ES.ES_clsName) and classname == ES.ES_clsName:
+            classn =  ES.nam_clsName
         if not simple and not classn:
             classn = ESValue.valClassName(val)
         if classn in ES.ESvalName:

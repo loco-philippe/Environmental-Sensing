@@ -27,7 +27,8 @@ def _classval():
             ES.dat_classES: DatationValue,
             ES.loc_classES: LocationValue,
             ES.prp_classES: PropertyValue,
-            ES.res_classES: NamedValue}
+            ES.res_classES: NamedValue,
+            ES.ES_clsName : NamedValue}
 
 def _classESval():
     from esobservation import LocationValue, DatationValue, PropertyValue, \
@@ -131,48 +132,6 @@ class Es:
                         "EMFType "           : "ObservingEMF"  ,
                         "ResultNature "      : "ObservingEMF"  }
         ''' Assignment of attributes to Observation objects '''
-
-        self.obsCat: Dict = {
-                            -1 :"obserror" ,
-                            0 : 'config'  ,
-                            1 : 'top'  ,
-                            2 : 'sequence'  ,
-                            10 : 'point'  ,
-                            11 : 'track'  ,
-                            12 : 'datTrack'  ,
-                            20 : 'zoning'  ,
-                            21 : 'datZoning'  ,
-                            22 : 'path'  ,
-                            23 : 'areaSequence'  ,
-                            100 : 'property'  ,
-                            101 : 'record'  ,
-                            102 : 'DatRecord'  ,
-                            110 : 'feature'  ,
-                            111 : 'obs'  ,
-                            112 : 'obsDat'  ,
-                            120 : 'areaFeature'  ,
-                            121 : 'obsLoc'  ,
-                            122 : 'obsPath'  ,
-                            123 : 'obsAreaSequence'  ,
-                            200 : 'multiFeature'  ,
-                            201 : 'datMultiFeature'  ,
-                            202 : 'multiRecord'  ,
-                            203 : 'multiFeatureSequence'  ,
-                            210 : 'multiFeatureVariation'  ,
-                            211 : 'obsFeature'  ,
-                            212 : 'obsRecord'  ,
-                            213 : 'obsGridRecord'  ,
-                            220 : 'areaFeature'  ,
-                            223 : 'multiAreaFeature'  ,
-                            221 : 'obsAreaFeature'  ,
-                            224 : 'multiObsAreaFeature'  ,
-                            222 : 'obsPathFeature'  ,
-                            225 : 'FeatureobsAreaSequence'  ,
-                            226 : 'areaObsrecord'  ,
-                            227 : 'histoObsareaFeature'  ,
-                            228 : 'obsGrid'  ,
-                            }
-        ''' Default name for `observation.Observation.score` '''
 
         #%% Xarray initialization (dict)
         self.nax: Dict = {'dat' : 0, 'loc' : 1, 'prp' : 2,
