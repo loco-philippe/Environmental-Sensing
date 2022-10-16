@@ -258,7 +258,8 @@ class util:
             if not option['typevalue']:
                 return val.json(**option)
             else:
-                return {_invcastfunc[val.__class__]: val.json(**option)}
+                #return {_invcastfunc[val.__class__]: val.json(**option)}
+                return {ES.valname[val.__class__.__name__]: val.json(**option)}
         if val.__class__.__name__ == 'Ilist':
             return {ES.ili_valName: val.json(**option)}
         if val.__class__.__name__ == 'Iindex':

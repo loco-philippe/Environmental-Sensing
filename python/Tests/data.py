@@ -90,5 +90,10 @@ def obs(obj): return Observation.Iobj({'data': obj})
 
 print(obs([[dat, date_mix[:3]], [loc, ville_mix[1:4], 0], [prp, env_mix[0:2]], 
            [res, mix_mix(6), -1]]), end='\n')
-print(Ilist.Iobj([[dat, date_mix[:3]], [loc, ville_mix[1:4], 0], [prp, env_mix[0:2]], 
-           [res, mix_mix(6), -1]]), end='\n')
+il = Ilist.Iobj([[dat, date_mix[:3]], [loc, ville_mix[1:4], 0], [prp, env_mix[0:2]], 
+           [res, mix_mix(6), -1]])
+print(il, end='\n')
+
+il.to_xarray()
+
+
