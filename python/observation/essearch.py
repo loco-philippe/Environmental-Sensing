@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from sqlite3 import Cursor
 import shapely.geometry
 from pymongo import MongoClient
@@ -27,7 +27,7 @@ dico_alias = {
         "lt":"$lt", "<":"$lt", "$lt":"$lt",
         "in":"$in", "$in":"$in"
     },
-    datetime : {
+    datetime.datetime : {
         None:"$eq",
         "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
         "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
@@ -53,7 +53,9 @@ dico_alias = {
         "touches":"touches", "$touches":"touches",
         "overlaps":"overlaps", "$overlaps":"overlaps",
         "contains":"contains", "$contains":"contains",
-        "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear" #nécessite la présence d'un index 2dsphere
+        "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear", #nécessite la présence d'un index 2dsphere
+        
+        "in":"$in", "$in":"$in" #unique cas dans lequel les listes ne sont pas interprétées comme des géométries
     }
 }
 dico_alias[float] = dico_alias[int]
@@ -72,10 +74,6 @@ def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.n
             '&' + ssl    
     return MongoClient(st)
 
-def f(num=5):
-    client = clientMongo()
-    return client["test_obs"]['observation' + str(num)]
-
 def insert_from_doc(collection, document = '..//Tests//json_examples.obs', info=True):
     with open(document, 'r') as doc:
         for line in doc:
@@ -88,7 +86,7 @@ def insert_to_mongo(collection, obj, info=True):
     #casser les observations à l'entrée dans Mongo pour permettre des recherches intéressantes. (implique recréation de la redondance)
     #corriger pour que dates restent au format date en entrée
     obs = Observation.from_obj(obj)
-#### A REPRENDRE CAR NE PERMET PAS DE RENTRER datetime EN DATES ET shapely.geometry EN GEOMETRIE DANS MONGODB TEL QUEL
+#### A REPRENDRE CAR NE PERMET PAS DE RENTRER datetime.datetime EN DATES ET shapely.geometry EN GEOMETRIE DANS MONGODB TEL QUEL
     dico2 = obs.json(json_info=info)
 ####
     collection.insert_one(dico2)
@@ -151,6 +149,9 @@ class ESSearch:
         if condtype is None and operand is None and operator is None and path is None:
             raise TypeError("ESSearch.addcondition() requires at least one of these parameters : condtype, operand or path.")
 
+        if isinstance(operand, datetime.datetime) and (operand.tzinfo is None or operand.tzinfo.utcoffset(operand) is None):
+            operand = operand.replace(tzinfo=datetime.timezone.utc)
+
         if condtype == 'datation':
             self.datation = True
             if path is None: # quand ce sont des TimeSlot (et donc par défaut), faire sur la datationBox
@@ -178,11 +179,11 @@ class ESSearch:
         else:
             self.params[or_position].append(condition)
 
-    def orCondition(self, **kwargs):
+    def orCondition(self, *args, **kwargs):
         """
         Adds a condition for elements in the database that we want to get but are currently not selected.
         """
-        self.addCondition(or_position = len(self.params), **kwargs)
+        self.addCondition(or_position = len(self.params), *args, **kwargs)
 
     def removeCondition(self, condnum = None, or_position = None):
         """
@@ -195,7 +196,7 @@ class ESSearch:
             if condnum is None: self.params.pop(or_position)
             else: self.params[or_position].pop(condnum)
 
-    def _cond(self, operand, comp, path, all = False, condtype = None, formatstring = None):
+    def _cond(self, or_pos, operand, comp, path, inverted = False, condtype = None, formatstring = None):
         """
         Prend en entrée des paramètres et retourne un dictionnaire de la condition pour la recherche MongoDB.
         Tri par dates : (Tout) / (au moins une date) est (supérieur à) / (inférieur à) / (égal à) / (dans) [date(s) en paramètre]
@@ -203,51 +204,73 @@ class ESSearch:
         -> Traiter le cas de conditions redondantes (ex <4 => <8) (actuellement, le dernier arrivé l'emporte)
         L'utilisation de OR est gérée par _fullSearchMongo.
         """
-        #TimeSlot à transformer en une liste de conditions
-        #Dans le cas d'un point,
         
-        try: comp = dico_alias[type(comp)][comp] #global variable
-        except: pass #raise ValueError("Comparators allowed are =, <, >, <=, >=, in and MongoDB equivalents.")
+        try: comp = dico_alias[type(operand)][comp] #global variable
+        except: raise ValueError("Comparator not allowed.")
 
         if comp is None : return #si on ne peut pas utiliser un comparateur, juste vérifier la présence.
 
-        if comp == "$geoIntersects":
-            cond_0 = {"$geoIntersects" :{"$geometry": {
-             "type": "Point", # à détecter
-             "coordinates": operand
-          }}}
+#Potentiellement test pour le unwind ici si format validé
 
-        elif all and type(operand) in {datetime, int, float}:
+        if isinstance(operand, TimeSlot): #equals, contains, within, disjoint, intersects
+            if comp in {"equals", "within"}:
+                self._cond(operand[0].start, "$gte", path, False, condtype)
+                self._cond(operand[-1].end, "$lte", path, False, condtype)
+            elif comp in {"contains", "intersects"}:
+                self._cond(operand[0].start, "$lte", path, False, condtype)
+                self._cond(operand[-1].end, "$gte", path, False, condtype)
+            return
+
+        if comp in {"$geoIntersects", "$geoWithin", "$geoNear"}:
+            if len(operand) == 1 or (len(operand) > 1 and not isinstance(operand[0], list)): geomtype = 'Point'
+            elif len(operand) == 2: geomtype = 'LineString'
+            elif len(operand) > 2:
+                if len(operand) == 3:
+                    operand.append(operand[-1])
+                geomtype = 'Polygon'                
+            cond_0 = {comp :{"$geometry": {"type" : geomtype, "coordinates" : operand}}}
+
+        elif formatstring:
+            if isinstance(operand, str):
+                operand = {"$dateFromString" : {'dateString' : operand, 'format': formatstring, 'onError': 'null'}}
+
+        elif inverted and type(operand) in {datetime.datetime, int, float}:
             if comp == "$eq"    :   cond_0 = {"$nor" : [{"$lt" : operand}, {"$gt" : operand}]}
             elif comp == "$gte" :   cond_0 = {"$not" : {"$lt"  : operand}}
             elif comp == "$gt"  :   cond_0 = {"$not" : {"$lte" : operand}}
             elif comp == "$lte" :   cond_0 = {"$not" : {"$gt"  : operand}}
             elif comp == "$lt"  :   cond_0 = {"$not" : {"$gte" : operand}}
-        else:                                 cond_0 = {comp : operand}
+        else:                       cond_0 = {comp : operand}
 
-        if path not in self._match_2:
-            self._match_2[path] = cond_0
+        if path not in self._match_2[or_pos]:
+            self._match_2[or_pos][path] = cond_0
         else:
-            self._match_2[path] |= cond_0
-        
-        return { path : cond_0 }
+            self._match_2[or_pos][path] |= cond_0
 
     def _fullSearchMongo(self):
         
         self._request = []
         self._match_1 = {'type' : 'obs'}
-        self._match_2 = {}
-        self._project = {"data" : 1}
+        self._unwind = {}
+        self._match_2 = []
+        self._project = {"information" : 0}
         
-        for param in self.params:
-            for cond in param:
-                self._cond(**cond)
+        for i in range(len(self.params)):
+            self._match_2.append({})
+            for cond in self.params[i]:
+                self._cond(or_pos = i, **cond)
 
-        if self._match_1 != {}:
+        if self._match_1:
             self._request.append({"$match" : self._match_1})
-        if self._match_2 != {}:
-            self._request.append({"$match" : self._match_2})
-        if self._project != {}:
+        if self._unwind:
+            for unwind in self._unwind:
+                self._request.append({"$unwind" : "$" + unwind})
+        if self._match_2:
+            if len(self.params) == 1: # no $or
+                self._request.append({"$match" : self._match_2[0]})
+            else: # there is a $or
+                self._request.append({"$match" : {"$or": self._match_2}}) #problème : self._match_2 est un dictionnaire
+        if self._project:
             self._request.append({"$project" : self._project})
         return self._request
 
@@ -315,7 +338,7 @@ class ESSearch:
         # param = [cond1 AND cond 2 AND cond 3]
         new_conds = []
         relevant =  False
-        for i in range(obs.lenidx):
+        for i in range(len(obs.lindex)):
             new_conds.append([])
             for cond in param:
                 if ('condtype' not in cond and ('path' not in cond or ('path' in cond and cond['path'] == 'data.' + obs.lindex[i].name) ) \
@@ -342,32 +365,32 @@ class ESSearch:
         """
         Takes an item and returns a Boolean.
         """
-        #cond = {"comp" : operator, "operand" : operand, "path" : path, "condtype" : condtype} and sometimes can contain "all" or "formatstring"
+        #cond = {"comp" : operator, "operand" : operand, "path" : path, "condtype" : condtype} and sometimes can contain "inverted" or "formatstring"
         if cond is None: return True
         if cond['comp'] is None and cond['operand'] is None: return True
 
         if cond['condtype'] == 'datation':
             if 'formatstring' in cond:
-                if not isinstance(item, datetime):
-                    item = datetime.strptime(item, cond['formatstring'])
-                if not isinstance(cond['operand'], datetime):
-                    cond['operand'] = datetime.strptime(cond['operand'], cond['formatstring'])
+                if not isinstance(item, datetime.datetime):
+                    item = datetime.datetime.strptime(item, cond['formatstring'])
+                if not isinstance(cond['operand'], datetime.datetime):
+                    cond['operand'] = datetime.datetime.strptime(cond['operand'], cond['formatstring'])
             elif isinstance(item, TimeSlot):
                 if cond['comp'] in dico_alias[type(cond['comp'])]:
                     cond['comp'] = dico_alias[type(cond['comp'])][cond['comp']]
                     return item.link(cond['operand'])[0] == cond['comp']
                 else:
                     if cond['comp'] in {"$gte", "gte", ">=", "=>"}:
-                        if 'all' in cond and cond['all']: return item.bounds[0] >= cond['operand']
+                        if 'inverted' in cond and cond['inverted']: return item.bounds[0] >= cond['operand']
                         else: return item.bounds[1] >= cond['operand']
                     elif cond['comp'] in {"$gt", "gt", ">"}         :
-                        if 'all' in cond and cond['all']: return item.bounds[0] > cond['operand']
+                        if 'inverted' in cond and cond['inverted']: return item.bounds[0] > cond['operand']
                         else: return item.bounds[1] > cond['operand']
                     elif cond['comp'] in {"$lte", "lte", "<=", "=<"}:
-                        if 'all' in cond and cond['all']: return item.bounds[1] <= cond['operand']
+                        if 'inverted' in cond and cond['inverted']: return item.bounds[1] <= cond['operand']
                         else: return item.bounds[0] <= cond['operand']
                     elif cond['comp'] in {"$lt", "lt", "<"}         :
-                        if 'all' in cond and cond['all']: return item.bounds[1] < cond['operand']
+                        if 'inverted' in cond and cond['inverted']: return item.bounds[1] < cond['operand']
                         else: return item.bounds[0] < cond['operand']
                     else: raise ValueError("Comparator not supported for TimeSlot.")
         elif cond['condtype'] == 'location':
@@ -378,13 +401,12 @@ class ESSearch:
             elif cond['comp'] in {"$touches", "touches"}                                : return item.touches(cond['operand'])
             elif cond['comp'] in {"$overlaps", "overlaps"}                              : return item.overlaps(cond['operand'])
             elif cond['comp'] in {"$contains", "contains"}                              : return item.contains(cond['operand'])
-            elif cond['comp'] in {"$geonear", "geonear", "$geoNear", "geoNear"}         : return True # no equivalent for this MongoDB operator in shapely
+            elif cond['comp'] not in {"$geonear", "geonear", "$geoNear", "geoNear"}         : return True # no equivalent for this MongoDB operator in shapely
         elif cond['condtype'] == 'property': # assuming property contains dict and the search targets one of its values
             for val in item.values():
                 if self._condcheck_0(val, cond | {'condtype' : None}, datatype):
                     return True
             return False
-
 
         if cond['comp'] in {"$eq", "eq", "=", "=="}     : return item == cond['operand']
         elif cond['comp'] in {"$gte", "gte", ">=", "=>"}: return item >= cond['operand']
@@ -409,9 +431,9 @@ class ESSearch:
             else: return False
         elif 'formatstring' in cond:
             if isinstance(item, str):
-                return type(cond['operand']) in {str, datetime, TimeSlot}
+                return type(cond['operand']) in {str, datetime.datetime, TimeSlot}
             elif isinstance(cond['operand'], str):
-                return type(item) in {datetime, TimeSlot}
+                return type(item) in {datetime.datetime, TimeSlot}
         elif isinstance(item, dict):
             for val in item.values():
                 if self._compatibletypes(val, cond):
@@ -446,10 +468,10 @@ if __name__ == "__main__":
 
     #2. Exemple de requête avec condition sur la date :
     research = ESSearch(collection=coll)
-    #research.addCondition('datation', datetime(2022, 1, 1, 0), ">=")#, all = True) #ACTUELLEMENT NE FONCTIONNE PAS CAR DONNÉES MAL RENTRÉES DANS LA BASE
-    #research.addCondition('datation', datetime(2022, 9, 2, 3), ">=")
+    research.addCondition('datation', datetime.datetime(2022, 1, 1, 0), ">=", inverted = True) #ACTUELLEMENT NE FONCTIONNE PAS CAR DONNÉES MAL RENTRÉES DANS LA BASE
+    #research.addCondition('datation', datetime.datetime(2022, 9, 2, 3), ">=")
     #research.addCondition('location', [2.1, 45.1]) #ACTUELLEMENT NE FONCTIONNE PAS CAR DONNÉES MAL RENTRÉES DANS LA BASE
-    research.addCondition('property', 'PM1')
+    #research.addCondition('property', 'PM1')
     print("Requête effectuée :", research.request, '\n')
     search_result = research.execute()
     if not search_result is None:
@@ -460,6 +482,6 @@ if __name__ == "__main__":
     else: print(None)
 
     # équivalent à :
-    research = ESSearch([{"condtype" : 'datation', "operand" : datetime(2022, 9, 19, 1), 'operator' : "$gte", 'all' : True},
-                {"condtype" : 'datation', "operand" : datetime(2022, 9, 20, 3), 'operator' : "$gte"}], collection = coll)
+    research = ESSearch([{"condtype" : 'datation', "operand" : datetime.datetime(2022, 9, 19, 1), 'operator' : "$gte", 'inverted' : True},
+                {"condtype" : 'datation', "operand" : datetime.datetime(2022, 9, 20, 3), 'operator' : "$gte"}], collection = coll)
     print("Requête effectuée :", research.request)
