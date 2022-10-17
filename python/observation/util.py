@@ -124,9 +124,11 @@ class util:
         if classvalue in ES.ESclassName:  # ESValue.cast()
             return util.cast(ESValue.from_obj(val, classvalue), dtype)
         if classvalue == ES.ES_clsName:   # cast auto ESValue
-            return _classval()[ESValue.valClassName(val)](val)
+            return _classval()[ESValue.valClassName(val)].from_obj(val)
+            #return _classval()[ESValue.valClassName(val)](val)
         if classvalue in ES.className:
-            return _classval()[classvalue](value)
+            return _classval()[classvalue].Iobj(value)
+            #return _classval()[classvalue](value)
         return val
 
     @staticmethod

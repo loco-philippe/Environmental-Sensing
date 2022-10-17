@@ -5,7 +5,8 @@ Created on Fri Oct 14 21:36:10 2022
 @author: a179227
 """
 import datetime
-from observation import Observation, Ilist
+from observation import Observation as Obs, Ilist
+from pprint import pprint
 
 dat = 'datation'
 loc = 'location'
@@ -53,6 +54,8 @@ date       = [an, femmes, travail, victoire, solstice, fetenat, assomption, tous
               armistice, noel]
 
 date_nom   = [d[0] for d in date]
+date_jour  = [d[1] for d in date]
+date_mois  = [d[2] for d in date]
 date_inst  = [datetime.datetime(2022, d[2], d[1]) for d in date]
 date_inter = [[datetime.datetime(2022, d[2], d[1]), datetime.datetime(2022, d[2], d[1]+5)] for d in date]
 date_slot  = [[[datetime.datetime(2022, d[2], d[1]), datetime.datetime(2022, d[2], d[1]+1)],
@@ -78,22 +81,27 @@ env_nv     = [{n: d} for n,d in zip(env_nom, env_v)]
 env_mix    = [[env_v, env_nv][i % 2][i] for i in range(len(env))]
 
 def ent(n): return list(range(n))
-def nom(n): return ['value' + str(i) for i in range(n)]
+def nom(n, name='value'): return [name + str(i) for i in range(n)]
 def dic(n): return [{'valmin': i, 'valmax': i + 2} for i in range(n)]
 def lis(n): return [list(range(i % 5)) for i in range(n)]
 #def mix_v(n): return [[ent, nom, dic, lis][i % 4](n)[i] for i in range(n)]
 def mix_v(n): return [[ent, nom, lis][i % 3](n)[i] for i in range(n)]
-def mix_nv(n): return [{'result': d} for d in mix_v(n)]
+def mix_nv(n): return [{'resul': d} for d in mix_v(n)]
 def mix_mix(n): return [[mix_v(n), mix_v(n), mix_nv(n)][i % 3][i] for i in range(n)]
 
-def obs(obj): return Observation.Iobj({'data': obj})
+def param_val(typeval, date='2022-10-20'): 
+    return {'date': date, 'project': 'dataref', 'type': typeval, 'context': {'version': 'v0', 'origin': 'data.py'}}
+def obs(obj): return Obs.Iobj({'data': obj})
 
-print(obs([[dat, date_mix[:3]], [loc, ville_mix[1:4], 0], [prp, env_mix[0:2]], 
-           [res, mix_mix(6), -1]]), end='\n')
-il = Ilist.Iobj([[dat, date_mix[:3]], [loc, ville_mix[1:4], 0], [prp, env_mix[0:2]], 
-           [res, mix_mix(6), -1]])
-print(il, end='\n')
+ob = Obs([[dat, date_mix[:3]], [loc, ville_mix[1:4], 0], [prp, env_mix[0:2]], 
+          [res, mix_mix(6), -1], ['mois', date_mois[:3], 0], 
+          ['structure', ['mixte']] ], 
+         name='test1', param=param_val('dim2')).setcanonorder().sort()
 
-il.to_xarray()
+print(ob, end='\n\n')
+
+pprint(ob.json())
+
+ob.to_xarray()
 
 

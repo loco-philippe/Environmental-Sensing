@@ -240,7 +240,7 @@ class TestObsUnitaire(unittest.TestCase):
                 [{"iindex": ["simple", [{"truc": 25}, 21]]}, 'Iindex']
                 ]
         for dat in data:
-            # print(dat[0])
+            #print(dat[0], util.castval(dat[0]).__class__.__name__, dat[1])
             self.assertEqual(util.castval(dat[0]).__class__.__name__, dat[1])
 
     def test_json(self):

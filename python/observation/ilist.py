@@ -360,9 +360,10 @@ class Ilist(IlistStructure, IlistInterface):
         flat = True
         if leng2:
             flat = length == max(leng2) == min(leng2)
-        self._init_index(lcodind, flat, lidx, length, codind)
+        #self._init_index(lcodind, flat, lidx, length, codind)
         for i in idxvar:
             self.lindex[i] = codind[i][1]
+        self._init_index(lcodind, flat, lidx, length, codind)
         self.lvarname = [codind[i][1].name for i in idxvar]
         if reindex:
             self.reindex()
@@ -438,7 +439,6 @@ class Ilist(IlistStructure, IlistInterface):
             self._addiidx(code, codind[code][0],
                           codind[code][1], codind, length)
         if iidx.keys == list(range(len(iidx.codec))):
-            # if len(iidx.codec) == length: #coupled format
             # coupled format
             if len(iidx.codec) == len(self.lindex[code].codec):
                 self.lindex[rang] = Iindex(
