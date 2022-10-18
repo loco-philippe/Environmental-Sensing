@@ -383,18 +383,19 @@ class Observation(Ilist):
         **string (@property)** : "FeatureCollection" with Location geometry'''
         if self.setLocation:
             geo = self.__geo_interface__
-            if geo['type'] == "MultiPolygon":
-                typ = "Polygon"
-            else:
-                typ = "Point"
-            lis = list(dict((("type", typ), ("coordinates", geo['coordinates'][i])))
-                       for i in range(len(geo['coordinates'])))
-            fea = list(dict((("type", "Feature"), ("id", i), ("geometry", lis[i])))
-                       for i in range(len(geo['coordinates'])))
-            return json.dumps(dict((("type", "FeatureCollection"), ("features", fea))),
+            if geo['type'][:5] == 'Multi':
+                typ =  geo['type'][5:]
+                lis = [{"type":  typ, "coordinates": geo['coordinates'][i]}
+                       for i in range(len(geo['coordinates']))]
+            elif geo['type'] in ['Point', 'Polygon']:
+                lis = [geo]
+            elif geo['type'] == 'GeometryCollection':
+                lis = geo['geometries']
+            fea = [{"type": "Feature", "id": i, "geometry": lis[i]}
+                       for i in range(len(lis))]
+            return json.dumps({"type": "FeatureCollection", "features": fea},
                               cls=ESValueEncoder)
-        else:
-            return ''
+        return ''
 
     @property
     def setDatation(self):
@@ -467,7 +468,8 @@ class Observation(Ilist):
                 name=name,
                 data=self.to_xarray(numeric=True).to_dataframe(name='obs'),
                 key_on="feature.id",
-                columns=['location_row', 'obs'],
+                #columns=['location_row', 'obs'],
+                columns=[self.idxname[self.primary[0]] + '_row', 'obs'],
                 fill_color="OrRd",
                 fill_opacity=0.7,
                 line_opacity=0.4,
