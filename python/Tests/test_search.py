@@ -11,10 +11,29 @@ class TestSearch(unittest.TestCase):
     """
     Tries different requests
     """
+    def test0(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
+        research = ESSearch(collection=coll)
+        research.addcondition('datation')
+        print("Requête effectuée :", research.request, '\n')
+        self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
+        result = research.execute()
+        #print(result)
+        self.assertIsNotNone(result)
+
+    def test0_1(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
+        research = ESSearch(collection=coll)
+        research.addcondition('datation')
+        research.addcondition('datation', datetime.datetime(2022, 9, 1, 3))
+        print("Requête effectuée :", research.request, '\n')
+        self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
+        result = research.execute()
+        #print(result)
+        self.assertIsNotNone(result)
+    
     # parameter inverted is to be used to select measures checking where everyting checks the conditions (and not just part of it)
     def test1(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
         research = ESSearch(collection=coll)
-        research.addCondition('datation', datetime.datetime(2022, 1, 1, 0), ">=", inverted = True) #sort quand même un résultat car le inverted met un "$not"
+        research.addcondition('datation', datetime.datetime(2022, 1, 1, 0), ">=", inverted = True) #sort quand même un résultat car le inverted met un "$not"
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -23,16 +42,16 @@ class TestSearch(unittest.TestCase):
 
     def test2(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
         research = ESSearch(collection=coll)
-        research.addCondition('datation', datetime.datetime(2022, 9, 1, 3), ">=")
+        research.addcondition('datation', datetime.datetime(2022, 9, 1, 3), ">=", formatstring='default')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
-        #print(result)
+        print(result)
         self.assertIsNotNone(result)
 
     def test3(self):  #ACTUELLEMENT NE FONCTIONNE PAS CAR GÉOMÉTRIES MAL RENTRÉES DANS LA BASE
         research = ESSearch(collection=coll)
-        research.addCondition('location', [2.1, 45.1])
+        research.addcondition('location', [2.1, 45.1])
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -41,7 +60,7 @@ class TestSearch(unittest.TestCase):
 
     def test4(self):
         research = ESSearch(collection=coll)
-        research.addCondition('property', 'PM1')
+        research.addcondition('property', 'PM1')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -49,8 +68,8 @@ class TestSearch(unittest.TestCase):
         self.assertIsNotNone(result)
     
     def test5(self):
-        research = ESSearch([{"condtype" : 'datation', "operand" : datetime.datetime(2022, 9, 19, 1), 'operator' : "$gte", 'inverted' : True},
-                    {"condtype" : 'datation', "operand" : datetime.datetime(2022, 9, 20, 3), 'operator' : "$gte"}], collection = coll)
+        research = ESSearch([{"name" : 'datation', "operand" : datetime.datetime(2022, 9, 19, 1), 'comparator' : "$gte", 'inverted' : True},
+                    {"name" : 'datation', "operand" : datetime.datetime(2022, 9, 20, 3), 'comparator' : "$gte"}], collection = coll)
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -59,15 +78,31 @@ class TestSearch(unittest.TestCase):
 
     def test6(self):
         research = ESSearch(collection=coll)
-        research.addCondition('property', 'PM1')
-        research.addCondition('datation', '2022-09-01T00:00:00+00:00')
-        research.orCondition('datation', '2022-09-02T00:00:00+00:00')
-        research.addCondition('property', 'PM2')
+        research.addcondition('property', 'PM1')
+        research.addcondition('datation', '2022-09-01T00:00:00+00:00', formatstring='default')
+        research.orcondition('datation', '2022-09-02T00:00:00+00:00', formatstring='default')
+        research.addcondition('property', 'PM2')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
         #print(result)
         self.assertIsNotNone(result)
+
+    def test6_2(self):
+        research = ESSearch(collection=coll)
+        research.addcondition('property', 'PM1')
+        research.addcondition('datation', '2022-09-01T00:00:00+00:00')
+        research.orcondition('datation', '2022-09-02T00:00:00+00:00')
+        research.addcondition('property', 'PM2')
+        print("Requête effectuée :", research.request, '\n')
+        self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
+        result = research.execute()
+        #print(result)
+        self.assertIsNotNone(result)
+        research2 = ESSearch(collection=coll, data=result)
+        result2 = research2.execute()
+        #print(result2)
+        self.assertIsNotNone(result2)
 
 
 if __name__ == '__main__':
