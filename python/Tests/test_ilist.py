@@ -310,7 +310,7 @@ class Test_Ilist(unittest.TestCase):
         #self.assertTrue(iidx5 == iidx6 == iidx7)
 
     def test_primary(self):
-        ['ext', ['er', 'rt', 'er', 'ry']]
+        #['ext', ['er', 'rt', 'er', 'ry']]
         ilm = Ilist.Iext([['math', 'english', 'software', 'physic', 'english', 'software'],
                           ['philippe', 'philippe', 'philippe',
                               'anne', 'anne', 'anne'],
