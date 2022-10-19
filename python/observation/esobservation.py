@@ -454,18 +454,19 @@ class Observation(Ilist):
             record[self.lname.index(ES.res_classES)] = ExternValue(obs)
         return self.append(record, unique=unique)
 
-    def choropleth(self, name="choropleth"):
+    def choropleth(self, name="choropleth", line=True):
         '''
         Display `Observation` on a folium.Map (only with dimension=1)
 
         - **name** : String, optionnal (default 'choropleth') - Name of the choropleth
+        - **line** : Boolean, optionnal (default True) - Line between recods if True
 
         *Returns* : None'''
         if self.dimension == 1:
             m = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
             folium.Choropleth(
                 geo_data=self.jsonFeature,
-                name=name,
+                name=self.name,
                 data=self.to_xarray(numeric=True).to_dataframe(name='obs'),
                 key_on="feature.id",
                 #columns=['location_row', 'obs'],
@@ -474,11 +475,12 @@ class Observation(Ilist):
                 fill_opacity=0.7,
                 line_opacity=0.4,
                 line_weight=2,
-                legend_name="test choropleth"
+                legend_name=name
             ).add_to(m)
-            folium.PolyLine(
-                util.funclist(self.nindex('location'), LocationValue.vPointInv)
-            ).add_to(m)
+            if line:
+                folium.PolyLine(
+                    util.funclist(self.nindex('location'), LocationValue.vPointInv)
+                ).add_to(m)
             folium.LayerControl().add_to(m)
             return m
         return None
