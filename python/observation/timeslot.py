@@ -36,7 +36,7 @@ Multiple properties are associated with the data :
 
 ## Relationships and assembly
 
-Two `TimeSlot` can be compared with five statuses (equals, contains, whitin, disjoint, intersects).
+Two `TimeSlot` can be compared with five statuses (equals, contains, within, disjoint, intersects).
 
 Multiple operations between two objects can be performed :
     
