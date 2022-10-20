@@ -186,6 +186,8 @@ class IindexStructure:
     def iskeysfromderkeys(self, other):
         '''return True if self.keys is relative from other.keys'''
         leng = len(other.codec)
+        if leng % len(self.codec) != 0 :
+            return False
         keys = [(i*len(self.codec))//leng for i in range(leng)]
         return self.__class__.keysfromderkeys(other.keys, keys) == self.keys
 

@@ -490,15 +490,15 @@ class Observation(Ilist):
 
         *Parameters (kwargs)*
 
-        - **encoded** : boolean (default False) - choice for return format (string/bytes if True, dict else)
+        - **encoded** : boolean (default False) - choice for return format
+        (string/bytes if True, dict else)
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
-        - **fullcodec** : boolean (default False) - if True, each index is with a full codec
-        - **defaultcodec** : boolean (default False) - if True, each index is whith a default codec
+        - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
+        if 'default' each index has keys, if 'optimize' keys are optimized, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
-        - **json_res_index** : Boolean - include index for Variable
         - **json_param**     : Boolean - include Obs Param
         - **json_info**      : Boolean - include all infos
         - **json_info_detail**: Boolean - include the other infos

@@ -299,7 +299,7 @@ class IindexInterface:
 
         *Parameters*
 
-        - **keys** : list (default None) - list: List of keys to include - None:
+        - **keys** : list (default None) - list: List of keys to include - None or False:
         no list - else: Iindex keys
         - **typevalue** : string (default None) - type to convert values
         - **fullcodec** : boolean (default False) - if True, use a full codec
