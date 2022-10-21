@@ -333,7 +333,8 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __hash__(self):
         '''return hash(codec) + hash(keys)'''
-        return util.hash(self.codec) + util.hash(self.keys)
+        #return util.hash(self.codec) + util.hash(self.keys)
+        return util.hash(self.values)
 
     def __add__(self, other):
         ''' Add other's values to self's values in a new Iindex'''

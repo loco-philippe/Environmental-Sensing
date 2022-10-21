@@ -205,7 +205,8 @@ class util:
     @staticmethod
     def hash(listval):
         ''' return sum of hash values in the list'''
-        return sum([hash(i) for i in listval])
+        #return sum([hash(i) for i in listval])
+        return hash(tuple(listval))
 
     @staticmethod
     def idxfull(setidx):

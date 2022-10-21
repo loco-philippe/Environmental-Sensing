@@ -501,13 +501,14 @@ class Ilist(IlistStructure, IlistInterface):
 
     def __hash__(self):
         '''return sum of all hash(Iindex)'''
-        return sum([hash(idx) for idx in self.lindex])
+        return sum([hash(idx) for idx in self.lindex]) + hash(tuple(self.lvarname))
 
     def __eq__(self, other):
         ''' equal if all Iindex and var are equal'''
-        return self.__class__.__name__ == other.__class__.__name__ \
+        return hash(self) == hash(other)
+        '''return self.__class__.__name__ == other.__class__.__name__ \
             and self.lvarname == other.lvarname \
-            and {idx in self.lindex for idx in other.lindex} in ({True}, set())
+            and {idx in self.lindex for idx in other.lindex} in ({True}, set())'''
 
     def __add__(self, other):
         ''' Add other's values to self's values in a new Ilist'''
