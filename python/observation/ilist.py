@@ -60,9 +60,9 @@ class Ilist(IlistStructure, IlistInterface):
 
     *constructor (@classmethod))*
 
-    - `Ilist.Idic`
-    - `Ilist.Iext`
-    - `Ilist.Iobj`
+    - `Ilist.dic`
+    - `Ilist.ext`
+    - `Ilist.obj`
     - `Ilist.from_csv`
     - `Ilist.from_obj`
     - `Ilist.from_file`
@@ -158,7 +158,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.voxel`
     '''
     @classmethod
-    def Idic(cls, idxdic=None, typevalue=ES.def_clsName, var=None, reindex=True):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, var=None, reindex=True):
         '''
         Ilist constructor (external dictionnary).
 
@@ -168,17 +168,17 @@ class Ilist(IlistStructure, IlistInterface):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable'''
         if not idxdic:
-            return cls.Iext(idxval=None, idxname=None, typevalue=typevalue, var=var,
+            return cls.ext(idxval=None, idxname=None, typevalue=typevalue, var=var,
                             reindex=reindex)
         if isinstance(idxdic, Ilist):
             return idxdic
         if not isinstance(idxdic, dict):
             raise IlistError("idxdic not dict")
-        return cls.Iext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
+        return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
                         typevalue=typevalue, var=var, reindex=reindex)
 
     @classmethod
-    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None,
+    def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None,
              reindex=True):
         '''
         Ilist constructor (external index).
@@ -189,7 +189,7 @@ class Ilist(IlistStructure, IlistInterface):
         - **idxname** : list of string (default None) - list of Iindex name (see data model)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable'''
-        #print('debut iext')
+        #print('debut ext')
         #t0 = time()
         if idxname is None:
             idxname = []
@@ -250,7 +250,7 @@ class Ilist(IlistStructure, IlistInterface):
                         for i in range(len(row)):
                             idxval[i].append(util.cast(row[i], dtype[i]))
                 irow += 1
-        return cls.Iext(idxval, idxname, typevalue=None, var=var, reindex=True)
+        return cls.ext(idxval, idxname, typevalue=None, var=var, reindex=True)
 
     @classmethod
     def from_file(cls, filename, forcestring=False):
@@ -275,7 +275,7 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.from_obj(bjson, reindex=True)
 
     @classmethod
-    def Iobj(cls, bsd=None, reindex=True, context=True):
+    def obj(cls, bsd=None, reindex=True, context=True):
         '''
         Generate a new Object from a bytes, string or list value
 

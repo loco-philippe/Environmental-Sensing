@@ -211,16 +211,16 @@ def p(f, n, p): return [f(n)[0], f(n)[1], p]
 def printf(data, ob, mode='a'):
     with open('json_examples.obs', mode, newline='') as file:
         file.write(data + '\n')
-    return Observation.Iobj(data) == ob
+    return Observation.obj(data) == ob
 
 
 def pobs(listobs, info=False, mode='a'):
-    ob = Observation.Iobj({'data': listobs}).setcanonorder()
+    ob = Observation.obj({'data': listobs}).setcanonorder()
     return printf(ob.json(encoded=True, json_info=info), ob, mode)
 
 
 def ppobs(listobs, param=None, name=None, info=False, mode='a'):
-    ob = Observation.Iobj({'name': name, 'data': listobs,
+    ob = Observation.obj({'name': name, 'data': listobs,
                   'param': param}).setcanonorder()
     return printf(ob.json(encoded=True, json_info=info), ob, mode)
 
@@ -251,7 +251,7 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(ppobs([dat(3), loc(3), prp(2), p(stg, 3, 0), res(18)]))
         self.assertTrue(ppobs([dat(3), loc(3), prp(2), p(stg, 3, 0), res(18)],
                               param={'dimension': 3}, name='example4', info=True))
-        ob = Observation.Idic({"datation": [[{"date1": "2021-02-04T12:05:00"},
+        ob = Observation.dic({"datation": [[{"date1": "2021-02-04T12:05:00"},
                                      "2021-07-04T12:05:00", "2021-05-04T12:05:00"],
                                     [0, 0, 1, 1, 2, 2]],
                        "location": [[{"paris": [2.35, 48.87]}, [4.83, 45.76],
@@ -325,8 +325,8 @@ class TestExamples(unittest.TestCase):
         payload2 = ob_sensor.json(encoded=True, encode_format='cbor')
         # print(len(payload2)) # 99 bytes
         # data decoding in the server
-        ob_receive1 = Observation.Iobj(payload1)
-        ob_receive2 = Observation.Iobj(payload2)
+        ob_receive1 = Observation.obj(payload1)
+        ob_receive2 = Observation.obj(payload2)
         # print(ob_receive1 == ob_receive2 == ob_sensor)   # it's True !!
         self.assertTrue(ob_receive1 == ob_receive2 ==
                         ob_sensor)   # it's True !!
@@ -349,7 +349,7 @@ class TestExamples(unittest.TestCase):
         payload = obs_sensor.json(encoded=True, encode_format='cbor')
         # print(len(payload)) # 41.8 bytes/measure
         # data decoding in the server
-        obs_receive = Observation.Iobj(payload)
+        obs_receive = Observation.obj(payload)
         # print(ob_receive1 == ob_receive2 == ob_sensor)   # it's True !!
         self.assertTrue(obs_receive == obs_sensor)   # it's True !!
 
@@ -369,7 +369,7 @@ class TestExamples(unittest.TestCase):
         payload = ob_sensor.json(encoded=True, encode_format='cbor')
         # print(len(payload)) # 280 bytes (35 bytes/measure)
         # data decoding in the server
-        ob_receive = Observation.Iobj(payload)
+        ob_receive = Observation.obj(payload)
         # print(ob_receive1 == ob_receive2 == ob_sensor)   # it's True !!
         self.assertTrue(ob_receive == ob_sensor)   # it's True !!
 
@@ -377,11 +377,11 @@ class TestExamples(unittest.TestCase):
         # initialization phase (sensor or server) -> once
         coord = [2.3, 48.9]
         prop = {"prp": "Temp"}
-        ob_init = Observation.Idic({'location': [coord], 'property': prop})
+        ob_init = Observation.dic({'location': [coord], 'property': prop})
         # print(ob_init.json)
         # operation phase (sensor) -> regularly
         res = 25
-        il_operat = Ilist.Idic({'res': [res]})
+        il_operat = Ilist.dic({'res': [res]})
         # if the payload is character payload
         payload1 = il_operat.json(encoded=True)
         #print(len(payload1), payload1)
@@ -389,14 +389,14 @@ class TestExamples(unittest.TestCase):
         payload2 = il_operat.json(encoded=True, encode_format='cbor')
         # print(len(payload2)) # 10 bytes
         # data decoding in the server
-        il_receive1 = Ilist.Iobj(payload1)
-        il_receive2 = Ilist.Iobj(payload2)
+        il_receive1 = Ilist.obj(payload1)
+        il_receive2 = Ilist.obj(payload2)
         date_receive = datetime.datetime(2021, 6, 4, 12, 5)
         # print(ob_receive1 == ob_receive2 == ob_sensor)   # it's True !!
         self.assertTrue(il_receive1 == il_receive2 ==
                         il_operat)   # it's True !!
         # complete observation
-        ob_complet = Observation.Idic({'res': il_receive1, 'datation': date_receive,
+        ob_complet = Observation.dic({'res': il_receive1, 'datation': date_receive,
                                'location': [coord], 'property': prop}, var=0).merge()
         # print(ob_complet)
 
@@ -421,11 +421,11 @@ class TestExamples(unittest.TestCase):
         payload = il_sensor.json(encoded=True, encode_format='cbor')
         # print(len(payload)) # 88 bytes (11 bytes/measure)
         # data decoding in the server
-        il_receive = Ilist.Iobj(payload, reindex=False)
+        il_receive = Ilist.obj(payload, reindex=False)
         self.assertTrue(il_receive == il_sensor)   # it's True !!
         il_receive.nindex('property').setcodeclist([prop1, prop2])
         # complete observation
-        ob_complet = Observation.Idic({'res': il_receive, 'location': [
+        ob_complet = Observation.dic({'res': il_receive, 'location': [
                               coord]}, var=0).merge().setcanonorder()
         # print(ob_complet.to_obj(encoded=True))
         self.assertTrue(ob_complet.dimension ==
@@ -442,20 +442,20 @@ class TestObservation(unittest.TestCase):
     def test_obs_creation_copy(self):
         listob = [Observation(), Observation(id='truc', listidx=[1, 2, 3]), 
                   Observation.from_obj({'data': [1, 2, 3]}),
-                  Observation.Iobj({'data': [1, 2, 3], 'id':'truc'}),
-                  Observation.Iobj({'data': [1, 2, 3], 'id':'truc',
+                  Observation.obj({'data': [1, 2, 3], 'id':'truc'}),
+                  Observation.obj({'data': [1, 2, 3], 'id':'truc',
                            'param':{'date': '21-12'}}),
                   Observation.Std([11, 12], 'dat1', ['loc1', 'loc2'],
                           'prp1', name='truc'),
                   Observation.Std(result=[10, 20], datation='dat1',
                           location=['loc1', 'loc2'], name='truc'),
-                  #Observation.Idic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
+                  #Observation.dic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
                   Observation([list(dat1), list(loc1), list(prop3), list(_res(3))], name='truc'),
                   Observation([list(loc3), list(dat3)+[0], list(prop2),
                        ['result', [{'file': 'truc', 'path': 'ertert'}, 1, 2, 3, 
                                    4, ['truc', 'rt']]]])]
         for ob in listob:
-            self.assertEqual(Observation.Iobj(ob.to_obj()), ob)
+            self.assertEqual(Observation.obj(ob.to_obj()), ob)
             self.assertEqual(copy.copy(ob), ob)
 
         ob1 = Observation([list(dat1), list(loc1), list(prop3), list(_res(3))])
@@ -465,7 +465,7 @@ class TestObservation(unittest.TestCase):
                       property=prop3[1], result=_res(3)[1])
         self.assertTrue(ob1 == ob3 == ob6)
         ob = Observation()
-        ob1 = Observation.Idic({})
+        ob1 = Observation.dic({})
         ob2 = Observation([])
         self.assertTrue(ob == ob1 == ob2)
         ob = Observation.Std('fort', 'ce matin', 'paris', 'pm10')
@@ -492,7 +492,7 @@ class TestObservation(unittest.TestCase):
                                                   extern=False) == [2, 3])
 
     def test_obs_vList(self):
-        ob = Observation.Idic(dict((dat3, loc3)), param=truc_mach)
+        ob = Observation.dic(dict((dat3, loc3)), param=truc_mach)
         self.assertEqual(ob.vlist(func=ESValue.vName, extern=False, index=ob.lname.index('datation'), default='now'),
                          ob.nindex('datation').vlist(
                              func=ESValue.vName, extern=False, default='now'),
@@ -501,7 +501,7 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob.nindex('location').vSimple(),
                          [paris, lyon, marseille])
         self.assertEqual(ob.nindex('datation').vSimple(), [t1, t2, t3])
-        #ob = Observation.Idic(dict((dat3, dpt2)), param=truc_mach)
+        #ob = Observation.dic(dict((dat3, dpt2)), param=truc_mach)
         ob = Observation([list(dat3), list(dpt2)], param=truc_mach)
         self.assertEqual(ob.nindex('location').vSimple()[0], pol1centre)
         ob = Observation([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
@@ -510,14 +510,14 @@ class TestObservation(unittest.TestCase):
 
     def test_obs_options(self):
         ob = Observation([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
-        self.assertTrue(Observation.Iobj(ob.json()) == ob)
+        self.assertTrue(Observation.obj(ob.json()) == ob)
         option = dict()
         option["json_res_index"] = True
         option["json_info_type"] = True
         option["json_info_nval"] = True
         option["json_info_other"] = True
         option["json_info_box"] = True
-        ob2 = Observation.Iobj(ob.json(**option))
+        ob2 = Observation.obj(ob.json(**option))
         self.assertTrue(ES.type in ob2.json())
         self.assertEqual(ob2, ob)
         self.assertEqual(ob2.json(**option), ob.json(**option))
@@ -540,7 +540,7 @@ class TestObservation(unittest.TestCase):
         self.assertTrue(ob1.dimension ==
                         2 and ob1.complete and ob1.primary == [0, 1])
         #ob1 = Observation([list(dat3), list(loc3), list(prop3), list(_res(3))])
-        ob1 = Observation.Idic(dict((dat3, loc3, prop3, _res(3))))
+        ob1 = Observation.dic(dict((dat3, loc3, prop3, _res(3))))
         self.assertTrue(ob1.dimension ==
                         1 and ob1.complete and ob1.primary == [0])
 
@@ -564,7 +564,7 @@ class TestObservation(unittest.TestCase):
             ob1.setLocation[ind[1]].value, LocationValue.Box(ob.bounds[1]).value)
         ob1 = Observation.Std()
         ob1.appendObs(ob)
-        ob2 = Observation.Iobj(ob1.to_obj(encode_format='json', encoded=False))
+        ob2 = Observation.obj(ob1.to_obj(encode_format='json', encoded=False))
 
     def test_obs_sort(self):
         dat = d1, c2, d3 = [{'d1': t1}, {'c2': t2}, {'d3': t3}]
@@ -604,7 +604,7 @@ class TestObservation(unittest.TestCase):
         self.assertFalse(ob2.consistent)
 
     def test_obs_full(self):
-        ob = Observation.Idic({"datation": [[{"date1": "2021-02-04T12:05:00"}, "2021-07-04T12:05:00", "2021-05-04T12:05:00"],
+        ob = Observation.dic({"datation": [[{"date1": "2021-02-04T12:05:00"}, "2021-07-04T12:05:00", "2021-05-04T12:05:00"],
                                     [0, 0, 1, 1, 2, 2]],
                        "location": [[{"paris": [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                                     [0, 0, 2, 1, 1, 2]],
@@ -625,7 +625,7 @@ class TestObservation(unittest.TestCase):
         ob = Observation([list(_res(6)), list(dat3), list(loc3)+[1], list(prop2)])
         obcc = obp | obc
         self.assertEqual(obcc, ob)
-        ob = Observation.Iobj({'data': [list(_res(6))]})
+        ob = Observation.obj({'data': [list(_res(6))]})
         ob.addindex(['datation', ['matin'], [0, 0, 0, 0, 0, 0]])
         ob.addindex(
             ['location', ['paris', 'lyon', 'marseille'], [0, 1, 2, 0, 1, 2]])
@@ -669,7 +669,7 @@ class TestExports(unittest.TestCase):
         self.assertEqual(_envoi_mongo_url(data), 200)"""
 
     def test_geo_interface(self):
-        ob = Observation.Idic(dict((loc3, dat3)))
+        ob = Observation.dic(dict((loc3, dat3)))
         _resloc = set((tuple(lyon), tuple(paris), tuple(marseille)))
         self.assertEqual(ob.__geo_interface__['type'], "MultiPoint")
         self.assertEqual(set(ob.__geo_interface__["coordinates"]), _resloc)
@@ -810,7 +810,7 @@ class TestInterne(unittest.TestCase):
 
     @unittest.skipIf(mongo, "test envoi mongo")
     def test_plot(self):
-        il3 = Ilist.Idic({'location': [[0,1], [4.83, 45.76], [5.38, 43.3]],
+        il3 = Ilist.dic({'location': [[0,1], [4.83, 45.76], [5.38, 43.3]],
          'datation': [{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -829,7 +829,7 @@ class TestInterne(unittest.TestCase):
         ob3.plot(line=False, order=[0,2,1])
         ob3.plot(line=True, order=[0,2,1])
         
-        il2 = Ilist.Idic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+        il2 = Ilist.dic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -843,7 +843,7 @@ class TestInterne(unittest.TestCase):
         ob2.plot(line=False, order=[1,0])
         ob2.plot(line=True, order=[1,0])
         
-        il2 = Ilist.Idic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
+        il2 = Ilist.dic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
          'datation': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -855,7 +855,7 @@ class TestInterne(unittest.TestCase):
         ob2.plot(line=False)
         ob2.plot(line=True)
         
-        il1 = Ilist.Idic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+        il1 = Ilist.dic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -865,7 +865,7 @@ class TestInterne(unittest.TestCase):
         ob1.plot(line=True)
         ob1.plot(line=False)
         
-        il1 = Ilist.Idic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
+        il1 = Ilist.dic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
          'datation': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],

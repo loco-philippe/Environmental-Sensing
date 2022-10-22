@@ -54,9 +54,9 @@ class Iindex(IindexStructure, IindexInterface):
 
     *constructor (@classmethod)*
 
-    - `Iindex.Idic`
-    - `Iindex.Iext`
-    - `Iindex.Iobj`
+    - `Iindex.dic`
+    - `Iindex.ext`
+    - `Iindex.obj`
     - `Iindex.from_parent`
     - `Iindex.from_obj`
     - `Iindex.merging`
@@ -166,7 +166,7 @@ class Iindex(IindexStructure, IindexInterface):
             self.reindex()
 
     @classmethod
-    def Iext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
+    def ext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
         Iindex constructor (external list).
 
@@ -191,7 +191,7 @@ class Iindex(IindexStructure, IindexInterface):
         return cls(name=name, codec=codec, keys=keys, typevalue=None)
 
     @classmethod
-    def Idic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
+    def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
         Iindex constructor (external dictionnary).
 
@@ -201,7 +201,7 @@ class Iindex(IindexStructure, IindexInterface):
         - **fullcodec** : boolean (default False) - full codec if True
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec'''
         if not dicvalues:
-            return cls.Iext(name=None, values=None, typevalue=typevalue, fullcodec=fullcodec)
+            return cls.ext(name=None, values=None, typevalue=typevalue, fullcodec=fullcodec)
         if isinstance(dicvalues, Iindex):
             return copy(dicvalues)
         if not isinstance(dicvalues, dict):
@@ -210,7 +210,7 @@ class Iindex(IindexStructure, IindexInterface):
             raise IindexError("one key:values is required")
         name = list(dicvalues.keys())[0]
         values = dicvalues[name]
-        return cls.Iext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)
+        return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)
 
     @classmethod
     def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
@@ -230,7 +230,7 @@ class Iindex(IindexStructure, IindexInterface):
         return cls(codec=codec, name=name, keys=parent.keys, typevalue=typevalue, reindex=reindex)
 
     @classmethod
-    def Iobj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
+    def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
         '''Generate an Iindex Object from a bytes, json or dict value and from
         a keys list (derived Iindex)
 
@@ -289,7 +289,7 @@ class Iindex(IindexStructure, IindexInterface):
         if not name:
             name = str(list({idx.name for idx in listidx}))
         values = util.tuple(util.transpose([idx.values for idx in listidx]))
-        return cls.Iext(values, name)
+        return cls.ext(values, name)
 
 
 # %% special

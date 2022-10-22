@@ -58,7 +58,7 @@ class IlistStructure:
         - **update** : if True, update actual values if index name is present (and merge is True)
 
         *Returns* : none '''
-        idx = Iindex.Iobj(index)
+        idx = Iindex.obj(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0:
             raise IlistError('sizes are different')

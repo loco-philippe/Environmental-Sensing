@@ -58,9 +58,9 @@ class Observation(Ilist):
 
     *constructor (@classmethod))*
 
-    - `Observation.Idic`
+    - `Observation.dic`
     - `Observation.Std`
-    - `observation.ilist.Ilist.Iobj`
+    - `observation.ilist.Ilist.obj`
     - `Observation.from_obj`
     - `observation.ilist.Ilist.from_file`
 
@@ -215,7 +215,7 @@ class Observation(Ilist):
         self.param = param
 
     @classmethod
-    def Idic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None, var=None):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None, var=None):
         '''
         Observation constructor (external dictionnary).
 
@@ -230,7 +230,7 @@ class Observation(Ilist):
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
         if ES.res_classES in idxdic:
             var = list(idxdic.keys()).index(ES.res_classES)
-        listidx = Ilist.Idic(idxdic, typevalue=typevalue, var=var)
+        listidx = Ilist.dic(idxdic, typevalue=typevalue, var=var)
         return cls(listidx=listidx, name=name, id=id, param=param, context=True)
 
     @classmethod
@@ -254,19 +254,19 @@ class Observation(Ilist):
             listidx.append([ES.res_classES, []])
             length = 0
         else:
-            listidx.append(Iindex.Iext(result, ES.res_classES))
+            listidx.append(Iindex.ext(result, ES.res_classES))
         if datation is None:
             listidx.append([ES.dat_classES, []])
         else:
-            listidx.append(Iindex.Iext(datation, ES.dat_classES))
+            listidx.append(Iindex.ext(datation, ES.dat_classES))
         if location is None:
             listidx.append([ES.loc_classES, []])
         else:
-            listidx.append(Iindex.Iext(location, ES.loc_classES))
+            listidx.append(Iindex.ext(location, ES.loc_classES))
         if property is None:
             listidx.append([ES.prp_classES, []])
         else:
-            listidx.append(Iindex.Iext(property, ES.prp_classES))
+            listidx.append(Iindex.ext(property, ES.prp_classES))
         return cls(listidx=listidx, length=length, name=name, id=None, param=param,
                    var=0, context=True)
 
@@ -314,7 +314,7 @@ class Observation(Ilist):
             data = None
         if data and not isinstance(data, list):
             raise ObsError('data is not a list')
-        return cls(listidx=Ilist.Iobj(data, reindex=reindex, context=context),
+        return cls(listidx=Ilist.obj(data, reindex=reindex, context=context),
                    name=name, id=id, param=param, context=context, reindex=reindex)
 
 # %% special

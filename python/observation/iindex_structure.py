@@ -53,7 +53,7 @@ class IindexStructure:
             index = [idx]
         else:
             index = idx
-        idxzip = self.__class__.Iext(list(zip(*([self.keys] + [ix.keys for ix in index]))),
+        idxzip = self.__class__.ext(list(zip(*([self.keys] + [ix.keys for ix in index]))),
                                      typevalue=None)
         self.tocoupled(idxzip)
         if not derived:

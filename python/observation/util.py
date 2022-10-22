@@ -127,7 +127,7 @@ class util:
             return _classval()[ESValue.valClassName(val)].from_obj(val)
             #return _classval()[ESValue.valClassName(val)](val)
         if classvalue in ES.className:
-            return _classval()[classvalue].Iobj(value)
+            return _classval()[classvalue].obj(value)
             #return _classval()[classvalue](value)
         return val
 

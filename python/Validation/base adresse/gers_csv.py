@@ -100,11 +100,11 @@ if opt_json:
     extval = lis[name.index('id')]
     lis.pop(name.index('id'))
     name.pop(name.index('id'))
-    il2 = Ilist.Iext(extval=extval, extidx=lis, valname='BAN Gers', idxname=name)
+    il2 = Ilist.ext(extval=extval, extidx=lis, valname='BAN Gers', idxname=name)
     affiche(il2, 'BAN_gers_json.il')
 
 #%% analyse sur les lignes
 if opt_row: 
     lis2 = [[rec['fields'][keys] if keys in rec['fields'] else '' for keys in name ] for rec in dic]
-    il3 = Ilist.Iext(extidx=lis2, valname='BAN Gers transpose')
+    il3 = Ilist.ext(extidx=lis2, valname='BAN Gers transpose')
     affiche(il3, 'BAN_gers_json_transp.il')
