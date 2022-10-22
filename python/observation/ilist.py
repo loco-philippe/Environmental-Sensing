@@ -122,6 +122,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.append`
     - `Ilist.delindex`
     - `Ilist.delrecord`
+    - `Ilist.orindex`
     - `Ilist.renameindex`
     - `Ilist.setvar`
     - `Ilist.setname`
@@ -343,9 +344,8 @@ class Ilist(IlistStructure, IlistInterface):
 
         if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)):
             listidx = [[idx] for idx in listidx]
-        codind, lcodind, lidx, idxvar, length, leng2 = \
-            Ilist._init_internal(listidx, typevalue, name,
-                                 context, idxvar, length)
+        codind, lcodind, lidx, idxvar, length, leng2 = Ilist._init_internal(
+            listidx, typevalue, name, context, idxvar, length)
         self.lindex = list(range(len(codind)))
 
         if len(listidx) == 1:
@@ -445,7 +445,7 @@ class Ilist(IlistStructure, IlistInterface):
                     iidx.codec, iidx.name, self.lindex[code].keys)
             else:  # derived format without keys
                 parent = copy(self.lindex[code])
-                parent.reindex()
+                #parent.reindex()
                 leng = len(parent.codec)
                 keys = [(i*len(iidx.codec))//leng for i in range(leng)]
                 self.lindex[rang] = Iindex(iidx.codec, iidx.name,
@@ -504,7 +504,7 @@ class Ilist(IlistStructure, IlistInterface):
         return sum([hash(idx) for idx in self.lindex]) + hash(tuple(self.lvarname))
 
     def __eq__(self, other):
-        ''' equal if all Iindex and var are equal'''
+        ''' equal if hash values are equal'''
         return hash(self) == hash(other)
         '''return self.__class__.__name__ == other.__class__.__name__ \
             and self.lvarname == other.lvarname \
@@ -528,14 +528,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     def __ior__(self, other):
         ''' Add other's index to self's index'''
-        if len(self) != 0 and len(self) != len(other) and len(other) != 0:
-            raise IlistError("the sizes are not equal")
-        otherc = copy(other)
-        for idx in otherc.lindex:
-            self.addindex(idx)
-        if not self.lvarname:
-            self.lvarname = other.lvarname
-        return self
+        return self.orindex(other, first=False, merge=True, update=False)
 
     def __copy__(self):
         ''' Copy all the data '''

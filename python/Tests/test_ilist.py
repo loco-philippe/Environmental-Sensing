@@ -256,11 +256,11 @@ class Test_Ilist(unittest.TestCase):
         il2 = Ilist([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 12, 10, 12, 10],
                      [110, 10, 120, 120, 115]])
         il3 = il1 | il2
-        self.assertEqual(il3.lenidx, il1.lenidx + il2.lenidx)
+        self.assertEqual(il3.lenidx, il2.lenidx)
         il = Ilist([['er', 'rt', 'er', 'ry', 'ab', 'ert']])
         ilx = Ilist([[0, 0, 0, 1, 1, 1], [0, 1, 2, 3, 4, 1]])
         il2 = il | ilx
-        self.assertEqual(il2.lidx, ilx.lidx)
+        self.assertEqual(il2.lidx[0], ilx.lidx[1])
         self.assertEqual(il2.lvar, il .lvar)
         il2 = Ilist([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 2, 10, 12, 10],
                      [110, 0, 120, 120, 115]])

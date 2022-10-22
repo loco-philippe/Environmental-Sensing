@@ -339,15 +339,15 @@ class Observation(Ilist):
             stro += ES.param + ':\n    ' + json.dumps(self.param) + '\n'
         return stro
 
-    def __eq__(self, other):
+    """def __eq__(self, other):
         ''' equal if all attribut and Ilist are equal'''
         return self.__class__.__name__ == other.__class__.__name__ and self.name == other.name \
             and self.id == other.id and self.param == other.param  \
-            and Ilist.__eq__(self, other)
+            and Ilist.__eq__(self, other)"""
 
     def __hash__(self):
         '''return sum of all hash(Iindex)'''
-        return hash(self.param) + hash(self.id) + hash(self.name) + Ilist.__hash__(self)
+        return hash(json.dumps(self.param)) + hash(self.id) + hash(self.name) + Ilist.__hash__(self)
 
 # %% properties
     @property

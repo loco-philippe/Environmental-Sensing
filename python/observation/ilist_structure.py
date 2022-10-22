@@ -538,6 +538,30 @@ class IlistStructure:
             return self.lindex[self.lname.index(name)]
         return None
 
+    def orindex(self, other, first=False, merge=False, update=False):
+        ''' Add other's index to self's index
+
+        *Parameters*
+
+        - **other** : self class - object to add
+        - **first** : Boolean (default False) - If True insert indexes
+        at the first row, else at the end
+        - **merge** : Boolean (default False) - create a new index 
+        if merge is False
+        - **update** : Boolean (default False) - if True, update actual 
+        values if index name is present (and merge is True)
+
+        *Returns* : none '''
+        if len(self) != 0 and len(self) != len(other) and len(other) != 0:
+            raise IlistError("the sizes are not equal")
+        otherc = copy(other)
+        for idx in otherc.lindex:
+            self.addindex(idx, first=first, merge=merge, update=update)
+        if not self.lvarname:
+            self.lvarname = other.lvarname
+        return self
+
+
     def record(self, row, extern=True):
         '''return the record at the row
 
