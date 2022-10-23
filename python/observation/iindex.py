@@ -131,8 +131,8 @@ class Iindex(IindexStructure, IindexInterface):
         - **lendefault** : integer (default 0) - default len if no keys is defined
         - **reindex** : boolean (default True) - if True, default codec is apply'''
         if isinstance(codec, Iindex):
-            self.keys = copy(codec.keys)
-            self.codec = deepcopy(codec.codec)
+            self._keys = copy(codec._keys)
+            self._codec = deepcopy(codec._codec)
             self.name = copy(codec.name)
             return
         if codec is None:
@@ -159,8 +159,8 @@ class Iindex(IindexStructure, IindexInterface):
             codec = util.tocodec(keys)
         #codec = [ESValue.from_obj(val, typevalue) for val in codec]
         codec = util.castobj(codec, typevalue)
-        self.keys = keys
-        self.codec = codec
+        self._keys = keys
+        self._codec = codec
         self.name = name
         if reindex:
             self.reindex()
@@ -227,7 +227,7 @@ class Iindex(IindexStructure, IindexInterface):
         *Returns* : Iindex '''
         if isinstance(codec, Iindex):
             return copy(codec)
-        return cls(codec=codec, name=name, keys=parent.keys, typevalue=typevalue, reindex=reindex)
+        return cls(codec=codec, name=name, keys=parent._keys, typevalue=typevalue, reindex=reindex)
 
     @classmethod
     def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
@@ -308,7 +308,7 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __len__(self):
         ''' len of values'''
-        return len(self.keys)
+        return len(self._keys)
 
     def __contains__(self, item):
         ''' item of values'''
@@ -328,12 +328,12 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __delitem__(self, ind):
         '''remove a record (value and key).'''
-        self.keys.pop(ind)
+        self._keys.pop(ind)
         self.reindex()
 
     def __hash__(self):
         '''return hash(codec) + hash(keys)'''
-        #return util.hash(self.codec) + util.hash(self.keys)
+        #return util.hash(self._codec) + util.hash(self._keys)
         return util.hash(self.values)
 
     def __add__(self, other):
@@ -358,16 +358,16 @@ class Iindex(IindexStructure, IindexInterface):
         *Returns* : self '''
         if solve:
             solved = copy(other)
-            for i in range(len(solved.codec)):
-                if not util.isNotNull(solved.codec[i]) and i in range(len(self.codec)):
-                    solved.codec[i] = self.codec[i]
+            for i in range(len(solved._codec)):
+                if not util.isNotNull(solved._codec[i]) and i in range(len(self._codec)):
+                    solved._codec[i] = self._codec[i]
             values = self.values + solved.values
         else:
             values = self.values + other.values
         codec = util.tocodec(values)
-        if set(codec) != set(self.codec):
-            self.codec = codec
-        self.keys = util.tokeys(values, self.codec)
+        if set(codec) != set(self._codec):
+            self._codec = codec
+        self._keys = util.tokeys(values, self._codec)
         return self
 
     def __copy__(self):
@@ -381,11 +381,16 @@ class Iindex(IindexStructure, IindexInterface):
         return self.to_obj(fullcodec=False, codecval=True, encoded=False, listunic=True)
 
     @property
+    def codec(self):
+        '''return codec  '''
+        return self._codec
+
+    @property
     def infos(self):
         '''return dict with lencodec, typecodec, rate, disttomin, disttomax'''
         maxi = len(self)
-        mini = len(set(self.codec))
-        xlen = len(self.codec)
+        mini = len(set(self._codec))
+        xlen = len(self._codec)
         rate = 0.0
         if maxi == 0:
             typecodec = 'null'
@@ -407,6 +412,11 @@ class Iindex(IindexStructure, IindexInterface):
                 'rate': rate, 'disttomin': disttomin, 'disttomax': disttomax}
 
     @property
+    def keys(self):
+        '''return keys  '''
+        return self._keys
+
+    @property
     def typevalue(self):
         '''return typevalue calculated from name'''
         return util.typename(self.name)
@@ -414,7 +424,7 @@ class Iindex(IindexStructure, IindexInterface):
     @property
     def values(self):
         '''return values (see data model)'''
-        return [self.codec[key] for key in self.keys]
+        return [self._codec[key] for key in self._keys]
 
     @property
     def val(self):

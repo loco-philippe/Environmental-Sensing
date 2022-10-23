@@ -419,14 +419,16 @@ class Ilist(IlistStructure, IlistInterface):
                    if code < 0 and len(iidx) != 1]
         for i, (rang, iidx) in zip(range(len(primary)), primary):
             if not flat:
-                iidx.keys = keysset[i]
+                #iidx.keys = keysset[i]
+                iidx.set_keys(keysset[i])
             self.lindex[lidx[rang]] = iidx
         # init secondary
         for i, (code, iidx) in zip(range(len(lcodind)), lcodind):
             if iidx.name is None or iidx.name == ES.defaultindex:
                 iidx.name = 'i'+str(i)
             if len(iidx.codec) == 1:
-                iidx.keys = [0] * length
+                #iidx.keys = [0] * length
+                iidx.set_keys([0] * length)
                 self.lindex[lidx[i]] = iidx
             elif code >= 0 and isinstance(self.lindex[lidx[i]], int):
                 self._addiidx(lidx[i], code, iidx, codind, length)

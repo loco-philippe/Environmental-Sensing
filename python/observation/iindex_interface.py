@@ -285,7 +285,7 @@ class IindexInterface:
         if not codec:
             values = util.funclist(self.values, func, **kwargs)
         else:
-            values = util.funclist(self.codec, func, **kwargs)
+            values = util.funclist(self._codec, func, **kwargs)
         if isinstance(values[0], (str, datetime.datetime)):
             try:
                 return np.array(values, dtype=np.datetime64)
@@ -323,7 +323,7 @@ class IindexInterface:
         if keys and isinstance(keys, list):
             keyslist = keys
         elif keys and not isinstance(keys, list):
-            keyslist = self.keys
+            keyslist = self._keys
         else:
             keyslist = None
         if not name or self.name == ES.defaultindex:
@@ -335,7 +335,7 @@ class IindexInterface:
             keyslist = None
             parent = ES.nullparent
         else:
-            codeclist = self.codec
+            codeclist = self._codec
         if typevalue:
             dtype = ES.valname[typevalue]
         else:

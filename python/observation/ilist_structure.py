@@ -257,12 +257,15 @@ class IlistStructure:
         inf = ilis.indexinfos()
         for i, j in zip(primary, range(len(primary))):
             if inf[i]['cat'] == 'unique':
-                ilis.lidx[i].keys += [0] * lenadd
+                #ilis.lidx[i].keys += [0] * lenadd
+                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
             else:
-                ilis.lidx[i].keys += keysadd[j]
+                #ilis.lidx[i].keys += keysadd[j]
+                ilis.lidx[i].set_keys(ilis.lidx[i].keys + keysadd[j])
         for i in secondary:
             if inf[i]['cat'] == 'unique':
-                ilis.lidx[i].keys += [0] * lenadd
+                #ilis.lidx[i].keys += [0] * lenadd
+                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
             else:
                 ilis.lidx[i].tocoupled(
                     ilis.lidx[inf[i]['parent']], coupling=False)
@@ -270,12 +273,17 @@ class IlistStructure:
             if len(ilis.lidx[i].keys) != leninit + lenadd:
                 raise IlistError('primary indexes have to be present')
         if ilis.lvarname:
-            ilis.lvar[0].keys += [len(ilis.lvar[0].codec)] * len(keysadd[0])
+            #ilis.lvar[0].keys += [len(ilis.lvar[0].codec)] * len(keysadd[0])
+            ilis.lvar[0].set_keys(ilis.lvar[0].keys + [len(ilis.lvar[0].codec)] * 
+                                  len(keysadd[0]))
             if fillextern:
-                ilis.lvar[0].codec.append(util.castval(
-                    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName)))
+                #ilis.lvar[0].codec.append(util.castval(
+                #    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName)))
+                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [util.castval(
+                    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName))])
             else:
-                ilis.lvar[0].codec.append(fillvalue)
+                #ilis.lvar[0].codec.append(fillvalue)
+                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [fillvalue])
         if complete:
             ilis.setcanonorder()
         return ilis
@@ -706,7 +714,8 @@ class IlistStructure:
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]),
             reverse=reverse))
         for i in range(self.lenindex):
-            self.lindex[orderfull[i]].keys = newidx[i]
+            #self.lindex[orderfull[i]].keys = newidx[i]
+            self.lindex[orderfull[i]].set_keys(newidx[i])
         return self
 
     def swapindex(self, order):
