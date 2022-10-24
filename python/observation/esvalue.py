@@ -52,7 +52,7 @@ import shapely.geometry
 import datetime
 from geopy import distance
 from copy import copy
-from openlocationcode import openlocationcode
+#from openlocationcode import openlocationcode
 
 from esconstante import ES, _classval
 from esvalue_base import ESValueEncoder, ESValue
