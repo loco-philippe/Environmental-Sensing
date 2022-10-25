@@ -146,12 +146,10 @@ class ESValue:
             return val
         if not simple and classn in [ES.ili_clsName, ES.iin_clsName, ES.obs_clsName]:
             classn = ES.ext_clsName
-        if not classn and classname != ES.ES_clsName:
+        if (not classn or classn == ES.ES_clsName) and classname != ES.ES_clsName:
             classn = classname
-        '''if not simple and not classn:
-            classESval = ESValue._decodeclass(val)
-            if classESval == ES.ili_clsName and name:
-                classn = ES.ext_clsName'''
+        if (not classn or classn == ES.ES_clsName) and classname == ES.ES_clsName:
+            classn =  ES.nam_clsName
         if not simple and not classn:
             classn = ESValue.valClassName(val)
         if classn in ES.ESvalName:
@@ -277,7 +275,6 @@ class ESValue:
         - PropertyValue : boundingBox (list of type property)
         - Other ESValue : () '''
         try:
-            # if isinstance(self, PropertyValue): return tuple(self.value[ES.prp_type])
             if self.__class__.__name__ == 'PropertyValue':
                 return tuple(self.value[ES.prp_type])
             return self.value.bounds
@@ -288,16 +285,18 @@ class ESValue:
         '''return a new `ESValue` with :
         - name : parameters
         - value : union between box(self) and box(other)  '''
-        # if self.__class__ == PropertyValue :
         if self.__class__.__name__ == 'PropertyValue':
-            # return PropertyValue.Box(sorted(list(self._setprp(self.value[ES.prp_type]) |
             return self.__class__.Box(sorted(list(self._setprp(self.value[ES.prp_type]) |
                                                   self._setprp(other.value[ES.prp_type]))),
                                       name=name)
         sbox = self.Box(self. bounds).value
         obox = other.Box(other.bounds).value
-        if sbox == obox:
+        if   sbox == obox:
             ubox = sbox
+        elif sbox.__class__.__name__ == 'Polygon' and sbox.covers(obox):
+            ubox = sbox
+        elif sbox.__class__.__name__ == 'Polygon' and obox.covers(sbox):
+            ubox = obox
         else:
             ubox = sbox.union(obox)
         boxunion = self.__class__(val=self.Box(ubox.bounds))

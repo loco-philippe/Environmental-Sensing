@@ -29,18 +29,18 @@ class IindexStructure:
 
         *Returns* : key of value '''
         value = util.castval(value, util.typename(self.name, typevalue))
-        if value in self.codec and unique:
-            key = self.codec.index(value)
+        if value in self._codec and unique:
+            key = self._codec.index(value)
         else:
-            key = len(self.codec)
-            self.codec.append(value)
-        self.keys.append(key)
+            key = len(self._codec)
+            self._codec.append(value)
+        self._keys.append(key)
         return key
 
     def coupling(self, idx, derived=True):
         '''
         Transform indexes in coupled or derived indexes (codec extension).
-        If derived option is True, self.codec is extended and idx codec not,
+        If derived option is True, self._codec is extended and idx codec not,
         else, both are coupled and both codec are extended.
 
         *Parameters*
@@ -53,7 +53,7 @@ class IindexStructure:
             index = [idx]
         else:
             index = idx
-        idxzip = self.__class__.Iext(list(zip(*([self.keys] + [ix.keys for ix in index]))),
+        idxzip = self.__class__.ext(list(zip(*([self._keys] + [ix._keys for ix in index]))),
                                      typevalue=None)
         self.tocoupled(idxzip)
         if not derived:
@@ -76,8 +76,8 @@ class IindexStructure:
         if min(len(self), len(other)) == 0:
             return {'lencoupling': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null'}
-        lens = len(self.codec)
-        leno = len(other.codec)
+        lens = len(self._codec)
+        leno = len(other._codec)
         xmin = max(lens, leno)
         xmax = lens * leno
         diff = abs(lens - leno)
@@ -89,7 +89,7 @@ class IindexStructure:
             return {'lencoupling': xmin, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': xmin, 'distmax': xmax, 'diff': diff, 'typecoupl': typec}
         xso = len(util.tocodec([tuple((v1, v2))
-                  for v1, v2 in zip(self.keys, other.keys)]))
+                  for v1, v2 in zip(self._keys, other._keys)]))
         dic = {'lencoupling': xso, 'rate': (xso - xmin) / (xmax - xmin),
                'disttomin': xso - xmin,  'disttomax': xmax - xso,
                'distmin': xmin, 'distmax': xmax, 'diff': diff}
@@ -115,9 +115,9 @@ class IindexStructure:
         - **parent** : Iindex - parent
 
         *Returns* : list of keys'''
-        derkey = [ES.nullparent] * len(parent.codec)
+        derkey = [ES.nullparent] * len(parent._codec)
         for i in range(len(self)):
-            derkey[parent.keys[i]] = self.keys[i]
+            derkey[parent._keys[i]] = self._keys[i]
         if min(derkey) < 0:
             raise IindexError("parent is not a derive Iindex")
         return derkey
@@ -130,9 +130,9 @@ class IindexStructure:
         - **keys** : list of int (value lower or equal than actual keys)
 
         *Returns* : None '''
-        if min(keys) < 0 or max(keys) > len(self.codec) - 1:
+        if min(keys) < 0 or max(keys) > len(self._codec) - 1:
             raise IindexError('keys not consistent with codec')
-        self.keys += keys
+        self._keys += keys
 
     @staticmethod
     def full(listidx):
@@ -150,18 +150,18 @@ class IindexStructure:
         leninit = len(idx1)
         keysadd = util.idxfull(listidx)
         for idx, keys in zip(listidx, keysadd):
-            idx.keys += keys
+            idx._keys += keys
         return tuple(range(leninit, len(idx1)))
 
     def getduplicates(self):
         ''' return tuple of items with duplicate codec'''
-        count = Counter(self.codec)
+        count = Counter(self._codec)
         defcodec = list(count - Counter(list(count)))
         dkeys = defaultdict(list)
-        for key, ind in zip(self.keys, range(len(self))):
+        for key, ind in zip(self._keys, range(len(self))):
             dkeys[key].append(ind)
         dcodec = defaultdict(list)
-        for key, ind in zip(self.codec, range(len(self.codec))):
+        for key, ind in zip(self._codec, range(len(self._codec))):
             dcodec[key].append(ind)
         duplicates = []
         for item in defcodec:
@@ -184,10 +184,12 @@ class IindexStructure:
         return info['diff'] != 0 and info['rate'] == 0.0
 
     def iskeysfromderkeys(self, other):
-        '''return True if self.keys is relative from other.keys'''
-        leng = len(other.codec)
-        keys = [(i*len(self.codec))//leng for i in range(leng)]
-        return self.__class__.keysfromderkeys(other.keys, keys) == self.keys
+        '''return True if self._keys is relative from other._keys'''
+        leng = len(other._codec)
+        if leng % len(self._codec) != 0 :
+            return False
+        keys = [(i*len(self._codec))//leng for i in range(leng)]
+        return self.__class__.keysfromderkeys(other._keys, keys) == self._keys
 
     def islinked(self, other):
         '''return True if self is linked to other'''
@@ -217,11 +219,11 @@ class IindexStructure:
         *Returns*
 
         - **int** : first key finded (None else)'''
-        if key < 0 or key >= len(self.codec):
+        if key < 0 or key >= len(self._codec):
             return None
         if extern:
             return self.cod[key]
-        return self.codec[key]
+        return self._codec[key]
 
     @staticmethod
     def keysfromderkeys(parentkeys, derkeys):
@@ -265,11 +267,11 @@ class IindexStructure:
         if extern:
             value = util.castval(
                 value, util.typename(self.name, ES.def_clsName))
-        if not value in self.codec:
+        if not value in self._codec:
             return None
             #raise IndexError('value not present')
         listkeys = [cod for cod, val in zip(
-            range(len(self.codec)), self.codec) if val == value]
+            range(len(self._codec)), self._codec) if val == value]
         return self.recordfromkeys(listkeys)
 
     def recordfromkeys(self, listkeys):
@@ -283,7 +285,7 @@ class IindexStructure:
 
         - **list of int** : list of record number finded (None else)'''
 
-        return [rec for rec, key in zip(range(len(self)), self.keys) if key in listkeys]
+        return [rec for rec, key in zip(range(len(self)), self._keys) if key in listkeys]
 
     def reindex(self, codec=None):
         '''apply a reordered codec. If None, a new default codec is apply.
@@ -296,8 +298,8 @@ class IindexStructure:
 
         if not codec:
             codec = util.tocodec(self.values)
-        self.keys = util.reindex(self.keys, self.codec, codec)
-        self.codec = codec
+        self._keys = util.reindex(self._keys, self._codec, codec)
+        self._codec = codec
         return self
 
     def reorder(self, sort=None, inplace=True):
@@ -315,8 +317,8 @@ class IindexStructure:
         values = util.reorder(self.values, sort)
         codec, keys = util.resetidx(values)
         if inplace:
-            self.keys = keys
-            self.codec = codec
+            self._keys = keys
+            self._codec = codec
             return None
         return self.__class__(name=self.name, codec=codec, keys=keys)
 
@@ -339,13 +341,13 @@ class IindexStructure:
             newvalue = util.castval(newvalue, typevalue)
             oldvalue = util.castval(oldvalue, typevalue)
         rank = -1
-        for i in range(len(self.codec)):
-            if self.codec[i] == oldvalue:
+        for i in range(len(self._codec)):
+            if self._codec[i] == oldvalue:
                 if typevalue in ES.ESclassName and nameonly:
-                    self.codec[i].setName(newvalue.name)
+                    self._codec[i].setName(newvalue.name)
                 elif typevalue in ES.ESclassName and valueonly:
-                    self.codec[i].setValue(newvalue.value)
-                self.codec[i] = newvalue
+                    self._codec[i].setValue(newvalue.value)
+                self._codec[i] = newvalue
                 rank = i
         return rank
 
@@ -364,14 +366,22 @@ class IindexStructure:
         typevalue = util.typename(self.name, typevalue)
         if extern:
             listcodec = util.castobj(listcodec, typevalue)
-        for i in range(len(self.codec)):
+        for i in range(len(self._codec)):
             if typevalue in ES.ESclassName and nameonly:
-                self.codec[i].setName(listcodec[i].name)
+                self._codec[i].setName(listcodec[i].name)
             elif typevalue in ES.ESclassName and valueonly:
-                self.codec[i].setValue(listcodec[i].value)
+                self._codec[i].setValue(listcodec[i].value)
             else:
-                self.codec[i] = listcodec[i]
+                self._codec[i] = listcodec[i]
 
+    def set_keys(self, keys):
+        ''' _keys setters '''
+        self._keys = keys
+        
+    def set_codec(self, codec):
+        ''' _codec setters '''
+        self._codec = codec
+        
     def setkeys(self, keys, inplace=True):
         '''apply new keys (replace codec with extended codec from parent keys)
 
@@ -383,8 +393,8 @@ class IindexStructure:
         *Returns* : self or new Iindex'''
         codec = util.tocodec(self.values, keys)
         if inplace:
-            self.codec = codec
-            self.keys = keys
+            self._codec = codec
+            self._keys = keys
             return self
         return self.__class__(codec=codec, name=self.name, keys=keys)
 
@@ -424,7 +434,7 @@ class IindexStructure:
             values[ind].setValue(values.value)
         else:
             values[ind] = value
-        self.codec, self.keys = util.resetidx(values)
+        self._codec, self._keys = util.resetidx(values)
 
     def setlistvalue(self, listvalue, extern=True, typevalue=None, nameonly=False, valueonly=False):
         '''update the values (and update codec and keys)
@@ -449,7 +459,7 @@ class IindexStructure:
                 values[i].setValue(value_i.value)
             else:
                 values[i] = value_i
-        self.codec, self.keys = util.resetidx(values)
+        self._codec, self._keys = util.resetidx(values)
 
     def sort(self, reverse=False, inplace=True, func=str):
         '''Define sorted index with ordered codec.
@@ -465,13 +475,13 @@ class IindexStructure:
 
         - **Iindex** : self if inplace, new Iindex if not inplace'''
         if inplace:
-            self.reindex(codec=sorted(self.codec, reverse=reverse, key=func))
-            self.keys.sort()
+            self.reindex(codec=sorted(self._codec, reverse=reverse, key=func))
+            self._keys.sort()
             return self
-        oldcodec = self.codec
+        oldcodec = self._codec
         codec = sorted(oldcodec, reverse=reverse, key=str)
         return self.__class__(name=self.name, codec=codec,
-                              keys=sorted(util.reindex(self.keys, oldcodec, codec)))
+                              keys=sorted(util.reindex(self._keys, oldcodec, codec)))
 
     def tocoupled(self, other, coupling=True):
         '''
@@ -484,11 +494,11 @@ class IindexStructure:
         - **coupling** : boolean (default True) - reindex if False
 
         *Returns* : None'''
-        dic = util.idxlink(other.keys, self.keys)
+        dic = util.idxlink(other._keys, self._keys)
         if not dic:
             raise IindexError("Iindex is not coupled or derived from other")
-        self.codec = [self.codec[dic[i]] for i in range(len(dic))]
-        self.keys = other.keys
+        self._codec = [self._codec[dic[i]] for i in range(len(dic))]
+        self._keys = other._keys
         if not coupling:
             self.reindex()
 
@@ -509,10 +519,10 @@ class IindexStructure:
             keys = list(range(len(codec)))
         else:
             codec = util.tocodec(self.values)
-            keys = util.reindex(self.keys, self.codec, codec)
+            keys = util.reindex(self._keys, self._codec, codec)
         if inplace:
-            self.codec = codec
-            self.keys = keys
+            self._codec = codec
+            self._keys = keys
             return self
         return self.__class__(codec=codec, name=self.name, keys=keys)
 
@@ -524,7 +534,7 @@ class IindexStructure:
         - **row** : record to obtain val
 
         *Returns* : val[row]'''
-        val = ESValue.uncastsimple(self.codec[self.keys[row]])
+        val = ESValue.uncastsimple(self._codec[self._keys[row]])
         if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes)):
             return val
         return val.json(encoded=False)
@@ -541,7 +551,7 @@ class IindexStructure:
 
         - **int** : first key finded (None else)'''
         if extern:
-            value = util.castval(value, util.typename(self.name, ES.def_dtype))
-        if value in self.codec:
-            return self.codec.index(value)
+            value = util.castval(value, util.typename(self.name, ES.def_clsName))
+        if value in self._codec:
+            return self._codec.index(value)
         return None

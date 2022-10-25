@@ -80,7 +80,7 @@ print('délai data: ', t1 - t0) # 1s pour c= 2000, 10s pour 20 000, 93s (1,5 mn)
 print('nombre de lignes : ', len(res))
 
 #%% création Ilist
-il = Ilist.Iext(res, data, 'result', ['datation', 'location', 'sexe', 'property'], fast=True)
+il = Ilist.ext(res, data, 'result', ['datation', 'location', 'sexe', 'property'], fast=True)
 t2 = time()
 print('délai il: ', t2 - t1) # 4s pour c= 2000, 37s pour 20 000, 360s (6 mn) pour 230 000 (soit 1 142 000 lignes)
 # total : 1 mn pour 100 000 enregistrements Ilist

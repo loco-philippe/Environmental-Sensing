@@ -37,7 +37,8 @@ from copy import copy
 
 from ilist import Ilist
 from iindex import Iindex
-from util import util, IindexEncoder, CborDecoder
+from util import util
+from iindex_interface import IindexEncoder, CborDecoder
 from esconstante import ES
 from esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from esvalue_base import ESValue, ESValueEncoder
@@ -57,9 +58,9 @@ class Observation(Ilist):
 
     *constructor (@classmethod))*
 
-    - `Observation.Idic`
+    - `Observation.dic`
     - `Observation.Std`
-    - `observation.ilist.Ilist.Iobj`
+    - `observation.ilist.Ilist.obj`
     - `Observation.from_obj`
     - `observation.ilist.Ilist.from_file`
 
@@ -165,8 +166,8 @@ class Observation(Ilist):
     """
 
 # %% constructor
-    def __init__(self, listidx=None, name=None, id=None, param=None, length=None, var=None, reindex=True,
-                 typevalue=ES.def_clsName, context=True):
+    def __init__(self, listidx=None, name=None, id=None, param=None, length=None, var=None, 
+                 reindex=True, typevalue=ES.def_clsName, context=True):
         '''
         Observation constructor
 
@@ -214,7 +215,7 @@ class Observation(Ilist):
         self.param = param
 
     @classmethod
-    def Idic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None, var=None):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None, var=None):
         '''
         Observation constructor (external dictionnary).
 
@@ -229,7 +230,7 @@ class Observation(Ilist):
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
         if ES.res_classES in idxdic:
             var = list(idxdic.keys()).index(ES.res_classES)
-        listidx = Ilist.Idic(idxdic, typevalue=typevalue, var=var)
+        listidx = Ilist.dic(idxdic, typevalue=typevalue, var=var)
         return cls(listidx=listidx, name=name, id=id, param=param, context=True)
 
     @classmethod
@@ -253,19 +254,19 @@ class Observation(Ilist):
             listidx.append([ES.res_classES, []])
             length = 0
         else:
-            listidx.append(Iindex.Iext(result, ES.res_classES))
+            listidx.append(Iindex.ext(result, ES.res_classES))
         if datation is None:
             listidx.append([ES.dat_classES, []])
         else:
-            listidx.append(Iindex.Iext(datation, ES.dat_classES))
+            listidx.append(Iindex.ext(datation, ES.dat_classES))
         if location is None:
             listidx.append([ES.loc_classES, []])
         else:
-            listidx.append(Iindex.Iext(location, ES.loc_classES))
+            listidx.append(Iindex.ext(location, ES.loc_classES))
         if property is None:
             listidx.append([ES.prp_classES, []])
         else:
-            listidx.append(Iindex.Iext(property, ES.prp_classES))
+            listidx.append(Iindex.ext(property, ES.prp_classES))
         return cls(listidx=listidx, length=length, name=name, id=None, param=param,
                    var=0, context=True)
 
@@ -313,7 +314,7 @@ class Observation(Ilist):
             data = None
         if data and not isinstance(data, list):
             raise ObsError('data is not a list')
-        return cls(listidx=Ilist.Iobj(data, reindex=reindex, context=context),
+        return cls(listidx=Ilist.obj(data, reindex=reindex, context=context),
                    name=name, id=id, param=param, context=context, reindex=reindex)
 
 # %% special
@@ -338,15 +339,15 @@ class Observation(Ilist):
             stro += ES.param + ':\n    ' + json.dumps(self.param) + '\n'
         return stro
 
-    def __eq__(self, other):
+    """def __eq__(self, other):
         ''' equal if all attribut and Ilist are equal'''
         return self.__class__.__name__ == other.__class__.__name__ and self.name == other.name \
             and self.id == other.id and self.param == other.param  \
-            and Ilist.__eq__(self, other)
+            and Ilist.__eq__(self, other)"""
 
     def __hash__(self):
         '''return sum of all hash(Iindex)'''
-        return hash(self.param) + hash(self.id) + hash(self.name) + Ilist.__hash__(self)
+        return hash(json.dumps(self.param)) + hash(self.id) + hash(self.name) + Ilist.__hash__(self)
 
 # %% properties
     @property
@@ -382,18 +383,19 @@ class Observation(Ilist):
         **string (@property)** : "FeatureCollection" with Location geometry'''
         if self.setLocation:
             geo = self.__geo_interface__
-            if geo['type'] == "MultiPolygon":
-                typ = "Polygon"
-            else:
-                typ = "Point"
-            lis = list(dict((("type", typ), ("coordinates", geo['coordinates'][i])))
-                       for i in range(len(geo['coordinates'])))
-            fea = list(dict((("type", "Feature"), ("id", i), ("geometry", lis[i])))
-                       for i in range(len(geo['coordinates'])))
-            return json.dumps(dict((("type", "FeatureCollection"), ("features", fea))),
+            if geo['type'][:5] == 'Multi':
+                typ =  geo['type'][5:]
+                lis = [{"type":  typ, "coordinates": geo['coordinates'][i]}
+                       for i in range(len(geo['coordinates']))]
+            elif geo['type'] in ['Point', 'Polygon']:
+                lis = [geo]
+            elif geo['type'] == 'GeometryCollection':
+                lis = geo['geometries']
+            fea = [{"type": "Feature", "id": i, "geometry": lis[i]}
+                       for i in range(len(lis))]
+            return json.dumps({"type": "FeatureCollection", "features": fea},
                               cls=ESValueEncoder)
-        else:
-            return ''
+        return ''
 
     @property
     def setDatation(self):
@@ -452,30 +454,33 @@ class Observation(Ilist):
             record[self.lname.index(ES.res_classES)] = ExternValue(obs)
         return self.append(record, unique=unique)
 
-    def choropleth(self, name="choropleth"):
+    def choropleth(self, name="choropleth", line=True):
         '''
         Display `Observation` on a folium.Map (only with dimension=1)
 
         - **name** : String, optionnal (default 'choropleth') - Name of the choropleth
+        - **line** : Boolean, optionnal (default True) - Line between recods if True
 
         *Returns* : None'''
         if self.dimension == 1:
             m = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
             folium.Choropleth(
                 geo_data=self.jsonFeature,
-                name=name,
+                name=self.name,
                 data=self.to_xarray(numeric=True).to_dataframe(name='obs'),
                 key_on="feature.id",
-                columns=['location_row', 'obs'],
+                #columns=['location_row', 'obs'],
+                columns=[self.idxname[self.primary[0]] + '_row', 'obs'],
                 fill_color="OrRd",
                 fill_opacity=0.7,
                 line_opacity=0.4,
                 line_weight=2,
-                legend_name="test choropleth"
+                legend_name=name
             ).add_to(m)
-            folium.PolyLine(
-                util.funclist(self.nindex('location'), LocationValue.vPointInv)
-            ).add_to(m)
+            if line:
+                folium.PolyLine(
+                    util.funclist(self.nindex('location'), LocationValue.vPointInv)
+                ).add_to(m)
             folium.LayerControl().add_to(m)
             return m
         return None
@@ -485,27 +490,24 @@ class Observation(Ilist):
 
         *Parameters (kwargs)*
 
-        - **encoded** : boolean (default False) - choice for return format (string/bytes if True, dict else)
+        - **encoded** : boolean (default False) - choice for return format
+        (string/bytes if True, dict else)
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
-        - **fullcodec** : boolean (default False) - if True, each index is with a full codec
-        - **defaultcodec** : boolean (default False) - if True, each index is whith a default codec
+        - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
+        if 'default' each index has keys, if 'optimize' keys are optimized, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
 
-        - **json_res_index** : Boolean - include index for Variable
         - **json_param**     : Boolean - include Obs Param
         - **json_info**      : Boolean - include all infos
-        - **json_info_type** : Boolean - include info_type
-        - **json_info_nval** : Boolean - include the lenght of Iindex
-        - **json_info_box**  : Boolean - include the bounding box
-        - **json_info_other**: Boolean - include the other infos
+        - **json_info_detail**: Boolean - include the other infos
 
         *Returns* : string, bytes or dict'''
         option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'json_param': False, 'json_info': False, 'json_info_type': False,
-                  'json_info_nval': False, 'json_info_box': False,
-                  'json_info_other': False} | kwargs
+                  'json_param': False, 'json_info': False, 'json_info_detail': False
+                  } | kwargs
         option2 = option | {'encoded': False, 'encode_format': 'json'}
         dic = {ES.type: ES.obs_classES}
         if self.id:
@@ -558,58 +560,50 @@ class Observation(Ilist):
 # %% internal
 
     def _info(self, **kwargs):
-        ''' Create json dict with info datas'''
+        ''' Create json dict with info datas'''    
         option = ES.mOption | kwargs
-        dcinf = dict()
-        if option["json_info"] or option["json_info_nval"]:
-            dcinf |= dict(
-                zip(['len-'+name for name in self.lname], self.indexlen))
-        if option["json_info"] or option["json_info_box"]:
-            dcinf |= self._infoBox(**option)
-        if option["json_info"] or option["json_info_other"]:
-            dcinf |= self._infoOther()
-        ldel = []
-        for k, v in dcinf.items():
-            if isinstance(v, str) and (v == "null" or v == ''):
-                ldel.append(k)
-            if isinstance(v, list) and v == ES.nullCoor:
-                ldel.append(k)
-        for k in ldel:
-            del dcinf[k]
-        if len(dcinf) == 0:
-            return ""
-        return {ES.information: dcinf}
+        dcobs = {}
+        dcindex = {}
+        if not option['json_info']:
+            return dcobs
+        dcobs[ES.name]              = self.name
+        dcobs[ES.length]            = len(self)
+        dcobs[ES.lenindex]          = self.lenindex
+        dcobs[ES.complete]          = self.complete
+        dcobs[ES.dimension]         = self.dimension
+        if option['json_info_detail']:
+            infos = self.indexinfos()        
+        for ind, idx in enumerate(self.lindex):
+            dcidx = {}
+            dcidx[ES.num]           = ind
+            dcidx[ES.typevalue]     = idx.typevalue
+            dcidx[ES.lencodec]      = len(idx.codec)
+            dcidx[ES.box]           = Observation._info_box(idx, **option)
+            if option['json_info_detail']:
+                dcidx[ES.typecoupl] = infos[ind][ES.typecoupl]
+                dcidx[ES.cat]       = infos[ind][ES.cat]
+                dcidx[ES.pname]     = infos[ind][ES.pname]
+                dcidx[ES.typecodec] = idx.infos[ES.typecodec]
+                dcidx[ES.linkrate]  = infos[ind][ES.linkrate]
+                dcidx[ES.disttomin] = idx.infos[ES.disttomin]
+                dcidx[ES.disttomax] = idx.infos[ES.disttomax]
+            dcindex[idx.name] = dcidx
+        return {ES.information: {ES.observation: dcobs, ES.index: dcindex}}
 
-    def _infoBox(self, **option):
-        ''' Add box informations's key-value to dict dcinf'''
-        dcinf = dict()
-        if self.setLocation:
-            dcinf[ES.loc_box] = list(
-                ESValue.boundingBox(self.setLocation).bounds)
-            dcinf[ES.geo_box] = ESValue.boundingBox(
-                self.setLocation).__geo_interface__
-        if self.setProperty:
-            dcinf[ES.prp_box] = list(
-                ESValue.boundingBox(self.setProperty).bounds)
-        if self.setDatation:
-            bound = ESValue.boundingBox(self.setDatation).bounds
-            if option["encode_format"] == 'json':
-                dcinf[ES.dat_box] = list(bound)
-            else:
-                dcinf[ES.dat_box] = [datetime.datetime.fromisoformat(bound[0]),
-                                     datetime.datetime.fromisoformat(bound[1])]
-        return dcinf
-
-    def _infoOther(self):
-        ''' Add other's information key-value to dict dcinf'''
-        dcinf = dict()
-        dcinf[ES.obs_complet] = self.complete
-        #dcinf[ES.obs_score]   = self.score
-        #dcinf[ES.res_mRate]   = self.rate
-        dcinf[ES.res_dim] = self.dimension
-        dcinf[ES.res_axes] = [self.idxname[i] for i in self.primary]
-        return dcinf
-
+    @staticmethod
+    def _info_box(idx, **option):
+        ''' return box informations's'''
+        if idx.typevalue == ES.loc_clsName and option['geojson']:
+            return ESValue.boundingBox(idx).__geo_interface__
+        if (idx.typevalue == ES.loc_clsName and not option['geojson']) \
+            or idx.typevalue == ES.prp_clsName \
+            or (idx.typevalue == ES.dat_clsName and option["encoded"]):
+            return list(ESValue.boundingBox(idx).bounds)
+        if (idx.typevalue == ES.dat_clsName and not option["encoded"]):
+            bound = ESValue.boundingBox(idx).bounds
+            return [datetime.datetime.fromisoformat(bound[0]),
+                    datetime.datetime.fromisoformat(bound[1])]
+        return None
 
 class ObsError(Exception):
     pass

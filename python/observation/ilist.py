@@ -41,7 +41,7 @@ import cbor2
 
 from esconstante import ES
 from iindex import Iindex
-from util import util, CborDecoder
+from iindex_interface import util, CborDecoder
 from ilist_interface import IlistInterface, IlistError
 from ilist_structure import IlistStructure
 
@@ -60,9 +60,9 @@ class Ilist(IlistStructure, IlistInterface):
 
     *constructor (@classmethod))*
 
-    - `Ilist.Idic`
-    - `Ilist.Iext`
-    - `Ilist.Iobj`
+    - `Ilist.dic`
+    - `Ilist.ext`
+    - `Ilist.obj`
     - `Ilist.from_csv`
     - `Ilist.from_obj`
     - `Ilist.from_file`
@@ -122,6 +122,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.append`
     - `Ilist.delindex`
     - `Ilist.delrecord`
+    - `Ilist.orindex`
     - `Ilist.renameindex`
     - `Ilist.setvar`
     - `Ilist.setname`
@@ -157,7 +158,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.voxel`
     '''
     @classmethod
-    def Idic(cls, idxdic=None, typevalue=ES.def_clsName, var=None, reindex=True):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, var=None, reindex=True):
         '''
         Ilist constructor (external dictionnary).
 
@@ -167,17 +168,17 @@ class Ilist(IlistStructure, IlistInterface):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable'''
         if not idxdic:
-            return cls.Iext(idxval=None, idxname=None, typevalue=typevalue, var=var,
+            return cls.ext(idxval=None, idxname=None, typevalue=typevalue, var=var,
                             reindex=reindex)
         if isinstance(idxdic, Ilist):
             return idxdic
         if not isinstance(idxdic, dict):
             raise IlistError("idxdic not dict")
-        return cls.Iext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
+        return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
                         typevalue=typevalue, var=var, reindex=reindex)
 
     @classmethod
-    def Iext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None,
+    def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None,
              reindex=True):
         '''
         Ilist constructor (external index).
@@ -188,7 +189,7 @@ class Ilist(IlistStructure, IlistInterface):
         - **idxname** : list of string (default None) - list of Iindex name (see data model)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable'''
-        #print('debut iext')
+        #print('debut ext')
         #t0 = time()
         if idxname is None:
             idxname = []
@@ -249,7 +250,7 @@ class Ilist(IlistStructure, IlistInterface):
                         for i in range(len(row)):
                             idxval[i].append(util.cast(row[i], dtype[i]))
                 irow += 1
-        return cls.Iext(idxval, idxname, typevalue=None, var=var, reindex=True)
+        return cls.ext(idxval, idxname, typevalue=None, var=var, reindex=True)
 
     @classmethod
     def from_file(cls, filename, forcestring=False):
@@ -274,7 +275,7 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.from_obj(bjson, reindex=True)
 
     @classmethod
-    def Iobj(cls, bsd=None, reindex=True, context=True):
+    def obj(cls, bsd=None, reindex=True, context=True):
         '''
         Generate a new Object from a bytes, string or list value
 
@@ -343,9 +344,8 @@ class Ilist(IlistStructure, IlistInterface):
 
         if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)):
             listidx = [[idx] for idx in listidx]
-        codind, lcodind, lidx, idxvar, length, leng2 = \
-            Ilist._init_internal(listidx, typevalue, name,
-                                 context, idxvar, length)
+        codind, lcodind, lidx, idxvar, length, leng2 = Ilist._init_internal(
+            listidx, typevalue, name, context, idxvar, length)
         self.lindex = list(range(len(codind)))
 
         if len(listidx) == 1:
@@ -360,9 +360,10 @@ class Ilist(IlistStructure, IlistInterface):
         flat = True
         if leng2:
             flat = length == max(leng2) == min(leng2)
-        self._init_index(lcodind, flat, lidx, length, codind)
+        #self._init_index(lcodind, flat, lidx, length, codind)
         for i in idxvar:
             self.lindex[i] = codind[i][1]
+        self._init_index(lcodind, flat, lidx, length, codind)
         self.lvarname = [codind[i][1].name for i in idxvar]
         if reindex:
             self.reindex()
@@ -418,14 +419,16 @@ class Ilist(IlistStructure, IlistInterface):
                    if code < 0 and len(iidx) != 1]
         for i, (rang, iidx) in zip(range(len(primary)), primary):
             if not flat:
-                iidx.keys = keysset[i]
+                #iidx.keys = keysset[i]
+                iidx.set_keys(keysset[i])
             self.lindex[lidx[rang]] = iidx
         # init secondary
         for i, (code, iidx) in zip(range(len(lcodind)), lcodind):
             if iidx.name is None or iidx.name == ES.defaultindex:
                 iidx.name = 'i'+str(i)
             if len(iidx.codec) == 1:
-                iidx.keys = [0] * length
+                #iidx.keys = [0] * length
+                iidx.set_keys([0] * length)
                 self.lindex[lidx[i]] = iidx
             elif code >= 0 and isinstance(self.lindex[lidx[i]], int):
                 self._addiidx(lidx[i], code, iidx, codind, length)
@@ -438,14 +441,13 @@ class Ilist(IlistStructure, IlistInterface):
             self._addiidx(code, codind[code][0],
                           codind[code][1], codind, length)
         if iidx.keys == list(range(len(iidx.codec))):
-            # if len(iidx.codec) == length: #coupled format
             # coupled format
             if len(iidx.codec) == len(self.lindex[code].codec):
                 self.lindex[rang] = Iindex(
                     iidx.codec, iidx.name, self.lindex[code].keys)
             else:  # derived format without keys
                 parent = copy(self.lindex[code])
-                parent.reindex()
+                #parent.reindex()
                 leng = len(parent.codec)
                 keys = [(i*len(iidx.codec))//leng for i in range(leng)]
                 self.lindex[rang] = Iindex(iidx.codec, iidx.name,
@@ -501,13 +503,14 @@ class Ilist(IlistStructure, IlistInterface):
 
     def __hash__(self):
         '''return sum of all hash(Iindex)'''
-        return sum([hash(idx) for idx in self.lindex])
+        return sum([hash(idx) for idx in self.lindex]) + hash(tuple(self.lvarname))
 
     def __eq__(self, other):
-        ''' equal if all Iindex and var are equal'''
-        return self.__class__.__name__ == other.__class__.__name__ \
+        ''' equal if hash values are equal'''
+        return hash(self) == hash(other)
+        '''return self.__class__.__name__ == other.__class__.__name__ \
             and self.lvarname == other.lvarname \
-            and {idx in self.lindex for idx in other.lindex} in ({True}, set())
+            and {idx in self.lindex for idx in other.lindex} in ({True}, set())'''
 
     def __add__(self, other):
         ''' Add other's values to self's values in a new Ilist'''
@@ -527,14 +530,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     def __ior__(self, other):
         ''' Add other's index to self's index'''
-        if len(self) != 0 and len(self) != len(other) and len(other) != 0:
-            raise IlistError("the sizes are not equal")
-        otherc = copy(other)
-        for idx in otherc.lindex:
-            self.addindex(idx)
-        if not self.lvarname:
-            self.lvarname = other.lvarname
-        return self
+        return self.orindex(other, first=False, merge=True, update=False)
 
     def __copy__(self):
         ''' Copy all the data '''

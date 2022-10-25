@@ -101,7 +101,8 @@ class TimeSlot:
         if val == None : 
             self.slot = slot
             return
-        if isinstance(val, tuple): val = list(val)
+        val = TimeSlot._listed(val)
+        #if isinstance(val, tuple): val = list(val)
         if isinstance(val, list) and len(val) == 2 and not isinstance(val[0], TimeInterval):  
             try :                           slot.append(TimeInterval(val))
             except :
@@ -354,7 +355,14 @@ class TimeSlot:
                 union.append(interv)
                 break
         return union
-    
+
+    @staticmethod
+    def _listed(idx):
+        '''transform a tuple of tuple in a list of list'''
+        if hasattr(idx, '__iter__'):
+            return [val if not isinstance(val, tuple) else TimeSlot._listed(val) for val in idx]
+        return idx
+
 class TimeInterval:    # !!! interval
     '''        
     *Attributes (for @property see methods)* :

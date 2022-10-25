@@ -21,7 +21,8 @@ import cbor2
 
 from esconstante import ES
 from iindex import Iindex
-from util import util, IindexEncoder
+from iindex_interface import IindexEncoder
+from util import util
 
 #import sys
 #print("In module ilist_interface sys.path[0], __package__ ==", sys.path[0], __package__)
@@ -43,12 +44,13 @@ class IlistInterface:
         *Parameters (kwargs)*
 
         - **encoded** : boolean (default False) - choice for return format
-        (bynary if True, dict else)
-        - **encode_format** : string (default 'json') - choice for return format
-        (json, bson or cbor)
-        - **json_res_index** : default False - if True add the index to the value
-        - **order** : default [] - list of ordered index
-        - **codif** : dict (default {}). Numerical value for string in CBOR encoder
+        (string/bytes if True, dict else)
+        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
+        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
+        - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
+        if 'default' each index has keys, if 'optimize' keys are optimized, if 'nokeys' keys are absent
+        - **name** : boolean (default False) - if False, default index name are not included
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string or dict'''
         return self.to_obj(**kwargs)
@@ -248,31 +250,38 @@ class IlistInterface:
         (string/bytes if True, dict else)
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
-        - **fullcodec** : boolean (default False) - if True, each index is with a full codec
-        - **defaultcodec** : boolean (default False) - if True, each index is whith a default codec
+        - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
+        if 'default' each index has keys, if 'optimize' keys are optimized, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
-        option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False,
-                  'encode_format': 'json', 'codif': ES.codeb, 'name': False} | kwargs
+        option = {'modecodec':'optimize', #fullcodec': False, 'defaultcodec': False, 
+                  'encoded': False,
+                  'encode_format': 'json', 'codif': ES.codeb, 'name': False,
+                  'geojson': False} | kwargs
         option2 = {'encoded': False, 'encode_format': 'json',
-                   'codif': option['codif']}
+                   'codif': option['codif'], 'geojson': option['geojson']}
         lis = []
-        if option['fullcodec'] or option['defaultcodec']:
+        # add not variable Iindex
+        for idx in self.lidx:
+            idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
+        if   option['modecodec'] == 'full':
             for idx in self.lidx:
-                idxname = option['name'] or idx.name != 'i' + \
-                    str(self.lname.index(idx.name))
-                lis.append(idx.tostdcodec(full=not option['defaultcodec'])
-                           .to_obj(keys=not option['fullcodec'], name=idxname, **option2))
-        else:
+                lis.append(idx.tostdcodec(full=True).to_obj(name=idxname, **option2))
+        elif option['modecodec'] == 'default':
+            for idx in self.lidx:
+                lis.append(idx.to_obj(keys=True, name=idxname, **option2))
+        elif option['modecodec'] == 'nokeys':
+            for idx in self.lidx:
+                lis.append(idx.to_obj(name=idxname, **option2))        
+        elif option['modecodec'] == 'optimize':
             if not indexinfos:
                 indexinfos = self.indexinfos(default=False)
             notkeyscrd = True
             if self.iscanonorder():
                 notkeyscrd = None
             for idx, inf in zip(self.lidx, indexinfos):
-                idxname = option['name'] or idx.name != 'i' + \
-                    str(self.lname.index(idx.name))
                 if inf['typecoupl'] == 'unique':
                     lis.append(idx.tostdcodec(full=False).to_obj(
                         name=idxname, **option2))
@@ -280,7 +289,11 @@ class IlistInterface:
                     lis.append(idx.to_obj(keys=notkeyscrd,
                                name=idxname, **option2))
                 elif inf['typecoupl'] == 'coupled':
-                    lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
+                    if self.lidx[inf['parent']].keys == list(range(len(self))):
+                        lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
+                               to_obj(name=idxname, **option2))
+                    else:
+                        lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
                                to_obj(parent=self.lidxrow[inf['parent']],
                                       name=idxname, **option2))
                 elif inf['typecoupl'] == 'linked':
@@ -295,6 +308,7 @@ class IlistInterface:
                                               name=idxname, **option2))
                 else:
                     raise IlistError('Iindex type undefined')
+        # add variable Iindex
         if self.lenindex > 1:
             parent = ES.variable
         else:
@@ -309,6 +323,7 @@ class IlistInterface:
             else:
                 lis.append(idx.tostdcodec(full=True).
                            to_obj(keys=False, parent=parent, name=idxname, **option2))
+            
         if option['encoded'] and option['encode_format'] == 'json':
             return json.dumps(lis, cls=IindexEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor':

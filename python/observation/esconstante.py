@@ -27,7 +27,8 @@ def _classval():
             ES.dat_classES: DatationValue,
             ES.loc_classES: LocationValue,
             ES.prp_classES: PropertyValue,
-            ES.res_classES: NamedValue}
+            ES.res_classES: NamedValue,
+            ES.ES_clsName : NamedValue}
 
 def _classESval():
     from esobservation import LocationValue, DatationValue, PropertyValue, \
@@ -75,11 +76,13 @@ class Es:
                       "json_dat_name"       : False, # affiche name ou instant/slot
                       "json_loc_name"       : False, # affiche name ou instant/slot
                       "json_param"          : False, # ok
+                      "geojson"             : False, # ok
                       "json_info"           : False, # si True, ok pour tous les info_
-                      "json_info_type"      : False,
-                      "json_info_nval"      : False,
-                      "json_info_box"       : False,
-                      "json_info_other"     : False,
+                      "json_info_detail"    : False,
+                      #"json_info_type"      : False,
+                      #"json_info_nval"      : False,
+                      ##"json_info_box"       : False,
+                      #"json_info_other"     : False,
                       "unic_index"          : True,  # dans add
                       #"add_equal"           : "full",  # sinon "value ou "name" pour les comparaisons
                       "bytes_res_format"    : self.nullDict, # calculé à partir de propperty si "null"
@@ -129,48 +132,6 @@ class Es:
                         "EMFType "           : "ObservingEMF"  ,
                         "ResultNature "      : "ObservingEMF"  }
         ''' Assignment of attributes to Observation objects '''
-
-        self.obsCat: Dict = {
-                            -1 :"obserror" ,
-                            0 : 'config'  ,
-                            1 : 'top'  ,
-                            2 : 'sequence'  ,
-                            10 : 'point'  ,
-                            11 : 'track'  ,
-                            12 : 'datTrack'  ,
-                            20 : 'zoning'  ,
-                            21 : 'datZoning'  ,
-                            22 : 'path'  ,
-                            23 : 'areaSequence'  ,
-                            100 : 'property'  ,
-                            101 : 'record'  ,
-                            102 : 'DatRecord'  ,
-                            110 : 'feature'  ,
-                            111 : 'obs'  ,
-                            112 : 'obsDat'  ,
-                            120 : 'areaFeature'  ,
-                            121 : 'obsLoc'  ,
-                            122 : 'obsPath'  ,
-                            123 : 'obsAreaSequence'  ,
-                            200 : 'multiFeature'  ,
-                            201 : 'datMultiFeature'  ,
-                            202 : 'multiRecord'  ,
-                            203 : 'multiFeatureSequence'  ,
-                            210 : 'multiFeatureVariation'  ,
-                            211 : 'obsFeature'  ,
-                            212 : 'obsRecord'  ,
-                            213 : 'obsGridRecord'  ,
-                            220 : 'areaFeature'  ,
-                            223 : 'multiAreaFeature'  ,
-                            221 : 'obsAreaFeature'  ,
-                            224 : 'multiObsAreaFeature'  ,
-                            222 : 'obsPathFeature'  ,
-                            225 : 'FeatureobsAreaSequence'  ,
-                            226 : 'areaObsrecord'  ,
-                            227 : 'histoObsareaFeature'  ,
-                            228 : 'obsGrid'  ,
-                            }
-        ''' Default name for `observation.Observation.score` '''
 
         #%% Xarray initialization (dict)
         self.nax: Dict = {'dat' : 0, 'loc' : 1, 'prp' : 2,
@@ -393,6 +354,7 @@ class Es:
         self.id               = "id"
         self.param            = "param"
         self.information      = "information"
+        self.observation      = "observation"
         self.type             = "type"
         self.multi            = "Multi"
         self.obs              = "obs"
@@ -406,6 +368,21 @@ class Es:
         self.variable         = "variable"
         self.order            = "order"
         self.name             = "name"
+        self.length           = "length"
+        self.lenindex         = "lenindex"
+        self.complete         = "complete"
+        self.dimension        = "dimension"
+        self.num              = "num"
+        self.typevalue        = "typevalue"
+        self.lencodec         = "lencodec"
+        self.box              = "box"
+        self.cat              = "cat"
+        self.typecoupl        = "typecoupl"
+        self.pname            = "pname"
+        self.typecodec        = "typecodec"
+        self.linkrate         = "linkrate"
+        self.disttomin        = "disttomin"
+        self.disttomax        = "disttomax"
 
         self.nul_classES      = "nullClass"
         self.obs_classES      = "obs"

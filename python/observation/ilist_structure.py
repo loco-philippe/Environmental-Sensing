@@ -58,7 +58,7 @@ class IlistStructure:
         - **update** : if True, update actual values if index name is present (and merge is True)
 
         *Returns* : none '''
-        idx = Iindex.Iobj(index)
+        idx = Iindex.obj(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0:
             raise IlistError('sizes are different')
@@ -257,12 +257,15 @@ class IlistStructure:
         inf = ilis.indexinfos()
         for i, j in zip(primary, range(len(primary))):
             if inf[i]['cat'] == 'unique':
-                ilis.lidx[i].keys += [0] * lenadd
+                #ilis.lidx[i].keys += [0] * lenadd
+                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
             else:
-                ilis.lidx[i].keys += keysadd[j]
+                #ilis.lidx[i].keys += keysadd[j]
+                ilis.lidx[i].set_keys(ilis.lidx[i].keys + keysadd[j])
         for i in secondary:
             if inf[i]['cat'] == 'unique':
-                ilis.lidx[i].keys += [0] * lenadd
+                #ilis.lidx[i].keys += [0] * lenadd
+                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
             else:
                 ilis.lidx[i].tocoupled(
                     ilis.lidx[inf[i]['parent']], coupling=False)
@@ -270,12 +273,17 @@ class IlistStructure:
             if len(ilis.lidx[i].keys) != leninit + lenadd:
                 raise IlistError('primary indexes have to be present')
         if ilis.lvarname:
-            ilis.lvar[0].keys += [len(ilis.lvar[0].codec)] * len(keysadd[0])
+            #ilis.lvar[0].keys += [len(ilis.lvar[0].codec)] * len(keysadd[0])
+            ilis.lvar[0].set_keys(ilis.lvar[0].keys + [len(ilis.lvar[0].codec)] * 
+                                  len(keysadd[0]))
             if fillextern:
-                ilis.lvar[0].codec.append(util.castval(
-                    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName)))
+                #ilis.lvar[0].codec.append(util.castval(
+                #    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName)))
+                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [util.castval(
+                    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName))])
             else:
-                ilis.lvar[0].codec.append(fillvalue)
+                #ilis.lvar[0].codec.append(fillvalue)
+                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [fillvalue])
         if complete:
             ilis.setcanonorder()
         return ilis
@@ -538,6 +546,30 @@ class IlistStructure:
             return self.lindex[self.lname.index(name)]
         return None
 
+    def orindex(self, other, first=False, merge=False, update=False):
+        ''' Add other's index to self's index
+
+        *Parameters*
+
+        - **other** : self class - object to add
+        - **first** : Boolean (default False) - If True insert indexes
+        at the first row, else at the end
+        - **merge** : Boolean (default False) - create a new index 
+        if merge is False
+        - **update** : Boolean (default False) - if True, update actual 
+        values if index name is present (and merge is True)
+
+        *Returns* : none '''
+        if len(self) != 0 and len(self) != len(other) and len(other) != 0:
+            raise IlistError("the sizes are not equal")
+        otherc = copy(other)
+        for idx in otherc.lindex:
+            self.addindex(idx, first=first, merge=merge, update=update)
+        if not self.lvarname:
+            self.lvarname = other.lvarname
+        return self
+
+
     def record(self, row, extern=True):
         '''return the record at the row
 
@@ -671,15 +703,19 @@ class IlistStructure:
 
         *Returns* : self'''
         if not order:
-            order = []
+            order = list(range(self.lenindex))
+            #order = []
         orderfull = order + list(set(range(self.lenindex)) - set(order))
-        for idx in [self.lindex[i] for i in order]:
-            idx.reindex(codec=sorted(idx.codec, key=func))
+        #for idx in [self.lindex[i] for i in order]:
+        #    idx.reindex(codec=sorted(idx.codec, key=func))
+        for i in order:
+            self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
         newidx = util.transpose(sorted(util.transpose(
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]),
             reverse=reverse))
         for i in range(self.lenindex):
-            self.lindex[orderfull[i]].keys = newidx[i]
+            #self.lindex[orderfull[i]].keys = newidx[i]
+            self.lindex[orderfull[i]].set_keys(newidx[i])
         return self
 
     def swapindex(self, order):
