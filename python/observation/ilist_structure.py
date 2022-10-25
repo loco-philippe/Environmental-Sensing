@@ -383,42 +383,12 @@ class IlistStructure:
             return infos
         return [{k: v for k, v in inf.items() if k in keys} for inf in infos]
 
-    @staticmethod
-    def _min_rate_parent(mati, ind, lenself, lenidx):
-        '''return minrate and minparent for the Index define by ind'''
-        minrate = 1.00
-        mindiff = lenself
-        disttomin = None
-        minparent = ind
-        for j in range(lenidx):
-            if mati[j]['typecoupl'] == 'derived':
-                minrate = 0.00
-                if mati[j]['diff'] < mindiff:
-                    mindiff = mati[j]['diff']
-                    minparent = j
-            elif mati[j]['typecoupl'] == 'linked' and minrate > 0.0:
-                if not disttomin or mati[j]['disttomin'] < disttomin:
-                    disttomin = mati[j]['disttomin']
-                    minrate = mati[j]['rate']
-                    minparent = j
-            if j < ind:
-                if mati[j]['typecoupl'] == 'coupled':
-                    minrate = 0.00
-                    minparent = j
-                    break
-                if mati[j]['typecoupl'] == 'crossed' and minrate > 0.0:
-                    if not disttomin or mati[j]['disttomin'] < disttomin:
-                        disttomin = mati[j]['disttomin']
-                        minrate = mati[j]['rate']
-                        minparent = j
-        return (minrate, minparent)
-
     def indicator(self, fullsize=None, size=None, indexinfos=None):
         '''generate size indicators: ol (object lightness), ul (unicity level), gain (sizegain)
 
         *Parameters*
 
-        - **fullsize** : int (default none) - size with fullcodec
+        - **fullsize** : int (default none) - size with full codec
         - **size** : int (default none) - size with existing codec
         - **indexinfos** : list (default None) - indexinfos data
 
@@ -427,7 +397,7 @@ class IlistStructure:
             indexinfos = self.indexinfos()
         if not fullsize:
             fullsize = len(self.to_obj(indexinfos=indexinfos,
-                           encoded=True, fullcodec=True))
+                           encoded=True, modecodec='full'))
         if not size:
             size = len(self.to_obj(indexinfos=indexinfos, encoded=True))
         lenidx = self.lenidx
@@ -777,3 +747,34 @@ class IlistStructure:
 
         - **list of int** : rec key for each idx'''
         return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lidx, rec)]
+
+    @staticmethod
+    def _min_rate_parent(mati, ind, lenself, lenidx):
+        '''return minrate and minparent for the Index define by ind'''
+        minrate = 1.00
+        mindiff = lenself
+        disttomin = None
+        minparent = ind
+        for j in range(lenidx):
+            if mati[j]['typecoupl'] == 'derived':
+                minrate = 0.00
+                if mati[j]['diff'] < mindiff:
+                    mindiff = mati[j]['diff']
+                    minparent = j
+            elif mati[j]['typecoupl'] == 'linked' and minrate > 0.0:
+                if not disttomin or mati[j]['disttomin'] < disttomin:
+                    disttomin = mati[j]['disttomin']
+                    minrate = mati[j]['rate']
+                    minparent = j
+            if j < ind:
+                if mati[j]['typecoupl'] == 'coupled':
+                    minrate = 0.00
+                    minparent = j
+                    break
+                if mati[j]['typecoupl'] == 'crossed' and minrate > 0.0:
+                    if not disttomin or mati[j]['disttomin'] < disttomin:
+                        disttomin = mati[j]['disttomin']
+                        minrate = mati[j]['rate']
+                        minparent = j
+        return (minrate, minparent)
+

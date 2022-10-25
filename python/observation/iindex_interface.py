@@ -78,14 +78,16 @@ class IindexInterface:
             return (None, None, [], ES.nullparent, None)
         if isinstance(bs, bytes):
             lis = cbor2.loads(bs)
-        elif isinstance(bs, str) and bs[0] in ['{', '[']:
+        elif isinstance(bs, str) and bs[0] in ['{', '[', '"']:
+        #elif isinstance(bs, str):
             lis = json.loads(bs, object_hook=CborDecoder().codecbor)
         elif isinstance(bs, list):
             lis = bs
         else:
             lis = [bs]
         if not isinstance(lis, list):
-            raise IindexError("the parameter has to be a list")
+            #raise IindexError("the parameter has to be a list")
+            lis = [lis]
 
         if not lis:
             return (None, None, [], ES.nullparent, None)
@@ -109,31 +111,6 @@ class IindexInterface:
             return (None, None, IindexInterface.decodecodec(lis[0], classname),
                     *IindexInterface.decodekeys(lis[1]))
         return (None, None, IindexInterface.decodecodec(lis, classname), ES.nullparent, None)
-
-    @staticmethod
-    def iskeysobj(obj):
-        if isinstance(obj, int):
-            return True
-        if not isinstance(obj, list):
-            return False
-        if len(obj) == 0:
-            return True
-        if not isinstance(obj[0], int):
-            return False
-        if len(obj) == 1:
-            return True
-        if len(obj) > 2 and not isinstance(obj[1], int):
-            return False
-        if len(obj) == 2 and isinstance(obj[1], int):
-            return True
-        if len(obj) == 2 and isinstance(obj[1], list):
-            obj = obj[1]
-        if not isinstance(obj, list):
-            return False
-        for i in range(len(obj)):
-            if not isinstance(obj[i], int):
-                return False
-        return True
 
     @staticmethod
     def decodecodec(codecobj, classname=ES.nam_clsName):
@@ -171,18 +148,19 @@ class IindexInterface:
         raise IindexError('parent or keys is unconsistent')
 
     @staticmethod
-    def encodeobj(codeclist, keyslist=None, name=None, fullcodec=False, simpleval=False,
-                  codecval=False, typevalue=None, parent=ES.nullparent, listunic=False, **kwargs):
+    def encodeobj(codeclist, keyslist=None, name=None, simpleval=False,
+                  codecval=False, typevalue=None, parent=ES.nullparent, 
+                  listunic=False, modecodec='optimize', **kwargs):
         '''
         Return a formatted object with values, keys and codec.
         - Format can be json, bson or cbor
         - object can be string, bytes or dict
 
         *Parameters*
+        - **modecodec** : string (default 'optimize') - json mode
         - **codeclist** : list of codec ESValue to encode
         - **keyslist** : list (default = None) - int keys to encode, None if no keys
         - **name** : string (default = None) - name to encode, None if no name
-        - **fullcodec** : boolean (default False) - if True, use a full codec
         - **typevalue** : string (default None) - type to convert values
         - **parent** : int (default ES.nullparent) - Ilist index linked to
         - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
@@ -209,12 +187,12 @@ class IindexInterface:
             elif typevalue:
                 js.append(typevalue)
         codlis = [util.json(cc, encoded=False, typevalue=None, simpleval=simpleval,
-                            fullcodec=fullcodec, untyped=option['untyped'],
+                            modecodec=modecodec, untyped=option['untyped'],
                             geojson=option['geojson']) for cc in codeclist]
-        if len(js) == 1 and isinstance(js[0], str):
-            listunic = True
-        if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):
-            codlis = codlis[0]
+        #if len(js) == 1 and isinstance(js[0], str):
+        #    listunic = True
+        #if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):
+        #    codlis = codlis[0]
         js.append(codlis)
         if not codecval:
             if parent >= 0 and keyslist:
@@ -232,7 +210,32 @@ class IindexInterface:
                                timezone=datetime.timezone.utc, canonical=True)
         return js
 
-    def json(self, keys=None, typevalue=None, fullcodec=False, simpleval=False,
+    @staticmethod
+    def iskeysobj(obj):
+        if isinstance(obj, int):
+            return True
+        if not isinstance(obj, list):
+            return False
+        if len(obj) == 0:
+            return True
+        if not isinstance(obj[0], int):
+            return False
+        if len(obj) == 1:
+            return True
+        if len(obj) > 2 and not isinstance(obj[1], int):
+            return False
+        if len(obj) == 2 and isinstance(obj[1], int):
+            return True
+        if len(obj) == 2 and isinstance(obj[1], list):
+            obj = obj[1]
+        if not isinstance(obj, list):
+            return False
+        for i in range(len(obj)):
+            if not isinstance(obj[i], int):
+                return False
+        return True
+
+    def json(self, keys=None, typevalue=None, modecodec='optimize', simpleval=False,
              codecval=False, parent=ES.nullparent, **kwargs):
         '''Return a formatted object (string, bytes or dict) for the Iindex
 
@@ -241,7 +244,7 @@ class IindexInterface:
         - **keys** : list (default None) - list: List of keys to include - None:
         no list - else: Iindex keys
         - **typevalue** : string (default None) - type to convert values
-        - **fullcodec** : boolean (default False) - if True, use a full codec
+        - **modecodec** : string (default 'optimize') - json mode
         - **simpleval** : boolean (default False) - if True, only codec is included
         - **parent** : integer (default None) - index number of the parent in indexset
 
@@ -256,7 +259,7 @@ class IindexInterface:
         *Returns* : string, bytes or dict'''
         option = {'encoded': False, 'encode_format': 'json', 'untyped': True,
                   'codif': {}} | kwargs
-        return self.to_obj(keys=keys, typevalue=typevalue, fullcodec=fullcodec,
+        return self.to_obj(keys=keys, typevalue=typevalue, modecodec=modecodec,
                            codecval=codecval, simpleval=simpleval, parent=parent,
                            **option)
 
@@ -293,16 +296,17 @@ class IindexInterface:
                 return np.array(values, dtype=npdtype)
         return np.array(values, dtype=npdtype)
 
-    def to_obj(self, keys=None, typevalue=None, fullcodec=False, simpleval=False,
-               codecval=False, parent=ES.nullparent, name=True, listunic=False, **kwargs):
+    def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
+               codecval=False, parent=ES.nullparent, name=True, listunic=False, 
+               **kwargs):
         '''Return a formatted object (string, bytes or dict) for the Iindex
 
         *Parameters*
 
+        - **modecodec** : string (default 'optimize') - json mode
         - **keys** : list (default None) - list: List of keys to include - None or False:
         no list - else: Iindex keys
         - **typevalue** : string (default None) - type to convert values
-        - **fullcodec** : boolean (default False) - if True, use a full codec
         - **name** : boolean (default True) - if False, name is not included
         - **codecval** : boolean (default False) - if True, only list of codec values is included
         - **simpleval** : boolean (default False) - if True, only value (without name) is included
@@ -330,19 +334,40 @@ class IindexInterface:
             idxname = None
         else:
             idxname = self.name
-        if fullcodec:
+        if modecodec == 'full':
             codeclist = self.values
             keyslist = None
-            parent = ES.nullparent
+            #parent = ES.nullparent
+        elif modecodec == 'default':
+            codeclist = self._codec
+            keyslist = self._keys            
         else:
             codeclist = self._codec
         if typevalue:
             dtype = ES.valname[typevalue]
         else:
             dtype = None
-        return IindexInterface.encodeobj(codeclist, keyslist, idxname, fullcodec, simpleval,
-                                         codecval, dtype, parent, listunic, **kwargs)
+        return IindexInterface.encodeobj(codeclist, keyslist, idxname, simpleval,
+                                         codecval, dtype, parent, listunic, 
+                                         modecodec, **kwargs)
 
+    def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
+        option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
+                  'codif': {}, 'geojson': False} | kwargs
+        dic = {}
+        if self.typevalue: 
+            dic['type'] = self.typevalue
+        lis = []
+        zkeys = list(zip(range(len(self.keys)), self.keys))
+        for i in range(len(self.codec)):
+            value = util.json(self.codec[i], encoded=False, typevalue=None, 
+                              simpleval=simpleval, modecodec=modecodec, 
+                              untyped=option['untyped'], geojson=option['geojson'])
+            lis.append({'record': [z[0] for z in zkeys if z[1] == i],
+                        'codec': value})
+        dic['value'] = lis
+        return {self.name: dic}
+    
     def vlist(self, func, *args, extern=True, **kwargs):
         '''
         Apply a function to values and return the result.

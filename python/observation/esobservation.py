@@ -59,7 +59,7 @@ class Observation(Ilist):
     *constructor (@classmethod))*
 
     - `Observation.dic`
-    - `Observation.Std`
+    - `Observation.std`
     - `observation.ilist.Ilist.obj`
     - `Observation.from_obj`
     - `observation.ilist.Ilist.from_file`
@@ -215,7 +215,8 @@ class Observation(Ilist):
         self.param = param
 
     @classmethod
-    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None, var=None):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, 
+            param=None, var=None):
         '''
         Observation constructor (external dictionnary).
 
@@ -223,7 +224,6 @@ class Observation(Ilist):
 
         - **idxdic** : dict (default None) - dict of Iindex element (Iindex name : list of Iindex values)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
-        - **fullcodec** : boolean (default False) - full codec if True
         - **var** :  int (default None) - row of the variable
         - **name**     : string (default None) - Observation name
         - **id**       : string (default None) - Identification string
@@ -234,7 +234,7 @@ class Observation(Ilist):
         return cls(listidx=listidx, name=name, id=id, param=param, context=True)
 
     @classmethod
-    def Std(cls, result=None, datation=None, location=None, property=None,
+    def std(cls, result=None, datation=None, location=None, property=None,
             name=None, id=None, param=None):
         '''
         Generate an Observation Object with standard indexes
@@ -312,8 +312,8 @@ class Observation(Ilist):
             data = dic[ES.data]
         else:
             data = None
-        if data and not isinstance(data, list):
-            raise ObsError('data is not a list')
+        if data and not isinstance(data, (list, dict)):
+            raise ObsError('data is not a list and not a dict')
         return cls(listidx=Ilist.obj(data, reindex=reindex, context=context),
                    name=name, id=id, param=param, context=context, reindex=reindex)
 
@@ -495,7 +495,8 @@ class Observation(Ilist):
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
-        if 'default' each index has keys, if 'optimize' keys are optimized, if 'nokeys' keys are absent
+        if 'default' each index has keys, if 'optimize' keys are optimized, 
+        if 'dict' dict format is used, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
@@ -504,7 +505,7 @@ class Observation(Ilist):
         - **json_info_detail**: Boolean - include the other infos
 
         *Returns* : string, bytes or dict'''
-        option = {'fullcodec': False, 'defaultcodec': False, 'encoded': False,
+        option = {'modecodec': 'optimize', 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
                   'json_param': False, 'json_info': False, 'json_info_detail': False
                   } | kwargs

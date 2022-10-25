@@ -166,6 +166,28 @@ class Iindex(IindexStructure, IindexInterface):
             self.reindex()
 
     @classmethod
+    def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
+        '''
+        Iindex constructor (external dictionnary).
+
+        *Parameters*
+
+        - **dicvalues** : {name : values}  (see data model)
+        - **fullcodec** : boolean (default False) - full codec if True
+        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec'''
+        if not dicvalues:
+            return cls.ext(name=None, values=None, typevalue=typevalue, fullcodec=fullcodec)
+        if isinstance(dicvalues, Iindex):
+            return copy(dicvalues)
+        if not isinstance(dicvalues, dict):
+            raise IindexError("dicvalues not dict")
+        if len(dicvalues) != 1:
+            raise IindexError("one key:values is required")
+        name = list(dicvalues.keys())[0]
+        values = dicvalues[name]
+        return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)
+
+    @classmethod
     def ext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
         Iindex constructor (external list).
@@ -191,28 +213,6 @@ class Iindex(IindexStructure, IindexInterface):
         return cls(name=name, codec=codec, keys=keys, typevalue=None)
 
     @classmethod
-    def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
-        '''
-        Iindex constructor (external dictionnary).
-
-        *Parameters*
-
-        - **dicvalues** : {name : values}  (see data model)
-        - **fullcodec** : boolean (default False) - full codec if True
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec'''
-        if not dicvalues:
-            return cls.ext(name=None, values=None, typevalue=typevalue, fullcodec=fullcodec)
-        if isinstance(dicvalues, Iindex):
-            return copy(dicvalues)
-        if not isinstance(dicvalues, dict):
-            raise IindexError("dicvalues not dict")
-        if len(dicvalues) != 1:
-            raise IindexError("one key:values is required")
-        name = list(dicvalues.keys())[0]
-        values = dicvalues[name]
-        return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)
-
-    @classmethod
     def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
         '''Generate an Iindex Object from specific codec and parent keys.
 
@@ -230,23 +230,6 @@ class Iindex(IindexStructure, IindexInterface):
         return cls(codec=codec, name=name, keys=parent._keys, typevalue=typevalue, reindex=reindex)
 
     @classmethod
-    def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
-        '''Generate an Iindex Object from a bytes, json or dict value and from
-        a keys list (derived Iindex)
-
-        *Parameters*
-
-        - **bsd** : bytes, string or dict data to convert
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
-        - **extkeys** : list (default None) of int, string or dict data to convert in keys
-        - **context** : boolean (default True) - if False, only codec and keys are included
-        - **reindex** : boolean (default True) - if True, default codec is apply
-
-        *Returns* : tuple(code, Iindex) '''
-        return cls.from_obj(bsd, extkeys=extkeys, typevalue=typevalue,
-                            context=context, reindex=reindex)[1]
-
-    @classmethod
     def from_obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
         '''Generate an Iindex Object from a bytes, json or dict value and from
         a keys list (derived Iindex)
@@ -257,7 +240,7 @@ class Iindex(IindexStructure, IindexInterface):
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **extkeys** : list (default None) of int, string or dict data to convert in keys
         - **context** : boolean (default True) - if False, only codec and keys are included
-        - **reindex** : boolean (default True) - if True, default codec is apply
+        - **reindex** : boolean (default False) - if True, default codec is apply
 
         *Returns* : tuple(code, Iindex) '''
         if isinstance(bsd, Iindex):
@@ -276,6 +259,33 @@ class Iindex(IindexStructure, IindexInterface):
                             reindex=reindex))
 
     @classmethod
+    def from_dict_obj(cls, bsd, typevalue=ES.def_clsName, reindex=False):
+        '''Generate an Iindex Object from a dict value'''
+        var = False
+        if not isinstance(bsd, dict):
+            raise IindexError('data is not a dict')
+        name = list(bsd.keys())[0]
+        bsdv = list(bsd.values())[0]    
+        if not 'value' in bsdv or not isinstance(bsdv['value'], list):
+            raise IindexError('value is not a list')
+        if 'type' in bsdv and isinstance(bsdv['type'], str):
+            typevalue = bsdv['type']
+        if 'var' in bsdv and isinstance(bsdv['var'], bool):
+            var = bsdv['var']
+        codec = [util.castval(val['codec'], typevalue) for val in bsdv['value']]
+        pairs=[]
+        for i, rec in enumerate(bsdv['value']):
+            for j in rec['record']:
+                pairs.append((j,i))
+        if not pairs:
+            return (var, cls())
+        keys = list(list(zip(*sorted(pairs)))[1])
+
+        idx= cls(name=name, codec=codec, keys=keys, typevalue=None)
+        return (var, idx)
+
+
+    @classmethod
     def merging(cls, listidx, name=None):
         '''Create a new Iindex with values are tuples of listidx Iindex values
 
@@ -291,6 +301,25 @@ class Iindex(IindexStructure, IindexInterface):
         values = util.tuple(util.transpose([idx.values for idx in listidx]))
         return cls.ext(values, name)
 
+    @classmethod
+    def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
+        '''Generate an Iindex Object from a bytes, json or dict value and from
+        a keys list (derived Iindex)
+
+        *Parameters*
+
+        - **bsd** : bytes, string or dict data to convert
+        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
+        - **extkeys** : list (default None) of int, string or dict data to convert in keys
+        - **context** : boolean (default True) - if False, only codec and keys are included
+        - **reindex** : boolean (default True) - if True, default codec is apply
+
+        *Returns* : tuple(code, Iindex) '''
+        if isinstance(bsd, dict):
+            return cls.from_dict_obj(bsd, typevalue=typevalue, reindex=reindex)[1]
+        return cls.from_obj(bsd, extkeys=extkeys, typevalue=typevalue,
+                            context=context, reindex=reindex)[1]
+
 
 # %% special
 
@@ -300,7 +329,7 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __str__(self):
         '''return json string format'''
-        return '    ' + self.to_obj(encoded=True, fullcodec=True, untyped=False) + '\n'
+        return '    ' + self.to_obj(encoded=True, modecodec='full', untyped=False) + '\n'
 
     def __eq__(self, other):
         ''' equal if class and values are equal'''
@@ -378,7 +407,7 @@ class Iindex(IindexStructure, IindexInterface):
     @property
     def cod(self):
         '''return codec conversion to string '''
-        return self.to_obj(fullcodec=False, codecval=True, encoded=False, listunic=True)
+        return self.to_obj(modecodec='optimize', codecval=True, encoded=False, listunic=True)
 
     @property
     def codec(self):
@@ -429,4 +458,4 @@ class Iindex(IindexStructure, IindexInterface):
     @property
     def val(self):
         '''return values conversion to string '''
-        return self.to_obj(fullcodec=True, codecval=True, encoded=False)
+        return self.to_obj(modecodec='full', codecval=True, encoded=False)

@@ -157,6 +157,75 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.vlist`
     - `Ilist.voxel`
     '''
+    def __init__(self, listidx=None, name=None, length=None, var=None, reindex=True,
+                 typevalue=ES.def_clsName, context=True):
+        '''
+        Ilist constructor.
+
+        *Parameters*
+
+        - **listidx** :  list (default None) - list of compatible Iindex data
+        - **name** :  list (default None) - list of name for the Iindex data
+        - **var** :  int (default None) - row of the variable
+        - **length** :  int (default None)  - len of each Iindex
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
+        - **context** : boolean (default True) - if False, only codec and keys are included'''
+
+        self.name = self.__class__.__name__
+        self.lindex = []
+        self.lvarname = []
+        if not isinstance(name, list):
+            name = [name]
+        if isinstance(var, list):
+            idxvar = var
+        elif not isinstance(var, int) or var < 0:
+            idxvar = []
+        else:
+            idxvar = [var]
+
+        if listidx.__class__.__name__ in ['Ilist', 'Observation']:
+            self.lindex = [copy(idx) for idx in listidx.lindex]
+            self.lvarname = copy(listidx.lvarname)
+            return
+        if not listidx:
+            return
+        if isinstance(listidx, dict):
+            for idxname in listidx:
+                var, idx = Iindex.from_dict_obj({idxname: listidx[idxname]}, 
+                                                typevalue=typevalue, reindex=reindex)
+                self.lindex.append(idx)
+                if var: 
+                    self.lvarname.append(idxname)
+            return
+        
+        if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)):
+            listidx = [[idx] for idx in listidx]
+        codind, lcodind, lidx, idxvar, length, leng2 = Ilist._init_internal(
+            listidx, typevalue, name, context, idxvar, length)
+        self.lindex = list(range(len(codind)))
+
+        if len(listidx) == 1:
+            self.lindex = [codind[0][1]]
+            self.lvarname = [codind[0][1].name]
+            return
+        if length == 0:
+            self.lvarname = [codind[i][1].name for i in idxvar]
+            self.lindex = [iidx for code, iidx in codind]
+            return
+
+        flat = True
+        if leng2:
+            flat = length == max(leng2) == min(leng2)
+        #self._init_index(lcodind, flat, lidx, length, codind)
+        for i in idxvar:
+            self.lindex[i] = codind[i][1]
+        self._init_index(lcodind, flat, lidx, length, codind)
+        self.lvarname = [codind[i][1].name for i in idxvar]
+        if reindex:
+            self.reindex()
+        return
+
     @classmethod
     def dic(cls, idxdic=None, typevalue=ES.def_clsName, var=None, reindex=True):
         '''
@@ -266,7 +335,7 @@ class Ilist(IlistStructure, IlistInterface):
         *Returns* : new Object'''
         with open(filename, 'rb') as file:
             btype = file.read(1)
-        if btype == bytes('[', 'UTF-8') or forcestring:
+        if btype == bytes('[', 'UTF-8') or btype == bytes('{', 'UTF-8') or forcestring:
             with open(filename, 'r', newline='', encoding="utf-8") as file:
                 bjson = file.read()
         else:
@@ -302,72 +371,11 @@ class Ilist(IlistStructure, IlistInterface):
             lis = cbor2.loads(bsd)
         elif isinstance(bsd, str):
             lis = json.loads(bsd, object_hook=CborDecoder().codecbor)
-        elif isinstance(bsd, list):
+        elif isinstance(bsd, (list, dict)):
             lis = bsd
         else:
             raise IlistError("the type of parameter is not available")
         return cls(lis, reindex=reindex, context=context)
-
-    def __init__(self, listidx=None, name=None, length=None, var=None, reindex=True,
-                 typevalue=ES.def_clsName, context=True):
-        '''
-        Ilist constructor.
-
-        *Parameters*
-
-        - **listidx** :  list (default None) - list of compatible Iindex data
-        - **name** :  list (default None) - list of name for the Iindex data
-        - **var** :  int (default None) - row of the variable
-        - **length** :  int (default None)  - len of each Iindex
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
-        - **context** : boolean (default True) - if False, only codec and keys are included'''
-
-        self.name = self.__class__.__name__
-        if not isinstance(name, list):
-            name = [name]
-        if isinstance(var, list):
-            idxvar = var
-        elif not isinstance(var, int) or var < 0:
-            idxvar = []
-        else:
-            idxvar = [var]
-
-        if listidx.__class__.__name__ in ['Ilist', 'Observation']:
-            self.lindex = [copy(idx) for idx in listidx.lindex]
-            self.lvarname = copy(listidx.lvarname)
-            return
-        if not listidx:
-            self.lindex = []
-            self.lvarname = []
-            return
-
-        if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)):
-            listidx = [[idx] for idx in listidx]
-        codind, lcodind, lidx, idxvar, length, leng2 = Ilist._init_internal(
-            listidx, typevalue, name, context, idxvar, length)
-        self.lindex = list(range(len(codind)))
-
-        if len(listidx) == 1:
-            self.lindex = [codind[0][1]]
-            self.lvarname = [codind[0][1].name]
-            return
-        if length == 0:
-            self.lvarname = [codind[i][1].name for i in idxvar]
-            self.lindex = [iidx for code, iidx in codind]
-            return
-
-        flat = True
-        if leng2:
-            flat = length == max(leng2) == min(leng2)
-        #self._init_index(lcodind, flat, lidx, length, codind)
-        for i in idxvar:
-            self.lindex[i] = codind[i][1]
-        self._init_index(lcodind, flat, lidx, length, codind)
-        self.lvarname = [codind[i][1].name for i in idxvar]
-        if reindex:
-            self.reindex()
-        return
 
     @staticmethod
     def _init_internal(listidx, typevalue, name, context, idxvar, length):

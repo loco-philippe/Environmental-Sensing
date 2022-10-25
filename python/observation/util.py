@@ -261,7 +261,6 @@ class util:
             if not option['typevalue']:
                 return val.json(**option)
             else:
-                #return {_invcastfunc[val.__class__]: val.json(**option)}
                 return {ES.valname[val.__class__.__name__]: val.json(**option)}
         if val.__class__.__name__ == 'Ilist':
             return {ES.ili_valName: val.json(**option)}
@@ -276,12 +275,31 @@ class util:
         return list(map(list, tuplelists))
 
     @staticmethod
+    def listed(idx):
+        '''transform a tuple of tuple in a list of list'''
+        return [val if not isinstance(val, tuple) else util.listed(val) for val in idx]
+
+    @staticmethod
     def mul(values):
         '''return the product of values in a list or tuple '''
         mul = 1
         for val in values:
             mul *= val
         return mul
+
+    @staticmethod
+    def pparent(row, infos):
+        '''return field 'pparent' '''
+        field = infos[row]
+        if field['pparent'] != 0:
+            return field['pparent']
+        if field['cat'] == 'primary':
+            field['pparent'] = field['num']
+        elif field['cat'] == 'unique':
+            field['pparent'] = -1
+        else:
+            field['pparent'] = util.pparent(field['parent'], infos)
+        return field['pparent']
 
     @staticmethod
     def reindex(oldkeys, oldcodec, newcodec):
@@ -301,20 +319,6 @@ class util:
         '''return codec and keys from a list of values'''
         codec = util.tocodec(values)
         return (codec, util.tokeys(values, codec))
-
-    @staticmethod
-    def pparent(row, infos):
-        '''return field 'pparent' '''
-        field = infos[row]
-        if field['pparent'] != 0:
-            return field['pparent']
-        if field['cat'] == 'primary':
-            field['pparent'] = field['num']
-        elif field['cat'] == 'unique':
-            field['pparent'] = -1
-        else:
-            field['pparent'] = util.pparent(field['parent'], infos)
-        return field['pparent']
 
     @staticmethod
     def str(listvalues):
@@ -380,11 +384,6 @@ class util:
     def tupled(idx):
         '''transform a list of list in a tuple of tuple'''
         return tuple([val if not isinstance(val, list) else util.tupled(val) for val in idx])
-
-    @staticmethod
-    def listed(idx):
-        '''transform a tuple of tuple in a list of list'''
-        return [val if not isinstance(val, tuple) else util.listed(val) for val in idx]
 
     @staticmethod
     def typename(name, typevalue=None):

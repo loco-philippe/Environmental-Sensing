@@ -48,7 +48,8 @@ class IlistInterface:
         - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
-        if 'default' each index has keys, if 'optimize' keys are optimized, if 'nokeys' keys are absent
+        if 'default' each index has keys, if 'optimize' keys are optimized, 
+        if 'dict' dict format is used, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
@@ -159,6 +160,97 @@ class IlistInterface:
                                   ).to_dataframe(name=name)
         return None
 
+    def to_file(self, filename, **kwargs):
+        '''Generate file to display data.
+
+         *Parameters (kwargs)*
+
+        - **filename** : string - file name (with path)
+        - **kwargs** : see 'to_obj' parameters
+
+        *Returns* : Integer - file lenght (bytes)  '''
+        option = {'encode_format': 'cbor'} | kwargs | {'encoded': True}
+        data = self.to_obj(**option)
+        if option['encode_format'] == 'cbor':
+            size = len(data)
+            with open(filename, 'wb') as file:
+                file.write(data)
+        else:
+            size = len(bytes(data, 'UTF-8'))
+            with open(filename, 'w', newline='', encoding="utf-8") as file:
+                file.write(data)
+        return size
+
+    def to_obj(self, indexinfos=None, **kwargs):
+        '''Return a formatted object (json string, cbor bytes or json dict).
+
+        *Parameters (kwargs)*
+
+        - **encoded** : boolean (default False) - choice for return format
+        (string/bytes if True, dict else)
+        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
+        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
+        - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
+        if 'default' each index has keys, if 'optimize' keys are optimized, 
+        if 'dict' dict format is used, if 'nokeys' keys are absent
+        - **name** : boolean (default False) - if False, default index name are not included
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
+
+        *Returns* : string, bytes or dict'''
+        option = {'modecodec':'optimize', 'encoded': False,
+                  'encode_format': 'json', 'codif': ES.codeb, 'name': False,
+                  'geojson': False} | kwargs
+        option2 = {'encoded': False, 'encode_format': 'json',
+                   'codif': option['codif'], 'geojson': option['geojson'],
+                   'modecodec': option['modecodec']}
+        if option['modecodec'] == 'dict':
+            lis = {}
+            for idx in self.lindex:
+                keyval = list(idx.to_dict_obj(**option2).items())[0]
+                name, dicval = keyval
+                if name in self.lvarname:
+                    dicval['var'] = True
+                lis[name] = dicval
+        else:
+            lis = []
+            idxname = False
+            # add not variable Iindex
+            for idx in self.lidx:
+                idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
+            if   option['modecodec'] == 'full':
+                for idx in self.lidx:
+                    lis.append(idx.tostdcodec(full=True).to_obj(name=idxname, **option2))
+            elif option['modecodec'] == 'default':
+                for idx in self.lidx:
+                    lis.append(idx.to_obj(keys=True, name=idxname, **option2))
+            elif option['modecodec'] == 'nokeys':
+                for idx in self.lidx:
+                    lis.append(idx.to_obj(name=idxname, **option2))        
+            elif option['modecodec'] == 'optimize':
+                lis = self._optimize_obj(indexinfos, idxname, lis, **option2)
+            # add variable Iindex
+            if self.lenindex > 1:
+                parent = ES.variable
+            else:
+                parent = ES.nullparent
+            for i in self.lvarrow:
+                idx = self.lindex[i]
+                idxname = option['name'] or idx.name != 'i' + \
+                    str(self.lname.index(idx.name))
+                if i != self.lenindex - 1:
+                    lis.insert(i, idx.tostdcodec(full=True).to_obj(keys=False, 
+                        parent=parent, name=idxname, **option2))
+                else:
+                    lis.append(idx.tostdcodec(full=True).to_obj(keys=False, 
+                        parent=parent, name=idxname, **option2))
+            
+        if option['encoded'] and option['encode_format'] == 'json':
+            return json.dumps(lis, cls=IindexEncoder)
+        if option['encoded'] and option['encode_format'] == 'cbor':
+            return cbor2.dumps(lis, datetime_as_timestamp=True,
+                               timezone=datetime.timezone.utc, canonical=True)
+        return lis
+
     def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
                   lisfunc=None, name=None, numeric=False, npdtype=None, attrs=None, **kwargs):
         '''
@@ -219,117 +311,6 @@ class IlistInterface:
         if info:
             attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
-
-    def to_file(self, filename, **kwargs):
-        '''Generate file to display data.
-
-         *Parameters (kwargs)*
-
-        - **filename** : string - file name (with path)
-        - **kwargs** : see 'to_obj' parameters
-
-        *Returns* : Integer - file lenght (bytes)  '''
-        option = {'encode_format': 'cbor'} | kwargs | {'encoded': True}
-        data = self.to_obj(**option)
-        if option['encode_format'] == 'cbor':
-            size = len(data)
-            with open(filename, 'wb') as file:
-                file.write(data)
-        else:
-            size = len(bytes(data, 'UTF-8'))
-            with open(filename, 'w', newline='', encoding="utf-8") as file:
-                file.write(data)
-        return size
-
-    def to_obj(self, indexinfos=None, **kwargs):
-        '''Return a formatted object (json string, cbor bytes or json dict).
-
-        *Parameters (kwargs)*
-
-        - **encoded** : boolean (default False) - choice for return format
-        (string/bytes if True, dict else)
-        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
-        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
-        - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
-        if 'default' each index has keys, if 'optimize' keys are optimized, if 'nokeys' keys are absent
-        - **name** : boolean (default False) - if False, default index name are not included
-        - **geojson** : boolean (default False) - geojson for LocationValue if True
-
-        *Returns* : string, bytes or dict'''
-        option = {'modecodec':'optimize', #fullcodec': False, 'defaultcodec': False, 
-                  'encoded': False,
-                  'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'geojson': False} | kwargs
-        option2 = {'encoded': False, 'encode_format': 'json',
-                   'codif': option['codif'], 'geojson': option['geojson']}
-        lis = []
-        # add not variable Iindex
-        for idx in self.lidx:
-            idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
-        if   option['modecodec'] == 'full':
-            for idx in self.lidx:
-                lis.append(idx.tostdcodec(full=True).to_obj(name=idxname, **option2))
-        elif option['modecodec'] == 'default':
-            for idx in self.lidx:
-                lis.append(idx.to_obj(keys=True, name=idxname, **option2))
-        elif option['modecodec'] == 'nokeys':
-            for idx in self.lidx:
-                lis.append(idx.to_obj(name=idxname, **option2))        
-        elif option['modecodec'] == 'optimize':
-            if not indexinfos:
-                indexinfos = self.indexinfos(default=False)
-            notkeyscrd = True
-            if self.iscanonorder():
-                notkeyscrd = None
-            for idx, inf in zip(self.lidx, indexinfos):
-                if inf['typecoupl'] == 'unique':
-                    lis.append(idx.tostdcodec(full=False).to_obj(
-                        name=idxname, **option2))
-                elif inf['typecoupl'] == 'crossed':
-                    lis.append(idx.to_obj(keys=notkeyscrd,
-                               name=idxname, **option2))
-                elif inf['typecoupl'] == 'coupled':
-                    if self.lidx[inf['parent']].keys == list(range(len(self))):
-                        lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                               to_obj(name=idxname, **option2))
-                    else:
-                        lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                               to_obj(parent=self.lidxrow[inf['parent']],
-                                      name=idxname, **option2))
-                elif inf['typecoupl'] == 'linked':
-                    lis.append(idx.to_obj(keys=True, name=idxname, **option2))
-                elif inf['typecoupl'] == 'derived':
-                    if idx.iskeysfromderkeys(self.lidx[inf['parent']]):
-                        lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']],
-                                              name=idxname, **option2))
-                    else:
-                        keys = idx.derkeys(self.lidx[inf['parent']])
-                        lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']],
-                                              name=idxname, **option2))
-                else:
-                    raise IlistError('Iindex type undefined')
-        # add variable Iindex
-        if self.lenindex > 1:
-            parent = ES.variable
-        else:
-            parent = ES.nullparent
-        for i in self.lvarrow:
-            idx = self.lindex[i]
-            idxname = option['name'] or idx.name != 'i' + \
-                str(self.lname.index(idx.name))
-            if i != self.lenindex - 1:
-                lis.insert(i, idx.tostdcodec(full=True).
-                           to_obj(keys=False, parent=parent, name=idxname, **option2))
-            else:
-                lis.append(idx.tostdcodec(full=True).
-                           to_obj(keys=False, parent=parent, name=idxname, **option2))
-            
-        if option['encoded'] and option['encode_format'] == 'json':
-            return json.dumps(lis, cls=IindexEncoder)
-        if option['encoded'] and option['encode_format'] == 'cbor':
-            return cbor2.dumps(lis, datetime_as_timestamp=True,
-                               timezone=datetime.timezone.utc, canonical=True)
-        return lis
 
     def voxel(self):
         '''
@@ -411,6 +392,42 @@ class IlistInterface:
         return self.lindex[index].vlist(func, *args, **kwargs)
 
     # %%internal
+    def _optimize_obj(self, indexinfos, idxname, lis, **option2):
+        '''return list object with primary and secondary Iindex'''
+        if not indexinfos:
+            indexinfos = self.indexinfos(default=False)
+        notkeyscrd = True
+        if self.iscanonorder():
+            notkeyscrd = None
+        for idx, inf in zip(self.lidx, indexinfos):
+            if inf['typecoupl'] == 'unique':
+                lis.append(idx.tostdcodec(full=False).to_obj(
+                    name=idxname, **option2))
+            elif inf['typecoupl'] == 'crossed':
+                lis.append(idx.to_obj(keys=notkeyscrd,
+                           name=idxname, **option2))
+            elif inf['typecoupl'] == 'coupled':
+                if self.lidx[inf['parent']].keys == list(range(len(self))):
+                    lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
+                           to_obj(name=idxname, **option2))
+                else:
+                    lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
+                           to_obj(parent=self.lidxrow[inf['parent']],
+                                  name=idxname, **option2))
+            elif inf['typecoupl'] == 'linked':
+                lis.append(idx.to_obj(keys=True, name=idxname, **option2))
+            elif inf['typecoupl'] == 'derived':
+                if idx.iskeysfromderkeys(self.lidx[inf['parent']]):
+                    lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']],
+                                          name=idxname, **option2))
+                else:
+                    keys = idx.derkeys(self.lidx[inf['parent']])
+                    lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']],
+                                          name=idxname, **option2))
+            else:
+                raise IlistError('Iindex type undefined')
+        return lis
+    
     def _to_tab(self, **kwargs):
         ''' data preparation (dict of dict) for view or csv export.
         Representation is included if :

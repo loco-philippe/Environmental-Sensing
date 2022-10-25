@@ -385,7 +385,7 @@ class Es:
         self.disttomax        = "disttomax"
 
         self.nul_classES      = "nullClass"
-        self.obs_classES      = "obs"
+        self.obs_classES      = "observation"
         self.dat_classES      = "datation"
         self.loc_classES      = "location"
         self.prp_classES      = "property"

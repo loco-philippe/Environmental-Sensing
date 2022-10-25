@@ -509,7 +509,7 @@ class IindexStructure:
         *Parameters*
 
         - **inplace** : boolean (default True) - if True, new order is apply to self,
-        - **full** : boolean (default True) - if True reindex with fullcodec
+        - **full** : boolean (default True) - if True reindex with full codec
 
         *Return*
 

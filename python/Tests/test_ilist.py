@@ -28,15 +28,16 @@ class Test_Ilist(unittest.TestCase):
 
     def test_creation_unique(self):
         self.assertTrue(Ilist().to_obj() == [])
-        self.assertTrue(Ilist([1, 2, 3]).to_obj() == [1, 2, 3])
+        self.assertTrue(Ilist([1, 2, 3]).to_obj() == [[1], [2], [3]])
+        self.assertTrue(Ilist([[1, 2, 3]]).to_obj() == [[1, 2, 3]])
         self.assertTrue(Ilist(['er', 'er', 'er']).to_obj()
-                        == ['er', 'er', 'er'])
-        self.assertTrue(Ilist.from_obj([1, 2, 3]).to_obj() == [1, 2, 3])
+                        == [['er'], ['er'], ['er']])
+        self.assertTrue(Ilist.from_obj([1, 2, 3]).to_obj() == [[1], [2], [3]])
         self.assertTrue(Ilist.from_obj(
-            ['er', 'er', 'er']).to_obj() == ['er', 'er', 'er'])
-        self.assertTrue(Ilist.ext([1, 2, 3]).to_obj() == [1, 2, 3])
-        self.assertTrue(Ilist.ext(['er', 'er', 'er']).to_obj() == [
-                        'er', 'er', 'er'])
+            ['er', 'er', 'er']).to_obj() == [['er'], ['er'], ['er']])
+        self.assertTrue(Ilist.ext([1, 2, 3]).to_obj() == [[1], [2], [3]])
+        self.assertTrue(Ilist.ext(['er', 'er', 'er']).to_obj() == 
+                        [['er'], ['er'], ['er']])
 
     def test_creation_simple(self):
         iidx = Ilist([['datationvalue', [10, 20, 30]],
@@ -355,12 +356,11 @@ class Test_Ilist(unittest.TestCase):
             #self.assertEqual(Ilist.from_obj(ilm.to_obj()).to_obj(), ilm.to_obj())
         encoded = [True, False]
         format = ['json', 'cbor']
-        fullcodec = [True, False]
-        defaultcodec = [False, False]
-        test = list(product(encoded, format, fullcodec, defaultcodec))
+        modecodec = ['full', 'default', 'optimize', 'dict']
+        #defaultcodec = [False, False]
+        test = list(product(encoded, format, modecodec))
         for ts in test:
-            opt = {'encoded': ts[0], 'encode_format': ts[1], 'fullcodec': ts[2],
-                   'defaultcodec': ts[3]}
+            opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)
             ilm.to_file('test.il', **opt)
             self.assertEqual(Ilist.from_file('test.il'), ilm)
@@ -368,8 +368,7 @@ class Test_Ilist(unittest.TestCase):
                           ['s', 's', 's', 'n', 'd', 'd', 'd']])
         ilm.coupling()
         for ts in test:
-            opt = {'encoded': ts[0], 'encode_format': ts[1], 'fullcodec': ts[2],
-                   'defaultcodec': ts[3]}
+            opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)
 
     def test_to_obj_variable(self):

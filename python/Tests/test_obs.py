@@ -266,7 +266,7 @@ class TestExamples(unittest.TestCase):
 
     def test_first_observation(self):
         # cas simple + présentation
-        ob = Observation.Std('high', 'morning', 'paris', ' Temp')
+        ob = Observation.std('high', 'morning', 'paris', ' Temp')
         ob.append(['low', 'morning', 'lyon', ' Temp'])
         ob.append(['very high', 'morning', 'marseille', ' Temp'])
         # ob.view()
@@ -317,7 +317,7 @@ class TestExamples(unittest.TestCase):
         prop = {"prp": "Temp"}
         res = 25
         # Observation creation and encoding to Json or to binary data in the sensor
-        ob_sensor = Observation.Std(res, time, coord, prop)
+        ob_sensor = Observation.std(res, time, coord, prop)
         # if the payload is character payload
         payload1 = ob_sensor.json(encoded=True)
         #print(len(payload1), payload1)
@@ -339,7 +339,7 @@ class TestExamples(unittest.TestCase):
         #print("réponse : ", r.status_code, "\n")
 
         # case 2 : Mobile sensor with one property
-        obs_sensor = Observation.Std()
+        obs_sensor = Observation.std()
         prop1 = prop_pm25
         for i in range(6):  # simule une boucle de mesure
             obs_sensor.append([45 + i, datetime.datetime(2021, 6, 4+i, 12, 5),
@@ -354,7 +354,7 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(obs_receive == obs_sensor)   # it's True !!
 
         # case 3 : Mobile sensor with two properties
-        ob_sensor = Observation.Std()
+        ob_sensor = Observation.std()
         prop1 = {'prp': 'PM25', 'unit': 'kg/m3'}
         prop2 = {'prp': 'PM10', 'unit': 'kg/m3'}
         for i in range(6):  # simule une boucle de mesure
@@ -445,9 +445,9 @@ class TestObservation(unittest.TestCase):
                   Observation.obj({'data': [1, 2, 3], 'id':'truc'}),
                   Observation.obj({'data': [1, 2, 3], 'id':'truc',
                            'param':{'date': '21-12'}}),
-                  Observation.Std([11, 12], 'dat1', ['loc1', 'loc2'],
+                  Observation.std([11, 12], 'dat1', ['loc1', 'loc2'],
                           'prp1', name='truc'),
-                  Observation.Std(result=[10, 20], datation='dat1',
+                  Observation.std(result=[10, 20], datation='dat1',
                           location=['loc1', 'loc2'], name='truc'),
                   #Observation.dic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
                   Observation([list(dat1), list(loc1), list(prop3), list(_res(3))], name='truc'),
@@ -459,19 +459,19 @@ class TestObservation(unittest.TestCase):
             self.assertEqual(copy.copy(ob), ob)
 
         ob1 = Observation([list(dat1), list(loc1), list(prop3), list(_res(3))])
-        ob3 = Observation.Std(datation=dat1[1], location=loc1[1], property=prop3[1],
+        ob3 = Observation.std(datation=dat1[1], location=loc1[1], property=prop3[1],
                       result=_res(3)[1])
-        ob6 = Observation.Std(datation=dat1[1][0], location=loc1[1][0],
+        ob6 = Observation.std(datation=dat1[1][0], location=loc1[1][0],
                       property=prop3[1], result=_res(3)[1])
         self.assertTrue(ob1 == ob3 == ob6)
         ob = Observation()
         ob1 = Observation.dic({})
         ob2 = Observation([])
         self.assertTrue(ob == ob1 == ob2)
-        ob = Observation.Std('fort', 'ce matin', 'paris', 'pm10')
-        ob1 = Observation.Std([], [], [], [])
+        ob = Observation.std('fort', 'ce matin', 'paris', 'pm10')
+        ob1 = Observation.std([], [], [], [])
         ob1.append(['fort', 'ce matin', 'paris', 'pm10'])
-        ob2 = Observation.Std(datation=['ce matin'], location=[
+        ob2 = Observation.std(datation=['ce matin'], location=[
                       'paris'], property=['pm10'], result=['fort'])
         self.assertTrue(ob == ob1 == ob2)
 
@@ -523,13 +523,12 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob2.json(**option), ob.json(**option))
         encoded = [True, False]
         format = ['json', 'cbor']
-        fullcodec = [True, False]
-        defaultcodec = [False, False]
+        modecodec = ['full', 'optimize']
         geojson = [True, False]
-        test = list(product(encoded, format, fullcodec, defaultcodec, geojson))
+        test = list(product(encoded, format, modecodec, geojson))
         for ts in test:
-            opt = {'encoded': ts[0], 'encode_format': ts[1], 'fullcodec': ts[2],
-                   'defaultcodec': ts[3], 'geojson': ts[4]}
+            opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2],
+                   'geojson': ts[3]}
             self.assertEqual(Observation.from_obj(ob.to_obj(**opt)), ob)
 
     def test_obs_dim(self):
@@ -562,7 +561,7 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob1.setResult[ind[3]].value, ob)
         self.assertEqual(
             ob1.setLocation[ind[1]].value, LocationValue.Box(ob.bounds[1]).value)
-        ob1 = Observation.Std()
+        ob1 = Observation.std()
         ob1.appendObs(ob)
         ob2 = Observation.obj(ob1.to_obj(encode_format='json', encoded=False))
 
@@ -633,29 +632,21 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob.primary, [1, 2])
         self.assertTrue(ob.complete)
 
-
-"""class TestImportExport(unittest.TestCase):
-    '''Unit tests for `observation.esobservation.Observation` import and export '''
-    def test_json(self):
+    def test_json_file(self):
         res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
-        ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref={'location':'datation'})        
-        for forma in ['json', 'bson', 'cbor']:
-            for encoded in [False, True]:
-                for codif in [ES.codeb, {}]:
-                    self.assertEqual(Observation(ob.to_json(encoded=encoded, 
-                        encode_format=forma, codif=codif)).to_json(encoded=False),
-                         ob.to_json(encoded=False))
+        ob = Observation([list(res), list(dat3), list(loc3)+[1], list(prop2)])
+        #ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref={'location':'datation'})        
 
-    def test_file(self):
-        res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
-        ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref={'location':'datation'})
-        ob.to_file('test.obs', encode_format='bson')
-        self.assertEqual(Observation.from_file('test.obs').to_json(encoded=False),
-                         ob.to_json(encoded=False))
-        ob.to_file('test.obs', encode_format='json')
-        self.assertEqual(Observation.from_file('test.obs').to_json(encoded=False),
-                         ob.to_json(encoded=False))"""
-
+        encoded = [True, False]
+        format = ['json', 'cbor']
+        modecodec = ['full', 'default', 'optimize', 'dict']
+        #defaultcodec = [False, False]
+        test = list(product(encoded, format, modecodec))
+        for ts in test:
+            opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
+            self.assertEqual(Observation.from_obj(ob.to_obj(**opt)), ob)
+            ob.to_file('test.obs', **opt)
+            self.assertEqual(Observation.from_file('test.obs'), ob)
 
 class TestExports(unittest.TestCase):
     '''Unit tests for `ES.observation.Observation` exports '''

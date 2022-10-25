@@ -198,7 +198,7 @@ class Test_iindex(unittest.TestCase):
         il = Ilist.dic({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
         idx = Iindex.ext([il, il])
         self.assertEqual(idx.vlist(func=Ilist.to_obj, extern=False, encoded=False)[0][0],
-                         'er')
+                         ['er'])
         idx = Iindex.dic({'datation': [{'date1': '2021-02-04T11:05:00+00:00'},
                                         '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
         self.assertTrue(idx.vlist(func=ESValue.vName, extern=False, default='ici') ==
@@ -308,9 +308,9 @@ class Test_iindex(unittest.TestCase):
 
     def test_json(self):
         self.assertTrue(Iindex.obj(
-            Iindex(['a']).to_obj()).to_obj() == Iindex(['a']).to_obj() == 'a')
+            Iindex(['a']).to_obj()).to_obj() == Iindex(['a']).to_obj() == ['a'])
         self.assertTrue(Iindex.obj(
-            Iindex([0]).to_obj()).to_obj() == Iindex([0]).to_obj() == 0)
+            Iindex([0]).to_obj()).to_obj() == Iindex([0]).to_obj() == [0])
         self.assertTrue(Iindex.obj(Iindex().to_obj()).to_obj()
                         == Iindex().to_obj() == [])
         parent = Iindex.ext(['j', 'j', 'f', 'f', 'm', 's', 's'])
@@ -366,19 +366,43 @@ class Test_iindex(unittest.TestCase):
         else:
             self.assertTrue(isinstance(idx.values[0], NamedValue))
 
-    def test_to_from_obj(self):  # !!!
-        idx = Iindex.ext([[1, 2], [2, 3], [3, 4]], fullcodec=True)
-        self.assertEqual(Iindex.obj(idx.to_obj(encoded=False)), idx)
-        self.assertEqual(Iindex.obj(idx.to_obj(encoded=True, keys=True)), idx)
-        idx = Iindex.obj(['datation', [DatationValue.from_obj(dat3[1][0]),
-                                        DatationValue.from_obj(dat3[1][1]),
-                                        DatationValue.from_obj(dat3[1][2])]])
-        idx2 = Iindex.obj(['location', [LocationValue.from_obj(loc3[1][0]),
-                                         LocationValue.from_obj(loc3[1][1]),
-                                         LocationValue.from_obj(loc3[1][2])], 0])
-        idx3 = Iindex.obj(
-            ['property', [PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]])
-
+    def test_to_from_obj(self):
+        listobj = [Iindex(),
+                   Iindex(1),
+                   Iindex.obj([0]),
+                   Iindex.obj(['a']),
+                   Iindex.dic({'datatio': ['er', 'rt', 'ty', 'ty']}),
+                   Iindex.ext([[1, 2], [2, 3], [3, 4]], fullcodec=True),
+                   Iindex.obj(['datation', [DatationValue.from_obj(dat3[1][0]),
+                                            DatationValue.from_obj(dat3[1][1]),
+                                            DatationValue.from_obj(dat3[1][2])]]),
+                   Iindex.obj(['location', [LocationValue.from_obj(loc3[1][0]),
+                                            LocationValue.from_obj(loc3[1][1]),
+                                            LocationValue.from_obj(loc3[1][2])], 0]),
+                   Iindex.obj(['property', [PropertyValue(prop2[1][0]), 
+                                            PropertyValue(prop2[1][1])]]),
+                   Iindex(codec=['s', 'n', 's', 'd', 's', 'd'],
+                          keys=[0, 4, 2, 1, 5, 3, 3]),
+                   Iindex.ext(['er', 2, 'er', [1, 2]]),
+                   Iindex(codec=['er', 2, [1, 2]], name='test', keys=[0, 1, 2, 1]),
+                   Iindex.ext(['er', 2, [1, 2], 2], 'test'),
+                   Iindex.dic({'test': ['er', 2, [1, 2], 2]}),
+                   Iindex.dic({'test': ['er', 2, [1, 2], 2]}, fullcodec=True),
+                   Iindex.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)]
+        encoded = [True, False]
+        format = ['json', 'cbor']
+        modecodec = ['full', 'default', 'dict']
+        test = list(product(encoded, format, modecodec))
+        for i,idx in enumerate(listobj):
+            for ts in test:
+                option = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
+                #print(i, option)
+                if ts[2] == 'dict':
+                    idx2 = Iindex.obj(idx.to_dict_obj(**option))
+                else:
+                    idx2 = Iindex.obj(idx.to_obj(**option))
+                self.assertEqual(idx, idx2)
+        
     def test_iadd(self):
         idx = Iindex.ext(['er', 2, [1, 2]])
         idx2 = idx + idx
