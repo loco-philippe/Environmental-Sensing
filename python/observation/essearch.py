@@ -288,10 +288,13 @@ class ESSearch:
         if isinstance(operand, datetime.datetime) and (operand.tzinfo is None or operand.tzinfo.utcoffset(operand) is None):
             operand = operand.replace(tzinfo=datetime.timezone.utc)
 
-        if path is None:
+        if path is None: # default values for path when not defined
             if name:
-                path = "data." + name + ".value.cod" # there is no default case when name == "name", path is set to "data.name.value.cod" and not to "name"
-                if name == 'property': path = path + ".prp" # à voir si format réellement utilisé à chaque fois
+                if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
+                    path = "data.datation.value.cod"
+                else:
+                    path = "data." + name + ".value.cod" # there is no default case when name == "name", path is set to "data.name.value.cod" and not to "name"
+                    if name == 'property': path = path + ".prp" # à voir si format réellement utilisé à chaque fois
             else: path = "data"
 
         if operand:
@@ -349,7 +352,7 @@ class ESSearch:
 
     def _cond(self, or_pos, operand, comparator, path, inverted = False, name = None, formatstring = None, unwind = None, **kwargs):
         '''
-        Takes parameters and adds corresponding MongoDB expression to self._match['2'].
+        Takes parameters and adds corresponding MongoDB expression to self._match.
         self._unwind and self._set are updated when necessary.
         '''
         match = '2'
@@ -377,6 +380,11 @@ class ESSearch:
                 elif isinstance(operand, shapely.geometry.base.BaseGeometry):
                     operand = {"type" : operand.geom_type, "coordinates" : list(operand.exterior.coords)}
                 else: raise ValueError("Comparator not allowed.")
+
+        if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
+            self._set |= {name[1:]: {name : path}} #à tester
+            path = name[1:]
+            self._project |= {name[1:]:0}
 
         if isinstance(operand, TimeSlot): #equals->within, contains->intersects, within, disjoint, intersects
             if comparator == "within":
@@ -425,7 +433,7 @@ class ESSearch:
             return
 
         cond_0 = {comparator : operand}
-
+        
         if inverted:
             if path in self._match[match][or_pos]:
                 if "$nor" in self._match[match][or_pos][path]:
