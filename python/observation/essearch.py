@@ -182,6 +182,7 @@ class ESSearch:
                     parameters = None,
                     data = None,
                     collection = None,
+                    heavy = True,
                     **kwargs
                     ):
         '''
@@ -196,18 +197,21 @@ class ESSearch:
         ]
         - **data** :  list (default None) - list of Observation
         - **collection** :  pymongo.collection.Collection (default None) - MongoDB collection of Observation. Documents must have been inserted in an appropriate format
+        - **heavy** :  bool (default False) - Must be True when values are defined directly and inside dictionnaries simultaneously.
         - **kwargs** :  other parameters are used as arguments for ESSearch.addcondition method
         '''
-        self.parameters = [[]]
-        if isinstance(data, list) or data is None:
+        self.parameters = [[]]                                          # self.parameters
+        if isinstance(data, list) or data is None:                      # self.data
             self.data = data
         elif isinstance(data, Observation):
             self.data = [data]
         else: raise TypeError("data must be a list.")
-
-        if isinstance(collection, Collection) or collection is None:
+        if isinstance(heavy, bool): self.heavy = heavy                  # self.heavy
+        else: raise TypeError("heavy must be a bool.")
+        if isinstance(collection, Collection) or collection is None:    # self.collection
             self.collection = collection
         else: raise TypeError("collection must be a pymongo.collection.Collection.")
+
         if parameters: self.addconditions(parameters)
         if kwargs: self.addcondition(**kwargs)
 
@@ -274,7 +278,7 @@ class ESSearch:
         no operand => only the existence of something located at path is tested
         '''
         if name is not None and not isinstance(name, str): raise TypeError("name must be a str.")
-        if comparator is not None and not isinstance(name, str): raise TypeError("comparator must be a str.")
+        if comparator is not None and not isinstance(comparator, str): raise TypeError("comparator must be a str.")
         if path is not None and not isinstance(path, str): raise TypeError("path must be a str.")
         if or_position is not None and not isinstance(or_position, int): raise TypeError("or_position must be an int.")
 
@@ -294,7 +298,7 @@ class ESSearch:
                     path = "data.datation.value.cod"
                 else:
                     path = "data." + name + ".value.cod" # there is no default case when name == "name", path is set to "data.name.value.cod" and not to "name"
-                    if name == 'property': path = path + ".prp" # à voir si format réellement utilisé à chaque fois
+                    #if name == 'property': path = path + ".prp" # à voir si format réellement utilisé à chaque fois
             else: path = "data"
 
         if operand:
@@ -366,6 +370,10 @@ class ESSearch:
             else: raise ArgumentError("unwind must be a tuple, a str or an int.")
         elif name and operand and name not in self._unwind: self._unwind.append("data." + name)
         elif path[:5] != "data.": match = '1'
+
+        if self.heavy:
+            if path not in self._heavystages: self._heavystages.add(path) # peut-être mieux de laisser l'utilisateur choisir manuellement
+            path = "_" + path + ".v"
 
         if operand is None: # no operand => we only test if there is something located at path or at path given by name
             if name: path = "data." + name
@@ -459,10 +467,11 @@ class ESSearch:
         self._match = {}
         self._match['1'] = [] #[{"type" : "observation"}] # first match stage benefits from the use of MongoDB indexes, second does not.
         self._unwind = []
+        self._heavystages = set() # two additional set stages when format is too unknown
         self._set = {}
         self._geonear = {}
         self._match['2'] = [] # second match stage contains conditions which require to be after unwind and/or set stages.
-        self._project = {"_id" : 0, "information" : 0}
+        self._project = {"_id" : 0, "_data" : 0, "information" : 0}
         
         for i in range(len(self.parameters)): # rewriting conditions in MongoDB format
             self._match['1'].append({})
@@ -470,7 +479,7 @@ class ESSearch:
             for cond in self.parameters[i]:
                 self._cond(or_pos = i, **cond)
 
-        if self._match['1']:                                                # Mongo stage $match (first one)
+        if self._match['1']:                                                # Mongo $match stage (first one)
             j = 0
             for i in range(len(self._match['1'])):
                 if self._match['1'][i] and j != i:
@@ -480,12 +489,17 @@ class ESSearch:
                 if self._match['1'][0]: request.append({"$match" : self._match['1'][0]})
             else: # when there is a $or
                 request.append({"$match" : {"$or": self._match['1'][:j]}})
-        if self._unwind:                                                    # Mongo stage $unwind
+        if self._unwind:                                                    # Mongo $unwind stage
             for unwind in self._unwind:
                 request.append({"$unwind" : "$" + unwind})
-        if self._set: request.append({"$set" : self._set})                  # Mongo stage $set
-        if self._geonear: request.append({"$geoNear" : self._geonear})      # Mongo stage $geoNear
-        if self._match['2']:                                                # Mongo stage $match (second one)
+        if self._heavystages:                                               # additional Mongo $set stage # à tester
+            heavy = {}
+            for path in self._heavystages:
+                heavy |= {"_"+path:{"$cond":{"if":{"$eq":[{"$type":"$"+path},"object"]},"then":{"$objectToArray":"$"+path},"else": {"v":"$"+path}}}}
+            request.append({"$set" : heavy})
+        if self._set: request.append({"$set" : self._set})                  # Mongo $set stage
+        if self._geonear: request.append({"$geoNear" : self._geonear})      # Mongo $geoNear stage
+        if self._match['2']:                                                # Mongo $match stage (second one)
             j = 0
             for i in range(len(self._match['2'])):
                 if self._match['2'][i] and j != i:
