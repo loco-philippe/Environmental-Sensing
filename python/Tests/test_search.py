@@ -1,5 +1,24 @@
 import unittest
+from pymongo import MongoClient
 from essearch import *
+#from dotenv import dotenv_values
+
+#config = dotenv_values(".env")
+#client = clientMongo(config["USER"], config["PWD"], config["SITE"])
+
+def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.net/test'):
+    auth        = 'authSource=admin'
+    replicaSet  = 'replicaSet=atlas-13vws6-shard-0'
+    readPref    = 'readPreference=primary'
+    appName     = 'appname=MongoDB%20Compass'
+    ssl         = 'ssl=true'  
+    st = 'mongodb+srv://' + user +':' + pwd + '@' + site + \
+            '?' + auth + \
+            '&' + replicaSet + \
+            '&' + readPref + \
+            '&' + appName + \
+            '&' + ssl    
+    return MongoClient(st)
 
 def f(num=5):
     client = clientMongo()
@@ -9,7 +28,7 @@ coll = f()
 
 class TestSearch(unittest.TestCase):
     """
-    Tries different requests
+    Tries different requests using MongoDB
     """
     def test0(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
         research = ESSearch(collection=coll)
@@ -46,7 +65,7 @@ class TestSearch(unittest.TestCase):
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
-        print(result)
+        #print(result)
         self.assertIsNotNone(result)
 
     def test3(self):  #ACTUELLEMENT NE FONCTIONNE PAS CAR GÉOMÉTRIES MAL RENTRÉES DANS LA BASE
