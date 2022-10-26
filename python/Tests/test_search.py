@@ -1,7 +1,26 @@
 import unittest
+from pymongo import MongoClient
 from essearch import *
+#from dotenv import dotenv_values
 
-def f(num=5):
+#config = dotenv_values(".env")
+#client = clientMongo(config["USER"], config["PWD"], config["SITE"])
+
+def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.net/test'):
+    auth        = 'authSource=admin'
+    replicaSet  = 'replicaSet=atlas-13vws6-shard-0'
+    readPref    = 'readPreference=primary'
+    appName     = 'appname=MongoDB%20Compass'
+    ssl         = 'ssl=true'  
+    st = 'mongodb+srv://' + user +':' + pwd + '@' + site + \
+            '?' + auth + \
+            '&' + replicaSet + \
+            '&' + readPref + \
+            '&' + appName + \
+            '&' + ssl    
+    return MongoClient(st)
+
+def f(num=0):
     client = clientMongo()
     return client["test_obs"]['observation' + str(num)]
 
@@ -9,9 +28,10 @@ coll = f()
 
 class TestSearch(unittest.TestCase):
     """
-    Tries different requests
+    Tries different requests using MongoDB
     """
     def test0(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('datation')
         print("Requête effectuée :", research.request, '\n')
@@ -21,6 +41,7 @@ class TestSearch(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test0_1(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('datation')
         research.addcondition('datation', datetime.datetime(2022, 9, 1, 3))
@@ -32,6 +53,7 @@ class TestSearch(unittest.TestCase):
     
     # parameter inverted is to be used to select measures checking where everyting checks the conditions (and not just part of it)
     def test1(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('datation', datetime.datetime(2022, 1, 1, 0), ">=", inverted = True) #sort quand même un résultat car le inverted met un "$not"
         print("Requête effectuée :", research.request, '\n')
@@ -41,15 +63,17 @@ class TestSearch(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test2(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR DATETIMES MAL RENTRÉES DANS LA BASE
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('datation', datetime.datetime(2022, 9, 1, 3), ">=", formatstring='default')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
-        print(result)
+        #print(result)
         self.assertIsNotNone(result)
 
     def test3(self):  #ACTUELLEMENT NE FONCTIONNE PAS CAR GÉOMÉTRIES MAL RENTRÉES DANS LA BASE
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('location', [2.1, 45.1])
         print("Requête effectuée :", research.request, '\n')
@@ -59,6 +83,7 @@ class TestSearch(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test4(self):
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('property', 'PM1')
         print("Requête effectuée :", research.request, '\n')
@@ -68,6 +93,7 @@ class TestSearch(unittest.TestCase):
         self.assertIsNotNone(result)
     
     def test5(self):
+        coll.drop()
         research = ESSearch([{"name" : 'datation', "operand" : datetime.datetime(2022, 9, 19, 1), 'comparator' : "$gte", 'inverted' : True},
                     {"name" : 'datation', "operand" : datetime.datetime(2022, 9, 20, 3), 'comparator' : "$gte"}], collection = coll)
         print("Requête effectuée :", research.request, '\n')
@@ -77,6 +103,7 @@ class TestSearch(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test6(self):
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('property', 'PM1')
         research.addcondition('datation', '2022-09-01T00:00:00+00:00', formatstring='default')
@@ -89,6 +116,7 @@ class TestSearch(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def test6_2(self):
+        coll.drop()
         research = ESSearch(collection=coll)
         research.addcondition('property', 'PM1')
         research.addcondition('datation', '2022-09-01T00:00:00+00:00')
