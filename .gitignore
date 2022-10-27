@@ -17,3 +17,5 @@ Project1/
 *~
 .pylint.d/
 .cache
+.vscode
+.gitignore

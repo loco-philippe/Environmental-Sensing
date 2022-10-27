@@ -1,10 +1,11 @@
-from argparse import ArgumentError
 import datetime
 import shapely.geometry
 from pymongo.collection import Collection
 from esobservation import Observation
+from iindex import Iindex
 from util import util
 from timeslot import TimeSlot
+import time
 
 # comments in english are for everyone to read, comments in french are for myself
 
@@ -126,19 +127,24 @@ dico_alias_python = {
     }
 }
 
-def insert_from_doc(collection, document = '..//Tests//json_examples.obs', info=True):
+def insert_from_doc(collection, document , info=True):
     with open(document, 'r') as doc:
         for line in doc:
-            try: insert_to_mongo(collection, line, info)
+            try: insert_one_to_mongo(collection, line, info)
             except: pass
 
-def insert_to_mongo(collection, obj, info=True):
+def insert_one_to_mongo(collection, obj, info=True, mode='dict'):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
-    obs = Observation.from_obj(obj)
-#### A REPRENDRE CAR NE PERMET PAS DE RENTRER datetime.datetime EN DATES ET geometry EN GEOMETRIE DANS MONGODB TEL QUEL
-    dico2 = obs.json(json_info=info)
-####
+    if not isinstance(obj, Observation): obj = Observation.from_obj(obj)
+    dico2 = obj.json(json_info=info, modecodec=mode)
     collection.insert_one(dico2)
+
+def insert_many_to_mongo(collection, objList, info=True, mode='dict'):
+    '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
+    for i in range(len(objList)):
+        if not isinstance(objList[i], Observation): objList[i] = Observation.from_obj(objList[i])
+        objList[i] = objList[i].json(json_info=info, modecodec=mode)
+    collection.insert_many(objList)
 
 def empty_request(collection): # actuellement, n'utilise pas les informations et requête LOURDE si on enlève le limit (et si on le laisse, résultat inexact)
     """
@@ -283,11 +289,11 @@ class ESSearch:
         if or_position is not None and not isinstance(or_position, int): raise TypeError("or_position must be an int.")
 
         if name is None and operand is None and comparator is None and path is None:
-            raise ArgumentError("ESSearch.addcondition() requires at least one of these parameters : name, operand or path.")
+            raise ValueError("ESSearch.addcondition() requires at least one of these parameters : name, operand or path.")
 
         for item in kwargs:
             if item not in {'formatstring', 'inverted', 'unwind', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
-                raise ArgumentError("Unknown parameter : ", item)
+                raise ValueError("Unknown parameter : ", item)
 
         if isinstance(operand, datetime.datetime) and (operand.tzinfo is None or operand.tzinfo.utcoffset(operand) is None):
             operand = operand.replace(tzinfo=datetime.timezone.utc)
@@ -295,9 +301,9 @@ class ESSearch:
         if path is None: # default values for path when not defined
             if name:
                 if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
-                    path = "data.datation.value.cod"
+                    path = "data.datation.value.codec"
                 else:
-                    path = "data." + name + ".value.cod" # there is no default case when name == "name", path is set to "data.name.value.cod" and not to "name"
+                    path = "data." + name + ".value.codec" # there is no default case when name == "name", path is set to "data.name.value.cod" and not to "name"
                     #if name == 'property': path = path + ".prp" # à voir si format réellement utilisé à chaque fois
             else: path = "data"
 
@@ -305,7 +311,7 @@ class ESSearch:
             try: comparator = dico_alias_mongo[type(operand)][comparator]
             except: raise ValueError("Incompatible values for comparator and operand.")
         elif comparator:
-            raise ArgumentError("operand must be defined when comparator is used.")
+            raise ValueError("operand must be defined when comparator is used.")
 
         condition = {"comparator" : comparator, "operand" : operand, "path" : path, "name" : name} | kwargs
 
@@ -367,11 +373,11 @@ class ESSearch:
                 for _ in range(unwind): self._unwind.append(path)
             elif isinstance(unwind, tuple): # format : (<path>, <unwind quantity>)
                 for _ in range(unwind[1]): self._unwind.append(unwind[0])
-            else: raise ArgumentError("unwind must be a tuple, a str or an int.")
-        elif name and operand and name not in self._unwind: self._unwind.append("data." + name)
+            else: raise TypeError("unwind must be a tuple, a str or an int.")
+        elif name and operand and "data." + name + ".value" not in self._unwind: self._unwind.append("data." + name + ".value")
         elif path[:5] != "data.": match = '1'
 
-        if self.heavy:
+        if self.heavy and operand is not None and path[:4] == "data":
             if path not in self._heavystages: self._heavystages.add(path) # peut-être mieux de laisser l'utilisateur choisir manuellement
             path = "_" + path + ".v"
 
@@ -416,28 +422,33 @@ class ESSearch:
         if comparator in {"$geoIntersects", "$geoWithin"}:  # operand :
                                                             # [x, y] or [[x, y]] -> Point ;
                                                             # [[x1, y1], [x2, y2]] -> LineString ;
-                                                            # [[x1, y1], [x2, y2], [x3, y3], ...] or [[x1, y1], [x2, y2], [x3, y3], ..., [x1, y1]] -> Polygon.
+                                                            # [[x1, y1], [x2, y2], [x3, y3], ...] or [[x1, y1], [x2, y2], [x3, y3], ..., [x1, y1]] or [[[x1, y1], [x2, y2], [x3, y3], ..., [x1, y1]]] -> Polygon.
             if isinstance(operand, list):
-                if len(operand) == 1:
-                    geom_type = "Point"
-                    coordinates = operand[0]
-                elif (len(operand) > 1 and not isinstance(operand[0], list)):
+                if not isinstance(operand[0], list):
                     geom_type = "Point"
                     coordinates = operand
-                elif len(operand) == 2:
-                    geom_type = "LineString"
+                elif not isinstance(operand[0][0], list):
+                    if len(operand) == 1:
+                        geom_type = "Point"
+                        coordinates = operand[0]
+                    elif len(operand) == 2:
+                        geom_type = "LineString"
+                        coordinates = operand
+                    elif len(operand) > 2:
+                        if not operand[-1] == operand[0]:
+                            operand.append(operand[0])
+                        geom_type = "Polygon"
+                        coordinates = [operand]
+                    else: raise ValueError("Unable to define a geometry from " + str(operand))
+                else:
+                    geom_type = "Polygon"
                     coordinates = operand
-                elif len(operand) > 2:
-                    if not operand[-1] == operand[0]:
-                        operand.append(operand[0])
-                    geom_type = "Polygon" # Polygons are assumed not to have multiple rings.
-                    coordinates = [operand]
                 operand = {"$geometry" : {"type" : geom_type, "coordinates" : coordinates}}
             elif isinstance(operand, dict) and '$geometry' not in operand:
                 operand = {"$geometry" : operand}
         elif comparator == "$geoNear": # $geoNear is a MongoDB stage
             self._geonear = self._geonear | kwargs
-            if 'distanceField' not in self._geonear: raise ArgumentError("distanceField missing in MongoDB stage $geoNear.")
+            if 'distanceField' not in self._geonear: raise ValueError("distanceField missing in MongoDB stage $geoNear.")
             return
 
         cond_0 = {comparator : operand}
@@ -509,6 +520,11 @@ class ESSearch:
                 if self._match['2'][0]: request.append({"$match" : self._match['2'][0]})
             else: # when there is a $or
                 request.append({"$match" : {"$or": self._match['2'][:j]}})
+        if self._unwind:
+            dico = {}
+            for unwind in self._unwind:
+                dico |= {unwind: ["$"+unwind]} # A FAIRE CORRECTEMENT ! (tel quel, ajoute un array contenant le path entre guillemets...)
+            request.append({"$set" : dico})
         if self._project: request.append({"$project" : self._project})      # Mongo stage $project
         return request
 
@@ -519,29 +535,32 @@ class ESSearch:
         '''
         return self._fullSearchMongo()
 
-    def execute(self, filtered = False, single = True):
+    def execute(self, filtered = False, namefused = False, single = False, fillvalue = None):
         '''
         Executes the request and returns its result, either in one or many Observations.
 
         *Parameter*
 
         - **fitered** :  bool (default False) - parameter to force filtering on Mongo out.
+        - **namefused** :  bool (default False) - Put to True to fuse observations whose names are the same together.
         - **single** :  bool (default True) - Must be put to False in order to return a list of Observation instead of a single Observation.
+        - **fillvalue** :  (default None) - Value to use to fill gaps when observations are fused together.
         '''
         if self.collection is None: cursor = []
         else: cursor = self.collection.aggregate(self.request)
         if not self.data: self.data = []
         if self.parameters == [[]]:
             result = self.data
-            for item in cursor: result.append(Observation.from_obj(item)) # à adapter pour permettre la sélection du bon format des données dans la base
+            for item in cursor: result.append(Observation.from_obj(item))
         else:
             result = [self._filtered_observation(item) for item in self.data]            
             if filtered:
                 for item in cursor: result.append(self._filtered_observation(Observation.from_obj(item)))
             else: 
                 for item in cursor: result.append(Observation.from_obj(item))
-        if single: return self._fusion(result)
-        else: return self._fusion(result, True)
+        if single: return self._fusion(result, fillvalue=fillvalue)
+        elif namefused: return self._fusion(result, namefused, fillvalue)
+        else: return result
 
     def _filtered_observation(self, obs):
         '''
@@ -690,7 +709,7 @@ class ESSearch:
         else:
             return False
 
-    def _fusion(self, obsList, samename = False): #n'a pas sa place ici, à déplacer comme constructeur d'Observation ou ailleurs
+    def _fusion(self, obsList, samename = False, fillvalue = None):
         '''
         Takes a list of observations and returns one observation mixing them together in one single observation
         or a list of observations where all observations sharing the same name are fused together.
@@ -699,17 +718,37 @@ class ESSearch:
             return obsList[0]
         elif len(obsList) > 1:
             if not samename:
-                obs = obsList[0].mix(obsList[1])
-                for item in obsList[2:]:
-                    obs = obs.mix(item)
-                return obs
-            else:
+                lidx = []
+                new_lname = set()
+                lvarname = None
+                name = None
+                for obs in obsList:
+                    if not lvarname and obs.lvarname: # toujours lvarname du premier élément... inclusion dans la boucle vraiment utile ?
+                        lvarname = obs.lvarname
+                    if not name and obs.name: name = obs.name
+                    new_lname |= set(obs.lname)
+                new_lname = list(new_lname)
+                
+                for i in range(len(new_lname)): # for each column of the new Observation
+                    values = []
+                    for obs in obsList: # for each Observation in the list
+                        if new_lname[i] in obs.lname: values += obs.lindex[obs.lname.index(new_lname[i])].values # values of the column are added to the new column
+                        else: values += [fillvalue] * len(obs) # when there is no value, filled with fillvalue
+                    codec = util.tocodec(values)
+                    lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
+
+                new_obs = Observation(lidx, name)
+                new_obs.lvarname = lvarname                
+                return new_obs
+            else:                   # à tester
                 new_obsList = []
                 dict_names = {}
                 for item in obsList:
                     if item.name in dict_names:
-                        new_obsList[dict_names[item.name]].mix(item)
+                        new_obsList[dict_names[item.name]].append(item)
                     else:
-                        new_obsList.append(item)
+                        new_obsList.append([item])
                         dict_names[item.name] = len(new_obsList) - 1
+                for i in range(len(new_obsList)):
+                    new_obsList[i] = self._fusion(new_obsList[i], False, fillvalue)
                 return new_obsList
