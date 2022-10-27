@@ -735,7 +735,7 @@ class ESSearch:
                         if new_lname[i] in obs.lname: values += obs.lindex[obs.lname.index(new_lname[i])].values # values of the column are added to the new column
                         else: values += [fillvalue] * len(obs) # when there is no value, filled with fillvalue
                     codec = util.tocodec(values)
-                    lidx[i] = Iindex(codec, new_lname[i], util.tokeys(values, codec))
+                    lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
 
                 new_obs = Observation(lidx, name)
                 new_obs.lvarname = lvarname                
