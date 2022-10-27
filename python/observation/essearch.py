@@ -727,19 +727,20 @@ class ESSearch:
                         lvarname = obs.lvarname
                     if not name and obs.name: name = obs.name
                     new_lname |= set(obs.lname)
+                new_lname = list(new_lname)
                 
                 for i in range(len(new_lname)): # for each column of the new Observation
                     values = []
                     for obs in obsList: # for each Observation in the list
                         if new_lname[i] in obs.lname: values += obs.lindex[obs.lname.index(new_lname[i])].values # values of the column are added to the new column
-                        else: values += [fillvalue] * len(obs) # when ther is no value, we fill with fillvalue
+                        else: values += [fillvalue] * len(obs) # when there is no value, filled with fillvalue
                     codec = util.tocodec(values)
                     lidx[i] = Iindex(codec, new_lname[i], util.tokeys(values, codec))
 
                 new_obs = Observation(lidx, name)
                 new_obs.lvarname = lvarname                
                 return new_obs
-            else:                   #à tester
+            else:                   # à tester
                 new_obsList = []
                 dict_names = {}
                 for item in obsList:
