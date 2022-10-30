@@ -146,6 +146,8 @@ class IlistStructure:
         - **att** : string - name of the info to store in the file
 
         *Returns* : array of array of dict'''
+        return self.analysis.getmatrix()
+        '''
         lenidx = self.lenidx
         mat = [[None for i in range(lenidx)] for i in range(lenidx)]
         for i in range(lenidx):
@@ -169,7 +171,7 @@ class IlistStructure:
                 for i in range(lenidx):
                     writer.writerow([mat[i, j][att] for j in range(lenidx)])
                 writer.writerow(self.idxlen)
-        return mat
+        return mat'''
 
     def coupling(self, mat=None, derived=True, rate=0.1):
         '''Transform idx with low rate in coupled or derived indexes (codec extension).
@@ -349,6 +351,8 @@ class IlistStructure:
         - **base** : boolean (default False) - if True, add Iindex infos
 
         *Returns* : array'''
+        return self.analysis.getinfos(keys)
+        '''
         infos = [{} for i in range(self.lenidx)]
         if not mat:
             mat = self.couplingmatrix(default=default)
@@ -381,7 +385,7 @@ class IlistStructure:
             util.pparent(i, infos)
         if not keys:
             return infos
-        return [{k: v for k, v in inf.items() if k in keys} for inf in infos]
+        return [{k: v for k, v in inf.items() if k in keys} for inf in infos] '''
 
     def indicator(self, fullsize=None, size=None, indexinfos=None):
         '''generate size indicators: ol (object lightness), ul (unicity level), gain (sizegain)

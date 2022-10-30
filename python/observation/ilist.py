@@ -44,6 +44,7 @@ from iindex import Iindex
 from iindex_interface import util, CborDecoder
 from ilist_interface import IlistInterface, IlistError
 from ilist_structure import IlistStructure
+from ilist_analysis import Analysis
 
 
 class Ilist(IlistStructure, IlistInterface):
@@ -173,6 +174,7 @@ class Ilist(IlistStructure, IlistInterface):
         - **context** : boolean (default True) - if False, only codec and keys are included'''
 
         self.name = self.__class__.__name__
+        self.analysis = Analysis(self)
         self.lindex = []
         self.lvarname = []
         if not isinstance(name, list):
@@ -187,6 +189,7 @@ class Ilist(IlistStructure, IlistInterface):
         if listidx.__class__.__name__ in ['Ilist', 'Observation']:
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.lvarname = copy(listidx.lvarname)
+            self.analysis = Analysis(self)
             return
         if not listidx:
             return
@@ -513,6 +516,15 @@ class Ilist(IlistStructure, IlistInterface):
         '''return sum of all hash(Iindex)'''
         return sum([hash(idx) for idx in self.lindex]) + hash(tuple(self.lvarname))
 
+    def _hashi(self):
+        '''return sum of all hashi(Iindex)'''
+        '''return hash(tuple(tuple([idx._hashi() for idx in self.lindex]),
+                          tuple([idx._hashi() for idx in self.lindex]),
+                          tuple(self.lvarname)))'''
+        return sum([idx._hashi() for idx in self.lindex]) + hash(tuple(self.lvarname))
+        #return hash(tuple(self.values))
+    
+
     def __eq__(self, other):
         ''' equal if hash values are equal'''
         return hash(self) == hash(other)
@@ -658,8 +670,9 @@ class Ilist(IlistStructure, IlistInterface):
     @property
     def primary(self):
         ''' list of primary idx'''
-        idxinfos = self.indexinfos()
-        return [idxinfos.index(idx) for idx in idxinfos if idx['cat'] == 'primary']
+        return self.analysis.getprimary()
+        #idxinfos = self.indexinfos()
+        #return [idxinfos.index(idx) for idx in idxinfos if idx['cat'] == 'primary']
 
     @property
     def setidx(self):
