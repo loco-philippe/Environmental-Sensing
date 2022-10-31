@@ -369,8 +369,8 @@ class Test_Ilist(unittest.TestCase):
         ilm.coupling()
         for ts in test:
             opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
-            self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)
-
+            self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)#'''
+    #"""
     def test_to_obj_variable(self):
         il = Ilist.ext([[0, 1, 2, 3, 4, 5],
                          ['j', 'j', 'f', 'f', 'a', 'a'],
@@ -642,7 +642,7 @@ class Test_Ilist(unittest.TestCase):
             option = {'encoded': ts[0], 'encode_format': ts[1]}
             #il2 = Ilist.from_obj(il.to_obj(**option))
             # self.assertEqual(il, il2)   #!!!
-
+    
     '''for forma in ['json', 'cbor']:
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:

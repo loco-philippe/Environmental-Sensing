@@ -130,6 +130,13 @@ class DatationValue(ESValue):   # !!! début ESValue
         if self.name == ES.nullName and isinstance(name, str) and name != ES.nullName:
             self.name = name
 
+    @staticmethod
+    def boundingBox(listValue):
+        ''' return a tuple (datmin, datmax) with bounds values'''
+        return [min([val.value.slot[0].start for val in listValue]),
+                max([val.value.slot[len(val.value) - 1].end for val in listValue])]
+        #return (TimeSlot.form(self.slot[0].start), TimeSlot.form(self.slot[len(self) - 1].end))
+
     def getInstant(self):
         '''return datetime if 'instant', none else'''
         if self.value.stype == 'instant':
@@ -272,6 +279,14 @@ class LocationValue(ESValue):              # !!! début LocationValue
     @property
     def __geo_interface__(self):
         return json.loads(json.dumps(self.value.__geo_interface__, cls=ESValueEncoder))
+
+    @staticmethod
+    def boundingBox(listValue):
+        ''' return a tuple (xmin, ymin, xmax, ymax) with bounds values'''
+        return [min([val.value.bounds[0] for val in listValue]),
+                min([val.value.bounds[1] for val in listValue]),
+                max([val.value.bounds[2] for val in listValue]),
+                max([val.value.bounds[3] for val in listValue])]
 
     @property
     def coords(self):
@@ -460,6 +475,11 @@ class PropertyValue(ESValue):              # !!! début ESValue
     def __lt__(self, other):
         """lower if string simple value + name is lower"""
         return self.simple + self.name < other.simple + other.name
+
+    @staticmethod
+    def boundingBox(listValue):
+        ''' return a tuple with 'prp' values'''
+        return [val.value['prp'] for val in listValue]
 
     def link(self, other):
         '''
