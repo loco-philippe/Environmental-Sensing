@@ -470,6 +470,7 @@ class Observation(Ilist):
         - **line** : Boolean, optionnal (default True) - Line between recods if True
 
         *Returns* : None'''
+        primary = self.primary
         if self.dimension == 1:
             m = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
             folium.Choropleth(
@@ -478,7 +479,7 @@ class Observation(Ilist):
                 data=self.to_xarray(numeric=True).to_dataframe(name='obs'),
                 key_on="feature.id",
                 #columns=['location_row', 'obs'],
-                columns=[self.idxname[self.primary[0]] + '_row', 'obs'],
+                columns=[self.idxname[primary[0]] + '_row', 'obs'],
                 fill_color="OrRd",
                 fill_opacity=0.7,
                 line_opacity=0.4,
@@ -518,8 +519,8 @@ class Observation(Ilist):
                   'json_param': False, 'json_info': False, 'json_info_detail': False
                   } | kwargs
         option2 = option | {'encoded': False, 'encode_format': 'json'}
-        from time import time
-        t0 = time()
+        #from time import time
+        #t0 = time()
         dic = {ES.type: ES.obs_classES}
         if self.id:
             dic[ES.obs_id] = self.id
@@ -527,13 +528,13 @@ class Observation(Ilist):
             dic[ES.obs_name] = self.name
         if self.param:
             dic[ES.obs_param] = self.param
-        print(time() - t0)
+        #print(time() - t0)
         dic[ES.obs_data] = Ilist.to_obj(self, **option2)
-        print('ilist ', time()-t0)
+        #print('ilist ', time()-t0)
         if option["json_param"] and self.param:
             dic[ES.obs_param] = self.param
         dic |= self._info(**option)
-        print('dic', time()-t0)
+        #print('dic', time()-t0)
         if option['codif'] and option['encode_format'] != 'cbor':
             js2 = {}
             for k, v in dic.items():
@@ -548,7 +549,7 @@ class Observation(Ilist):
         if option['encoded'] and option['encode_format'] == 'cbor':
             return cbor2.dumps(js2, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
-        print('fin', time()-t0)
+        #print('fin', time()-t0)
         return dic
 
     def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
@@ -586,7 +587,9 @@ class Observation(Ilist):
         dcobs[ES.name]              = self.name
         dcobs[ES.length]            = len(self)
         dcobs[ES.lenindex]          = self.lenindex
+        #print('lenindex')
         dcobs[ES.complete]          = self.complete
+        #print('complete')
         dcobs[ES.dimension]         = self.dimension
         #print('info dim ', time()-t0)
         if option['json_info_detail']:

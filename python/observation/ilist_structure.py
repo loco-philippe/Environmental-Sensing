@@ -173,17 +173,16 @@ class IlistStructure:
                 writer.writerow(self.idxlen)
         return mat'''
 
-    def coupling(self, mat=None, derived=True, rate=0.1):
+    def coupling(self, derived=True, rate=0.1):
         '''Transform idx with low rate in coupled or derived indexes (codec extension).
 
         *Parameters*
 
-        - **mat** : array of array (default None) - coupling matrix
         - **rate** : integer (default 0.1) - threshold to apply coupling.
         - **derived** : boolean (default : True).If True, indexes are derived, else coupled.
 
         *Returns* : list - coupling infos for each idx'''
-        infos = self.indexinfos(mat=mat)
+        infos = self.indexinfos()
         coupl = True
         while coupl:
             coupl = False
@@ -259,14 +258,11 @@ class IlistStructure:
         inf = ilis.indexinfos()
         for i, j in zip(primary, range(len(primary))):
             if inf[i]['cat'] == 'unique':
-                #ilis.lidx[i].keys += [0] * lenadd
                 ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
             else:
-                #ilis.lidx[i].keys += keysadd[j]
                 ilis.lidx[i].set_keys(ilis.lidx[i].keys + keysadd[j])
         for i in secondary:
             if inf[i]['cat'] == 'unique':
-                #ilis.lidx[i].keys += [0] * lenadd
                 ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
             else:
                 ilis.lidx[i].tocoupled(
@@ -275,16 +271,12 @@ class IlistStructure:
             if len(ilis.lidx[i].keys) != leninit + lenadd:
                 raise IlistError('primary indexes have to be present')
         if ilis.lvarname:
-            #ilis.lvar[0].keys += [len(ilis.lvar[0].codec)] * len(keysadd[0])
             ilis.lvar[0].set_keys(ilis.lvar[0].keys + [len(ilis.lvar[0].codec)] * 
                                   len(keysadd[0]))
             if fillextern:
-                #ilis.lvar[0].codec.append(util.castval(
-                #    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName)))
                 ilis.lvar[0].set_codec(ilis.lvar[0].codec + [util.castval(
                     fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName))])
             else:
-                #ilis.lvar[0].codec.append(fillvalue)
                 ilis.lvar[0].set_codec(ilis.lvar[0].codec + [fillvalue])
         if complete:
             ilis.setcanonorder()
@@ -338,7 +330,7 @@ class IlistStructure:
         '''return rec array (without variable) from complete record (with variable)'''
         return [record[self.lidxrow[i]] for i in range(len(self.lidxrow))]
 
-    def indexinfos(self, keys=None, mat=None, default=False, base=False):
+    def indexinfos(self, keys=None):
         '''return an array with infos of each index :
             - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate
             - lencodec, min, max, typecodec, rate, disttomin, disttomax (base info)
@@ -346,48 +338,11 @@ class IlistStructure:
         *Parameters*
 
         - **keys** : list (default none) - list of information to return (reduct dict), all if None
-        - **default** : build infos with default codec if new coupling matrix is calculated
-        - **mat** : array of array (default None) - coupling matrix
-        - **base** : boolean (default False) - if True, add Iindex infos
 
         *Returns* : array'''
         return self.analysis.getinfos(keys)
-        '''
-        infos = [{} for i in range(self.lenidx)]
-        if not mat:
-            mat = self.couplingmatrix(default=default)
-        for i in range(self.lenidx):
-            infos[i]['num'] = i
-            infos[i]['name'] = self.idxname[i]
-            infos[i]['typecoupl'] = 'null'
-            minrate, minparent = self._min_rate_parent(
-                mat[i], i, len(self), self.lenidx)
-            if self.lidx[i].infos['typecodec'] == 'unique':
-                infos[i]['cat'] = 'unique'
-                infos[i]['typecoupl'] = 'unique'
-                infos[i]['parent'] = i
-            elif minrate == 0.0:
-                infos[i]['cat'] = 'secondary'
-                infos[i]['parent'] = minparent
-            else:
-                infos[i]['cat'] = 'primary'
-                infos[i]['parent'] = minparent
-                if minparent == i:
-                    infos[i]['typecoupl'] = 'crossed'
-            if minparent != i:
-                infos[i]['typecoupl'] = mat[i][minparent]['typecoupl']
-            infos[i]['linkrate'] = round(minrate, 2)
-            infos[i]['pname'] = self.idxname[infos[i]['parent']]
-            infos[i]['pparent'] = 0
-            if base:
-                infos[i] |= self.lidx[i].infos
-        for i in range(self.lenidx):
-            util.pparent(i, infos)
-        if not keys:
-            return infos
-        return [{k: v for k, v in inf.items() if k in keys} for inf in infos] '''
 
-    def indicator(self, fullsize=None, size=None, indexinfos=None):
+    def indicator(self, fullsize=None, size=None):
         '''generate size indicators: ol (object lightness), ul (unicity level), gain (sizegain)
 
         *Parameters*
@@ -397,13 +352,10 @@ class IlistStructure:
         - **indexinfos** : list (default None) - indexinfos data
 
         *Returns* : dict'''
-        if not indexinfos:
-            indexinfos = self.indexinfos()
         if not fullsize:
-            fullsize = len(self.to_obj(indexinfos=indexinfos,
-                           encoded=True, modecodec='full'))
+            fullsize = len(self.to_obj(encoded=True, modecodec='full'))
         if not size:
-            size = len(self.to_obj(indexinfos=indexinfos, encoded=True))
+            size = len(self.to_obj(encoded=True))
         lenidx = self.lenidx
         nval = len(self) * (lenidx + 1)
         sval = fullsize / nval
@@ -619,7 +571,8 @@ class IlistStructure:
         '''Set the canonical index order : primary - secondary/unique - variable.
         Set the canonical keys order : ordered keys in the first columns.
         Return self'''
-        order = [self.lidxrow[idx] for idx in self.primary]
+        primary = self.primary
+        order = [self.lidxrow[idx] for idx in primary]
         order += [idx for idx in self.lidxrow if not idx in order]
         order += self.lvarrow
         self.swapindex(order)

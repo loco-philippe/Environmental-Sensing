@@ -181,7 +181,7 @@ class IlistInterface:
                 file.write(data)
         return size
 
-    def to_obj(self, indexinfos=None, **kwargs):
+    def to_obj(self, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict).
 
         *Parameters (kwargs)*
@@ -206,8 +206,7 @@ class IlistInterface:
         if option['modecodec'] == 'dict':
             lis = {}
             for idx in self.lindex:
-                keyval = list(idx.to_dict_obj(**option2).items())[0]
-                name, dicval = keyval
+                name, dicval = list(idx.to_dict_obj(**option2).items())[0]
                 if name in self.lvarname:
                     dicval['var'] = True
                 lis[name] = dicval
@@ -227,7 +226,7 @@ class IlistInterface:
                 for idx in self.lidx:
                     lis.append(idx.to_obj(name=idxname, **option2))        
             elif option['modecodec'] == 'optimize':
-                lis = self._optimize_obj(indexinfos, idxname, lis, **option2)
+                lis = self._optimize_obj(idxname, lis, **option2)
             # add variable Iindex
             if self.lenindex > 1:
                 parent = ES.variable
@@ -392,10 +391,9 @@ class IlistInterface:
         return self.lindex[index].vlist(func, *args, **kwargs)
 
     # %%internal
-    def _optimize_obj(self, indexinfos, idxname, lis, **option2):
+    def _optimize_obj(self, idxname, lis, **option2):
         '''return list object with primary and secondary Iindex'''
-        if not indexinfos:
-            indexinfos = self.indexinfos(default=False)
+        indexinfos = self.indexinfos()
         notkeyscrd = True
         if self.iscanonorder():
             notkeyscrd = None

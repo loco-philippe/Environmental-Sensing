@@ -11,13 +11,10 @@ The `observation.ilist_structure` module contains the `IlistStructure` class
 # %% declarations
 from copy import copy
 import csv
-import math
 
-from esconstante import ES
-from iindex import Iindex
 from util import util
 #from ilist import Ilist
-
+from time import time
 
 class Analysis:
     '''this class includes Ilist methods'''
@@ -28,15 +25,14 @@ class Analysis:
         self.matrix = None
         self.infos = None
         self.primary = None
-        #self.actualize()
     
     def actualize(self, forcing=False):
+        #t0=time()
         self.matrix = self.setmatrix()
         self.infos = self.setinfos()
         self.primary = [self.infos.index(idx) for idx in self.infos if idx['cat'] == 'primary']
-        #self.hashi = hash(self.iobj)
         self.hashi = self.iobj._hashi()
-        #print('update'+ str(self.hashi))
+        #print('update ', time()-t0, self.primary, str(self.hashi))
         
     def setinfos(self):
         '''set and return attribute 'infos'. 

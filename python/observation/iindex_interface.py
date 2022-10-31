@@ -357,15 +357,26 @@ class IindexInterface:
         dic = {}
         if self.typevalue: 
             dic['type'] = self.typevalue
-        lis = []
+        #lis = []
+        #from time import time
+        #t0 = time()
         zkeys = list(zip(range(len(self.keys)), self.keys))
-        for i in range(len(self.codec)):
+        #print('zkeys ', time()-t0)
+        dic['value'] = [{'record':[z[0] for z in zkeys if z[1] == i],
+                         'codec': util.json(cod, encoded=False, typevalue=None, 
+                                  simpleval=simpleval, modecodec=modecodec, 
+                                  untyped=option['untyped'], geojson=option['geojson'])}
+                         for i, cod in enumerate(self.codec)]
+        """for i in range(len(self.codec)):
             value = util.json(self.codec[i], encoded=False, typevalue=None, 
                               simpleval=simpleval, modecodec=modecodec, 
                               untyped=option['untyped'], geojson=option['geojson'])
+            #if i==len(self.codec)-1: print('value ', time()-t0)
             lis.append({'record': [z[0] for z in zkeys if z[1] == i],
                         'codec': value})
-        dic['value'] = lis
+            #if i==len(self.codec)-1: print('append ', time()-t0)
+        #print('boucle for ', self.name, time()-t0)
+        dic['value'] = lis"""
         return {self.name: dic}
     
     def vlist(self, func, *args, extern=True, **kwargs):

@@ -593,8 +593,9 @@ class Ilist(IlistStructure, IlistInterface):
     @property
     def idxref(self):
         ''' list of idx parent row (idx row if linked)'''
+        indexinfos = self.indexinfos()
         return [inf['parent'] if inf['typecoupl'] != 'linked' else
-                inf['num'] for inf in self.indexinfos()]
+                inf['num'] for inf in indexinfos]
 
     @property
     def idxlen(self):
@@ -619,7 +620,8 @@ class Ilist(IlistStructure, IlistInterface):
     @property
     def lencomplete(self):
         '''number of values if complete (prod(idxlen primary))'''
-        return util.mul([self.idxlen[i] for i in self.primary])
+        primary = self.primary        
+        return util.mul([self.idxlen[i] for i in primary])
 
     @property
     def lenindex(self):
@@ -671,8 +673,6 @@ class Ilist(IlistStructure, IlistInterface):
     def primary(self):
         ''' list of primary idx'''
         return self.analysis.getprimary()
-        #idxinfos = self.indexinfos()
-        #return [idxinfos.index(idx) for idx in idxinfos if idx['cat'] == 'primary']
 
     @property
     def setidx(self):
