@@ -462,6 +462,7 @@ class Es:
         self.defaultindex     = '$default'
         self.variable         = -1
         self.nullparent       = -2
+        self.notcrossed       = -3
         self.miniStr          = 10
         self.distRef          = [48.87, 2.35] # coordonnées Paris lat/lon
         #self.nullDate         = datetime(1970, 1, 1)

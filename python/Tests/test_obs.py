@@ -406,8 +406,8 @@ class TestExamples(unittest.TestCase):
         prop2 = {"prp": "PM10"}
         ob_init =  Observation([['location', [coord]], ['property', [prop1, prop2]]])
         # sensor : Ilist acquisition
-        il_sensor = Ilist([['res', []], ['datation', []], 
-                           ['property', [prop1, prop2], []]], var=0)
+        il_sensor = Ilist.obj([['res', [], 0], ['datation', []], 
+                           ['property', [prop1, prop2], []]])
         for i in range(6):  # simule une boucle de mesure
             date = datetime.datetime(2021, 6, 4+i, 12, 5)
             il_sensor.append([45 + i, date, prop1])
@@ -446,7 +446,7 @@ class TestObservation(unittest.TestCase):
                   Observation.obj({'data': [1, 2, 3], 'id':'truc',
                            'param':{'date': '21-12'}}),
                   Observation.std([11, 12], 'dat1', ['loc1', 'loc2'],
-                          'prp1', name='truc'),
+                                  'prp1', name='truc'), #!!!
                   Observation.std(result=[10, 20], datation='dat1',
                           location=['loc1', 'loc2'], name='truc'),
                   #Observation.dic(dict((dat1, loc1, prop3, _res(3))), name='truc'),

@@ -208,8 +208,12 @@ class Observation(Ilist):
                 if isinstance(idx, list) and len(idx) > 1 and idx[0]==ES.res_classES:
                     var=i
                     break
-            Ilist.__init__(self, listidx=listidx, length=length, var=var,
+            #Ilist.__init__(self, listidx=listidx, length=length, var=var,
+            il = Ilist._init_ilist(listidx=listidx, length=length, var=var,
                            reindex=reindex, typevalue=typevalue, context=context)
+            self.lindex= il.lindex
+            self.lvarname = il.lvarname
+            self.analysis = Analysis(self)
         #if ES.res_classES in self.lname:
         #    self.lvarname = [ES.res_classES]
         self.name = name
@@ -256,19 +260,41 @@ class Observation(Ilist):
             listidx.append([ES.res_classES, []])
             length = 0
         else:
+            if isinstance(result, list):
+                length = len(result)
+            else:
+                length = 1
             listidx.append(Iindex.ext(result, ES.res_classES))
         if datation is None:
             listidx.append([ES.dat_classES, []])
         else:
-            listidx.append(Iindex.ext(datation, ES.dat_classES))
+            if not isinstance(datation, list):
+                dat = [datation] * length
+            elif len(datation) == 1 :
+                dat = datation * length
+            else:
+                dat = datation
+            listidx.append(Iindex.ext(dat, ES.dat_classES))
         if location is None:
             listidx.append([ES.loc_classES, []])
         else:
-            listidx.append(Iindex.ext(location, ES.loc_classES))
+            if not isinstance(location, list):
+                loc = [location] * length
+            elif len(location) == 1 :
+                loc = location * length
+            else:
+                loc = location
+            listidx.append(Iindex.ext(loc, ES.loc_classES))
         if property is None:
             listidx.append([ES.prp_classES, []])
         else:
-            listidx.append(Iindex.ext(property, ES.prp_classES))
+            if not isinstance(property, list):
+                prp = [property] * length
+            elif len(property) == 1 :
+                prp = property * length
+            else:
+                prp = property
+            listidx.append(Iindex.ext(prp, ES.prp_classES))
         return cls(listidx=listidx, length=length, name=name, id=None, param=param,
                    var=0, context=True)
 

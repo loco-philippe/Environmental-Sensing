@@ -31,6 +31,7 @@ class Analysis:
         self.matrix = self.setmatrix()
         self.infos = self.setinfos()
         self.primary = [self.infos.index(idx) for idx in self.infos if idx['cat'] == 'primary']
+        self.crossed = [idx for idx in self.primary if self.infos[idx]['typecoupl'] == 'crossed']
         self.hashi = self.iobj._hashi()
         #print('update ', time()-t0, self.primary, str(self.hashi))
         
@@ -44,7 +45,7 @@ class Analysis:
             infos[i]['num'] = i
             infos[i]['name'] = self.iobj.idxname[i]
             infos[i]['typecoupl'] = 'null'
-            minrate, minparent = self.iobj._min_rate_parent(
+            minrate, minparent = Analysis._min_rate_parent(
                 self.matrix[i], i, len(self.iobj), lenidx)
             if self.iobj.lidx[i].infos['typecodec'] == 'unique':
                 infos[i]['cat'] = 'unique'
@@ -96,16 +97,59 @@ class Analysis:
             return self.infos
         return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
     
-    def getmatrix(self):
+    def getmatrix(self, name=None):
         '''return attribute matrix'''
-        #if self.hashi != hash(self.iobj):
         if self.hashi != self.iobj._hashi():
             self.actualize()
-        return self.matrix
-
+        if not name or not isinstance(name, list):
+            return self.matrix
+        if name[0] in self.iobj.idxname:
+            ind0 = self.iobj.idxname.index(name[0])
+            if len(name) == 1:
+                return self.matrix[ind0]
+            if len(name) > 1 and name[1] in self.iobj.idxname:
+                return self.matrix[ind0][self.iobj.idxname.index(name[1])]
+        return None
+    
     def getprimary(self):
         '''return attribute primary'''
-        #if self.hashi != hash(self.iobj):
         if self.hashi != self.iobj._hashi():
             self.actualize()
         return self.primary
+
+    def getcrossed(self):
+        '''return attribute crossed'''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        return self.crossed
+
+    @staticmethod
+    def _min_rate_parent(mati, ind, lenself, lenidx):
+        '''return minrate and minparent for the Index define by ind'''
+        minrate = 1.00
+        mindiff = lenself
+        disttomin = None
+        minparent = ind
+        for j in range(lenidx):
+            if mati[j]['typecoupl'] == 'derived':
+                minrate = 0.00
+                if mati[j]['diff'] < mindiff:
+                    mindiff = mati[j]['diff']
+                    minparent = j
+            elif mati[j]['typecoupl'] == 'linked' and minrate > 0.0:
+                if not disttomin or mati[j]['disttomin'] < disttomin:
+                    disttomin = mati[j]['disttomin']
+                    minrate = mati[j]['rate']
+                    minparent = j
+            if j < ind:
+                if mati[j]['typecoupl'] == 'coupled':
+                    minrate = 0.00
+                    minparent = j
+                    break
+                if mati[j]['typecoupl'] == 'crossed' and minrate > 0.0:
+                    if not disttomin or mati[j]['disttomin'] < disttomin:
+                        disttomin = mati[j]['disttomin']
+                        minrate = mati[j]['rate']
+                        minparent = j
+        return (minrate, minparent)
+

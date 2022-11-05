@@ -281,7 +281,7 @@ class util:
 
     @staticmethod
     def mul(values):
-        '''return the product of values in a list or tuple '''
+        '''return the product of values in a list or tuple (math.prod)'''
         mul = 1
         for val in values:
             mul *= val

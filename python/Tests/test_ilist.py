@@ -18,8 +18,8 @@ from observation import Observation, NamedValue, DatationValue, LocationValue, \
     PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
 from test_obs import dat3, loc3, prop2, _res
 
-l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
-il = Ilist(l)
+#l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
+#il = Ilist.obj(l)
 defv = 'default value'
 i1 = 'i1'
 
@@ -28,9 +28,9 @@ class Test_Ilist(unittest.TestCase):
 
     def test_creation_unique(self):
         self.assertTrue(Ilist().to_obj() == [])
-        self.assertTrue(Ilist([1, 2, 3]).to_obj() == [[1], [2], [3]])
-        self.assertTrue(Ilist([[1, 2, 3]]).to_obj() == [[1, 2, 3]])
-        self.assertTrue(Ilist(['er', 'er', 'er']).to_obj()
+        self.assertTrue(Ilist.obj([1, 2, 3]).to_obj() == [[1], [2], [3]])
+        self.assertTrue(Ilist.obj([[1, 2, 3]]).to_obj() == [[1, 2, 3]])
+        self.assertTrue(Ilist.obj(['er', 'er', 'er']).to_obj()
                         == [['er'], ['er'], ['er']])
         self.assertTrue(Ilist.from_obj([1, 2, 3]).to_obj() == [[1], [2], [3]])
         self.assertTrue(Ilist.from_obj(
@@ -40,49 +40,64 @@ class Test_Ilist(unittest.TestCase):
                         [['er'], ['er'], ['er']])
 
     def test_creation_simple(self):
-        iidx = Ilist([['datationvalue', [10, 20, 30]],
+        iidx = Ilist.obj ([['datationvalue', [10, 20, 30]],
                       ['locationvalue', [100, 200, 300], 0],
                       ['propertyvalue', [True, False]]])
-        iidx1 = Ilist([['datationvalue', [10, 20, 30]],
+        '''iidx1 = Ilist.obj ([['datationvalue', [10, 20, 30]],
                        ['locationvalue', [100, 200, 300], 0],
-                       ['propertyvalue', [True, False]]], length=6)
-        iidx2 = Ilist([['datationvalue', [10, 20, 30], [0, 0, 1, 1, 2, 2]],
+                       ['propertyvalue', [True, False]]], length=6)'''
+        iidx2 = Ilist.obj ([['datationvalue', [10, 20, 30], [0, 0, 1, 1, 2, 2]],
                        ['locationvalue', [100, 200, 300], [0, 0, 1, 1, 2, 2]],
-                       ['propertyvalue', [True, False], [0, 1, 0, 1, 0, 1]]], length=6)
-        iidx3 = Ilist([['datationvalue', [10, 10, 20, 20, 30, 30]],
+                       ['propertyvalue', [True, False], [0, 1, 0, 1, 0, 1]]])
+        '''iidx3 = Ilist.obj ([['datationvalue', [10, 10, 20, 20, 30, 30]],
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
-                       ['propertyvalue', [True, False, True, False, True, False]]], length=6)
-        iidx4 = Ilist([['datationvalue', [10, 10, 20, 20, 30, 30]],
+                       ['propertyvalue', [True, False, True, False, True, False]]], length=6)'''
+        iidx4 = Ilist.obj ([['datationvalue', [10, 10, 20, 20, 30, 30]],
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
-        self.assertTrue(len(iidx) == len(iidx1) == len(
-            iidx3) == len(iidx2) == len(iidx4))
-        self.assertTrue(iidx.lidx[2].values == iidx3.lidx[2].values ==
-                        iidx2.lidx[2].values == iidx4.lidx[2].values ==
-                        iidx1.lidx[2].values)
-        self.assertEqual(Ilist(Ilist([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])),
-                         Ilist([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
-        il = Ilist([[{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]]],
-                   name='location', context=False)
+        self.assertTrue(len(iidx) == len(iidx2) == len(iidx4))
+        self.assertTrue(iidx.lidx[2].values == iidx2.lidx[2].values == iidx4.lidx[2].values)
+        self.assertEqual(Ilist(Ilist.obj ([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])),
+                         Ilist.obj([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
+        il = Ilist([Iindex([{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
+                   name='location')])
         self.assertEqual(
             il.lindex[0].codec[1].value.__class__.__name__, 'Point')
 
     def test_creation_variable(self):
         #self.assertEqual(Ilist2(indexset=['i1', [1, 2, 3]]), Ilist2([defv, [True, True, True]], ['i1', [1, 2, 3]]))
-        il = Ilist([['namvalue', ['a', 'b', 'c', 'd', 'e', 'f']],
+        '''il = Ilist([['namvalue', ['a', 'b', 'c', 'd', 'e', 'f']],
                     ['datationvalue', [10, 20, 30]],
                     ['locationvalue', [100, 200, 300], 1],
-                    ['propertyvalue', [True, False]]], var=0)
-        il1 = Ilist([['namvalue', ['a', 'b', 'c', 'd', 'e', 'f'], -1],
+                    ['propertyvalue', [True, False]]], var=0)'''
+        il1 = Ilist.obj([['namvalue', ['a', 'b', 'c', 'd', 'e', 'f'], -1],
                      ['datationvalue', [10, 20, 30]],
                      ['locationvalue', [100, 200, 300], 1],
                     ['propertyvalue', [True, False]]])
-        il2 = Ilist([['namvalue', ["a", "b", "c", "d", "e", "f"], -1],
-                    ['datationvalue', [10, 10, 20, 20, 30, 30]],
-                    ['locationvalue', [100, 100, 200, 200, 300, 300]],
-                     ['propertyvalue', [True, False, True, False, True, False]]])
-        self.assertTrue(il == il1 == il2)
-        self.assertTrue(il == Ilist(il.lindex, var=il.lvarrow) == copy(il))
+        il2 = Ilist.ext([["a", "b", "c", "d", "e", "f"],
+                         [10, 10, 20, 20, 30, 30],
+                         [100, 100, 200, 200, 300, 300],
+                         [True, False, True, False, True, False]], 
+                        ['namvalue', 'datationvalue', 'locationvalue', 'propertyvalue'],
+                        var=0)
+        self.assertTrue(il1 == il2)
+        self.assertTrue(il1 == Ilist(il1.lindex, lvarname=il1.lvarname) == copy(il1))
+
+    def test_creation_mode(self):
+        il1 = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2],
+                         [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
+                         ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
+        il2 = Ilist.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]], [0, 2, 0, 2],
+                         [[30, 12, 15], [0,1,1,2]], [[2, 0], 1], [2, 2, 0, 0],
+                         ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])        
+        il3 = Ilist.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]], 
+                         [[0, 2], [0,1,0,1]],
+                         [[30, 12, 15], [0,1,1,2]],
+                         [[2, 0], [0,1,0,1]], 
+                         [[2, 0], [0,0,1,1]],
+                         [['info'], [0,0,0,0]], 
+                         [[12, 15, 30], [0,0,1,2]]])   
+        self.assertTrue(il1 == il2 == il3)
 
     def test_creation_dic_ext(self):
         iidx = Ilist.dic({'datationvalue': [10, 10, 20, 20, 30, 30],
@@ -91,7 +106,7 @@ class Test_Ilist(unittest.TestCase):
         iidx1 = Ilist.ext([[10, 10, 20, 20, 30, 30], [100, 100, 200, 200, 300, 300],
                            [True, False, True, False, True, False]],
                            ['datationvalue', 'locationvalue', 'propertyvalue'])
-        iidx4 = Ilist([['datationvalue', [10, 10, 20, 20, 30, 30]],
+        iidx4 = Ilist.obj([['datationvalue', [10, 10, 20, 20, 30, 30]],
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
         self.assertTrue(iidx == iidx1 == iidx4)
@@ -103,7 +118,7 @@ class Test_Ilist(unittest.TestCase):
             res1 = True
         except: res1 = False
         try: 
-            il2 = Ilist([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
+            il2 = Ilist.obj([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
                          [[11, 12, 13, 14, 15, 16], -1]])
             res2 = True
         except: res2 = False
@@ -115,7 +130,7 @@ class Test_Ilist(unittest.TestCase):
         self.assertTrue(not res1 and res2 and not res3 and len(il2) == 6)
 
     def test_var(self):
-        il2 = Ilist([['namvalue', ["a", "b", "c", "d", "e", "f"], -1],
+        il2 = Ilist.obj([['namvalue', ["a", "b", "c", "d", "e", "f"], -1],
                     ['datationvalue', [10, 10, 20, 20, 30, 30]],
                     ['locationvalue', [100, 100, 200, 200, 300, 300]],
                     ['propertyvalue', [True, False, True, False, True, False]]])
@@ -146,7 +161,7 @@ class Test_Ilist(unittest.TestCase):
                            ['datationvalue', 'locationvalue',
                                'propertyvalue', 'varvalue'],
                            var=3)
-        iidx4 = Ilist([['varvalue', ['a', 'b', 'c', 'd', 'e', 'f'], -1],
+        iidx4 = Ilist.obj([['varvalue', ['a', 'b', 'c', 'd', 'e', 'f'], -1],
                        ['datationvalue', [10, 10, 20, 20, 30, 30]],
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
@@ -159,7 +174,7 @@ class Test_Ilist(unittest.TestCase):
         self.assertFalse(res)
 
     def test_properties(self):
-        il = Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2],
+        il = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2],
                    [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
                    ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
         # il.reindex()
@@ -167,17 +182,17 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il.idxlen, [2, 3, 2, 2, 1, 3])
         self.assertEqual(il.dimension, 3)
         self.assertEqual(il.lencomplete, 18)
-        il = Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1],
+        il = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1],
                    [0, 2, 0, 0], [30, 12, 20, 20]])
         # il.reindex()
         self.assertFalse(il.consistent)
-        il = Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1],
+        il = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1],
                    [0, 2, 0, 1], [30, 12, 20, 20]])
         # il.reindex()
         self.assertTrue(il.consistent)
 
     def test_item(self):
-        il = Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1],
+        il = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1],
                    [0, 2, 0, 1], [30, 12, 20, 20]])
         il[1] = ['rtt', 22, 1212]
         self.assertEqual(il[1], ['rtt', 22, 1212],
@@ -194,9 +209,9 @@ class Test_Ilist(unittest.TestCase):
         self.assertTrue(il.iscanonorder())
 
     def test_addindex(self):
-        iidx = Ilist([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
-        idx = Iindex([6, 7, 8], 'i2')
-        idx2 = Iindex([6, 7, 8], 'truc')
+        iidx = Ilist.obj([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
+        idx = Iindex.ext([6, 7, 8], 'i2')
+        idx2 = Iindex.ext([6, 7, 8], 'truc')
         iidx.addindex(idx)
         iidx.addindex(idx)
         self.assertEqual(iidx.idxname, ['i0', 'i1', 'i2', 'i2(2)', 'i2(2)(2)'])
@@ -210,26 +225,26 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(iidx.lindex[2].val, [6, 7, 8])
 
     def test_add_update_list(self):
-        il = Ilist([[1, 2, 3]])
+        il = Ilist.obj([[1, 2, 3]])
         il.addindex(['test', [0, 1, 1]])
         self.assertEqual(il.lidx[0].val, [0, 1, 1])
         il.updateindex([0, 2, 2], 1)
         self.assertEqual(il.lidx[0].val, [0, 2, 2])
-        il = Ilist([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
+        il = Ilist.ext([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
         il.updateindex(["d", 8, 2], 1)
         il.append(["z", 1, 10])
         self.assertEqual(il.idxlen, [4, 4, 3])
 
     def test_add(self):
-        il1 = Ilist([[['er', 'rt', 'er', 'ry', 'ab'], -1],
+        il1 = Ilist.obj([[['er', 'rt', 'er', 'ry', 'ab'], -1],
                     [0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])
-        il2 = Ilist([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 12, 10, 12, 10],
+        il2 = Ilist.obj([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 12, 10, 12, 10],
                      [110, 10, 120, 120, 115]])
         il3 = il1 + il2
         self.assertEqual(len(il3), len(il1) + len(il2))
         self.assertEqual(il2.loc([12, 10]), il3.loc([12, 10]))
         self.assertEqual(il1.loc([0, 20]), il3.loc([0, 20]))
-        il2 = Ilist([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 2, 10, 12, 10],
+        il2 = Ilist.obj([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 2, 10, 12, 10],
                      [110, 0, 120, 120, 115]])
         il3 = il1 + il2
         self.assertEqual(len(il3), len(il1) + len(il2))
@@ -237,7 +252,7 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il1.loc([0, 20]), il3.loc([0, 20]))
 
     def test_swap(self):
-        il = Ilist([[10, 20, 30], [[100, 200, 300], 0], [True, False]])
+        il = Ilist.obj([[10, 20, 30], [[100, 200, 300], 0], [True, False]])
         il1 = copy(il)
         il.swapindex([2, 0, 1])
         il.swapindex([2, 0, 1])
@@ -245,25 +260,25 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il, il1)
 
     def test_list(self):
-        il = Ilist([[1, 2, 3, 4, 5, 6]])
+        il = Ilist.ext([[1, 2, 3, 4, 5, 6]])
         self.assertEqual(il[1], 2)
         il[1] = 3
         self.assertEqual(il[1], 3)
         self.assertEqual(len(il), 6)
 
     def test_extend(self):
-        il1 = Ilist([['er', 'rt', 'er', 'ry', 'ab'], [
+        il1 = Ilist.ext([['er', 'rt', 'er', 'ry', 'ab'], [
                     0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])
-        il2 = Ilist([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 12, 10, 12, 10],
+        il2 = Ilist.obj([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 12, 10, 12, 10],
                      [110, 10, 120, 120, 115]])
         il3 = il1 | il2
         self.assertEqual(il3.lenidx, il2.lenidx)
-        il = Ilist([['er', 'rt', 'er', 'ry', 'ab', 'ert']])
-        ilx = Ilist([[0, 0, 0, 1, 1, 1], [0, 1, 2, 3, 4, 1]])
+        il = Ilist.ext([['er', 'rt', 'er', 'ry', 'ab', 'ert']])
+        ilx = Ilist.ext([[0, 0, 0, 1, 1, 1], [0, 1, 2, 3, 4, 1]])
         il2 = il | ilx
         self.assertEqual(il2.lidx[0], ilx.lidx[1])
         self.assertEqual(il2.lvar, il .lvar)
-        il2 = Ilist([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 2, 10, 12, 10],
+        il2 = Ilist.obj([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 2, 10, 12, 10],
                      [110, 0, 120, 120, 115]])
         il2.addindex(['truc', ['un', 'deux'], [0, 0, 1, 1, 0]])
         il2.addindex(['truc2', ['un', 'de', 'un', 'de', 'un']])
@@ -271,30 +286,30 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il2.loc([12, 120, "deux", "de"]), ['_ry'])
 
     def test_append(self):
-        il = Ilist([[0, 2, 0, 2], [30, 12, 20, 15]])
+        il = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 15]])
         il.append([0, 20], unique=True)
         self.assertEqual(len(il), 4)
         il.append([0, 40])
         self.assertEqual(len(il), 5)
-        self.assertEqual(il, Ilist([[0, 2, 0, 2, 0], [30, 12, 20, 15, 40]]))
-        il = Ilist([[{'paris': [2.35, 48.87]}, [4.83, 45.76],
-                   [5.38, 43.3]]], 'location', context=False)
+        self.assertEqual(il, Ilist.ext([[0, 2, 0, 2, 0], [30, 12, 20, 15, 40]]))
+        il = Ilist.ext([[{'paris': [2.35, 48.87]}, [4.83, 45.76],
+                   [5.38, 43.3]]], 'location')
         il.append([[4.83, 45.76]])
         self.assertEqual(len(il), 4)
         self.assertEqual(len(il.lindex[0].codec), 3)
 
     def test_append_variable(self):
-        il = Ilist([[['er', 'rt', 'er', 'ry'], -1],
+        il = Ilist.obj([[['er', 'rt', 'er', 'ry'], -1],
                    [0, 2, 0, 2], [30, 12, 20, 15]])
         il.append(['truc', 0, 20], unique=True)
         self.assertEqual(len(il), 4)
         il.append(['truc', 0, 40])
         self.assertEqual(len(il), 5)
-        self.assertEqual(il, Ilist([['er', 'rt', 'er', 'ry', 'truc'],
+        self.assertEqual(il, Ilist.ext([['er', 'rt', 'er', 'ry', 'truc'],
                                     [0, 2, 0, 2, 0], [30, 12, 20, 15, 40]], var=0))
 
     def test_magic(self):
-        iidx5 = Ilist([['datationvalue', [10, 10, 20, 20, 30, 30]],
+        iidx5 = Ilist.obj([['datationvalue', [10, 10, 20, 20, 30, 30]],
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
         self.assertEqual(iidx5.lidx[0], Iindex.ext(
@@ -319,10 +334,10 @@ class Test_Ilist(unittest.TestCase):
                           ['philippe white', 'philippe white', 'philippe white',
                            'anne white', 'anne white', 'anne white']])
         self.assertEqual(ilm.primary, [0, 2])
-        ilm = Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 12, 15],
+        ilm = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 12, 15],
                      [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
         self.assertEqual(ilm.primary, [0, 1, 5])
-        ilm = Ilist([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 20, 30],
+        ilm = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 20, 30],
                      [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertEqual(ilm.primary, [0, 1, 3])
         ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
@@ -370,7 +385,7 @@ class Test_Ilist(unittest.TestCase):
         for ts in test:
             opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)#'''
-    #"""
+    
     def test_to_obj_variable(self):
         il = Ilist.ext([[0, 1, 2, 3, 4, 5],
                          ['j', 'j', 'f', 'f', 'a', 'a'],
@@ -390,7 +405,7 @@ class Test_Ilist(unittest.TestCase):
         ilx.reindex()
         ilx.coupling()
         self.assertTrue(ilx.indexinfos()[1]['typecoupl'] == 'derived')
-        il = Ilist([[[1, 2, 3, 4, 5, 6], -1], ['a', 'b', 'b', 'c', 'c', 'a'],
+        il = Ilist.obj([[[1, 2, 3, 4, 5, 6], -1], ['a', 'b', 'b', 'c', 'c', 'a'],
                     [20,  10,  10,  10,  10,  20], [200, 200, 300, 200, 300, 300]])
         self.assertTrue(il.complete)
         il.coupling(derived=False)
@@ -453,17 +468,17 @@ class Test_Ilist(unittest.TestCase):
                          2, 12, 0, 2, 'info', 20])
 
     def test_vlist(self):
-        il = Ilist([[1, 2, 3]])
+        il = Ilist.ext([[1, 2, 3]])
         self.assertEqual(il.vlist(2, func=pow), [1, 4, 9])
-        il = Ilist([['er', 'ar', 'ty']])
+        il = Ilist.ext([['er', 'ar', 'ty']])
         self.assertEqual(il.vlist(func=len), [2, 2, 2])
-        il = Ilist([[datetime(2010, 1, 2), datetime(2012, 1, 2)]])
+        il = Ilist.ext([[datetime(2010, 1, 2), datetime(2012, 1, 2)]])
         self.assertEqual(il.vlist(func=datetime.isoformat, timespec='hours', sep='-', extern=False),  # !!!
                          ['2010-01-02-00', '2012-01-02-00'])
-        il = Ilist([[['aer', 'e', 'h'], -1], [1, 2, 3],
+        il = Ilist.obj([[['aer', 'e', 'h'], -1], [1, 2, 3],
                    ['a', 'efg', 'h'], [0, 1, 0]])
         self.assertEqual(il.vlist(func=len, index=2), [1, 3, 1])
-        il = Ilist([[[1, 2, 3, 4], -1], [DatationValue(name='morning'), DatationValue(name='afternoon')],
+        il = Ilist.obj([[[1, 2, 3, 4], -1], [DatationValue(name='morning'), DatationValue(name='afternoon')],
                     [LocationValue(name='paris'), LocationValue([4.1, 42.8])]])
         self.assertEqual(il.vlist(func=ESValue.vName, extern=False, index=1),
                          ['morning', 'morning', 'afternoon', 'afternoon'])
@@ -484,12 +499,12 @@ class Test_Ilist(unittest.TestCase):
             ["anne white", "anne", "gr1", "english"]), [14])
         self.assertEqual(il3.merge(mergeidx=True, updateidx=False).loc(
             ["anne white", "anne", "gr2", "english"]), [14])
-        il3 = Ilist([[il1, il2]], typevalue=None)
+        il3 = Ilist.ext([[il1, il2]], typevalue=None)
         self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(
             ["english", "gr1"]), [14])
 
     def test_csv(self):
-        il = Ilist([[['er', 'rt', 'er', 'ry'], -1],
+        il = Ilist.obj([[['er', 'rt', 'er', 'ry'], -1],
                    [0, 2, 0, 2], [30, 12, 20, 15]])
         il.to_csv('test.csv')
         il2 = Ilist.from_csv('test.csv', var=0)
@@ -608,7 +623,7 @@ class Test_Ilist(unittest.TestCase):
                          'propert': [{'prp': 'PM25', 'unit': 'kg/m3'},
                                      {'prp': 'PM10', 'unit': 'kg/m3'}],
                          'result': [[{'ert': 0}, 1, 2, 3, 4, 5], -1]})'''
-        il = Ilist([['locatio', [0, [4.83, 45.76], [5.38, 43.3]]],
+        il = Ilist.obj([['locatio', [0, [4.83, 45.76], [5.38, 43.3]]],
                     ['datatio', [{'date1': '2021-02-04T11:05:00+00:00'},
                                   '2021-07-04T10:05:00+00:00',
                                   '2021-05-04T10:05:00+00:00'],
@@ -627,7 +642,7 @@ class Test_Ilist(unittest.TestCase):
         '''à faire'''  # !!!
 
     def test_to_obj_file(self):  # !!!
-        il = Ilist([['result', [0, 1, 2, 3, 4, 5], -1],
+        il = Ilist.obj([['result', [0, 1, 2, 3, 4, 5], -1],
                     ['datation', [DatationValue.from_obj(dat3[1][0]),
                                   DatationValue.from_obj(dat3[1][1]),
                                   DatationValue.from_obj(dat3[1][2])]],
@@ -669,7 +684,7 @@ class Test_Ilist(unittest.TestCase):
             ilf.to_file('testf.tst', encode_format=forma)
             self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
             self.assertEqual(ilf, il.from_file('testf.tst'))'''
-
+        
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

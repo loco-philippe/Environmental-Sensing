@@ -306,11 +306,15 @@ class IlistStructure:
         return tuple(set(duplicates))
 
     def iscanonorder(self):
-        '''return True if primary indexes have canonical ordered keys'''
-        primary = self.primary
+        '''return True if crossed indexes have canonical ordered keys'''
+        crossed = self.crossed
+        canonorder = util.canonorder(
+            [len(self.lidx[idx].codec) for idx in crossed])
+        return canonorder == [self.lidx[idx].keys for idx in crossed]
+        '''primary = self.primary
         canonorder = util.canonorder(
             [len(self.lidx[idx].codec) for idx in primary])
-        return canonorder == [self.lidx[idx].keys for idx in primary]
+        return canonorder == [self.lidx[idx].keys for idx in primary]'''
 
     def isinrecord(self, record, extern=True):
         '''Check if record is present in self.
@@ -571,8 +575,10 @@ class IlistStructure:
         '''Set the canonical index order : primary - secondary/unique - variable.
         Set the canonical keys order : ordered keys in the first columns.
         Return self'''
+        crossed = self.crossed
         primary = self.primary
-        order = [self.lidxrow[idx] for idx in primary]
+        order = [self.lidxrow[idx] for idx in crossed]
+        order += [self.lidxrow[idx] for idx in primary if not idx in crossed]
         order += [idx for idx in self.lidxrow if not idx in order]
         order += self.lvarrow
         self.swapindex(order)
@@ -675,7 +681,8 @@ class IlistStructure:
         if inplace:
             self.lindex = lindex
             return self
-        return self.__class__(lindex, var=self.lvarrow[0])
+        return self.__class__._init_ilist(lindex, var=self.lvarrow[0])
+        #return self.__class__(lindex, var=self.lvarrow[0])
         # return Ilist(lindex, var=self.lvarrow[0])
 
     def updateindex(self, listvalue, index, extern=True, typevalue=None):
@@ -704,34 +711,4 @@ class IlistStructure:
 
         - **list of int** : rec key for each idx'''
         return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lidx, rec)]
-
-    @staticmethod
-    def _min_rate_parent(mati, ind, lenself, lenidx):
-        '''return minrate and minparent for the Index define by ind'''
-        minrate = 1.00
-        mindiff = lenself
-        disttomin = None
-        minparent = ind
-        for j in range(lenidx):
-            if mati[j]['typecoupl'] == 'derived':
-                minrate = 0.00
-                if mati[j]['diff'] < mindiff:
-                    mindiff = mati[j]['diff']
-                    minparent = j
-            elif mati[j]['typecoupl'] == 'linked' and minrate > 0.0:
-                if not disttomin or mati[j]['disttomin'] < disttomin:
-                    disttomin = mati[j]['disttomin']
-                    minrate = mati[j]['rate']
-                    minparent = j
-            if j < ind:
-                if mati[j]['typecoupl'] == 'coupled':
-                    minrate = 0.00
-                    minparent = j
-                    break
-                if mati[j]['typecoupl'] == 'crossed' and minrate > 0.0:
-                    if not disttomin or mati[j]['disttomin'] < disttomin:
-                        disttomin = mati[j]['disttomin']
-                        minrate = mati[j]['rate']
-                        minparent = j
-        return (minrate, minparent)
 
