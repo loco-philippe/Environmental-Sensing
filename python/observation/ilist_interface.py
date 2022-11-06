@@ -238,10 +238,12 @@ class IlistInterface:
                     str(self.lname.index(idx.name))
                 if i != self.lenindex - 1:
                     lis.insert(i, idx.tostdcodec(full=True).to_obj(keys=False, 
-                        parent=parent, name=idxname, **option2))
+                        parent=ES.variable, name=idxname, **option2))
+                        #parent=parent, name=idxname, **option2))
                 else:
                     lis.append(idx.tostdcodec(full=True).to_obj(keys=False, 
-                        parent=parent, name=idxname, **option2))
+                        parent=ES.variable, name=idxname, **option2))
+                        #parent=parent, name=idxname, **option2))
             
         if option['encoded'] and option['encode_format'] == 'json':
             return json.dumps(lis, cls=IindexEncoder)

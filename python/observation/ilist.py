@@ -362,18 +362,42 @@ class Ilist(IlistStructure, IlistInterface):
             lindex = [Iindex(idx[2], idx[0], idx[4], idx[1], reindex=reindex) for idx in lidx]
             return cls(lindex, lvarname=lvarname, reindex=reindex)
 
-        if not fullmode: #au moins un fullindex
-            length = len(keys[isfullkeys.index(True)])
-        #sinon pas de fullindex (mais un sans index) => matrice et dérivés
+        if not fullmode or max(isvar): #au moins un fullkeys ou un var
+            if not fullmode: 
+                length = len(keys[isfullkeys.index(True)])
+            else:
+                length = leng[isvar.index(True)]
+            crossed = [i for i, (isfullk, ispar, isvr, lengt) in 
+                       enumerate(zip(isfullkeys, isparent, isvar, leng))
+                       if not ispar and not isfullk and not isvr and 1 < lengt < length]
         #crossed : pas d'index (isfullindex false), pas de parent(isparent false)
         else: 
-            crossed = [i for i,(isfullk, ispar, isvr) in enumerate(zip(isfullkeys,isparent,isvar))
-                       if not ispar and not isfullk and not isvr]
+            #sinon pas de fullindex (mais un sans index) => matrice et dérivés
+            crossed = [i for i,(isfullk, ispar, isvr, lengt) in 
+                       enumerate(zip(isfullkeys, isparent, isvar, leng))
+                       if not ispar and not isfullk and not isvr and lengt > 1]
+                       #if not ispar and not isfullk and not isvr]
+            lencrossed = [leng[ind] for ind in crossed]
+            if max(lencrossed) == min(lencrossed):
+                length = lencrossed[0]
+                crossed = []
+            else:
+                length = math.prod([leng[i] for i in crossed])
+        keyscross = util.canonorder([leng[i] for i in crossed])
+        for ind in range(len(crossed)):
+            lidx[crossed[ind]][4] = keyscross[ind]
+
+        '''#crossed : pas d'index (isfullindex false), pas de parent(isparent false)
+        crossed = [i for i,(isfullk, ispar, isvr) in enumerate(zip(isfullkeys,isparent,isvar))
+                   if not ispar and not isfullk and not isvr]
+        if not crossed: #au moins un fullindex
+            length = len(keys[isfullkeys.index(True)])
+        else: 
             length = math.prod([leng[i] for i in crossed])
             keyscross = util.canonorder([leng[i] for i in crossed])
             for ind in range(len(crossed)):
-                lidx[crossed[ind]][4] = keyscross[ind]
-        print(length)
+                lidx[crossed[ind]][4] = keyscross[ind]'''
+        #print(length)
         for ind in range(len(lidx)):
             Ilist._init_keys(ind, lidx, length)
         lindex = [Iindex(idx[2], idx[0], idx[4], idx[1], reindex=reindex) for idx in lidx]
@@ -381,10 +405,14 @@ class Ilist(IlistStructure, IlistInterface):
         
     @staticmethod
     def _init_keys(ind, lidx, leng):
+        # codec: 2, parent: 3, keys: 4
         if lidx[ind][4] and (lidx[ind][3] is None or lidx[ind][3] < 0): 
             return
+        if len(lidx[ind][2]) == 1:
+            lidx[ind][4] = [0] * leng
+            return 
         if lidx[ind][3] is None:
-            raise IlistError('lidx[ind][4] not referenced')
+            raise IlistError('keys not referenced')
         if lidx[ind][3] < 0:
             lidx[ind][4] = list(range(leng))
             return
@@ -394,11 +422,11 @@ class Ilist(IlistStructure, IlistInterface):
             if len(lidx[ind][2]) == len(lidx[lidx[ind][3]][2]):    # coupled format
                 lidx[ind][4] = lidx[lidx[ind][3]][4]
                 return
-            # derived format without lidx[ind][4]
+            # derived format without keys
             lencodp = len(lidx[lidx[ind][3]][2])  # codec
             lidx[ind][4] = [(i*len(lidx[ind][2]))//lencodp for i in range(lencodp)]
             return
-        # derived lidx[ind][4]
+        # derived keys
         lidx[ind][4] = Iindex.keysfromderkeys(lidx[lidx[ind][3]][4], lidx[ind][4])
         return    
         """if isinstance(listidx[0], Iindex) and isinstance(listidx[len(listidx)-1], Iindex):

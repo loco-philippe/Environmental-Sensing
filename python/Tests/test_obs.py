@@ -339,7 +339,7 @@ class TestExamples(unittest.TestCase):
         #print("réponse : ", r.status_code, "\n")
 
         # case 2 : Mobile sensor with one property
-        obs_sensor = Observation.std()
+        obs_sensor = Observation.std([], [], [], [])
         prop1 = prop_pm25
         for i in range(6):  # simule une boucle de mesure
             obs_sensor.append([45 + i, datetime.datetime(2021, 6, 4+i, 12, 5),
@@ -406,8 +406,11 @@ class TestExamples(unittest.TestCase):
         prop2 = {"prp": "PM10"}
         ob_init =  Observation([['location', [coord]], ['property', [prop1, prop2]]])
         # sensor : Ilist acquisition
-        il_sensor = Ilist.obj([['res', [], 0], ['datation', []], 
-                           ['property', [prop1, prop2], []]])
+        '''il_sensor = Ilist.obj([['res', [], 0], ['datation', []], 
+                           ['property', [prop1, prop2], []]])'''
+        il_sensor = Ilist.obj([['res', [], -1], ['datation', []], 
+                           ['property', []]])
+        property = [prop1, prop2]
         for i in range(6):  # simule une boucle de mesure
             date = datetime.datetime(2021, 6, 4+i, 12, 5)
             il_sensor.append([45 + i, date, prop1])
@@ -423,7 +426,7 @@ class TestExamples(unittest.TestCase):
         # data decoding in the server
         il_receive = Ilist.obj(payload, reindex=False)
         self.assertTrue(il_receive == il_sensor)   # it's True !!
-        il_receive.nindex('property').setcodeclist([prop1, prop2])
+        il_receive.nindex('property').setcodeclist(property)
         # complete observation
         ob_complet = Observation.dic({'res': il_receive, 'location': [
                               coord]}, var=0).merge().setcanonorder()
@@ -448,13 +451,14 @@ class TestObservation(unittest.TestCase):
                   Observation.std([11, 12], 'dat1', ['loc1', 'loc2'],
                                   'prp1', name='truc'), #!!!
                   Observation.std(result=[10, 20], datation='dat1',
-                          location=['loc1', 'loc2'], name='truc'),
+                          location=['loc1', 'loc2'], property=[None], name='truc'),
                   #Observation.dic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
                   Observation([list(dat1), list(loc1), list(prop3), list(_res(3))], name='truc'),
                   Observation([list(loc3), list(dat3)+[0], list(prop2),
                        ['result', [{'file': 'truc', 'path': 'ertert'}, 1, 2, 3, 
                                    4, ['truc', 'rt']]]])]
         for ob in listob:
+            #print(ob)
             self.assertEqual(Observation.obj(ob.to_obj()), ob)
             self.assertEqual(copy.copy(ob), ob)
 
@@ -624,7 +628,7 @@ class TestObservation(unittest.TestCase):
         ob = Observation([list(_res(6)), list(dat3), list(loc3)+[1], list(prop2)])
         obcc = obp | obc
         self.assertEqual(obcc, ob)
-        ob = Observation.obj({'data': [list(_res(6))]})
+        ob = Observation.obj({'data': [[_res(6)[0], _res(6)[1], -1]]})
         ob.addindex(['datation', ['matin'], [0, 0, 0, 0, 0, 0]])
         ob.addindex(
             ['location', ['paris', 'lyon', 'marseille'], [0, 1, 2, 0, 1, 2]])

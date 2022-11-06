@@ -87,8 +87,9 @@ class Test_Ilist(unittest.TestCase):
         il1 = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2],
                          [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
-        il2 = Ilist.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]], [0, 2, 0, 2],
-                         [[30, 12, 15], [0,1,1,2]], [[2, 0], 1], [2, 2, 0, 0],
+        il2 = Ilist.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]], 
+                         [[0, 2], [0,1,0,1]], [[30, 12, 15], [0,1,1,2]], 
+                         [[2, 0], 1], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])        
         il3 = Ilist.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]], 
                          [[0, 2], [0,1,0,1]],
@@ -227,9 +228,9 @@ class Test_Ilist(unittest.TestCase):
     def test_add_update_list(self):
         il = Ilist.obj([[1, 2, 3]])
         il.addindex(['test', [0, 1, 1]])
-        self.assertEqual(il.lidx[0].val, [0, 1, 1])
+        self.assertEqual(il.lidx[1].val, [0, 1, 1])
         il.updateindex([0, 2, 2], 1)
-        self.assertEqual(il.lidx[0].val, [0, 2, 2])
+        self.assertEqual(il.lidx[1].val, [0, 2, 2])
         il = Ilist.ext([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
         il.updateindex(["d", 8, 2], 1)
         il.append(["z", 1, 10])
