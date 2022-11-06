@@ -167,13 +167,9 @@ class Ilist(IlistStructure, IlistInterface):
 
         *Parameters*
 
-        - **listidx** :  list (default None) - list of compatible Iindex data
-        - **name** :  list (default None) - list of name for the Iindex data
-        - **var** :  int (default None) - row of the variable
-        - **length** :  int (default None)  - len of each Iindex
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
-        - **context** : boolean (default True) - if False, only codec and keys are included'''
+        - **listidx** :  list (default None) - list of Iindex data
+        - **lvarname** :  list (default None) - list of name of variable
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
 
         self.name = self.__class__.__name__
         self.analysis = Analysis(self)
@@ -184,58 +180,12 @@ class Ilist(IlistStructure, IlistInterface):
             self.lvarname = [lvarname]
         else: 
             self.lvarname = lvarname
-        '''if not isinstance(name, list):
-            name = [name]
-        if isinstance(var, list):
-            idxvar = var
-        elif not isinstance(var, int) or var < 0:
-            idxvar = []
-        else:
-            idxvar = [var]'''
-
         if listidx.__class__.__name__ in ['Ilist', 'Observation']:
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.lvarname = copy(listidx.lvarname)
-            #self.analysis = Analysis(self)
             return
         if not listidx:
             return
-        '''if isinstance(listidx, dict):
-            for idxname in listidx:
-                var, idx = Iindex.from_dict_obj({idxname: listidx[idxname]}, 
-                                                typevalue=typevalue, reindex=reindex)
-                self.lindex.append(idx)
-                if var: 
-                    self.lvarname.append(idxname)
-            return
-        if isinstance(listidx[0], Iindex) and isinstance(listidx[len(listidx)-1], Iindex):
-            self.lindex = [copy(idx) for idx in listidx]
-            self.lvarname = [listidx[i].name for i in idxvar]
-            return
-            
-        if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)):
-            listidx = [[idx] for idx in listidx]
-        codind, lcodind, lidx, idxvar, length, leng2 = Ilist._init_internal(
-            listidx, typevalue, name, context, idxvar, length)
-        self.lindex = list(range(len(codind)))
-
-        if len(listidx) == 1:
-            self.lindex = [codind[0][1]]
-            self.lvarname = [codind[0][1].name]
-            return
-        if length == 0:
-            self.lvarname = [codind[i][1].name for i in idxvar]
-            self.lindex = [iidx for code, iidx in codind]
-            return
-
-        flat = True
-        if leng2:
-            flat = length == max(leng2) == min(leng2)
-        #self._init_index(lcodind, flat, lidx, length, codind)
-        for i in idxvar:
-            self.lindex[i] = codind[i][1]
-        self._init_index(lcodind, flat, lidx, length, codind)
-        self.lvarname = [codind[i][1].name for i in idxvar]'''
         self.lindex = listidx
         if reindex:
             self.reindex()
@@ -266,13 +216,6 @@ class Ilist(IlistStructure, IlistInterface):
         else:
             idxvar = [var]
 
-        '''if listidx.__class__.__name__ in ['Ilist', 'Observation']:
-            self.lindex = [copy(idx) for idx in listidx.lindex]
-            self.lvarname = copy(listidx.lvarname)
-            self.analysis = Analysis(self)
-            return
-        if not listidx:
-            return'''
         lindex = []
         lvarname = []
         if isinstance(listidx, dict):
@@ -316,9 +259,6 @@ class Ilist(IlistStructure, IlistInterface):
         Ilist._init_idx(lindex, lcodind, flat, lidx, length, codind)
         lvarname = [codind[i][1].name for i in idxvar]
         return cls(lindex, lvarname=lvarname, reindex=reindex)
-        '''if reindex:
-            self.reindex()
-        return'''
 
     @classmethod    
     def _init_obj(cls, listidx=None, reindex=True, typevalue=ES.def_clsName, context=True):
@@ -387,16 +327,6 @@ class Ilist(IlistStructure, IlistInterface):
         for ind in range(len(crossed)):
             lidx[crossed[ind]][4] = keyscross[ind]
 
-        '''#crossed : pas d'index (isfullindex false), pas de parent(isparent false)
-        crossed = [i for i,(isfullk, ispar, isvr) in enumerate(zip(isfullkeys,isparent,isvar))
-                   if not ispar and not isfullk and not isvr]
-        if not crossed: #au moins un fullindex
-            length = len(keys[isfullkeys.index(True)])
-        else: 
-            length = math.prod([leng[i] for i in crossed])
-            keyscross = util.canonorder([leng[i] for i in crossed])
-            for ind in range(len(crossed)):
-                lidx[crossed[ind]][4] = keyscross[ind]'''
         #print(length)
         for ind in range(len(lidx)):
             Ilist._init_keys(ind, lidx, length)
@@ -429,39 +359,6 @@ class Ilist(IlistStructure, IlistInterface):
         # derived keys
         lidx[ind][4] = Iindex.keysfromderkeys(lidx[lidx[ind][3]][4], lidx[ind][4])
         return    
-        """if isinstance(listidx[0], Iindex) and isinstance(listidx[len(listidx)-1], Iindex):
-            lindex = [copy(idx) for idx in listidx]
-            lvarname = [listidx[i].name for i in idxvar]
-            return cls(lindex, lvarname=lvarname, reindex=reindex)
-            
-        if not isinstance(listidx, list) or not isinstance(listidx[0], (list, Iindex)):
-            listidx = [[idx] for idx in listidx]
-        codind, lcodind, lidx, idxvar, length, leng2 = Ilist._init_internal(
-            listidx, typevalue, name, context, idxvar, length)
-        lindex = list(range(len(codind)))
-
-        if len(listidx) == 1:
-            lindex = [codind[0][1]]
-            lvarname = [codind[0][1].name]
-            return cls(lindex, lvarname=lvarname, reindex=reindex)
-        if length == 0:
-            lvarname = [codind[i][1].name for i in idxvar]
-            lindex = [iidx for code, iidx in codind]
-            return cls(lindex, lvarname=lvarname, reindex=reindex)
-
-        flat = True
-        if leng2:
-            flat = length == max(leng2) == min(leng2)
-        #self._init_index(lcodind, flat, lidx, length, codind)
-        for i in idxvar:
-            lindex[i] = codind[i][1]
-        Ilist._init_idx(lindex, lcodind, flat, lidx, length, codind)
-        lvarname = [codind[i][1].name for i in idxvar]
-        return cls(lindex, lvarname=lvarname, reindex=reindex)
-        '''if reindex:
-            self.reindex()
-        return'''
-        """
         
     @classmethod
     def dic(cls, idxdic=None, typevalue=ES.def_clsName, var=None, reindex=True):
@@ -653,64 +550,6 @@ class Ilist(IlistStructure, IlistInterface):
             length = len(codind[idxvar[0]][1])
         return (codind, lcodind, lidx, idxvar, length, leng2)
 
-    def _init_index(self, lcodind, flat, lidx, length, codind):
-        '''creation of primary and secondary Iindex'''
-        if not flat:
-            keysset = util.canonorder([len(iidx) for code, iidx in lcodind
-                                       if code == ES.nullparent and len(iidx) != 1])
-                                       #if code < 0 and len(iidx) != 1])
-            if length >= 0 and length != len(keysset[0]):
-                raise IlistError('length of Iindex and Ilist inconsistent')
-            length = len(keysset[0])
-        else:
-            keysset = None
-        # init crossed
-        '''primary = [(rang, iidx) for rang, (code, iidx) in zip(range(len(lcodind)), lcodind)
-                   if code < 0 and len(iidx) != 1]
-        for i, (rang, iidx) in zip(range(len(primary)), primary):'''
-        crossed = [(rang, iidx) for rang, (code, iidx) in zip(range(len(lcodind)), lcodind)
-                   if code == ES.nullparent and len(iidx) != 1]
-        for i, (rang, iidx) in zip(range(len(crossed)), crossed):
-            if not flat:
-                #iidx.keys = keysset[i]
-                iidx.set_keys(keysset[i])
-            self.lindex[lidx[rang]] = iidx
-        # init secondary and primary not crossed
-        for i, (code, iidx) in zip(range(len(lcodind)), lcodind):
-            if iidx.name is None or iidx.name == ES.defaultindex:
-                iidx.name = 'i'+str(i)
-            if len(iidx.codec) == 1:
-                #iidx.keys = [0] * length
-                iidx.set_keys([0] * length)
-                self.lindex[lidx[i]] = iidx
-            elif code >= 0 and isinstance(self.lindex[lidx[i]], int):
-                self._addiidx(lidx[i], code, iidx, codind, length)
-            elif code == ES.notcrossed and isinstance(self.lindex[lidx[i]], int):
-                self.lindex[lidx[i]] = iidx
-            elif code < 0 and isinstance(self.lindex[lidx[i]], int):
-                raise IlistError('Ilist not canonical')
-
-    def _addiidx(self, rang, code, iidx, codind, length):
-        '''creation derived or coupled Iindex and update lindex'''
-        if isinstance(self.lindex[code], int):
-            self._addiidx(code, codind[code][0],
-                          codind[code][1], codind, length)
-        if iidx.keys == list(range(len(iidx.codec))):
-            # coupled format
-            if len(iidx.codec) == len(self.lindex[code].codec):
-                self.lindex[rang] = Iindex(
-                    iidx.codec, iidx.name, self.lindex[code].keys)
-            else:  # derived format without keys
-                parent = copy(self.lindex[code])
-                #parent.reindex()
-                leng = len(parent.codec)
-                keys = [(i*len(iidx.codec))//leng for i in range(leng)]
-                self.lindex[rang] = Iindex(iidx.codec, iidx.name,
-                                           Iindex.keysfromderkeys(parent.keys, keys))
-        else:
-            self.lindex[rang] = Iindex(iidx.codec, iidx.name,
-                                       Iindex.keysfromderkeys(self.lindex[code].keys,
-                                                              codind[rang][1].keys))
     @staticmethod
     def _init_idx(lindex, lcodind, flat, lidx, length, codind):
         '''creation of primary and secondary Iindex'''
@@ -724,9 +563,6 @@ class Ilist(IlistStructure, IlistInterface):
         else:
             keysset = None
         # init crossed
-        '''primary = [(rang, iidx) for rang, (code, iidx) in zip(range(len(lcodind)), lcodind)
-                   if code < 0 and len(iidx) != 1]
-        for i, (rang, iidx) in zip(range(len(primary)), primary):'''
         crossed = [(rang, iidx) for rang, (code, iidx) in zip(range(len(lcodind)), lcodind)
                    if code == ES.nullparent and len(iidx) != 1]
         for i, (rang, iidx) in zip(range(len(crossed)), crossed):

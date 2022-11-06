@@ -367,21 +367,10 @@ class Observation(Ilist):
             stro += ES.param + ':\n    ' + json.dumps(self.param) + '\n'
         return stro
 
-    """def __eq__(self, other):
-        ''' equal if all attribut and Ilist are equal'''
-        return self.__class__.__name__ == other.__class__.__name__ and self.name == other.name \
-            and self.id == other.id and self.param == other.param  \
-            and Ilist.__eq__(self, other)"""
-
     def __hash__(self):
         '''return sum of all hash(Iindex)'''
         return hash(json.dumps(self.param)) + hash(self.id) + hash(self.name) + \
             Ilist.__hash__(self)
-
-    """def _hashi(self):
-        '''return sum of all hashi(Iindex)'''
-        return hash(json.dumps(self.param)) + hash(self.id) + hash(self.name) + \
-            Ilist._hashi(self)"""
 
 # %% properties
     @property
@@ -651,16 +640,6 @@ class Observation(Ilist):
             return LocationValue.Box(LocationValue.boundingBox(idx.codec)).__geo_interface__
         if (idx.typevalue == ES.prp_clsName):
             return PropertyValue.boundingBox(idx.codec)
-        
-        '''if idx.typevalue == ES.loc_clsName and option['geojson']:
-            return ESValue.boundingBox(idx).__geo_interface__
-        if (idx.typevalue == ES.loc_clsName and not option['geojson']) \
-            or idx.typevalue == ES.prp_clsName \
-            or (idx.typevalue == ES.dat_clsName and option["encoded"]):
-            return list(ESValue.boundingBox(idx).bounds)
-            #bound = ESValue.boundingBox(idx).bounds
-            #return [datetime.datetime.fromisoformat(bound[0]),
-            #        datetime.datetime.fromisoformat(bound[1])]'''
         return None
 
 class ObsError(Exception):
