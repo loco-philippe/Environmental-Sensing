@@ -58,30 +58,30 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
 }
 dico_alias_mongo[float] = dico_alias_mongo[int]
 
-geoeq    = lambda x, y: x.equals(y)
-geowith  = lambda x, y: x.within(y)
-geodis   = lambda x, y: x.disjoint(y)
-geointer = lambda x, y: x.intersects(y)
-geotou   = lambda x, y: x.touches(y)
-geoover  = lambda x, y: x.overlaps(y)
-geocont  = lambda x, y: x.contains(y)
-geonear  = lambda x, y: True
+_geoeq    = lambda x, y: x.equals(y)
+_geowith  = lambda x, y: x.within(y)
+_geodis   = lambda x, y: x.disjoint(y)
+_geointer = lambda x, y: x.intersects(y)
+_geotou   = lambda x, y: x.touches(y)
+_geoover  = lambda x, y: x.overlaps(y)
+_geocont  = lambda x, y: x.contains(y)
+_geonear  = lambda x, y: True
 
-defeq    = lambda x, y: x == y
-defsupeq = lambda x, y: x >= y
-defsup   = lambda x, y: x > y
-definfeq = lambda x, y: x <= y
-definf   = lambda x, y: x < y
-defin    = lambda x, y: x in y
+_defeq    = lambda x, y: x == y
+_defsupeq = lambda x, y: x >= y
+_defsup   = lambda x, y: x > y
+_definfeq = lambda x, y: x <= y
+_definf   = lambda x, y: x < y
+_defin    = lambda x, y: x in y
 
-timsupeq_0 = lambda x, y: x.bounds[0] >= y
-timsup_0   = lambda x, y: x.bounds[0] > y
-timinfeq_0 = lambda x, y: x.bounds[0] <= y
-timinf_0   = lambda x, y: x.bounds[0] < y
-timsupeq_1 = lambda x, y: x.bounds[1] >= y
-timsup_1   = lambda x, y: x.bounds[1] > y
-timinfeq_1 = lambda x, y: x.bounds[1] <= y
-timinf_1   = lambda x, y: x.bounds[1] < y
+_timsupeq_0 = lambda x, y: x.bounds[0] >= y
+_timsup_0   = lambda x, y: x.bounds[0] > y
+_timinfeq_0 = lambda x, y: x.bounds[0] <= y
+_timinf_0   = lambda x, y: x.bounds[0] < y
+_timsupeq_1 = lambda x, y: x.bounds[1] >= y
+_timsup_1   = lambda x, y: x.bounds[1] > y
+_timinfeq_1 = lambda x, y: x.bounds[1] <= y
+_timinf_1   = lambda x, y: x.bounds[1] < y
 
 dico_alias_python = {
     TimeSlot : { # only used in python filtering part
@@ -93,41 +93,42 @@ dico_alias_python = {
         "intersects":"intersects", "$intersects":"intersects",
         
         True: {
-            "$gte":timsupeq_0, "gte":timsupeq_0, ">=":timsupeq_0, "=>":timsupeq_0,
-            "$gt":timsup_0, "gt":timsup_0, ">":timsup_0,
-            "$lte":timinfeq_1, "lte":timinfeq_1, "<=":timinfeq_1, "=<":timinfeq_1,
-            "$lt":timinf_1, "lt":timinf_1, "<":timinf_1
+            "$gte":_timsupeq_0, "gte":_timsupeq_0, ">=":_timsupeq_0, "=>":_timsupeq_0,
+            "$gt":_timsup_0, "gt":_timsup_0, ">":_timsup_0,
+            "$lte":_timinfeq_1, "lte":_timinfeq_1, "<=":_timinfeq_1, "=<":_timinfeq_1,
+            "$lt":_timinf_1, "lt":_timinf_1, "<":_timinf_1
         },
         False: {
-            "$gte":timsupeq_1, "gte":timsupeq_1, ">=":timsupeq_1, "=>":timsupeq_1,
-            "$gt":timsup_1, "gt":timsup_1, ">":timsup_1,
-            "$lte":timinfeq_0, "lte":timinfeq_0, "<=":timinfeq_0, "=<":timinfeq_0,
-            "$lt":timinf_0, "lt":timinf_0, "<":timinf_0
+            "$gte":_timsupeq_1, "gte":_timsupeq_1, ">=":_timsupeq_1, "=>":_timsupeq_1,
+            "$gt":_timsup_1, "gt":_timsup_1, ">":_timsup_1,
+            "$lte":_timinfeq_0, "lte":_timinfeq_0, "<=":_timinfeq_0, "=<":_timinfeq_0,
+            "$lt":_timinf_0, "lt":_timinf_0, "<":_timinf_0
         }
     },
     'geometry' : { # lists are interpreted as geometries
-        None:geointer,
-        "eq":geoeq, "=":geoeq, "==":geoeq, "$eq":geoeq, "equals":geoeq, "$equals":geoeq,
-        "$geowithin":geowith, "geowithin":geowith, "$geoWithin":geowith, "geoWithin":geowith, "within":geowith, "$within":geowith,
-        "disjoint":geodis, "$disjoint":geodis,
-        "intersects":geointer, "$intersects":geointer, "geoIntersects":geointer, "$geointersects":geointer, "geoIntersects":geointer, "$geoIntersects":geointer,
-        "touches":geotou, "$touches":geotou,
-        "overlaps":geoover, "$overlaps":geoover,
-        "contains":geocont, "$contains":geocont,
-        "$geoNear":geonear, "$geonear":geonear, "geonear":geonear, "geoNear":geonear
+        None:_geointer,
+        "eq":_geoeq, "=":_geoeq, "==":_geoeq, "$eq":_geoeq, "equals":_geoeq, "$equals":_geoeq,
+        "$geowithin":_geowith, "geowithin":_geowith, "$geoWithin":_geowith, "geoWithin":_geowith, "within":_geowith, "$within":_geowith,
+        "disjoint":_geodis, "$disjoint":_geodis,
+        "intersects":_geointer, "$intersects":_geointer, "geoIntersects":_geointer, "$geointersects":_geointer, "geoIntersects":_geointer, "$geoIntersects":_geointer,
+        "touches":_geotou, "$touches":_geotou,
+        "overlaps":_geoover, "$overlaps":_geoover,
+        "contains":_geocont, "$contains":_geocont,
+        "$geoNear":_geonear, "$geonear":_geonear, "geonear":_geonear, "geoNear":_geonear
     },
     'default' : {
-        None:defeq,
-        "eq":defeq, "=":defeq, "==":defeq, "$eq":defeq,
-        "gte":defsupeq, ">=":defsupeq, "=>":defsupeq, "$gte":defsupeq,
-        "gt":defsup, ">":defsup, "$gt":defsup,
-        "lte":definfeq, "<=":"$lte", "=<":definfeq,
-        "lt":definf, "<":definf, "$lt":definf,
-        "in":defin, "$in":defin
+        None:_defeq,
+        "eq":_defeq, "=":_defeq, "==":_defeq, "$eq":_defeq,
+        "gte":_defsupeq, ">=":_defsupeq, "=>":_defsupeq, "$gte":_defsupeq,
+        "gt":_defsup, ">":_defsup, "$gt":_defsup,
+        "lte":_definfeq, "<=":"$lte", "=<":_definfeq,
+        "lt":_definf, "<":_definf, "$lt":_definf,
+        "in":_defin, "$in":_defin
     }
 }
 
 def insert_from_doc(collection, document , info=True):
+    '''Inserts all observations from a document into a collection, where each line of to document corresponds to an observation.'''
     with open(document, 'r') as doc:
         for line in doc:
             try: insert_one_to_mongo(collection, line, info)
@@ -243,7 +244,7 @@ class ESSearch:
 
     def addconditions(self, parameters):
         '''
-        Takes multiple parameters and executes self.addcondition() for each of them.
+        Takes multiple parameters and applyes self.addcondition() on each of them.
         '''
         if isinstance(parameters, dict):
             self.addcondition(**parameters)
@@ -709,7 +710,7 @@ class ESSearch:
         else:
             return False
 
-    def _fusion(self, obsList, samename = False, fillvalue = None):
+    def _fusion(self, obsList, namefused = False, fillvalue = None, name = None):
         '''
         Takes a list of observations and returns one observation mixing them together in one single observation
         or a list of observations where all observations sharing the same name are fused together.
@@ -717,15 +718,14 @@ class ESSearch:
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:
-            if not samename:
+            if not namefused:
                 lidx = []
                 new_lname = set()
-                lvarname = None
-                name = None
                 for obs in obsList:
-                    if not lvarname and obs.lvarname: # toujours lvarname du premier élément... inclusion dans la boucle vraiment utile ?
+                    if obs.lvarname: # toujours lvarname du premier élément... inclusion dans la boucle vraiment utile ?
                         lvarname = obs.lvarname
-                    if not name and obs.name: name = obs.name
+                        break
+                for obs in obsList:
                     new_lname |= set(obs.lname)
                 new_lname = list(new_lname)
                 
@@ -737,8 +737,11 @@ class ESSearch:
                     codec = util.tocodec(values)
                     lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
 
-                new_obs = Observation(lidx, name)
-                new_obs.lvarname = lvarname                
+                if name is None: name = "ESSearch query result on " + str(datetime.datetime.now())
+                param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                        'context': {'origin': 'ESSearch query', 'source_collection ': self.collection.name, 'ESSearch_parameters': str(self.parameters)}}
+                new_obs = Observation(lidx, name, param=param)
+                new_obs.lvarname = lvarname
                 return new_obs
             else:                   # à tester
                 new_obsList = []
@@ -750,5 +753,5 @@ class ESSearch:
                         new_obsList.append([item])
                         dict_names[item.name] = len(new_obsList) - 1
                 for i in range(len(new_obsList)):
-                    new_obsList[i] = self._fusion(new_obsList[i], False, fillvalue)
+                    new_obsList[i] = self._fusion(new_obsList[i], False, fillvalue, new_obsList[i][0].name)
                 return new_obsList
