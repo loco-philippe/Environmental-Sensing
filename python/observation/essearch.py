@@ -110,7 +110,7 @@ dico_alias_python = {
         "eq":_geoeq, "=":_geoeq, "==":_geoeq, "$eq":_geoeq, "equals":_geoeq, "$equals":_geoeq,
         "$geowithin":_geowith, "geowithin":_geowith, "$geoWithin":_geowith, "geoWithin":_geowith, "within":_geowith, "$within":_geowith,
         "disjoint":_geodis, "$disjoint":_geodis,
-        "intersects":_geointer, "$intersects":_geointer, "geoIntersects":_geointer, "$geointersects":_geointer, "geoIntersects":_geointer, "$geoIntersects":geointer,
+        "intersects":_geointer, "$intersects":_geointer, "geoIntersects":_geointer, "$geointersects":_geointer, "geoIntersects":_geointer, "$geoIntersects":_geointer,
         "touches":_geotou, "$touches":_geotou,
         "overlaps":_geoover, "$overlaps":_geoover,
         "contains":_geocont, "$contains":_geocont,
