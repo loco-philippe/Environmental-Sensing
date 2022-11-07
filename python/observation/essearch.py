@@ -128,6 +128,7 @@ dico_alias_python = {
 }
 
 def insert_from_doc(collection, document , info=True):
+    '''Inserts all observations from a document into a collection, where each line of to document corresponds to an observation.'''
     with open(document, 'r') as doc:
         for line in doc:
             try: insert_one_to_mongo(collection, line, info)
@@ -243,7 +244,7 @@ class ESSearch:
 
     def addconditions(self, parameters):
         '''
-        Takes multiple parameters and executes self.addcondition() for each of them.
+        Takes multiple parameters and applyes self.addcondition() on each of them.
         '''
         if isinstance(parameters, dict):
             self.addcondition(**parameters)
