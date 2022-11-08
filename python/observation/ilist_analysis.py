@@ -13,7 +13,6 @@ from copy import copy
 import csv
 
 from util import util
-#from ilist import Ilist
 from time import time
 
 class Analysis:
@@ -90,7 +89,6 @@ class Analysis:
 
     def getinfos(self, keys=None):
         '''return attribute infos'''
-        #if self.hashi != hash(self.iobj):
         if self.hashi != self.iobj._hashi():
             self.actualize()
         if not keys:
