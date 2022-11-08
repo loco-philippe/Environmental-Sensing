@@ -267,9 +267,9 @@ class TestObsUnitaire(unittest.TestCase):
             encoded=False), {"val": [2, 1]})
         # !!!! à adapter en fonction de ExternValue
         self.assertEqual(ESValue.from_obj(
-            '{"obs":["val", 21]}').__class__.__name__, 'Observation')
+            '{"obs": {"data": ["val", 21]}}').__class__.__name__, 'Observation')
         self.assertEqual(ESValue.from_obj(
-            {"obs": ["val", 21]}).__class__.__name__, 'Observation')
+            {"obs": {'data': ["val", 21]}}).__class__.__name__, 'Observation')
         #self.assertEqual(ESValue.from_obj('{"truc":{"observation":{}}}').json(encoded=False), {"truc":'{"observation": {}}'})
         #self.assertEqual(ESValue.from_obj({"truc": Observation()}).json(encoded=False), {"truc":{"type":"observation"}})
         #self.assertEqual(ESValue.valClassName('{"locvalue":1, "observation":{}}'), 'NamedValue')

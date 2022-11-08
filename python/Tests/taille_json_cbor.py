@@ -94,7 +94,7 @@ len(cbor2.dumps(dic4, datetime_as_timestamp=True, timezone=timezone.utc,
                 canonical=True))    # len 32
 
 #%%% interne
-ob = Observation(json.dumps(dict((obs_1, dat1, loc1, prop1, _res(1)))))
+ob = Observation.obj(json.dumps(dict((obs_1, dat1, loc1, prop1, _res(1)))))
 opt ={ES.dat_classES : ['value'], ES.loc_classES : ['value'], 
       ES.prp_classES : ['valuemini'], ES.res_classES : ['sfloat']}    
 len(ob.to_bytes(opt))   #24

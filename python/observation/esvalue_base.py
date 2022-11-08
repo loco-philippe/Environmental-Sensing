@@ -155,7 +155,7 @@ class ESValue:
         if classn in ES.ESvalName:
             return _classval()[classn](val, name)
         if classn in ES.valname:
-            return _classval()[classn](val)
+            return _classval()[classn].obj(val)
         # return ESValue._castsimple(val)
         return ESValue._castsimple(bs)
 
@@ -551,7 +551,6 @@ class ESValue:
                 pass
         if not isinstance(bs, dict):
             val = bs
-        # elif isinstance(bs, dict) and len(bs) > 1: val = bs
         elif isinstance(bs, dict) and len(bs) != 1:
             val = bs
         elif list(bs.keys())[0] in ES.typeName:
@@ -559,14 +558,17 @@ class ESValue:
             bs2 = bs[list(bs.keys())[0]]
         else:
             bs2 = bs
-        if not bs2 is None:
-            if not isinstance(bs2, dict):
-                val = bs2
-            elif isinstance(bs2, dict) and len(bs2) > 1:
-                val = bs2
-            else:
-                name = str(list(bs2.keys())[0])
-                val = list(bs2.values())[0]
+        if bs2 is None:
+            return (classname, None, val)
+        if classname == ES.obs_clsName:
+            return (classname, None, bs2)
+        if not isinstance(bs2, dict):
+            val = bs2
+        elif isinstance(bs2, dict) and len(bs2) > 1:
+            val = bs2
+        else:
+            name = str(list(bs2.keys())[0])
+            val = list(bs2.values())[0]
         return (classname, name, val)
 
 

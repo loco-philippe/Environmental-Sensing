@@ -274,7 +274,7 @@ class Test_Ilist(unittest.TestCase):
                      [110, 10, 120, 120, 115]])
         il3 = il1 | il2
         self.assertEqual(il3.lenidx, il2.lenidx)
-        il = Ilist.ext([['er', 'rt', 'er', 'ry', 'ab', 'ert']])
+        il = Ilist.ext([['er', 'rt', 'er', 'ry', 'ab', 'ert']], var=0)
         ilx = Ilist.ext([[0, 0, 0, 1, 1, 1], [0, 1, 2, 3, 4, 1]])
         il2 = il | ilx
         self.assertEqual(il2.lidx[0], ilx.lidx[1])
@@ -500,7 +500,7 @@ class Test_Ilist(unittest.TestCase):
             ["anne white", "anne", "gr1", "english"]), [14])
         self.assertEqual(il3.merge(mergeidx=True, updateidx=False).loc(
             ["anne white", "anne", "gr2", "english"]), [14])
-        il3 = Ilist.ext([[il1, il2]], typevalue=None)
+        il3 = Ilist.ext([[il1, il2]], typevalue=None, var=0)
         self.assertEqual(il3.merge(mergeidx=True, updateidx=True).loc(
             ["english", "gr1"]), [14])
 

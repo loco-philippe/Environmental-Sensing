@@ -381,7 +381,7 @@ class TestExamples(unittest.TestCase):
         # print(ob_init.json)
         # operation phase (sensor) -> regularly
         res = 25
-        il_operat = Ilist.dic({'res': [res]})
+        il_operat = Ilist.dic({'res': [res]}, var=0)
         # if the payload is character payload
         payload1 = il_operat.json(encoded=True)
         #print(len(payload1), payload1)
@@ -404,7 +404,7 @@ class TestExamples(unittest.TestCase):
         coord = [2.3, 48.9]
         prop1 = {"prp": "PM25"}
         prop2 = {"prp": "PM10"}
-        ob_init =  Observation([['location', [coord]], ['property', [prop1, prop2]]])
+        ob_init =  Observation.obj({'data': [['location', [coord]], ['property', [prop1, prop2]]]})
         # sensor : Ilist acquisition
         '''il_sensor = Ilist.obj([['res', [], 0], ['datation', []], 
                            ['property', [prop1, prop2], []]])'''
@@ -443,7 +443,7 @@ class TestObservation(unittest.TestCase):
     '''Unit tests for `ES.observation.Obs` '''
 
     def test_obs_creation_copy(self):
-        listob = [Observation(), Observation(id='truc', listidx=[1, 2, 3]), 
+        listob = [Observation(), Observation(id='truc', listidx=Ilist.obj([1, 2, 3])), 
                   Observation.from_obj({'data': [1, 2, 3]}),
                   Observation.obj({'data': [1, 2, 3], 'id':'truc'}),
                   Observation.obj({'data': [1, 2, 3], 'id':'truc',
@@ -453,16 +453,17 @@ class TestObservation(unittest.TestCase):
                   Observation.std(result=[10, 20], datation='dat1',
                           location=['loc1', 'loc2'], property=[None], name='truc'),
                   #Observation.dic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
-                  Observation([list(dat1), list(loc1), list(prop3), list(_res(3))], name='truc'),
-                  Observation([list(loc3), list(dat3)+[0], list(prop2),
+                  Observation(Ilist.obj([list(dat1), list(loc1), list(prop3), list(_res(3))])
+                              , name='truc'),
+                  Observation.obj({'data': [list(loc3), list(dat3)+[0], list(prop2),
                        ['result', [{'file': 'truc', 'path': 'ertert'}, 1, 2, 3, 
-                                   4, ['truc', 'rt']]]])]
+                                   4, ['truc', 'rt']]]]})]
         for ob in listob:
             #print(ob)
             self.assertEqual(Observation.obj(ob.to_obj()), ob)
             self.assertEqual(copy.copy(ob), ob)
 
-        ob1 = Observation([list(dat1), list(loc1), list(prop3), list(_res(3))])
+        ob1 = Observation.obj({'data': [list(dat1), list(loc1), list(prop3), list(_res(3)) + [-1]]})
         ob3 = Observation.std(datation=dat1[1], location=loc1[1], property=prop3[1],
                       result=_res(3)[1])
         ob6 = Observation.std(datation=dat1[1][0], location=loc1[1][0],
@@ -470,7 +471,7 @@ class TestObservation(unittest.TestCase):
         self.assertTrue(ob1 == ob3 == ob6)
         ob = Observation()
         ob1 = Observation.dic({})
-        ob2 = Observation([])
+        ob2 = Observation.obj()
         self.assertTrue(ob == ob1 == ob2)
         ob = Observation.std('fort', 'ce matin', 'paris', 'pm10')
         ob1 = Observation.std([], [], [], [])
@@ -480,7 +481,8 @@ class TestObservation(unittest.TestCase):
         self.assertTrue(ob == ob1 == ob2)
 
     def test_obs_loc_iloc_maj(self):
-        ob = Observation([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))], param=truc_mach)
+        ob = Observation(Ilist.obj([list(dat3), list(loc3)+[0], list(prop2), 
+                                    list(_res(6)) + [-1]]), param=truc_mach)
         self.assertTrue([ob[3][3]] ==
                         ob.loc([datetime.datetime.fromisoformat(dat3[1][1]), loc3[1][1],
                                 prop2[1][1]]) ==
@@ -506,14 +508,14 @@ class TestObservation(unittest.TestCase):
                          [paris, lyon, marseille])
         self.assertEqual(ob.nindex('datation').vSimple(), [t1, t2, t3])
         #ob = Observation.dic(dict((dat3, dpt2)), param=truc_mach)
-        ob = Observation([list(dat3), list(dpt2)], param=truc_mach)
+        ob = Observation(Ilist.obj([list(dat3), list(dpt2)]), param=truc_mach)
         self.assertEqual(ob.nindex('location').vSimple()[0], pol1centre)
-        ob = Observation([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
+        ob = Observation.obj({'data': [list(dat3), list(loc3)+[0], list(prop2), list(_res(6)) + [-1]]})
         self.assertEqual(ob.nindex('result').vName(default='res'), ['res']*6)
         self.assertEqual(ob.nindex('result').vSimple(), [0, 1, 2, 3, 4, 5])
 
     def test_obs_options(self):
-        ob = Observation([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
+        ob = Observation.obj({'data': [list(dat3), list(loc3)+[0], list(prop2), list(_res(6)) + [-1]]})
         self.assertTrue(Observation.obj(ob.json()) == ob)
         option = dict()
         option["json_res_index"] = True
@@ -536,10 +538,10 @@ class TestObservation(unittest.TestCase):
             self.assertEqual(Observation.from_obj(ob.to_obj(**opt)), ob)
 
     def test_obs_dim(self):
-        ob1 = Observation([list(dat2), list(loc3), list(prop3)+[1], list(_res(6))])
+        ob1 = Observation.obj({'data': [list(dat2), list(loc3), list(prop3)+[1], list(_res(6)) + [-1]]})
         self.assertTrue(ob1.dimension ==
                         2 and ob1.complete and ob1.primary == [0, 1])
-        ob1 = Observation([list(dat3), list(loc2), list(prop3)+[0], list(_res(6))])
+        ob1 = Observation.obj({'data': [list(dat3), list(loc2), list(prop3)+[0], list(_res(6)) + [-1]]})
         self.assertTrue(ob1.dimension ==
                         2 and ob1.complete and ob1.primary == [0, 1])
         #ob1 = Observation([list(dat3), list(loc3), list(prop3), list(_res(3))])
@@ -548,7 +550,7 @@ class TestObservation(unittest.TestCase):
                         1 and ob1.complete and ob1.primary == [0])
 
     def test_obs_majListName_majListValue(self):
-        ob = Observation([list(dat3), list(loc3), list(prop2), list(_res(18))])
+        ob = Observation.obj({'data': [list(dat3), list(loc3), list(prop2), list(_res(18))]})
         ob.nindex('location').setcodeclist(
             [pparis, plyon, pmarseille], valueonly=True)
         self.assertEqual(ob.setLocation[2].vSimple(), pmarseille)
@@ -559,7 +561,7 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob.setLocation[2].name, 'marseille')
 
     def test_append_obs(self):
-        ob = Observation([list(dat3), list(loc3)+[0], list(prop2), list(_res(6))])
+        ob = Observation.obj({'data': [list(dat3), list(loc3)+[0], list(prop2), list(_res(6))]})
         ob1 = copy.copy(ob)
         ind = ob1.appendObs(ob)
         self.assertEqual(ob1.setResult[ind[3]].value, ob)
@@ -576,8 +578,8 @@ class TestObservation(unittest.TestCase):
         #res = [[10, 11, 12, 13, 14, 15], -1]
         res = [10, 11, 12, 13, 14, 15]
         lis = [['location', loc, 2], ['property', prp],
-               ['datation', dat], ['result', res]]
-        ob = Observation(lis)
+               ['datation', dat], ['result', res, -1]]
+        ob = Observation.obj({'data': lis})
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
         ob.sort(order=[0, 2, 1])
         self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
@@ -593,8 +595,10 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob.lindex[1].vName()[:4], ['p1', 'p1', 'p1', 'p2'])
 
     def test_obs_add(self):
-        ob = Observation([list(dat3), list(loc3), list(prop2), list(_res(18))], var=3)
-        obp = Observation([list(pdat3), list(ploc3), list(pprop2), list(_res(18))], var=3)
+        ob = Observation.obj({'data': [list(dat3), list(loc3), list(prop2), 
+                                       list(_res(18)) + [-1]]})
+        obp = Observation.obj({'data': [list(pdat3), list(ploc3), list(pprop2), 
+                                        list(_res(18)) + [-1]]})
         obc = obp + ob
         self.assertEqual(set(obc.lindex[0].codec), set(
             obp.lindex[0].codec + ob.lindex[0].codec))
@@ -607,13 +611,20 @@ class TestObservation(unittest.TestCase):
         self.assertFalse(ob2.consistent)
 
     def test_obs_full(self):
-        ob = Observation.dic({"datation": [[{"date1": "2021-02-04T12:05:00"}, "2021-07-04T12:05:00", "2021-05-04T12:05:00"],
+        '''ob = Observation.dic({"datation": [[{"date1": "2021-02-04T12:05:00"}, "2021-07-04T12:05:00", "2021-05-04T12:05:00"],
                                     [0, 0, 1, 1, 2, 2]],
                        "location": [[{"paris": [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                                     [0, 0, 2, 1, 1, 2]],
                       "property": [[{"prp": "PM25", "unit": "kg/m3"}, {"prp": "PM10", "unit": "kg/m3"}],
                                    [0, 1, 0, 1, 0, 1]],
-                       "result": [[0, 1, 2, 3, 4, 5], -1]}, name='test1')
+                       "result": [[0, 1, 2, 3, 4, 5], -1]}, name='test1')'''
+        ob = Observation.obj({'data':[["datation", [{"date1": "2021-02-04T12:05:00"}, "2021-07-04T12:05:00", "2021-05-04T12:05:00"],
+                                    [0, 0, 1, 1, 2, 2]],
+                       ["location", [{"paris": [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
+                                    [0, 0, 2, 1, 1, 2]],
+                      ["property", [{"prp": "PM25", "unit": "kg/m3"}, {"prp": "PM10", "unit": "kg/m3"}],
+                                   [0, 1, 0, 1, 0, 1]],
+                       ["result", [0, 1, 2, 3, 4, 5], -1]], 'name': 'test1'})
         ob1 = ob.full(fillvalue=-1, inplace=False)
         rec = [{"date1": "2021-02-04T12:05:00"}, {"paris": [2.35, 48.87]},
                {"prp": "PM10", "unit": "kg/m3"}]
@@ -623,9 +634,9 @@ class TestObservation(unittest.TestCase):
         self.assertEqual(ob, ob1)
 
     def test_obs_extend(self):
-        obp = Observation([list(_res(6)), list(loc3), list(prop2)])
-        obc = Observation([list(_res(6)), list(dat3), list(prop2)])
-        ob = Observation([list(_res(6)), list(dat3), list(loc3)+[1], list(prop2)])
+        obp = Observation.obj({'data': [list(_res(6)), list(loc3), list(prop2)]})
+        obc = Observation.obj({'data': [list(_res(6)), list(dat3), list(prop2)]})
+        ob  = Observation.obj({'data': [list(_res(6)), list(dat3), list(loc3)+[1], list(prop2)]})
         obcc = obp | obc
         self.assertEqual(obcc, ob)
         ob = Observation.obj({'data': [[_res(6)[0], _res(6)[1], -1]]})
@@ -638,7 +649,7 @@ class TestObservation(unittest.TestCase):
 
     def test_json_file(self):
         res = ('result', [{'file':'truc', 'path':'ertert'}, 1,2,3,4,['truc', 'rt']])
-        ob = Observation([list(res), list(dat3), list(loc3)+[1], list(prop2)])
+        ob = Observation.obj({'data': [list(res), list(dat3), list(loc3)+[1], list(prop2)]})
         #ob = Observation(dict((obs_1, loc3, dat3, prop2, res)), idxref={'location':'datation'})        
 
         encoded = [True, False]
@@ -668,12 +679,12 @@ class TestExports(unittest.TestCase):
         _resloc = set((tuple(lyon), tuple(paris), tuple(marseille)))
         self.assertEqual(ob.__geo_interface__['type'], "MultiPoint")
         self.assertEqual(set(ob.__geo_interface__["coordinates"]), _resloc)
-        ob = Observation([list(dpt2), list(dat1)])
+        ob = Observation.obj({'data': [list(dpt2), list(dat1)]})
         dpt2pt = {'type': 'Polygon', 'coordinates': (((0.5, 1.5), (0.0, 2.0),
                                                       (1.0, 2.0), (2.0, 2.0), (1.0, 1.0), (0.0, 1.0), (0.5, 1.5)),)}
         self.assertEqual(set(ob.__geo_interface__['coordinates'][0]), set(
             dpt2pt['coordinates'][0]))
-        ob = Observation([list(dat3), list(dpt2), list(_res(6))])
+        ob = Observation.obj({'data': [list(dat3), list(dpt2), list(_res(6))]})
         self.assertEqual(set(ob.__geo_interface__['coordinates'][0]), set(
             dpt2pt['coordinates'][0]))
         '''{'type': 'Polygon',

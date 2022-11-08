@@ -166,22 +166,18 @@ class Observation(Ilist):
     """
 
 # %% constructor
-    def __init__(self, listidx=None, name=None, id=None, param=None, length=None, var=None, 
-                 reindex=True, typevalue=ES.def_clsName, context=True):
-        '''
-        Observation constructor
+    def __init__(self, listidx=None, name=None, id=None, param=None, 
+                 lvarname=None, reindex=True,):
+        '''Observation constructor
 
         *Parameters*
 
-        - **listidx**  : list (default None) - list of compatible Iindex data
-        - **typevalue**: str (default ES.def_clsName) - default value class (None or NamedValue)
-        - **var**      : int (default None) - row of the variable
-        - **length**   : int (default None) - number of records (row)
+        - **listidx**  : object (default None) - list of Iindex data or Ilist or Observation
+        - **lvarname** : list (default None) - list of variable names
         - **name**     : string (default None) - Obs name
         - **id**       : string (default None) - Identification string
-        - **param**    : dict (default None) - Dict with parameter data or user's data
-        - **context** : boolean (default True) - if False, only codec and keys are included
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        - **param**    : dict (default None) - Dict with parameter data or user's data'''
+
         if isinstance(listidx, Observation):
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.lvarname = [name for name in listidx.lvarname]
@@ -204,18 +200,7 @@ class Observation(Ilist):
         if not listidx:
             Ilist.__init__(self)
         else:
-            for i, idx in enumerate(listidx):
-                if isinstance(idx, list) and len(idx) > 1 and idx[0]==ES.res_classES:
-                    var=i
-                    break
-            #Ilist.__init__(self, listidx=listidx, length=length, var=var,
-            il = Ilist._init_ilist(listidx=listidx, length=length, var=var,
-                           reindex=reindex, typevalue=typevalue, context=context)
-            self.lindex= il.lindex
-            self.lvarname = il.lvarname
-            self.analysis = Analysis(self)
-        #if ES.res_classES in self.lname:
-        #    self.lvarname = [ES.res_classES]
+            Ilist.__init__(self, listidx=listidx, lvarname=lvarname, reindex=reindex)
         self.name = name
         self.id = id
         self.param = param
@@ -237,11 +222,11 @@ class Observation(Ilist):
         if ES.res_classES in idxdic:
             var = list(idxdic.keys()).index(ES.res_classES)
         listidx = Ilist.dic(idxdic, typevalue=typevalue, var=var)
-        return cls(listidx=listidx, name=name, id=id, param=param, context=True)
+        return cls(listidx=listidx, name=name, id=id, param=param)
 
     @classmethod
     def std(cls, result=None, datation=None, location=None, property=None,
-            name=None, id=None, param=None):
+            name=None, id=None, param=None, typevalue=ES.def_clsName):
         '''
         Generate an Observation Object with standard indexes
 
@@ -254,49 +239,22 @@ class Observation(Ilist):
         - **name**     : string (default None) - Observation name
         - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
-        listidx = []
-        length = -1
-        if result is None:
-            listidx.append([ES.res_classES, []])
-            length = 0
-        else:
-            if isinstance(result, list):
-                length = len(result)
-            else:
-                length = 1
-            listidx.append(Iindex.ext(result, ES.res_classES))
-        if datation is None:
-            listidx.append([ES.dat_classES, []])
-        else:
-            if not isinstance(datation, list):
-                dat = [datation] * length
-            elif len(datation) == 1 :
-                dat = datation * length
-            else:
-                dat = datation
-            listidx.append(Iindex.ext(dat, ES.dat_classES))
-        if location is None:
-            listidx.append([ES.loc_classES, []])
-        else:
-            if not isinstance(location, list):
-                loc = [location] * length
-            elif len(location) == 1 :
-                loc = location * length
-            else:
-                loc = location
-            listidx.append(Iindex.ext(loc, ES.loc_classES))
-        if property is None:
-            listidx.append([ES.prp_classES, []])
-        else:
-            if not isinstance(property, list):
-                prp = [property] * length
-            elif len(property) == 1 :
-                prp = property * length
-            else:
-                prp = property
-            listidx.append(Iindex.ext(prp, ES.prp_classES))
-        return cls(listidx=listidx, length=length, name=name, id=None, param=param,
-                   var=0, context=True)
+        idxdic = {}
+        length = 0
+        std_val = (result, datation, location, property)
+        es_val  = (ES.res_classES, ES.dat_classES, ES.loc_classES, ES.prp_classES)     
+        for ind, (std, es) in enumerate(zip(std_val, es_val)):
+            value = []
+            if not std is None and isinstance(std, list):
+                value = std
+            elif not std is None and not isinstance(std, list):
+                value = [std]
+            length = max(length, len(value))
+            idxdic[es] = value
+        for item in idxdic.items():
+            if len(item[1]) == 1:
+                idxdic[item[0]] = item[1] * length
+        return cls.dic(idxdic=idxdic, typevalue=typevalue, name=name, id=id, param=param)
 
     @classmethod
     def from_obj(cls, bs=None, reindex=True, context=True):
@@ -309,7 +267,7 @@ class Observation(Ilist):
         - **reindex** : boolean (default True) - if True, default codec for each Iindex
         - **context** : boolean (default True) - if False, only codec and keys are included'''
         if not bs:
-            bs = []
+            bs = {}
         if isinstance(bs, bytes):
             dic = cbor2.loads(bs)
         elif isinstance(bs, str):
@@ -343,7 +301,7 @@ class Observation(Ilist):
         if data and not isinstance(data, (list, dict)):
             raise ObsError('data is not a list and not a dict')
         return cls(listidx=Ilist.obj(data, reindex=reindex, context=context),
-                   name=name, id=id, param=param, context=context, reindex=reindex)
+                   name=name, id=id, param=param)
 
 # %% special
     def __copy__(self):
