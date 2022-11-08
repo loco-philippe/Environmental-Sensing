@@ -147,31 +147,6 @@ class IlistStructure:
 
         *Returns* : array of array of dict'''
         return self.analysis.getmatrix()
-        '''
-        lenidx = self.lenidx
-        mat = [[None for i in range(lenidx)] for i in range(lenidx)]
-        for i in range(lenidx):
-            for j in range(i, lenidx):
-                mat[i][j] = self.lidx[i].couplinginfos(
-                    self.lidx[j], default=default)
-            for j in range(i):
-                mat[i][j] = copy(mat[j][i])
-                if mat[i][j]['typecoupl'] == 'derived':
-                    mat[i][j]['typecoupl'] = 'derive'
-                elif mat[i][j]['typecoupl'] == 'derive':
-                    mat[i][j]['typecoupl'] = 'derived'
-                elif mat[i][j]['typecoupl'] == 'linked':
-                    mat[i][j]['typecoupl'] = 'link'
-                elif mat[i][j]['typecoupl'] == 'link':
-                    mat[i][j]['typecoupl'] = 'linked'
-        if filename:
-            with open(filename, 'w', newline='', encoding="utf-8") as file:
-                writer = csv.writer(file)
-                writer.writerow(self.idxname)
-                for i in range(lenidx):
-                    writer.writerow([mat[i, j][att] for j in range(lenidx)])
-                writer.writerow(self.idxlen)
-        return mat'''
 
     def coupling(self, derived=True, rate=0.1):
         '''Transform idx with low rate in coupled or derived indexes (codec extension).
@@ -513,7 +488,6 @@ class IlistStructure:
         - **list** : val record or value record'''
         if extern:
             return [idx.valrow(row) for idx in self.lindex]
-        # if extern: return [idx.val[row] for idx in self.lindex]
         return [idx.values[row] for idx in self.lindex]
 
     def recidx(self, row, extern=True):
@@ -527,7 +501,6 @@ class IlistStructure:
         *Returns*
 
         - **list** : val or value for idx'''
-        # if extern: return [idx.val[row] for idx in self.lidx]
         if extern:
             return [idx.valrow(row) for idx in self.lidx]
         return [idx.values[row] for idx in self.lidx]
@@ -637,17 +610,13 @@ class IlistStructure:
         *Returns* : self'''
         if not order:
             order = list(range(self.lenindex))
-            #order = []
         orderfull = order + list(set(range(self.lenindex)) - set(order))
-        #for idx in [self.lindex[i] for i in order]:
-        #    idx.reindex(codec=sorted(idx.codec, key=func))
         for i in order:
             self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
         newidx = util.transpose(sorted(util.transpose(
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]),
             reverse=reverse))
         for i in range(self.lenindex):
-            #self.lindex[orderfull[i]].keys = newidx[i]
             self.lindex[orderfull[i]].set_keys(newidx[i])
         return self
 
@@ -681,9 +650,7 @@ class IlistStructure:
         if inplace:
             self.lindex = lindex
             return self
-        return self.__class__._init_ilist(lindex, var=self.lvarrow[0])
-        #return self.__class__(lindex, var=self.lvarrow[0])
-        # return Ilist(lindex, var=self.lvarrow[0])
+        return self.__class__(lindex, self.lvarname)
 
     def updateindex(self, listvalue, index, extern=True, typevalue=None):
         '''update values of an index.

@@ -81,7 +81,6 @@ class IindexInterface:
         if isinstance(bs, bytes):
             lis = cbor2.loads(bs)
         elif isinstance(bs, str) and bs[0] in ['{', '[', '"']:
-        #elif isinstance(bs, str):
             lis = json.loads(bs, object_hook=CborDecoder().codecbor)
         elif isinstance(bs, list):
             lis = bs
@@ -141,7 +140,6 @@ class IindexInterface:
         if isinstance(keys, int):
             keys = [keys]
         if isinstance(keys, list) and len(keys) == 0:
-            #return (ES.nullparent, keys)
             return (ES.notcrossed, keys, False, False, False)
         if isinstance(keys, list) and len(keys) == 1 and isinstance(keys[0], int)\
                 and keys[0] < 0:
@@ -156,7 +154,6 @@ class IindexInterface:
                 and isinstance(keys[1], list) and keys[0] >= 0:
             return (keys[0], keys[1], False, True, False)
         if isinstance(keys, list) and len(keys) > 1:
-            #return (ES.nullparent, keys)
             return (ES.notcrossed, keys, True, False, False)
         raise IindexError('parent or keys is unconsistent')
 
@@ -202,10 +199,6 @@ class IindexInterface:
         codlis = [util.json(cc, encoded=False, typevalue=None, simpleval=simpleval,
                             modecodec=modecodec, untyped=option['untyped'],
                             geojson=option['geojson']) for cc in codeclist]
-        #if len(js) == 1 and isinstance(js[0], str):
-        #    listunic = True
-        #if len(codlis) == 1 and not listunic and not isinstance(codlis[0], list):
-        #    codlis = codlis[0]
         js.append(codlis)
         if not codecval:
             if parent >= 0 and keyslist:
@@ -350,7 +343,6 @@ class IindexInterface:
         if modecodec == 'full':
             codeclist = self.values
             keyslist = None
-            #parent = ES.nullparent
         elif modecodec == 'default':
             codeclist = self._codec
             keyslist = self._keys            
@@ -380,16 +372,6 @@ class IindexInterface:
                                   simpleval=simpleval, modecodec=modecodec, 
                                   untyped=option['untyped'], geojson=option['geojson'])}
                          for i, cod in enumerate(self.codec)]
-        """for i in range(len(self.codec)):
-            value = util.json(self.codec[i], encoded=False, typevalue=None, 
-                              simpleval=simpleval, modecodec=modecodec, 
-                              untyped=option['untyped'], geojson=option['geojson'])
-            #if i==len(self.codec)-1: print('value ', time()-t0)
-            lis.append({'record': [z[0] for z in zkeys if z[1] == i],
-                        'codec': value})
-            #if i==len(self.codec)-1: print('append ', time()-t0)
-        #print('boucle for ', self.name, time()-t0)
-        dic['value'] = lis"""
         return {self.name: dic}
     
     def vlist(self, func, *args, extern=True, **kwargs):

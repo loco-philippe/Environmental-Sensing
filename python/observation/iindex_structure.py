@@ -269,7 +269,6 @@ class IindexStructure:
                 value, util.typename(self.name, ES.def_clsName))
         if not value in self._codec:
             return None
-            #raise IndexError('value not present')
         listkeys = [cod for cod, val in zip(
             range(len(self._codec)), self._codec) if val == value]
         return self.recordfromkeys(listkeys)

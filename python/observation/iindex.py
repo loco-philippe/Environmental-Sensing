@@ -157,7 +157,6 @@ class Iindex(IindexStructure, IindexInterface):
             raise IindexError("codec not list")
         if codec == []:
             codec = util.tocodec(keys)
-        #codec = [ESValue.from_obj(val, typevalue) for val in codec]
         codec = util.castobj(codec, typevalue)
         self._keys = keys
         self._codec = codec
@@ -210,7 +209,7 @@ class Iindex(IindexStructure, IindexInterface):
             codec, keys = (values, list(range(len(values))))
         else:
             codec, keys = util.resetidx(values)
-        return cls(name=name, codec=codec, keys=keys, typevalue=None)
+        return cls(codec=codec, name=name, keys=keys, typevalue=None)
 
     @classmethod
     def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
@@ -295,7 +294,6 @@ class Iindex(IindexStructure, IindexInterface):
         - **name** : string (default : None) - Name of the new Iindex
 
         *Returns* : new Iindex'''
-        #if not name: name = str(list(set([idx.name for idx in listidx])))
         if not name:
             name = str(list({idx.name for idx in listidx}))
         values = util.tuple(util.transpose([idx.values for idx in listidx]))
