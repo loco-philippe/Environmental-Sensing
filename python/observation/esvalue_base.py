@@ -171,10 +171,14 @@ class ESValue:
             self.value == other.value and self.name == other.name
 
     def __lt__(self, other):
-        '''lower if value is lower. If values are equal, self is lower if name is lower'''
-        if self.value == other.value:
+        '''lower if vSimple is lower. If vSimple are equal, self is lower if name is lower'''
+        if self.__class__.__name__ != other.__class__.__name__:
+            return hash(self) < hash(other)
+        simps = self.vSimple()
+        simpo = other.vSimple()
+        if simps == simpo:
             return self.name < other.name
-        return self.value < other.value
+        return simps < simpo
 
     def __str__(self):
         '''return json string format'''
