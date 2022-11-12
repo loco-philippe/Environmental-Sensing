@@ -271,7 +271,10 @@ class LocationValue(ESValue):              # !!! début LocationValue
 
     def __lt__(self, other):
         ''' return minimal distance between a fixed point'''
-        if self.coorInv == ES.nullCoor:
+        if self.__class__.__name__ != other.__class__.__name__:
+            return hash(self) < hash(other)
+        #if self.coorInv == ES.nullCoor:
+        if self.coorInv == other.coorInv:
             return self.name < other.name
         return distance.distance(self.coorInv, ES.distRef) <  \
             distance.distance(other.coorInv, ES.distRef)
@@ -474,6 +477,8 @@ class PropertyValue(ESValue):              # !!! début ESValue
 
     def __lt__(self, other):
         """lower if string simple value + name is lower"""
+        if self.__class__.__name__ != other.__class__.name:
+            return hash(self) < hash(other)
         return self.simple + self.name < other.simple + other.name
 
     @staticmethod

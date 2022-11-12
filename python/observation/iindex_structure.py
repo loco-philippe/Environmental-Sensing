@@ -523,7 +523,7 @@ class IindexStructure:
             self._codec = codec
             self._keys = keys
             return self
-        return self.__class__(codec=codec, name=self.name, keys=keys)
+        return self.__class__(codec=codec, name=self.name, keys=keys, castobj=False)
 
     def valrow(self, row):
         ''' return val for a record

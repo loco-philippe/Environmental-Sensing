@@ -118,7 +118,7 @@ class Iindex(IindexStructure, IindexInterface):
     '''
 
     def __init__(self, codec=None, name=None, keys=None, typevalue=ES.def_clsName,
-                 lendefault=0, reindex=False):
+                 lendefault=0, reindex=False, castobj=True):
         '''
         Iindex constructor.
 
@@ -157,7 +157,8 @@ class Iindex(IindexStructure, IindexInterface):
             raise IindexError("codec not list")
         if codec == []:
             codec = util.tocodec(keys)
-        codec = util.castobj(codec, typevalue)
+        if not typevalue is None or castobj:
+            codec = util.castobj(codec, typevalue)
         self._keys = keys
         self._codec = codec
         self.name = name
