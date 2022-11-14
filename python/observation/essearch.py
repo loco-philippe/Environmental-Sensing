@@ -31,8 +31,8 @@ import datetime
 client = Mongoclient(<Mongo-auth>)
 collec = client[<base>][<collection>]
 
-# In this example, we search for measures of property PM25 taken between 2022/01/01 and 2022/31/12 
-# and we ensure the measure is an Observation.
+# In this example, we search for measures of property PM25 taken between 2022/01/01 
+# and 2022/31/12 and we ensure the measure is an Observation.
 
 # Option 1
 srch = ESSearch(collection = collec)
