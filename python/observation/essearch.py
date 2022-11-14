@@ -23,7 +23,7 @@ Execute the research with `ESSearch.execute()`. Put parameter **single** to True
 instead of a list of observations.
 
 Example of python code using observation.essearch module:
-```
+```python
 from pymongo import MongoClient
 from observation.essearch import ESSearch
 import datetime
@@ -42,7 +42,6 @@ srch.addcondition('property', 'PM25')
 srch.addcondition(path = 'type', comparator = '==', operand = 'observation')
 
 # Option 2 (equivalent to option 1 but on one line)
-
 srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
                  ['datation', datetime.datetime(2022, 31, 12), '<='], 
                  ['property', 'PM25'], 
