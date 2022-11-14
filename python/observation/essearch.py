@@ -1,11 +1,3 @@
-import datetime
-import shapely.geometry
-from pymongo.collection import Collection
-from esobservation import Observation
-from iindex import Iindex
-from util import util
-from timeslot import TimeSlot
-
 '''
 # How to use observation.essearch ?
 
@@ -31,7 +23,7 @@ Execute the research with `ESSearch.execute()`. Put parameter **single** to True
 instead of a list of observations.
 
 Example of python code using observation.essearch module:
-`
+```
 from pymongo import MongoClient
 from observation.essearch import ESSearch
 import datetime
@@ -39,7 +31,9 @@ import datetime
 client = Mongoclient(<Mongo-auth>)
 collec = client[<base>][<collection>]
 
-# In this example, we search for measures of property PM25 taken between 2022/01/01 and 2022/31/12 and we ensure the measure is an Observation.
+# In this example, we search for measures of property PM25 taken between 2022/01/01 and 2022/31/12 
+# and we ensure the measure is an Observation.
+
 # Option 1
 srch = ESSearch(collection = collec)
 srch.addcondition('datation', datetime.datetime(2022, 1, 1), '>=')
@@ -48,11 +42,23 @@ srch.addcondition('property', 'PM25')
 srch.addcondition(path = 'type', comparator = '==', operand = 'observation')
 
 # Option 2 (equivalent to option 1 but on one line)
-srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], ['datation', datetime.datetime(2022, 31, 12), '<='], ['property', 'PM25'], {'path': 'type', 'comparator': '==', 'operand': 'Observation'}], collec)
+
+srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
+                 ['datation', datetime.datetime(2022, 31, 12), '<='], 
+                 ['property', 'PM25'], 
+                 {'path': 'type', 'comparator': '==', 'operand': 'Observation'}], 
+                collec)
 
 result = srch.execute()
-`
+```
 '''
+import datetime
+import shapely.geometry
+from pymongo.collection import Collection
+from esobservation import Observation
+from iindex import Iindex
+from util import util
+from timeslot import TimeSlot
 
 dico_alias_mongo = { # dictionnary of the different names accepted for each comparator and a given type. <key>:<value> -> <accepted name>:<name in MongoDB>
     # any type other than those used as keys is considered non valid
@@ -203,7 +209,7 @@ def empty_request(collection, limit = 5): # actuellement, n'utilise pas les info
     return count, distinct_names
 
 class ESSearch:
-    '''
+    """
     An `ESSearch` is defined as an ensemble of conditions to be used to execute a MongoDB request or any iterable containing only observations.
 
     *Attributes (for @property, see methods)* :
@@ -230,7 +236,7 @@ class ESSearch:
     *query method*
 
     - `ESSearch.execute`
-    '''
+    """
     def __init__(self, 
                     parameters = None,
                     collection = None,
