@@ -5,9 +5,54 @@ from esobservation import Observation
 from iindex import Iindex
 from util import util
 from timeslot import TimeSlot
-import time
 
-# comments in english are for everyone to read, comments in french are for myself
+'''
+# How to use observation.essearch ?
+
+1. **Create the MongoDB database**
+You can easily create an account on MongoDB. Once you have a database, follow the guidelines [here](https://www.mongodb.com/docs/atlas/tutorial/connect-to-your-cluster/#connect-to-your-atlas-cluster) to connect to it using pymongo.
+All you need to use this module is to be able connect to the Collection with pymongo.
+
+2. **Fill the database with your data**
+Construct an observation or a list of observations containing your data using dedicated functions from `observation.Observation`. 
+You can then use either `insert_one_to_mongo(collection, observation)` or `insert_many_to_mongo(collection, observation_list)` to insert it in the database.
+
+3. **Write a request using observation.ESSearch**
+An `ESSearch` instance must be created with either a MongoDB Collection (passed as argument **collection**) or a list of observations (passed as argument **data**).
+Criteria for the query are then added one by one using `ESSearch.addcondition` or `ESSearch.orcondition`, or all together with `ESSearch.addconditions` or passed as argument **parameters** of ESSearch.
+
+A condition is composed of:
+- a **name** or a **path** indicating the name of a column or an exact path giving which element is concerned by the condition;
+- an **operand** which is the item of the comparison (if omitted, the existence of the path is tested);
+- a **comparator** which can be applied on the operand, for example '>=' or 'within' (defaults to equality in most cases);
+- optional parameters detailed in `ESSearch.addcondition` documentation, like **inverted** to add a *not*.
+
+Execute the research with `ESSearch.execute()`. Put parameter **single** to True so that the return be a single observation
+instead of a list of observations.
+
+Example of python code using observation.essearch module:
+`
+from pymongo import MongoClient
+from observation.essearch import ESSearch
+import datetime
+
+client = Mongoclient(<Mongo-auth>)
+collec = client[<base>][<collection>]
+
+# In this example, we search for measures of property PM25 taken between 2022/01/01 and 2022/31/12 and we ensure the measure is an Observation.
+# Option 1
+srch = ESSearch(collection = collec)
+srch.addcondition('datation', datetime.datetime(2022, 1, 1), '>=')
+srch.addcondition('datation', datetime.datetime(2022, 31, 12), '<=')
+srch.addcondition('property', 'PM25')
+srch.addcondition(path = 'type', comparator = '==', operand = 'observation')
+
+# Option 2 (equivalent to option 1 but on one line)
+srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], ['datation', datetime.datetime(2022, 31, 12), '<='], ['property', 'PM25'], {'path': 'type', 'comparator': '==', 'operand': 'Observation'}], collec)
+
+result = srch.execute()
+`
+'''
 
 dico_alias_mongo = { # dictionnary of the different names accepted for each comparator and a given type. <key>:<value> -> <accepted name>:<name in MongoDB>
     # any type other than those used as keys is considered non valid
@@ -51,7 +96,7 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
         "touches":"touches", "$touches":"touches",
         "overlaps":"overlaps", "$overlaps":"overlaps",
         "contains":"contains", "$contains":"contains",
-        "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear", #nécessite des paramètres supplémentaires
+        "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear",
         
         "in":"$in", "$in":"$in" # only in case where a list is not a geometry
     }
@@ -128,31 +173,32 @@ dico_alias_python = {
 }
 
 def insert_from_doc(collection, document , info=True):
-    '''Inserts all observations from a document into a collection, where each line of to document corresponds to an observation.'''
+    '''Inserts all observations from a document into a collection, where each line of the document corresponds to an observation.'''
     with open(document, 'r') as doc:
         for line in doc:
             try: insert_one_to_mongo(collection, line, info)
             except: pass
 
-def insert_one_to_mongo(collection, obj, info=True, mode='dict'):
+def insert_one_to_mongo(collection, obj, info=True):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
     if not isinstance(obj, Observation): obj = Observation.from_obj(obj)
-    dico2 = obj.json(json_info=info, modecodec=mode)
+    dico2 = obj.json(json_info=info, modecodec='dict')
     collection.insert_one(dico2)
 
-def insert_many_to_mongo(collection, objList, info=True, mode='dict'):
+def insert_many_to_mongo(collection, objList, info=True):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
     for i in range(len(objList)):
         if not isinstance(objList[i], Observation): objList[i] = Observation.from_obj(objList[i])
-        objList[i] = objList[i].json(json_info=info, modecodec=mode)
+        objList[i] = objList[i].json(json_info=info, modecodec='dict')
     collection.insert_many(objList)
 
-def empty_request(collection): # actuellement, n'utilise pas les informations et requête LOURDE si on enlève le limit (et si on le laisse, résultat inexact)
+def empty_request(collection, limit = 5): # actuellement, n'utilise pas les informations et requête LOURDE si on enlève le $limit (et si on le laisse, résultat inexact)
     """
-    limit : 100 MB
+    Empty request to get an idea of what the database contains. Excessively long if *limit* parameter is to high.
+    max : 100 MB
     """
     count = collection.count_documents({})
-    keys = collection.aggregate([{"$limit":5},{"$project":{"_id":0}},{"$project":{"a":{"$objectToArray":"$$ROOT"}}},{"$unwind":"$a"},{"$group":{"_id":"null","keys":{"$addToSet":"$a.k"}}}])
+    keys = collection.aggregate([{"$limit":limit},{"$project":{"_id":0}},{"$project":{"a":{"$objectToArray":"$$ROOT"}}},{"$unwind":"$a"},{"$group":{"_id":"null","keys":{"$addToSet":"$a.k"}}}])
     distinct_names = keys.next()['keys']
     return count, distinct_names
 
@@ -163,8 +209,8 @@ class ESSearch:
     *Attributes (for @property, see methods)* :
 
     - **parameters** : list of list of conditions for queries, to be interpreted as : parameters = [[cond_1 AND cond_2 AND cond_3] OR [cond_4 AND cond_5 AND cond_6]] where conds are criteria for queries
-    - **data** : iterable on which we want to query. Must contain observations only.
     - **collection** : pymongo.collection.Collection on which we want to query.
+    - **data** : iterable on which we want to query. Must contain observations only.
 
     The methods defined in this class are (documentations in methods definitions):
     
@@ -187,8 +233,8 @@ class ESSearch:
     '''
     def __init__(self, 
                     parameters = None,
-                    data = None,
                     collection = None,
+                    data = None,
                     heavy = True,
                     **kwargs
                     ):
@@ -197,7 +243,7 @@ class ESSearch:
 
         *Arguments*
 
-        - **parameters** :  dict, list (default None) - list of dictionnaries whose keys are arguments of ESSearch.addcondition method
+        - **parameters** :  dict, list (default None) - list of list or list of dictionnaries whose keys are arguments of ESSearch.addcondition method
         ex: parameters = [
             {'name' : 'datation', 'operand' : datetime.datetime(2022, 9, 19, 1), 'comparator' : '>='},
             {'name' : 'property', 'operand' : 'PM2'}
@@ -248,9 +294,11 @@ class ESSearch:
         '''
         if isinstance(parameters, dict):
             self.addcondition(**parameters)
-        elif isinstance(parameters, list) or isinstance(parameters, tuple):
+        elif isinstance(parameters, (list, tuple)):
             for parameter in parameters:
-                self.addcondition(**parameter)
+                if isinstance(parameter, dict): self.addcondition(**parameter)
+                elif isinstance(parameters, (list, tuple)): self.addcondition(*parameter)
+                else: self.addcondition(parameter)
         else: raise TypeError("parameters must be either a dict or a list of dict.")
             
     def addcondition(self, name = None, operand = None, comparator = None, path = None, or_position = -1, **kwargs):
