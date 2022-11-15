@@ -204,6 +204,12 @@ class Ilist(IlistStructure, IlistInterface):
 
         lindex = []
         lvarname = []
+        if listidx.__class__.__name__ == 'DataFrame':
+            lindex = [Iindex(list(listidx.loc[:,idx].cat.categories), idx, 
+                     list(listidx.loc[:,idx].cat.codes), lendefault=len(listidx), castobj=False)
+                     for idx in list(listidx)]
+            return cls(lindex, lvarname=lvarname, reindex=reindex)
+        
         if isinstance(listidx, dict):
             for idxname in listidx:
                 var, idx = Iindex.from_dict_obj({idxname: listidx[idxname]}, 
@@ -440,16 +446,16 @@ class Ilist(IlistStructure, IlistInterface):
 
         *Parameters*
 
-        - **bsd** : bytes, string or list data to convert
+        - **bsd** : bytes, string, DataFrame or list data to convert
         - **reindex** : boolean (default True) - if True, default codec for each Iindex
         - **context** : boolean (default True) - if False, only codec and keys are included'''
-        if not bsd:
+        if bsd is None:
             bsd = []
         if isinstance(bsd, bytes):
             lis = cbor2.loads(bsd)
         elif isinstance(bsd, str):
             lis = json.loads(bsd, object_hook=CborDecoder().codecbor)
-        elif isinstance(bsd, (list, dict)):
+        elif isinstance(bsd, (list, dict)) or bsd.__class__.__name__ == 'DataFrame':
             lis = bsd
         else:
             raise IlistError("the type of parameter is not available")

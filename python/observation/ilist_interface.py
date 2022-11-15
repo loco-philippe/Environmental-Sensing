@@ -216,22 +216,13 @@ class IlistInterface:
             # add not variable Iindex
             for idx in self.lidx:
                 idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
-            if   option['modecodec'] == 'full':
+            
+            if   option['modecodec'] != 'optimize':
                 for idx in self.lidx:
-                    lis.append(idx.tostdcodec(full=True).to_obj(name=idxname, **option2))
-            elif option['modecodec'] == 'default':
-                for idx in self.lidx:
-                    lis.append(idx.to_obj(keys=True, name=idxname, **option2))
-            elif option['modecodec'] == 'nokeys':
-                for idx in self.lidx:
-                    lis.append(idx.to_obj(name=idxname, **option2))        
-            elif option['modecodec'] == 'optimize':
+                    lis.append(idx.to_obj(name=idxname, **option2))
+            else:
                 lis = self._optimize_obj(idxname, lis, **option2)
             # add variable Iindex
-            if self.lenindex > 1:
-                parent = ES.variable
-            else:
-                parent = ES.nullparent
             for i in self.lvarrow:
                 idx = self.lindex[i]
                 idxname = option['name'] or idx.name != 'i' + \
@@ -239,11 +230,9 @@ class IlistInterface:
                 if i != self.lenindex - 1:
                     lis.insert(i, idx.tostdcodec(full=True).to_obj(keys=False, 
                         parent=ES.variable, name=idxname, **option2))
-                        #parent=parent, name=idxname, **option2))
                 else:
                     lis.append(idx.tostdcodec(full=True).to_obj(keys=False, 
                         parent=ES.variable, name=idxname, **option2))
-                        #parent=parent, name=idxname, **option2))
             
         if option['encoded'] and option['encode_format'] == 'json':
             return json.dumps(lis, cls=IindexEncoder)

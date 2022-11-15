@@ -330,12 +330,7 @@ class IindexInterface:
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
-        if keys and isinstance(keys, list):
-            keyslist = keys
-        elif keys and not isinstance(keys, list):
-            keyslist = self._keys
-        else:
-            keyslist = None
+        keyslist = None
         if not name or self.name == ES.defaultindex:
             idxname = None
         else:
@@ -348,6 +343,10 @@ class IindexInterface:
             keyslist = self._keys            
         else:
             codeclist = self._codec
+            if keys and isinstance(keys, list):
+                keyslist = keys
+            elif keys and not isinstance(keys, list):
+                keyslist = self._keys
         if typevalue:
             dtype = ES.valname[typevalue]
         else:
