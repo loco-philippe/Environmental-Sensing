@@ -25,7 +25,7 @@ or for NoSQL API, files)
 model cardinality in a dataset)
 - A library of connectors for different uses (sensors, database, storage, networks, etc.) 
 in différents languages (python, C++)
-- Bidirectional interfaces to data processing tools (eg Numpy, Xarray, GIS).
+- Bidirectional interfaces to data processing tools (eg Numpy, Pandas, Xarray, GIS).
 
 It allows to :
     
@@ -50,12 +50,12 @@ all situations (platform)
 
 ## Documentation
 
-- data exchange format (three documents)
+- Data exchange format (three documents)
     - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
-- project presentation
+- Project presentation
     - general presentation of the Environmental Sensing project [document(french)](./ES-presentation.pdf) and [slides(french)](./presentation_projet.pdf)
     - [interoperability](./interoperability.pdf) of environmental data
-- data structure
+- Data structure
     - [observation](./documentation/Observation.pdf) presentation,
     - presentation of the concepts and principles of [indexed lists principles](./documentation/Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
 - Connectors documentation
@@ -66,6 +66,8 @@ all situations (platform)
     - [Extension Air pollutants in ESS Bluetooth](https://www.bluetooth.com/specifications/specs/gatt-specification-supplement-6/)
     - [ESS permitted Characteristics](https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/permitted_characteristics.pdf)
 - [TableSchema](https://specs.frictionlessdata.io/table-schema/#introduction) : schema for tabular data
-    - [proposal](./documentation/relationship_property.pdf) for a 'relationship' property
+    - [proposal](./documentation/relationship_property.pdf) for a `relationship` property
+    - [methodology](./property_relationship/methodology.ipynb) for taking into account relations between fields in tabular representations ([version française](./property_relationship/FR_methodology.ipynb))
+    - [a simple tool](./property_relationship/example.ipynb) used to check the validity of relationship property
  
 *The Environmental Sensing project is one of the six [BlueHats Semester of Code](https://communs.numerique.gouv.fr/bluehats/bsoc-contributions-2022/) projects selected among the 40 projects identified by in March 22.*
