@@ -4,8 +4,7 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-ESValue is a class dedicated to structured data (such as dates, location or measurable properties) 
-and groups common properties and concepts.
+The `observation.esvalue` module contains the `observation.esvalue_base.ESValue` subclasses
 
 ESValue is build around two attributes :
 

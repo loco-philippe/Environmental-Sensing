@@ -4,8 +4,8 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-ESValue is a module dedicated to structured data (such as dates, location or measurable properties) 
-and groups common properties and concepts.
+The `observation.esvalue_base` is a module dedicated to structured data (such as dates,
+location or measurable properties) and groups common properties and concepts.
 
 ESValue is build around two attributes :
 

@@ -210,7 +210,7 @@ class Iindex(IindexStructure, IindexInterface):
             codec, keys = (values, list(range(len(values))))
         else:
             codec, keys = util.resetidx(values)
-        return cls(codec=codec, name=name, keys=keys, typevalue=None)
+        return cls(codec=codec, name=name, keys=keys, typevalue=None, castobj=False)
 
     @classmethod
     def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
