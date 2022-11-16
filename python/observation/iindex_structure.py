@@ -16,7 +16,52 @@ from iindex_interface import IindexError
 
 
 class IindexStructure:
-    '''this class includes Iindex methods'''
+    '''this class includes Iindex methods :
+
+    *add - update methods*
+
+    - `Iindex.append`
+    - `Iindex.setcodecvalue`
+    - `Iindex.setcodeclist`
+    - `Iindex.setname`
+    - `Iindex.setkeys`
+    - `Iindex.setlistvalue`
+    - `Iindex.setvalue`
+
+    *transform methods*
+
+    - `Iindex.coupling`
+    - `Iindex.extendkeys`
+    - `Iindex.full`
+    - `Iindex.reindex`
+    - `Iindex.reorder`
+    - `Iindex.sort`
+    - `Iindex.tocoupled`
+    - `Iindex.tostdcodec`
+
+    *getters methods*
+
+    - `Iindex.couplinginfos`
+    - `Iindex.derkeys`
+    - `Iindex.getduplicates`
+    - `Iindex.iscrossed`
+    - `Iindex.iscoupled`
+    - `Iindex.isderived`
+    - `Iindex.islinked`
+    - `Iindex.isvalue`
+    - `Iindex.iskeysfromderkeys`
+    - `Iindex.keysfromderkeys`
+    - `Iindex.keytoval`
+    - `Iindex.loc`
+    - `Iindex.recordfromkeys`
+    - `Iindex.recordfromvalue`
+    - `Iindex.valtokey`
+
+    
+    
+    
+    
+    '''
 
     def append(self, value,  typevalue=ES.def_clsName, unique=True):
         '''add a new value

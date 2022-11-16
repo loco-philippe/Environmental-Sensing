@@ -20,7 +20,22 @@ from ilist_interface import IlistError
 
 
 class IlistStructure:
-    '''this class includes Ilist methods'''
+    '''this class includes Ilist methods :
+        
+    - `IlistStructure.applyfilter`
+    - `IlistStructure.coupling`
+    - `IlistStructure.full`
+    - `IlistStructure.getduplicates`
+    - `IlistStructure.mix`
+    - `IlistStructure.merge`
+    - `IlistStructure.reindex`
+    - `IlistStructure.reorder`
+    - `IlistStructure.setfilter`
+    - `IlistStructure.sort`
+    - `IlistStructure.swapindex`
+    - `IlistStructure.setcanonorder`
+    - `IlistStructure.tostdcodec`
+    '''
     # %% methods
 
     def add(self, other, name=False, solve=True):

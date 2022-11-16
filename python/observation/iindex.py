@@ -111,7 +111,9 @@ class Iindex(IindexStructure, IindexInterface):
 
     - `Iindex.json`
     - `Iindex.to_obj`
+    - `Iindex.to_dict_obj`
     - `Iindex.to_numpy`
+    - `Iindex.to_pandas`
     - `Iindex.vlist`
     - `Iindex.vName`
     - `Iindex.vSimple`

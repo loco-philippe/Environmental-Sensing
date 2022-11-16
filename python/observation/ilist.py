@@ -205,9 +205,9 @@ class Ilist(IlistStructure, IlistInterface):
         lindex = []
         lvarname = []
         if listidx.__class__.__name__ == 'DataFrame':
-            lindex = [Iindex(list(listidx.loc[:,idx].cat.categories), idx, 
-                     list(listidx.loc[:,idx].cat.codes), lendefault=len(listidx), castobj=False)
-                     for idx in list(listidx)]
+            lindex = [Iindex(list(idx.cat.categories), idx, list(idx.cat.codes),
+                             lendefault=len(listidx), castobj=False)
+                     for name, idx in listidx.astype('category').items()]
             return cls(lindex, lvarname=lvarname, reindex=reindex)
         
         if isinstance(listidx, dict):
