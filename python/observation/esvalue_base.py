@@ -330,6 +330,13 @@ class ESValue:
         *Returns* :  string or dict '''
         return self.to_obj(**kwargs)
 
+    def to_json(self):
+        '''
+        Export in json format (string).
+        '''
+        return self.to_obj(untyped=False, encoded=True, encode_format='json')
+
+
     def setName(self, nam):
         '''
         Set the Name of the `ESValue`

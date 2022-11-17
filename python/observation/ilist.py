@@ -84,6 +84,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.lenidx`
     - `Ilist.lidx`
     - `Ilist.lidxrow`
+    - `Ilist.lisvar`
     - `Ilist.lvar`
     - `Ilist.lvarrow`
     - `Ilist.lname`
@@ -200,12 +201,12 @@ class Ilist(IlistStructure, IlistInterface):
 
         - **listidx** :  list (default None) - list of compatible Iindex data
         - **reindex** : boolean (default True) - if True, default codec for each Iindex
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
-
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
+        '''
         lindex = []
         lvarname = []
         if listidx.__class__.__name__ == 'DataFrame':
-            lindex = [Iindex(list(idx.cat.categories), idx, list(idx.cat.codes),
+            lindex = [Iindex(list(idx.cat.categories), name, list(idx.cat.codes),
                              lendefault=len(listidx), castobj=False)
                      for name, idx in listidx.astype('category').items()]
             return cls(lindex, lvarname=lvarname, reindex=reindex)
@@ -230,7 +231,6 @@ class Ilist(IlistStructure, IlistInterface):
                 lidx[ind][1] = util.typename(lidx[ind][0], typevalue)
         name, typevaluedec, codec, parent, keys, isfullkeys, isparent, isvar =\
             tuple(zip(*lidx))
-
 
         fullmode = not max(isfullkeys)  # mode full : tous False
         defmode = min(isfullkeys)       # mode default : tous True (idem all(isfullkeys))
@@ -634,6 +634,11 @@ class Ilist(IlistStructure, IlistInterface):
     def lidx(self):
         '''list of idx'''
         return [self.lindex[i] for i in self.lidxrow]
+
+    @property
+    def lisvar(self):
+        '''list of boolean : True if Iindex is var'''
+        return [name in self.lvarname for name in self.lname]
 
     @property
     def lvar(self):

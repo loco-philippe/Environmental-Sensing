@@ -44,7 +44,6 @@ class Analysis:
         
         Note: The Analysis data can be update only if tabular object is Ilist or 
         Observation.
-        Note: If the object is a DataFrame, the dtype has to be 'categorical'
         '''
         if iobj.__class__.__name__ in ('Ilist', 'Observation'): 
             self.iobj = iobj

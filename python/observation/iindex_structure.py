@@ -20,48 +20,42 @@ class IindexStructure:
 
     *add - update methods*
 
-    - `Iindex.append`
-    - `Iindex.setcodecvalue`
-    - `Iindex.setcodeclist`
-    - `Iindex.setname`
-    - `Iindex.setkeys`
-    - `Iindex.setlistvalue`
-    - `Iindex.setvalue`
+    - `IindexStructure.append`
+    - `IindexStructure.setcodecvalue`
+    - `IindexStructure.setcodeclist`
+    - `IindexStructure.setname`
+    - `IindexStructure.setkeys`
+    - `IindexStructure.setlistvalue`
+    - `IindexStructure.setvalue`
 
     *transform methods*
 
-    - `Iindex.coupling`
-    - `Iindex.extendkeys`
-    - `Iindex.full`
-    - `Iindex.reindex`
-    - `Iindex.reorder`
-    - `Iindex.sort`
-    - `Iindex.tocoupled`
-    - `Iindex.tostdcodec`
+    - `IindexStructure.coupling`
+    - `IindexStructure.extendkeys`
+    - `IindexStructure.full`
+    - `IindexStructure.reindex`
+    - `IindexStructure.reorder`
+    - `IindexStructure.sort`
+    - `IindexStructure.tocoupled`
+    - `IindexStructure.tostdcodec`
 
     *getters methods*
 
-    - `Iindex.couplinginfos`
-    - `Iindex.derkeys`
-    - `Iindex.getduplicates`
-    - `Iindex.iscrossed`
-    - `Iindex.iscoupled`
-    - `Iindex.isderived`
-    - `Iindex.islinked`
-    - `Iindex.isvalue`
-    - `Iindex.iskeysfromderkeys`
-    - `Iindex.keysfromderkeys`
-    - `Iindex.keytoval`
-    - `Iindex.loc`
-    - `Iindex.recordfromkeys`
-    - `Iindex.recordfromvalue`
-    - `Iindex.valtokey`
-
-    
-    
-    
-    
-    '''
+    - `IindexStructure.couplinginfos`
+    - `IindexStructure.derkeys`
+    - `IindexStructure.getduplicates`
+    - `IindexStructure.iscrossed`
+    - `IindexStructure.iscoupled`
+    - `IindexStructure.isderived`
+    - `IindexStructure.islinked`
+    - `IindexStructure.isvalue`
+    - `IindexStructure.iskeysfromderkeys`
+    - `IindexStructure.keysfromderkeys`
+    - `IindexStructure.keytoval`
+    - `IindexStructure.loc`
+    - `IindexStructure.recordfromkeys`
+    - `IindexStructure.recordfromvalue`
+    - `IindexStructure.valtokey`  '''
 
     def append(self, value,  typevalue=ES.def_clsName, unique=True):
         '''add a new value

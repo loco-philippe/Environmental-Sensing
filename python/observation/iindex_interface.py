@@ -66,6 +66,7 @@ class IindexInterface:
         
     - `IindexInterface.json`
     - `IindexInterface.to_obj`
+    - `IindexInterface.to_dict_obj`
     - `IindexInterface.to_numpy`
     - `IindexInterface.to_pandas`
     - `IindexInterface.vlist`
@@ -406,16 +407,18 @@ class IindexInterface:
         dic = {}
         if self.typevalue: 
             dic['type'] = self.typevalue
-        #lis = []
         #from time import time
         #t0 = time()
-        zkeys = list(zip(range(len(self.keys)), self.keys))
+        #zkeys = list(zip(range(len(self.keys)), self.keys))
+        ds = pd.Series(range(len(self.keys)), index=self.keys, dtype='int64')
         #print('zkeys ', time()-t0)
-        dic['value'] = [{'record':[z[0] for z in zkeys if z[1] == i],
+        #dic['value'] = [{'record':[z[0] for z in zkeys if z[1] == i],
+        dic['value'] = [{'record':ds[i].tolist(),
                          'codec': util.json(cod, encoded=False, typevalue=None, 
                                   simpleval=simpleval, modecodec=modecodec, 
                                   untyped=option['untyped'], geojson=option['geojson'])}
                          for i, cod in enumerate(self.codec)]
+        #print('value ', time()-t0)
         return {self.name: dic}
     
     def vlist(self, func, *args, extern=True, **kwargs):
