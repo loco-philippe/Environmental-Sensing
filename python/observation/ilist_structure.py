@@ -261,13 +261,14 @@ class IlistStructure:
             if len(ilis.lidx[i].keys) != leninit + lenadd:
                 raise IlistError('primary indexes have to be present')
         if ilis.lvarname:
-            ilis.lvar[0].set_keys(ilis.lvar[0].keys + [len(ilis.lvar[0].codec)] * 
-                                  len(keysadd[0]))
-            if fillextern:
-                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [util.castval(
-                    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName))])
-            else:
-                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [fillvalue])
+            for i in range(len(ilis.lvar)):
+                ilis.lvar[i].set_keys(ilis.lvar[i].keys + [len(ilis.lvar[i].codec)] * 
+                                      len(keysadd[0]))
+                if fillextern:
+                    ilis.lvar[i].set_codec(ilis.lvar[i].codec + [util.castval(
+                        fillvalue, util.typename(ilis.lvarname[i], ES.def_clsName))])
+                else:
+                    ilis.lvar[i].set_codec(ilis.lvar[i].codec + [fillvalue])
         if complete:
             ilis.setcanonorder()
         return ilis
@@ -389,7 +390,7 @@ class IlistStructure:
         - **extern** : boolean (default True) - if True, compare rec to val,
         else to values
         - **row** : Boolean (default False) - if True, return list of row,
-        else list of variable values
+        else list of first variable values
 
         *Returns*
 

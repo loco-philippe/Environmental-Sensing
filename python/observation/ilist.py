@@ -464,10 +464,11 @@ class Ilist(IlistStructure, IlistInterface):
 # %% special
     def __str__(self):
         '''return string format for var and lidx'''
+        stri = ''
         if self.lvar:
-            stri = str(self.lvar[0]) + '\n'
-        else:
-            stri = ''
+            for idx in self.lvar:
+                stri += str(idx)
+        stri += '\n'
         for idx in self.lidx:
             stri += str(idx)
         return stri

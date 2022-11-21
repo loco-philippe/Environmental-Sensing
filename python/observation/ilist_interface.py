@@ -255,7 +255,8 @@ class IlistInterface:
                   lisfunc=None, name=None, numeric=False, npdtype=None, attrs=None, **kwargs):
         '''
         Complete the Object and generate a Xarray DataArray with the dimension define by idx.
-
+        Only the first variable is incuded.
+        
         *Parameters*
 
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
@@ -382,7 +383,7 @@ class IlistInterface:
 
         - **func** : function (default none) - function to apply to extval or extidx
         - **args, kwargs** : parameters for the function
-        - **index** : integer - index to update (index=-1 for variable)
+        - **index** : integer - index to update (index=-1 for first variable)
 
         *Returns* : list of func result'''
         if index == -1 and self.lvar:

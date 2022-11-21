@@ -245,10 +245,11 @@ class util:
     @staticmethod
     def idxlink(ref, l2):
         ''' return a dict for each different tuple (ref value, l2 value)'''
-        lis = set(util.tuple(util.transpose([ref, l2])))
-        if not len(lis) == len(set(ref)):
-            return {}
-        return dict(lis)
+        return dict(set(zip(ref, l2)))
+        #lis = set(util.tuple(util.transpose([ref, l2])))
+        #if not len(lis) == len(set(ref)):
+        #    return {}
+        #return dict(lis)
 
     @staticmethod
     def json(val, **option):
