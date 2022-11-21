@@ -45,7 +45,7 @@ srch.addcondition(path = 'type', comparator = '==', operand = 'observation')
 srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
                  ['datation', datetime.datetime(2022, 12, 31), '<='], 
                  ['property', 'PM25'], 
-                 {'path': 'type', 'comparator': '==', 'operand': 'Observation'}], 
+                 {'path': 'type', 'comparator': '==', 'operand': 'observation'}], 
                 collec)
 
 result = srch.execute(single = True)
