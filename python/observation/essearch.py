@@ -1,15 +1,15 @@
 '''
 # How to use observation.essearch ?
 
-1. **Create the MongoDB database**
+1. **Create the MongoDB database:**
 You can easily create an account on MongoDB. Once you have a database, follow the guidelines [here](https://www.mongodb.com/docs/atlas/tutorial/connect-to-your-cluster/#connect-to-your-atlas-cluster) to connect to it using pymongo.
-All you need to use this module is to be able connect to the Collection with pymongo.
+All you need in order to be able to use this module is to be able to connect to the Collection with pymongo.
 
-2. **Fill the database with your data**
+2. **Fill the database with your data:**
 Construct an observation or a list of observations containing your data using dedicated functions from `observation.Observation`. 
 You can then use either `insert_one_to_mongo(collection, observation)` or `insert_many_to_mongo(collection, observation_list)` to insert it in the database.
 
-3. **Write a request using observation.ESSearch**
+3. **Write a request using observation.ESSearch:**
 An `ESSearch` instance must be created with either a MongoDB Collection (passed as argument **collection**) or a list of observations (passed as argument **data**).
 Criteria for the query are then added one by one using `ESSearch.addcondition` or `ESSearch.orcondition`, or all together with `ESSearch.addconditions` or passed as argument **parameters** of ESSearch.
 
@@ -19,7 +19,7 @@ A condition is composed of:
 - a **comparator** which can be applied on the operand, for example '>=' or 'within' (defaults to equality in most cases);
 - optional parameters detailed in `ESSearch.addcondition` documentation, like **inverted** to add a *not*.
 
-Execute the research with `ESSearch.execute()`. Put parameter **single** to True so that the return be a single observation
+Execute the research with `ESSearch.execute()`. Put the parameter **single** to True if you want the return to be a single observation
 instead of a list of observations.
 
 Example of python code using observation.essearch module:
@@ -37,18 +37,18 @@ collec = client[<base>][<collection>]
 # Option 1
 srch = ESSearch(collection = collec)
 srch.addcondition('datation', datetime.datetime(2022, 1, 1), '>=')
-srch.addcondition('datation', datetime.datetime(2022, 31, 12), '<=')
+srch.addcondition('datation', datetime.datetime(2022, 12, 31), '<=')
 srch.addcondition('property', 'PM25')
 srch.addcondition(path = 'type', comparator = '==', operand = 'observation')
 
 # Option 2 (equivalent to option 1 but on one line)
 srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
-                 ['datation', datetime.datetime(2022, 31, 12), '<='], 
+                 ['datation', datetime.datetime(2022, 12, 31), '<='], 
                  ['property', 'PM25'], 
                  {'path': 'type', 'comparator': '==', 'operand': 'Observation'}], 
                 collec)
 
-result = srch.execute()
+result = srch.execute(single = True)
 ```
 '''
 import datetime
@@ -59,7 +59,7 @@ from iindex import Iindex
 from util import util
 from timeslot import TimeSlot
 
-dico_alias_mongo = { # dictionnary of the different names accepted for each comparator and a given type. <key>:<value> -> <accepted name>:<name in MongoDB>
+dico_alias_mongo = { # dictionnary of the different names accepted for each comparator and each given type. <key>:<value> -> <accepted name>:<name in MongoDB>
     # any type other than those used as keys is considered non valid
     str : {
         None:"$eq",
@@ -71,7 +71,7 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
         "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
         "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
         "gt":"$gt", ">":"$gt", "$gt":"$gt",
-        "lte":"$lte", "<=":"$lte", "=<":"$lte",
+        "lte":"$lte", "<=":"$lte", "=<":"$lte", "$lte":"$lte",
         "lt":"$lt", "<":"$lt", "$lt":"$lt",
         "in":"$in", "$in":"$in"
     },
@@ -80,7 +80,7 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
         "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
         "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
         "gt":"$gt", ">":"$gt", "$gt":"$gt",
-        "lte":"$lte", "<=":"$lte", "=<":"$lte",
+        "lte":"$lte", "<=":"$lte", "=<":"$lte", "$lte":"$lte",
         "lt":"$lt", "<":"$lt", "$lt":"$lt",
         "in":"$in", "$in":"$in"
     },
@@ -199,7 +199,7 @@ def insert_many_to_mongo(collection, objList, info=True):
 
 def empty_request(collection, limit = 5): # actuellement, n'utilise pas les informations et requête LOURDE si on enlève le $limit (et si on le laisse, résultat inexact)
     """
-    Empty request to get an idea of what the database contains. Excessively long if *limit* parameter is to high.
+    Empty request to get an idea of what the database contains. Excessively long if *limit* parameter is too high.
     max : 100 MB
     """
     count = collection.count_documents({})
