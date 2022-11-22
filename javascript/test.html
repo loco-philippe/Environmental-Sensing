@@ -1,0 +1,89 @@
+<!--<head>
+<script type="module">
+
+import * as Plot from "https://cdn.skypack.dev/@observablehq/plot@0.6";
+conso = FileAttachment("conso-elec-gaz-annuelle-par-naf-agregee-region.csv").csv({typed: true})
+dotplot = Plot.dot(conso, {x: "annee", y: "filiere", stroke: "operateur"}).plot()
+dotplot.legend("color")
+//Inputs.table(conso)
+/*
+document.body.append(Plot.plot({
+  marks: [
+    Plot.barY(alphabet, {x: "letter", y: "frequency", fill: "steelblue"}),
+    Plot.ruleY([0])
+  ]
+})
+);
+*/
+</script>
+</head>
+<body></body>
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Conso</title>
+	<meta charset="UTF-8" />
+<!--	<style>
+	body {
+		font-family: 'Source Sans Pro', sans-serif;
+	}
+	
+	.container {
+		display: inline-block;
+	}
+	
+	.title {
+		font-weight: bold;
+		font-size: 18px;
+		text-align: center;
+	}
+	
+	figcaption {
+		font-size: 12px;
+		color: #777777;
+	}
+	</style>-->
+	<script src="https://cdn.jsdelivr.net/npm/d3@6"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.1"></script>
+</head>
+
+<body>
+	<div class='container'>
+		<div class='title'>Graphique des consommations d'énergie en France</div>
+		<figure id='graphic'></figure>
+	</div>
+	<script>
+	d3.csv('https://www.data.gouv.fr/fr/datasets/r/d33eabc9-e2fd-4787-83e5-a5fcfb5af66d', d3.autoType).then(data => {
+		var options = {
+			height: 396,
+			width: 640,
+			x: {
+				label: "Année"
+			},
+			y: {
+				grid: true,
+				label: "Filière"
+			},
+			//caption: "Source: flother.is/blog/olympic-games-data",
+			facet: {
+				data: data,
+				y: "sex"
+			},
+			marks: [
+				Plot.rectY(data, Plot.binX({
+					y: "count"
+				}, {
+					x: "weight",
+					fill: "sex"
+				})),
+				Plot.ruleY([0])
+			]
+		};
+		document.getElementById('graphic').appendChild(Plot.plot(options));
+	});
+	</script>
+</body>
+
+</html>

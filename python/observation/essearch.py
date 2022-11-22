@@ -577,7 +577,7 @@ class ESSearch:
         if self._unwind:
             dico = {}
             for unwind in self._unwind:
-                dico |= {unwind: ["$"+unwind]} # A FAIRE CORRECTEMENT ! (tel quel, ajoute un array contenant le path entre guillemets...)
+                dico |= {unwind: ["$" + unwind]} # A FAIRE CORRECTEMENT ! (tel quel, ajoute toujours un seul array de chaque type...)
             request.append({"$set" : dico})
         if self._project: request.append({"$project" : self._project})      # Mongo stage $project
         return request

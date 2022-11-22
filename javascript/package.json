@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "dependencies": {
+    "mongodb": "^4.12.0"
+  }
+}
