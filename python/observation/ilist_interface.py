@@ -35,7 +35,19 @@ class IlistError(Exception):
 
 
 class IlistInterface:
-    '''this class includes Iindex methods'''
+    '''this class includes Ilist methods :
+        
+    - `IlistInterface.json`
+    - `IlistInterface.plot`
+    - `IlistInterface.to_obj`
+    - `IlistInterface.to_csv`
+    - `IlistInterface.to_file`
+    - `IlistInterface.to_xarray`
+    - `IlistInterface.to_dataframe`
+    - `IlistInterface.view`
+    - `IlistInterface.vlist`
+    - `IlistInterface.voxel`
+    '''
 
     def json(self, **kwargs):
         '''
@@ -212,26 +224,15 @@ class IlistInterface:
                 lis[name] = dicval
         else:
             lis = []
-            idxname = False
             # add not variable Iindex
-            for idx in self.lidx:
-                idxname = option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
-            if   option['modecodec'] == 'full':
-                for idx in self.lidx:
-                    lis.append(idx.tostdcodec(full=True).to_obj(name=idxname, **option2))
-            elif option['modecodec'] == 'default':
-                for idx in self.lidx:
-                    lis.append(idx.to_obj(keys=True, name=idxname, **option2))
-            elif option['modecodec'] == 'nokeys':
-                for idx in self.lidx:
-                    lis.append(idx.to_obj(name=idxname, **option2))        
-            elif option['modecodec'] == 'optimize':
+            idxname = [option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
+                       for idx in self.lidx]
+            if   option['modecodec'] != 'optimize':
+                lis = [idx.to_obj(name=iname, **option2) 
+                       for idx, iname in zip(self.lidx, idxname)]
+            else:
                 lis = self._optimize_obj(idxname, lis, **option2)
             # add variable Iindex
-            if self.lenindex > 1:
-                parent = ES.variable
-            else:
-                parent = ES.nullparent
             for i in self.lvarrow:
                 idx = self.lindex[i]
                 idxname = option['name'] or idx.name != 'i' + \
@@ -239,11 +240,9 @@ class IlistInterface:
                 if i != self.lenindex - 1:
                     lis.insert(i, idx.tostdcodec(full=True).to_obj(keys=False, 
                         parent=ES.variable, name=idxname, **option2))
-                        #parent=parent, name=idxname, **option2))
                 else:
                     lis.append(idx.tostdcodec(full=True).to_obj(keys=False, 
                         parent=ES.variable, name=idxname, **option2))
-                        #parent=parent, name=idxname, **option2))
             
         if option['encoded'] and option['encode_format'] == 'json':
             return json.dumps(lis, cls=IindexEncoder)
@@ -399,31 +398,31 @@ class IlistInterface:
         notkeyscrd = True
         if self.iscanonorder():
             notkeyscrd = None
-        for idx, inf in zip(self.lidx, indexinfos):
+        for idx, iname, inf in zip(self.lidx, idxname, indexinfos):
             if inf['typecoupl'] == 'unique':
                 lis.append(idx.tostdcodec(full=False).to_obj(
-                    name=idxname, **option2))
+                    name=iname, **option2))
             elif inf['typecoupl'] == 'crossed':
                 lis.append(idx.to_obj(keys=notkeyscrd,
-                           name=idxname, **option2))
+                           name=iname, **option2))
             elif inf['typecoupl'] == 'coupled':
                 if self.lidx[inf['parent']].keys == list(range(len(self))):
                     lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                           to_obj(name=idxname, **option2))
+                           to_obj(name=iname, **option2))
                 else:
                     lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
                            to_obj(parent=self.lidxrow[inf['parent']],
-                                  name=idxname, **option2))
+                                  name=iname, **option2))
             elif inf['typecoupl'] == 'linked':
-                lis.append(idx.to_obj(keys=True, name=idxname, **option2))
+                lis.append(idx.to_obj(keys=True, name=iname, **option2))
             elif inf['typecoupl'] == 'derived':
                 if idx.iskeysfromderkeys(self.lidx[inf['parent']]):
                     lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']],
-                                          name=idxname, **option2))
+                                          name=iname, **option2))
                 else:
                     keys = idx.derkeys(self.lidx[inf['parent']])
                     lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']],
-                                          name=idxname, **option2))
+                                          name=iname, **option2))
             else:
                 raise IlistError('Iindex type undefined')
         return lis

@@ -111,7 +111,9 @@ class Iindex(IindexStructure, IindexInterface):
 
     - `Iindex.json`
     - `Iindex.to_obj`
+    - `Iindex.to_dict_obj`
     - `Iindex.to_numpy`
+    - `Iindex.to_pandas`
     - `Iindex.vlist`
     - `Iindex.vName`
     - `Iindex.vSimple`
@@ -210,7 +212,7 @@ class Iindex(IindexStructure, IindexInterface):
             codec, keys = (values, list(range(len(values))))
         else:
             codec, keys = util.resetidx(values)
-        return cls(codec=codec, name=name, keys=keys, typevalue=None)
+        return cls(codec=codec, name=name, keys=keys, typevalue=None, castobj=False)
 
     @classmethod
     def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
@@ -266,16 +268,22 @@ class Iindex(IindexStructure, IindexInterface):
             raise IindexError('data is not a dict')
         name = list(bsd.keys())[0]
         bsdv = list(bsd.values())[0]    
-        if not 'value' in bsdv or not isinstance(bsdv['value'], list):
-            raise IindexError('value is not a list')
+        if not 'value' in bsdv:
+            raise IindexError('value is not present')
+        value = bsdv['value']
+        if not isinstance(value, list):
+            value = [value]
         if 'type' in bsdv and isinstance(bsdv['type'], str):
             typevalue = bsdv['type']
         if 'var' in bsdv and isinstance(bsdv['var'], bool):
             var = bsdv['var']
-        codec = [util.castval(val['codec'], typevalue) for val in bsdv['value']]
+        codec = [util.castval(val['codec'], typevalue) for val in value]
         pairs=[]
-        for i, rec in enumerate(bsdv['value']):
-            for j in rec['record']:
+        for i, rec in enumerate(value):
+            record = rec['record']
+            if not isinstance(record, list):
+                record = [record]
+            for j in record:
                 pairs.append((j,i))
         if not pairs:
             return (var, cls())

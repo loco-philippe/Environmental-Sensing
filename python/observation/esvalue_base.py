@@ -4,8 +4,8 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-ESValue is a module dedicated to structured data (such as dates, location or measurable properties) 
-and groups common properties and concepts.
+The `observation.esvalue_base` is a module dedicated to structured data (such as dates,
+location or measurable properties) and groups common properties and concepts.
 
 ESValue is build around two attributes :
 
@@ -329,6 +329,13 @@ class ESValue:
 
         *Returns* :  string or dict '''
         return self.to_obj(**kwargs)
+
+    def to_json(self):
+        '''
+        Export in json format (string).
+        '''
+        return self.to_obj(untyped=False, encoded=True, encode_format='json')
+
 
     def setName(self, nam):
         '''

@@ -4,7 +4,7 @@ Created on Sun Aug  1 13:35:28 2021
 
 @author: philippe@loco-labs.io
 
-This module describes the constants and default values used in other modules.
+The `observation.esconstante` module describes the constants and default values used in other modules.
 """
 import datetime, math
 from typing import Dict

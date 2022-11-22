@@ -11,6 +11,7 @@ The `observation.iindex_interface` module contains the `IindexInterface` class
 import json
 import datetime
 import numpy as np
+import pandas as pd
 import cbor2
 
 from esconstante import ES
@@ -61,7 +62,17 @@ class IindexEncoder(json.JSONEncoder):
 
 
 class IindexInterface:
-    '''this class includes Iindex methods'''
+    '''this class includes Iindex methods :
+        
+    - `IindexInterface.json`
+    - `IindexInterface.to_obj`
+    - `IindexInterface.to_dict_obj`
+    - `IindexInterface.to_numpy`
+    - `IindexInterface.to_pandas`
+    - `IindexInterface.vlist`
+    - `IindexInterface.vName`
+    - `IindexInterface.vSimple`
+    '''
 
     @staticmethod
     def decodeobj(bs=None, classname=None, context=True):
@@ -269,6 +280,60 @@ class IindexInterface:
                            codecval=codecval, simpleval=simpleval, parent=parent,
                            **option)
 
+    def to_pandas(self, func=None, codec=False, npdtype=None,
+                  series=True, index=True, numpy=False, **kwargs):
+        '''
+        Transform Iindex in a Pandas Series, Pandas DataFrame or Numpy array.
+
+        *Parameters*
+
+        - **func** : function (default None) - function to apply for each value of the Iindex.
+        If func is the 'index' string, values are replaced by raw values.
+        - **npdtype** : string (default None) - numpy dtype for the Array ('object' if None)
+        - **series** : boolean (default True) - if True, return a Series. 
+        If False return a DataFrame
+        - **index** : boolean (default True) - if True, index is keys.
+        - **numpy** : boolean (default False) - if True, return a Numpy array.
+        - **kwargs** : parameters to apply to the func function
+
+        *Returns* : Pandas Series, Pandas DataFrame, Numpy Array'''
+        if len(self) == 0:
+            raise IindexError("Ilist is empty")
+        if npdtype: 
+            npdtype = np.dtype(npdtype)
+        if func is None:
+            func = identity
+        if func == 'index':
+            return np.array(list(range(len(self))))
+        if not codec:
+            values = util.funclist(self.values, func, **kwargs)
+        else:
+            values = util.funclist(self._codec, func, **kwargs)
+        npdtype1 = npdtype 
+        if isinstance(values[0], (str, datetime.datetime)):
+            npdtype1 = np.datetime64
+        else:
+            npdtype=None
+        pdindex=None 
+        if index:
+            pdindex = self._keys
+        try:
+            if numpy:
+                return np.array(values, dtype=npdtype1)
+            if series:
+                return pd.Series(values, dtype=npdtype1, 
+                                 index=pdindex, name=self.name)
+            return pd.DataFrame(pd.Series(values, dtype=npdtype1, 
+                                          index=pdindex, name=self.name))
+        except:
+            if numpy:
+                return np.array(values, dtype=npdtype)
+            if series:
+                return pd.Series(values, dtype=npdtype, 
+                                 index=pdindex, name=self.name)
+            return pd.DataFrame(pd.Series(values, dtype=npdtype, 
+                                          index=pdindex, name=self.name))
+
     def to_numpy(self, func=None, codec=False, npdtype=None, **kwargs):
         '''
         Transform Iindex in a Numpy array.
@@ -281,26 +346,7 @@ class IindexInterface:
         - **kwargs** : parameters to apply to the func function
 
         *Returns* : Numpy Array'''
-        if len(self) == 0:
-            raise IindexError("Ilist is empty")
-        if npdtype is None:
-            npdtype = np.dtype('object')
-        else:
-            npdtype = np.dtype(npdtype)
-        if func is None:
-            func = identity
-        if func == 'index':
-            return np.array(list(range(len(self))))
-        if not codec:
-            values = util.funclist(self.values, func, **kwargs)
-        else:
-            values = util.funclist(self._codec, func, **kwargs)
-        if isinstance(values[0], (str, datetime.datetime)):
-            try:
-                return np.array(values, dtype=np.datetime64)
-            except:
-                return np.array(values, dtype=npdtype)
-        return np.array(values, dtype=npdtype)
+        return self.to_pandas(func=func, codec=codec, npdtype=npdtype, numpy=True, **kwargs)
 
     def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
                codecval=False, parent=ES.nullparent, name=True, listunic=False, 
@@ -330,12 +376,7 @@ class IindexInterface:
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
-        if keys and isinstance(keys, list):
-            keyslist = keys
-        elif keys and not isinstance(keys, list):
-            keyslist = self._keys
-        else:
-            keyslist = None
+        keyslist = None
         if not name or self.name == ES.defaultindex:
             idxname = None
         else:
@@ -348,6 +389,10 @@ class IindexInterface:
             keyslist = self._keys            
         else:
             codeclist = self._codec
+            if keys and isinstance(keys, list):
+                keyslist = keys
+            elif keys and not isinstance(keys, list):
+                keyslist = self._keys
         if typevalue:
             dtype = ES.valname[typevalue]
         else:
@@ -362,16 +407,18 @@ class IindexInterface:
         dic = {}
         if self.typevalue: 
             dic['type'] = self.typevalue
-        #lis = []
         #from time import time
         #t0 = time()
-        zkeys = list(zip(range(len(self.keys)), self.keys))
+        #zkeys = list(zip(range(len(self.keys)), self.keys))
+        ds = pd.Series(range(len(self.keys)), index=self.keys, dtype='int64')
         #print('zkeys ', time()-t0)
-        dic['value'] = [{'record':[z[0] for z in zkeys if z[1] == i],
+        #dic['value'] = [{'record':[z[0] for z in zkeys if z[1] == i],
+        dic['value'] = [{'record':ds[i].tolist(),
                          'codec': util.json(cod, encoded=False, typevalue=None, 
                                   simpleval=simpleval, modecodec=modecodec, 
                                   untyped=option['untyped'], geojson=option['geojson'])}
                          for i, cod in enumerate(self.codec)]
+        #print('value ', time()-t0)
         return {self.name: dic}
     
     def vlist(self, func, *args, extern=True, **kwargs):
