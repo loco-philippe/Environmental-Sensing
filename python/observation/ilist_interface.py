@@ -505,7 +505,7 @@ class IlistInterface:
         coord = {}
         for i in self.lidxrow:
             fieldi = info[i]
-            if fieldi['cat'] == 'unique':
+            if fieldi['cat'] == 'unique':  #!!!
                 continue
             if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
                 funci = lisfuncname[self.lname[i]]
@@ -519,7 +519,7 @@ class IlistInterface:
                 coord[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast,
                                        codec=True, dtype='str', maxlen=maxlen))
             else:
-                self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)
+                self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)   #!!!
                 coord[iname] = (self.idxname[fieldi['pparent']],
                                 self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))
         return coord

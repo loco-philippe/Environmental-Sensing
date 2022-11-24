@@ -9,6 +9,7 @@ The `observation.ilist_analysis` module contains the `Analysis` class.
 
 # %% declarations
 from copy import copy
+import pprint
 
 from util import util
 
@@ -32,8 +33,10 @@ class Analysis:
     - `Analysis.getmatrix`
     - `Analysis.getprimary`
     - `Analysis.getcrossed`
+    - `Analysis.tree`
     '''
     # %% methods
+
     def __init__(self, iobj):
         '''Analysis constructor.
 
@@ -50,11 +53,15 @@ class Analysis:
         else: 
             from ilist import Ilist
             self.iobj = Ilist.obj(iobj)
-        self.hashi   = None
-        self.matrix  = None
-        self.infos   = None
-        self.primary = None
-        self.crossed = None
+        self.hashi      = None
+        self.matrix     = None
+        self.matrix2     = None
+        self.infos      = None
+        self.infos2      = None
+        self.primary    = None
+        self.primary2    = None
+        self.crossed    = None      # à supprimer
+        self.partition  = []
     
     def getinfos(self, keys=None):
         '''return attribute infos
@@ -99,14 +106,48 @@ class Analysis:
             self._actualize()
         return self.crossed
 
+    def tree(self, width=5, lname=20):
+        '''return a string with a tree of derived Iindex.
+                
+         *Parameters*
+
+        - **lname** : integer (default 20) - length of the names        
+        - **width** : integer (default 5) - length of the lines        
+        '''
+        #from pprint import pformat        
+        if self.hashi != self.iobj._hashi():
+            self._actualize()
+        child = [None] * (len(self.infos) + 1)
+        for i in range(len(self.infos)):
+            parent = self.infos2[i]['parent2']
+            if child[parent + 1] is None:
+                child[parent + 1] = []
+            child[parent + 1].append(i)
+        tr = self._dic_noeud(-1, child, lname)
+        tre = pprint.pformat(tr, indent=0, width=width)
+        tre = tre.replace('---', ' - ')
+        tre = tre.replace('*', ' ')
+        for c in ["'", "\"", "{", "[", "]", "}", ","]: 
+            tre = tre.replace (c, "")
+        return tre
+    
     # %% internal methods
-    def _actualize(self, forcing=False):
+    def _actualize(self, forcing=False, partition=None):
         #t0=time()
         self.matrix = self._setmatrix()
         self.infos = self._setinfos()
+        self._setparent()
+        self.matrix2 = self._setmatrix2()
+        self.infos2 = self._setinfos2()
+        self._setparent2()
+        self._setpartition()
+        self._setinfospartition(partition)
         self.primary = [self.infos.index(idx) for idx in self.infos if idx['cat'] == 'primary']
+        self.primary2 = [idx['num'] for idx in self.infos2 if idx['cat'] == 'primary']
         self.crossed = [idx for idx in self.primary if self.infos[idx]['typecoupl'] == 'crossed']
         self.hashi = self.iobj._hashi()
+        self.lvarname = [idx['name'] for idx in self.infos2 if idx['cat'] == 'variable']
+        self.secondary = [idx['num'] for idx in self.infos2 if idx['cat'] == 'secondary']
         #print('update ', time()-t0, self.primary, str(self.hashi))
 
     def _setinfos(self):
@@ -137,7 +178,8 @@ class Analysis:
                 infos[i]['typecoupl'] = self.matrix[i][minparent]['typecoupl']
             infos[i]['linkrate'] = round(minrate, 2)
             infos[i]['pname'] = self.iobj.idxname[infos[i]['parent']]
-            infos[i]['pparent'] = 0
+            infos[i]['pparent'] = -2
+            #infos[i]['pparent'] = 0
             infos[i] |= self.iobj.lidx[i].infos
         for i in range(lenidx):
             util.pparent(i, infos)
@@ -150,6 +192,25 @@ class Analysis:
         for i in range(lenidx):
             for j in range(i, lenidx):
                 mat[i][j] = self.iobj.lidx[i].couplinginfos(self.iobj.lidx[j])
+            for j in range(i):
+                mat[i][j] = copy(mat[j][i])
+                if mat[i][j]['typecoupl'] == 'derived':
+                    mat[i][j]['typecoupl'] = 'derive'
+                elif mat[i][j]['typecoupl'] == 'derive':
+                    mat[i][j]['typecoupl'] = 'derived'
+                elif mat[i][j]['typecoupl'] == 'linked':
+                    mat[i][j]['typecoupl'] = 'link'
+                elif mat[i][j]['typecoupl'] == 'link':
+                    mat[i][j]['typecoupl'] = 'linked'
+        return mat    
+    
+    def _setmatrix2(self):
+        '''set and return matrix attributes (coupling infos between each idx)'''
+        lenindex = self.iobj.lenindex
+        mat = [[None for i in range(lenindex)] for i in range(lenindex)]
+        for i in range(lenindex):
+            for j in range(i, lenindex):
+                mat[i][j] = self.iobj.lindex[i].couplinginfos(self.iobj.lindex[j])
             for j in range(i):
                 mat[i][j] = copy(mat[j][i])
                 if mat[i][j]['typecoupl'] == 'derived':
@@ -192,3 +253,135 @@ class Analysis:
                         minparent = j
         return (minrate, minparent)
 
+    def _setinfos2(self):
+        '''set and return attribute 'infos'. 
+        Infos is an array with infos of each index :
+            - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
+        lenindex = self.iobj.lenindex
+        infos = [{} for i in range(lenindex)]
+        for i in range(lenindex):
+            infos[i]['num'] = i
+            infos[i]['name'] = self.iobj.lname[i]
+            infos[i]['cat'] = 'null'
+            infos[i]['pparent'] = -2
+            infos[i] |= self.iobj.lindex[i].infos
+        return infos
+
+    def _setinfospartition(self, partition=None):
+        '''set and return attribute 'infos'. 
+        Infos is an array with infos of each index :
+            - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
+        if (not partition and not self.partition) or not partition in self.partition:
+            raise AnalysisError('partition is not a valid partition')
+        lenindex = self.iobj.lenindex
+        infosp = self.infos2
+        if not partition:
+            partition = self.partition[0]
+        for i in partition:
+            infosp[i]['cat'] = 'primary'
+            infosp[i]['pparent'] = i
+        for i in range(lenindex):
+            if infosp[i]['typecodec'] == 'unique':
+                infosp[i]['pparent'] = -1
+                infosp[i]['cat'] = 'unique'
+            elif not i in partition:
+                util.pparent2(i, infosp)
+                if infosp[i]['pparent'] == -1:
+                    infosp[i]['cat'] = 'variable'
+                else:
+                    infosp[i]['cat'] = 'secondary'
+    
+    def _setparent2(self):
+        '''set parent (Iindex with minimal diff) for each Iindex'''
+        lenindex = self.iobj.lenindex
+        lenself = len(self.iobj)
+        for i in range(lenindex):
+            self.infos2[i]['parent2'] = -1
+            self.infos2[i]['child'] = []
+            self.infos2[i]['crossed'] = []
+        for i in range(lenindex):
+            mindiff = lenself
+            parent = -1
+            infoi = self.infos2[i]
+            if infoi['typecodec'] != 'unique':
+                for j in range(lenindex):
+                    matij = self.matrix2[i][j]
+                    if i != j and self.infos2[j]['parent2'] != i and \
+                      matij['typecoupl'] in ('coupled', 'derived') and \
+                      matij['diff'] < mindiff:
+                        mindiff = matij['diff']
+                        parent = j
+                    elif i != j and matij['typecoupl'] == 'crossed':
+                        infoi['crossed'].append(j)
+                infoi['parent2'] = parent
+                infoi['pname2'] = self.iobj.lname[parent]
+                self.infos2[parent]['child'].append(i)
+        return    
+
+    def _setparent(self):
+        '''set parent (Iindex with minimal diff) for each Iindex'''
+        lenidx = self.iobj.lenidx
+        lenself = len(self.iobj)
+        for i in range(lenidx):
+            self.infos[i]['parent2'] = -1
+            self.infos[i]['child'] = []
+            self.infos[i]['crossed'] = []
+        for i in range(lenidx):
+            mindiff = lenself
+            parent = -1
+            infoi = self.infos[i]
+            if infoi['typecodec'] != 'unique':
+                for j in range(lenidx):
+                    matij = self.matrix[i][j]
+                    if i != j and self.infos[j]['parent2'] != i and \
+                      matij['typecoupl'] in ('coupled', 'derived') and \
+                      matij['diff'] < mindiff:
+                        mindiff = matij['diff']
+                        parent = j
+                    elif i != j and matij['typecoupl'] == 'crossed':
+                        infoi['crossed'].append(j)
+                infoi['parent2'] = parent
+                infoi['pname2'] = self.iobj.lname[parent]
+                self.infos[parent]['child'].append(i)
+        return
+
+    def _dic_noeud(self, n, child, lname):
+        if n == -1:
+            lis = ['root*-*' + str(len(self.iobj))]
+        else:
+            name = self.infos[n]['name'].ljust(lname)[0:lname] + '---' + \
+                   str(self.infos[n]['lencodec'])
+            lis = [name.replace(' ', '*').replace("'",'*')]
+        if child[n+1]:
+            for ch in child[n+1]:
+                if ch != n:
+                    lis.append(self._dic_noeud(ch, child, lname))
+        return {str(n).ljust(2,'*'): lis}
+    
+    def _setpartition(self):
+        '''set partition (list of Iindex partitions)'''
+        brother = {idx['num']:idx['crossed'] for idx in self.infos2 if idx['crossed']}
+        for cros in brother:
+            chemin = []
+            self._addchemin(chemin, cros, 1, brother)
+        return None
+    
+    def _addchemin(self, chemin, node, lchemin, brother):
+        if lchemin == len(self.iobj) and node == chemin[0]:
+            part = sorted(chemin)
+            if not part in self.partition:
+                if not self.partition or len(part) > len(self.partition[0]):
+                    self.partition.insert(0, part)
+                else:
+                    self.partition.append(part)
+        if node in chemin[1:]: 
+            return
+        lnode = self.infos2[node]['lencodec']
+        if lchemin * lnode <= len(self.iobj):
+            newchemin = chemin + [node]
+            for broth in brother[node]:
+                self._addchemin(newchemin, broth, lchemin * lnode, brother)
+
+class AnalysisError(Exception):
+    ''' Analysis Exception'''
+    # pass        

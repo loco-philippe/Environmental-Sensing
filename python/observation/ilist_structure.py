@@ -247,7 +247,7 @@ class IlistStructure:
         lenadd = len(keysadd[0])
         inf = ilis.indexinfos()
         for i, j in zip(primary, range(len(primary))):
-            if inf[i]['cat'] == 'unique':
+            if inf[i]['cat'] == 'unique':                               #!!!
                 ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
             else:
                 ilis.lidx[i].set_keys(ilis.lidx[i].keys + keysadd[j])
@@ -296,16 +296,19 @@ class IlistStructure:
             self.addindex(newidx)
         return tuple(set(duplicates))
 
-    def iscanonorder(self):
+    def iscanonorder(self):     # à supprimer
         '''return True if crossed indexes have canonical ordered keys'''
         crossed = self.crossed
         canonorder = util.canonorder(
             [len(self.lidx[idx].codec) for idx in crossed])
         return canonorder == [self.lidx[idx].keys for idx in crossed]
-        '''primary = self.primary
+
+    def iscanonorder2(self):
+        '''return True if primary indexes have canonical ordered keys'''
+        primary = self.primary
         canonorder = util.canonorder(
             [len(self.lidx[idx].codec) for idx in primary])
-        return canonorder == [self.lidx[idx].keys for idx in primary]'''
+        return canonorder == [self.lidx[idx].keys for idx in primary]
 
     def isinrecord(self, record, extern=True):
         '''Check if record is present in self.

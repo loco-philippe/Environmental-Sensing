@@ -212,7 +212,6 @@ class Es:
             self.res          ,
             self.coordinates  ,
             self.index        ,
-            self.idxref       ,
             self.order        ,
 
             self.nul_classES  ,
@@ -229,7 +228,6 @@ class Es:
             self.obs_reference ,
             self.obs_score     ,
             self.obs_order     ,
-            self.obs_idxref    ,
 
             self.res_mRate     ,
             self.res_nEch      ,
@@ -364,7 +362,6 @@ class Es:
         self.res              = "res"
         self.coordinates      = "coordinates"
         self.index            = "index"
-        self.idxref           = "idxref"
         self.variable         = "variable"
         self.order            = "order"
         self.name             = "name"
@@ -401,7 +398,6 @@ class Es:
         self.obs_reference    = "reference"
         self.obs_score        = "score"
         self.obs_order        = "order"
-        self.obs_idxref       = "idxref"
 
         self.res_mRate        = "measureRate"
         self.res_nEch         = "nEch"

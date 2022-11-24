@@ -76,7 +76,6 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.extidx`
     - `Ilist.extidxext`
     - `Ilist.idxname`
-    - `Ilist.idxref`
     - `Ilist.idxlen`
     - `Ilist.iidx`
     - `Ilist.keys`
@@ -587,13 +586,6 @@ class Ilist(IlistStructure, IlistInterface):
     def idxname(self):
         ''' list of idx name'''
         return [idx.name for idx in self.lidx]
-
-    @property
-    def idxref(self):
-        ''' list of idx parent row (idx row if linked)'''
-        indexinfos = self.indexinfos()
-        return [inf['parent'] if inf['typecoupl'] != 'linked' else
-                inf['num'] for inf in indexinfos]
 
     @property
     def idxlen(self):

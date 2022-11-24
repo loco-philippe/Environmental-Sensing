@@ -291,8 +291,11 @@ class util:
     @staticmethod
     def pparent(row, infos):
         '''return field 'pparent' '''
+        if row < 0:
+            return row
         field = infos[row]
-        if field['pparent'] != 0:
+        #if field['pparent'] != 0:
+        if field['pparent'] != -2:
             return field['pparent']
         if field['cat'] == 'primary':
             field['pparent'] = field['num']
@@ -302,6 +305,23 @@ class util:
             field['pparent'] = util.pparent(field['parent'], infos)
         return field['pparent']
 
+    @staticmethod
+    def pparent2(row, infos):
+        '''return field 'pparent' '''
+        if row < 0:
+            return row
+        field = infos[row]
+        #if field['pparent'] != 0:
+        if field['pparent'] != -2:
+            return field['pparent']
+        if field['cat'] == 'primary':
+            field['pparent'] = field['num']
+        elif field['cat'] == 'unique':
+            field['pparent'] = -1
+        else:
+            field['pparent'] = util.pparent2(field['parent2'], infos)
+        return field['pparent']
+    
     @staticmethod
     def reindex(oldkeys, oldcodec, newcodec):
         '''new keys with new order of codec'''

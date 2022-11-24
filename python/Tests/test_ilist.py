@@ -179,7 +179,7 @@ class Test_Ilist(unittest.TestCase):
                    [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
                    ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
         # il.reindex()
-        self.assertEqual(il.idxref, [0, 1, 0, 5, 4, 5])
+        #self.assertEqual(il.idxref, [0, 1, 0, 5, 4, 5])
         self.assertEqual(il.idxlen, [2, 3, 2, 2, 1, 3])
         self.assertEqual(il.dimension, 3)
         self.assertEqual(il.lencomplete, 18)

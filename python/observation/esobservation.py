@@ -78,7 +78,6 @@ class Observation(Ilist):
     - `observation.ilist.Ilist.extidx`
     - `observation.ilist.Ilist.extidxext`
     - `observation.ilist.Ilist.idxname`
-    - `observation.ilist.Ilist.idxref`
     - `observation.ilist.Ilist.idxlen`
     - `observation.ilist.Ilist.iidx`
     - `observation.ilist.Ilist.keys`
