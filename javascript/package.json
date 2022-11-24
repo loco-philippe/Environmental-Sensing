@@ -1,6 +1,7 @@
 {
   "type": "module",
   "dependencies": {
-    "mongodb": "^4.12.0"
+    "mongodb": "^4.12.0",
+    "python-bridge": "^1.1.0"
   }
 }

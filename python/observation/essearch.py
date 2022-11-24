@@ -11,13 +11,13 @@ You can then use either `insert_one_to_mongo(collection, observation)` or `inser
 
 3. **Write a request using observation.ESSearch:**
 An `ESSearch` instance must be created with either a MongoDB Collection (passed as argument **collection**) or a list of observations (passed as argument **data**).
-Criteria for the query are then added one by one using `ESSearch.addcondition` or `ESSearch.orcondition`, or all together with `ESSearch.addconditions` or passed as argument **parameters** of ESSearch.
+Criteria for the query are then added one by one using `ESSearch.addCondition` or `ESSearch.orCondition`, or all together with `ESSearch.addConditions` or passed as argument **parameters** of ESSearch.
 
 A condition is composed of:
 - a **name** or a **path** indicating the name of a column or an exact path giving which element is concerned by the condition;
 - an **operand** which is the item of the comparison (if omitted, the existence of the path is tested);
 - a **comparator** which can be applied on the operand, for example '>=' or 'within' (defaults to equality in most cases);
-- optional parameters detailed in `ESSearch.addcondition` documentation, like **inverted** to add a *not*.
+- optional parameters detailed in `ESSearch.addCondition` documentation, like **inverted** to add a *not*.
 
 Execute the research with `ESSearch.execute()`. Put the parameter **single** to True if you want the return to be a single observation
 instead of a list of observations.
@@ -36,10 +36,10 @@ collec = client[<base>][<collection>]
 
 # Option 1
 srch = ESSearch(collection = collec)
-srch.addcondition('datation', datetime.datetime(2022, 1, 1), '>=')
-srch.addcondition('datation', datetime.datetime(2022, 12, 31), '<=')
-srch.addcondition('property', 'PM25')
-srch.addcondition(path = 'type', comparator = '==', operand = 'observation')
+srch.addCondition('datation', datetime.datetime(2022, 1, 1), '>=')
+srch.addCondition('datation', datetime.datetime(2022, 12, 31), '<=')
+srch.addCondition('property', 'PM25')
+srch.addCondition(path = 'type', comparator = '==', operand = 'observation')
 
 # Option 2 (equivalent to option 1 but on one line)
 srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
@@ -225,11 +225,11 @@ class ESSearch:
     
     *parameters for query - update methods*
 
-    - `ESSearch.addconditions`
-    - `ESSearch.addcondition`
-    - `ESSearch.orcondition`
-    - `ESSearch.removecondition`
-    - `ESSearch.clearconditions`
+    - `ESSearch.addConditions`
+    - `ESSearch.addCondition`
+    - `ESSearch.orCondition`
+    - `ESSearch.removeCondition`
+    - `ESSearch.clearConditions`
     - `ESSearch.clear`
 
     *query method*
@@ -248,7 +248,7 @@ class ESSearch:
 
         *Arguments*
 
-        - **parameters** :  dict, list (default None) - list of list or list of dictionnaries whose keys are arguments of ESSearch.addcondition method
+        - **parameters** :  dict, list (default None) - list of list or list of dictionnaries whose keys are arguments of ESSearch.addCondition method
         ex: parameters = [
             {'name' : 'datation', 'operand' : datetime.datetime(2022, 9, 19, 1), 'comparator' : '>='},
             {'name' : 'property', 'operand' : 'PM2'}
@@ -256,7 +256,7 @@ class ESSearch:
         - **data** :  list (default None) - list of Observation
         - **collection** :  pymongo.collection.Collection (default None) - MongoDB collection of Observation. Documents must have been inserted in an appropriate format
         - **heavy** :  bool (default False) - Must be True when values are defined directly and inside dictionnaries simultaneously.
-        - **kwargs** :  other parameters are used as arguments for ESSearch.addcondition method
+        - **kwargs** :  other parameters are used as arguments for ESSearch.addCondition method
         '''
         self.parameters = [[]]                                          # self.parameters
         if isinstance(data, list) or data is None:                      # self.data
@@ -270,8 +270,8 @@ class ESSearch:
             self.collection = collection
         else: raise TypeError("collection must be a pymongo.collection.Collection.")
 
-        if parameters: self.addconditions(parameters)
-        if kwargs: self.addcondition(**kwargs)
+        if parameters: self.addConditions(parameters)
+        if kwargs: self.addCondition(**kwargs)
 
     def __repr__(self):
         return "ESSearch(collection = " + str(self.collection) + ", data = " + str(self.data) + ", parameters = " + str(self.parameters) + ")"
@@ -293,20 +293,20 @@ class ESSearch:
     def __getitem__(self, key):
         return self.parameters[key]
 
-    def addconditions(self, parameters):
+    def addConditions(self, parameters):
         '''
-        Takes multiple parameters and applyes self.addcondition() on each of them.
+        Takes multiple parameters and applyes self.addCondition() on each of them.
         '''
         if isinstance(parameters, dict):
-            self.addcondition(**parameters)
+            self.addCondition(**parameters)
         elif isinstance(parameters, (list, tuple)):
             for parameter in parameters:
-                if isinstance(parameter, dict): self.addcondition(**parameter)
-                elif isinstance(parameters, (list, tuple)): self.addcondition(*parameter)
-                else: self.addcondition(parameter)
+                if isinstance(parameter, dict): self.addCondition(**parameter)
+                elif isinstance(parameters, (list, tuple)): self.addCondition(*parameter)
+                else: self.addCondition(parameter)
         else: raise TypeError("parameters must be either a dict or a list of dict.")
             
-    def addcondition(self, name = None, operand = None, comparator = None, path = None, or_position = -1, **kwargs):
+    def addCondition(self, name = None, operand = None, comparator = None, path = None, or_position = -1, **kwargs):
         '''
         Takes parameters and inserts corresponding query condition in self.parameters.
 
@@ -343,7 +343,7 @@ class ESSearch:
         if or_position is not None and not isinstance(or_position, int): raise TypeError("or_position must be an int.")
 
         if name is None and operand is None and comparator is None and path is None:
-            raise ValueError("ESSearch.addcondition() requires at least one of these parameters : name, operand or path.")
+            raise ValueError("ESSearch.addCondition() requires at least one of these parameters : name, operand or path.")
 
         for item in kwargs:
             if item not in {'formatstring', 'inverted', 'unwind', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
@@ -374,18 +374,18 @@ class ESSearch:
         else:
             self.parameters[or_position].append(condition)
 
-    def orcondition(self, *args, **kwargs):
+    def orCondition(self, *args, **kwargs):
         '''
         Adds a condition in a new sublist in self.parameters. Separations in sublists correspond to "or" in the query.
         '''
-        self.addcondition(or_position = len(self.parameters), *args, **kwargs)
+        self.addCondition(or_position = len(self.parameters), *args, **kwargs)
 
-    def removecondition(self, or_position = None, condnum = None):
+    def removeCondition(self, or_position = None, condnum = None):
         '''
         Removes a condition from self.parameters. By default, last element added is removed.
         Otherwise, condition removed is self.parameters[or_position][condnum]
 
-        To remove all conditions, use ESSearch.clearconditions() method.
+        To remove all conditions, use ESSearch.clearConditions() method.
         '''
         if self.parameters == [[]]: return
         if or_position is None:
@@ -401,7 +401,7 @@ class ESSearch:
         if self.parameters == []:
             self.parameters = [[]]
 
-    def clearconditions(self):
+    def clearConditions(self):
         '''
         Removes all conditions from self.parameters
         To remove all attributes, use ESSearch.clear() method.
@@ -604,7 +604,7 @@ class ESSearch:
         else: cursor = self.collection.aggregate(self.request)
         if not self.data: self.data = []
         if self.parameters == [[]]:
-            result = self.data
+            result = self.data # part du principe que data est bien une liste d'observations et empêche donc l'entrée de données au format json
             for item in cursor: result.append(Observation.from_obj(item))
         else:
             result = [self._filtered_observation(item) for item in self.data]            
@@ -612,7 +612,8 @@ class ESSearch:
                 for item in cursor: result.append(self._filtered_observation(Observation.from_obj(item)))
             else: 
                 for item in cursor: result.append(Observation.from_obj(item))
-        if single: return self._fusion(result, fillvalue=fillvalue)
+        if single:
+            return self._fusion(result, fillvalue=fillvalue)
         elif namefused: return self._fusion(result, namefused, fillvalue)
         else: return result
 
@@ -768,16 +769,17 @@ class ESSearch:
         Takes a list of observations and returns one observation mixing them together in one single observation
         or a list of observations where all observations sharing the same name are fused together.
         '''
+# NE FONCTIONNE PAS S'IL NE S'AGIT PAS D'UNE LISTE D'OBSERVATIONS
+# parce que la conversion en observation est faite au sein d'execute et donc que les données entrées par le champ data ne sont pas converties
+# à voir pour modifier fusion / l'intégrer comme méthode de Ilist/Observation / modifier execute.
+# -> dans tous les cas, fait sens d'insérer fusion comme méthode d'Observation.
+#
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:
             if not namefused:
                 lidx = []
                 new_lname = set()
-                for obs in obsList:
-                    if obs.lvarname: # toujours lvarname du premier élément... inclusion dans la boucle vraiment utile ?
-                        lvarname = obs.lvarname
-                        break
                 for obs in obsList:
                     new_lname |= set(obs.lname)
                 new_lname = list(new_lname)
@@ -791,10 +793,14 @@ class ESSearch:
                     lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
 
                 if name is None: name = "ESSearch query result on " + str(datetime.datetime.now())
-                param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
-                        'context': {'origin': 'ESSearch query', 'source_collection ': self.collection.name, 'ESSearch_parameters': str(self.parameters)}}
+                if self.collection is not None:
+                    param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                            'context': {'origin': 'ESSearch query', 'source_collection ': self.collection.name, 
+                            'ESSearch_parameters': str(self.parameters)}}
+                else:
+                    param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                            'context': {'origin': 'ESSearch query', 'ESSearch_parameters': str(self.parameters)}}
                 new_obs = Observation(lidx, name, param=param)
-                new_obs.lvarname = lvarname
                 return new_obs
             else:                   # à tester
                 new_obsList = []
