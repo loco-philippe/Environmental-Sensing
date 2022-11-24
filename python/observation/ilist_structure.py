@@ -402,7 +402,8 @@ class IlistStructure:
                                        for i in range(self.lenidx)]))
         if row:
             return locrow
-        return self.lvar[0][tuple(locrow)]
+        #return self.lvar[0][tuple(locrow)]
+        return [self.record(locr, extern=extern) for locr in locrow]
 
     def merge(self, name=None, fillvalue=math.nan, mergeidx=False, updateidx=False):
         '''
@@ -569,8 +570,10 @@ class IlistStructure:
         Return self'''
         crossed = self.crossed
         primary = self.primary
-        order = [self.lidxrow[idx] for idx in crossed]
-        order += [self.lidxrow[idx] for idx in primary if not idx in crossed]
+        # %%% modif
+        order = [self.lidxrow[idx] for idx in primary]
+        #order = [self.lidxrow[idx] for idx in crossed]
+        #order += [self.lidxrow[idx] for idx in primary if not idx in crossed]
         order += [idx for idx in self.lidxrow if not idx in order]
         order += self.lvarrow
         self.swapindex(order)

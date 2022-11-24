@@ -243,14 +243,14 @@ class Test_Ilist(unittest.TestCase):
                      [110, 10, 120, 120, 115]])
         il3 = il1 + il2
         self.assertEqual(len(il3), len(il1) + len(il2))
-        self.assertEqual(il2.loc([12, 10]), il3.loc([12, 10]))
-        self.assertEqual(il1.loc([0, 20]), il3.loc([0, 20]))
+        self.assertEqual(il2.loc(["_rt", 12, 10]), il3.loc(["_rt", 12, 10]))
+        self.assertEqual(il1.loc(['er', 0, 20]), il3.loc(['er', 0, 20]))
         il2 = Ilist.obj([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 2, 10, 12, 10],
                      [110, 0, 120, 120, 115]])
         il3 = il1 + il2
         self.assertEqual(len(il3), len(il1) + len(il2))
-        self.assertEqual(il2.loc([12, 120]), il3.loc([12, 120]))
-        self.assertEqual(il1.loc([0, 20]), il3.loc([0, 20]))
+        self.assertEqual(il2.loc(['_ry', 12, 120]), il3.loc(['_ry', 12, 120]))
+        self.assertEqual(il1.loc(['er', 0, 20]), il3.loc(['er', 0, 20]))
 
     def test_swap(self):
         il = Ilist.obj([[10, 20, 30], [[100, 200, 300], 0], [True, False]])

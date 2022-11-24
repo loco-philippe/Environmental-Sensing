@@ -189,6 +189,9 @@ class Ilist(IlistStructure, IlistInterface):
         self.lindex = listidx
         if reindex:
             self.reindex()
+        # %%% modif
+        self.analysis._actualize()              
+        self.lvarname = self.analysis.lvarname
         return
 
     @classmethod    
@@ -667,7 +670,9 @@ class Ilist(IlistStructure, IlistInterface):
     @property
     def primary(self):
         ''' list of primary idx'''
-        return self.analysis.getprimary()
+        # %%% modif
+        return self.analysis.primary3
+        #return self.analysis.getprimary()
 
     @property
     def setidx(self):

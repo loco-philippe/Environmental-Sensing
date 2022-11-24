@@ -10,6 +10,7 @@ The `observation.ilist_analysis` module contains the `Analysis` class.
 # %% declarations
 from copy import copy
 import pprint
+from collections import Counter
 
 from util import util
 
@@ -144,6 +145,8 @@ class Analysis:
         self._setinfospartition(partition)
         self.primary = [self.infos.index(idx) for idx in self.infos if idx['cat'] == 'primary']
         self.primary2 = [idx['num'] for idx in self.infos2 if idx['cat'] == 'primary']
+        infosidx = [idx for idx in self.infos2 if idx['cat'] != 'variable']
+        self.primary3 = [infosidx.index(idx) for idx in infosidx if idx['cat'] == 'primary']
         self.crossed = [idx for idx in self.primary if self.infos[idx]['typecoupl'] == 'crossed']
         self.hashi = self.iobj._hashi()
         self.lvarname = [idx['name'] for idx in self.infos2 if idx['cat'] == 'variable']
@@ -271,7 +274,9 @@ class Analysis:
         '''set and return attribute 'infos'. 
         Infos is an array with infos of each index :
             - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
-        if (not partition and not self.partition) or not partition in self.partition:
+        if partition is None and not self.partition:
+            return
+        if not partition is None and not partition in self.partition:
             raise AnalysisError('partition is not a valid partition')
         lenindex = self.iobj.lenindex
         infosp = self.infos2
@@ -367,7 +372,8 @@ class Analysis:
         return None
     
     def _addchemin(self, chemin, node, lchemin, brother):
-        if lchemin == len(self.iobj) and node == chemin[0]:
+        if lchemin == len(self.iobj) and node == chemin[0] and \
+          max(Counter(zip(*[self.iobj.lindex[idx] for idx in chemin])).values()) == 1:
             part = sorted(chemin)
             if not part in self.partition:
                 if not self.partition or len(part) > len(self.partition[0]):
