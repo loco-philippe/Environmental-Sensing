@@ -1,6 +1,6 @@
 //const { MongoClient } = require("mongodb");
 import { MongoClient } from "mongodb";
-import { ESSearch } from "./essearch_javascript.js";
+import { ESSearch } from "../essearch_javascript.js";
 const uri = "mongodb+srv://ESobsUser:observation@esobs.gwpay.mongodb.net/?retryWrites=true&w=majority";
 const client = new MongoClient(uri);
 
