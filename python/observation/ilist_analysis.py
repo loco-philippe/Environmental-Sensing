@@ -118,8 +118,8 @@ class Analysis:
         #from pprint import pformat        
         if self.hashi != self.iobj._hashi():
             self._actualize()
-        child = [None] * (len(self.infos) + 1)
-        for i in range(len(self.infos)):
+        child = [None] * (len(self.infos2) + 1)
+        for i in range(len(self.infos2)):
             parent = self.infos2[i]['parent2']
             if child[parent + 1] is None:
                 child[parent + 1] = []
@@ -139,7 +139,7 @@ class Analysis:
         self.infos = self._setinfos()
         self._setparent()
         self.matrix2 = self._setmatrix2()
-        self.infos2 = self._setinfos2()
+        self._setinfos2()
         self._setparent2()
         self._setpartition()
         self._setinfospartition(partition)
@@ -150,7 +150,13 @@ class Analysis:
         self.crossed = [idx for idx in self.primary if self.infos[idx]['typecoupl'] == 'crossed']
         self.hashi = self.iobj._hashi()
         self.lvarname = [idx['name'] for idx in self.infos2 if idx['cat'] == 'variable']
+        coupledvar = [idx['name'] for idx in self.infos2 if idx['cat'] == 'coupled' 
+                    and self.infos2[idx['parent2']]['cat'] == 'variable']
+        self.lvarname += coupledvar
         self.secondary = [idx['num'] for idx in self.infos2 if idx['cat'] == 'secondary']
+        coupledsec = [idx['num'] for idx in self.infos2 if idx['cat'] == 'coupled' 
+                    and self.infos2[idx['parent2']]['cat'] in ('primary', 'secondary')]
+        self.secondary += coupledsec
         #print('update ', time()-t0, self.primary, str(self.hashi))
 
     def _setinfos(self):
@@ -261,54 +267,66 @@ class Analysis:
         Infos is an array with infos of each index :
             - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
         lenindex = self.iobj.lenindex
-        infos = [{} for i in range(lenindex)]
+        self.infos2 = [{} for i in range(lenindex)]
         for i in range(lenindex):
-            infos[i]['num'] = i
-            infos[i]['name'] = self.iobj.lname[i]
-            infos[i]['cat'] = 'null'
-            infos[i]['pparent'] = -2
-            infos[i] |= self.iobj.lindex[i].infos
-        return infos
+            self.infos2[i]['parent2'] = -1
+            self.infos2[i]['child'] = []
+            self.infos2[i]['crossed'] = []
+            self.infos2[i]['num'] = i
+            self.infos2[i]['name'] = self.iobj.lname[i]           
+            self.infos2[i]['cat'] = 'null'
+            self.infos2[i]['pparent'] = -2
+            self.infos2[i] |= self.iobj.lindex[i].infos
+            if self.infos2[i]['typecodec'] == 'unique':
+                self.infos2[i]['pparent'] = -1
+                self.infos2[i]['cat'] = 'unique'
+        for i in range(lenindex):
+            for j in range(i+1, lenindex):
+                if self.matrix2[i][j]['typecoupl'] == 'coupled' and \
+                  self.infos2[j]['parent2'] == -1:
+                    self.infos2[j]['parent2'] = i
+                    self.infos2[j]['cat'] = 'coupled'
+                    self.infos2[i]['child'].append(j)
+        return
 
     def _setinfospartition(self, partition=None):
         '''set and return attribute 'infos'. 
         Infos is an array with infos of each index :
             - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
-        if partition is None and not self.partition:
-            return
         if not partition is None and not partition in self.partition:
             raise AnalysisError('partition is not a valid partition')
         lenindex = self.iobj.lenindex
         infosp = self.infos2
-        if not partition:
+        if not partition and len(self.partition) > 0:
             partition = self.partition[0]
-        for i in partition:
-            infosp[i]['cat'] = 'primary'
-            infosp[i]['pparent'] = i
-        for i in range(lenindex):
-            if infosp[i]['typecodec'] == 'unique':
+        if partition:
+            for i in partition:
+                infosp[i]['cat'] = 'primary'
+                infosp[i]['pparent'] = i
+        for i in range(lenindex): 
+            '''if infosp[i]['typecodec'] == 'unique':   #!!!
                 infosp[i]['pparent'] = -1
                 infosp[i]['cat'] = 'unique'
-            elif not i in partition:
+            elif not i in partition:'''
+            if infosp[i]['cat'] == 'null':
                 util.pparent2(i, infosp)
-                if infosp[i]['pparent'] == -1:
+                if infosp[i]['pparent'] == -1 and partition:
                     infosp[i]['cat'] = 'variable'
                 else:
                     infosp[i]['cat'] = 'secondary'
-    
+        for i in range(lenindex): 
+            if infosp[i]['cat'] == 'coupled':
+                infosp[i]['pparent'] = infosp[infosp[i]['parent2']]['pparent']
+            
     def _setparent2(self):
         '''set parent (Iindex with minimal diff) for each Iindex'''
         lenindex = self.iobj.lenindex
         lenself = len(self.iobj)
         for i in range(lenindex):
-            self.infos2[i]['parent2'] = -1
-            self.infos2[i]['child'] = []
-            self.infos2[i]['crossed'] = []
-        for i in range(lenindex):
             mindiff = lenself
             parent = -1
             infoi = self.infos2[i]
-            if infoi['typecodec'] != 'unique':
+            if not infoi['cat'] in ['unique', 'coupled']:
                 for j in range(lenindex):
                     matij = self.matrix2[i][j]
                     if i != j and self.infos2[j]['parent2'] != i and \
@@ -316,11 +334,12 @@ class Analysis:
                       matij['diff'] < mindiff:
                         mindiff = matij['diff']
                         parent = j
-                    elif i != j and matij['typecoupl'] == 'crossed':
+                    elif i != j and matij['typecoupl'] == 'crossed' and \
+                      self.infos2[j]['cat'] != 'coupled':
                         infoi['crossed'].append(j)
                 infoi['parent2'] = parent
-                infoi['pname2'] = self.iobj.lname[parent]
-                self.infos2[parent]['child'].append(i)
+                #infoi['pname2'] = self.iobj.lname[parent]
+                self.infos2[parent]['child'].append(i)      
         return    
 
     def _setparent(self):
@@ -354,8 +373,8 @@ class Analysis:
         if n == -1:
             lis = ['root*-*' + str(len(self.iobj))]
         else:
-            name = self.infos[n]['name'].ljust(lname)[0:lname] + '---' + \
-                   str(self.infos[n]['lencodec'])
+            name = self.infos2[n]['name'].ljust(lname)[0:lname] + '---' + \
+                   str(self.infos2[n]['lencodec'])
             lis = [name.replace(' ', '*').replace("'",'*')]
         if child[n+1]:
             for ch in child[n+1]:
