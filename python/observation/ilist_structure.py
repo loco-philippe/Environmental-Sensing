@@ -58,8 +58,8 @@ class IlistStructure:
                                    solve=solve)
             else:
                 self.lindex[i].add(other.lindex[i], solve=solve)
-        if not self.lvarname:
-            self.lvarname = other.lvarname
+        #if not self.lvarname:
+        #    self.lvarname = other.lvarname
         return self
 
     def addindex(self, index, first=False, merge=False, update=False):
@@ -161,7 +161,7 @@ class IlistStructure:
         - **att** : string - name of the info to store in the file
 
         *Returns* : array of array of dict'''
-        return self.analysis.getmatrix()
+        return self.analysis.getmatrix2()
 
     def coupling(self, derived=True, rate=0.1):
         '''Transform idx with low rate in coupled or derived indexes (codec extension).
@@ -338,7 +338,7 @@ class IlistStructure:
         - **keys** : list (default none) - list of information to return (reduct dict), all if None
 
         *Returns* : array'''
-        return self.analysis.getinfos(keys)
+        return self.analysis.getinfos2(keys)
 
     def indicator(self, fullsize=None, size=None):
         '''generate size indicators: ol (object lightness), ul (unicity level), gain (sizegain)
@@ -568,7 +568,7 @@ class IlistStructure:
         '''Set the canonical index order : primary - secondary/unique - variable.
         Set the canonical keys order : ordered keys in the first columns.
         Return self'''
-        crossed = self.crossed
+        #crossed = self.crossed
         primary = self.primary
         # %%% modif
         order = [self.lidxrow[idx] for idx in primary]

@@ -319,7 +319,7 @@ class util:
         elif field['cat'] == 'unique':
             field['pparent'] = -1
         else:
-            field['pparent'] = util.pparent2(field['parent2'], infos)
+            field['pparent'] = util.pparent2(field['parent'], infos)
         return field['pparent']
     
     @staticmethod

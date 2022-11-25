@@ -59,12 +59,12 @@ class Analysis:
         self.matrix2     = None
         self.infos      = None
         self.infos2      = None
-        self.primary    = None
+        #self.primary    = None
         self.primary2    = None
-        self.crossed    = None      # à supprimer
+        #self.crossed    = None      # à supprimer
         self.partition  = []
     
-    def getinfos(self, keys=None):
+    def getinfos2(self, keys=None):
         '''return attribute infos
 
          *Parameters*
@@ -73,10 +73,10 @@ class Analysis:
         if self.hashi != self.iobj._hashi():
             self._actualize()
         if not keys:
-            return self.infos
-        return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
+            return self.infos2
+        return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos2]
     
-    def getmatrix(self, name=None):
+    def getmatrix2(self, name=None):
         '''return attribute matrix or only one value of the matrix defined by two names
         
          *Parameters*
@@ -86,26 +86,38 @@ class Analysis:
         if self.hashi != self.iobj._hashi():
             self._actualize()
         if not name or not isinstance(name, list):
-            return self.matrix
-        if name[0] in self.iobj.idxname:
-            ind0 = self.iobj.idxname.index(name[0])
+            return self.matrix2
+        if name[0] in self.iobj.indexname:
+            ind0 = self.iobj.indexname.index(name[0])
             if len(name) == 1:
-                return self.matrix[ind0]
-            if len(name) > 1 and name[1] in self.iobj.idxname:
-                return self.matrix[ind0][self.iobj.idxname.index(name[1])]
+                return self.matrix2[ind0]
+            if len(name) > 1 and name[1] in self.iobj.indexname:
+                return self.matrix2[ind0][self.iobj.indexname.index(name[1])]
         return None
     
-    def getprimary(self):
+    def getvarname(self):
+        '''return variable Iindex name'''
+        if self.hashi != self.iobj._hashi():
+            self._actualize()
+        return self.lvarname
+
+    """def getprimary(self):
         '''return attribute primary'''
         if self.hashi != self.iobj._hashi():
             self._actualize()
-        return self.primary
+        return self.primary"""
 
-    def getcrossed(self):
+    def getprimary3(self):
+        '''return attribute primary'''
+        if self.hashi != self.iobj._hashi():
+            self._actualize()
+        return self.primary3
+
+    """def getcrossed(self):
         '''return attribute crossed'''
         if self.hashi != self.iobj._hashi():
             self._actualize()
-        return self.crossed
+        return self.crossed"""
 
     def tree(self, width=5, lname=20):
         '''return a string with a tree of derived Iindex.
@@ -120,7 +132,7 @@ class Analysis:
             self._actualize()
         child = [None] * (len(self.infos2) + 1)
         for i in range(len(self.infos2)):
-            parent = self.infos2[i]['parent2']
+            parent = self.infos2[i]['parent']
             if child[parent + 1] is None:
                 child[parent + 1] = []
             child[parent + 1].append(i)
@@ -135,27 +147,27 @@ class Analysis:
     # %% internal methods
     def _actualize(self, forcing=False, partition=None):
         #t0=time()
-        self.matrix = self._setmatrix()
-        self.infos = self._setinfos()
-        self._setparent()
+        #self.matrix = self._setmatrix()
+        #self.infos = self._setinfos()
+        #self._setparent()
         self.matrix2 = self._setmatrix2()
         self._setinfos2()
         self._setparent2()
         self._setpartition()
         self._setinfospartition(partition)
-        self.primary = [self.infos.index(idx) for idx in self.infos if idx['cat'] == 'primary']
+        #self.primary = [self.infos.index(idx) for idx in self.infos if idx['cat'] == 'primary']
         self.primary2 = [idx['num'] for idx in self.infos2 if idx['cat'] == 'primary']
         infosidx = [idx for idx in self.infos2 if idx['cat'] != 'variable']
         self.primary3 = [infosidx.index(idx) for idx in infosidx if idx['cat'] == 'primary']
-        self.crossed = [idx for idx in self.primary if self.infos[idx]['typecoupl'] == 'crossed']
+        #self.crossed = [idx for idx in self.primary if self.infos[idx]['typecoupl'] == 'crossed']
         self.hashi = self.iobj._hashi()
         self.lvarname = [idx['name'] for idx in self.infos2 if idx['cat'] == 'variable']
         coupledvar = [idx['name'] for idx in self.infos2 if idx['cat'] == 'coupled' 
-                    and self.infos2[idx['parent2']]['cat'] == 'variable']
+                    and self.infos2[idx['parent']]['cat'] == 'variable']
         self.lvarname += coupledvar
         self.secondary = [idx['num'] for idx in self.infos2 if idx['cat'] == 'secondary']
         coupledsec = [idx['num'] for idx in self.infos2 if idx['cat'] == 'coupled' 
-                    and self.infos2[idx['parent2']]['cat'] in ('primary', 'secondary')]
+                    and self.infos2[idx['parent']]['cat'] in ('primary', 'secondary')]
         self.secondary += coupledsec
         #print('update ', time()-t0, self.primary, str(self.hashi))
 
@@ -269,7 +281,7 @@ class Analysis:
         lenindex = self.iobj.lenindex
         self.infos2 = [{} for i in range(lenindex)]
         for i in range(lenindex):
-            self.infos2[i]['parent2'] = -1
+            self.infos2[i]['parent'] = -1
             self.infos2[i]['child'] = []
             self.infos2[i]['crossed'] = []
             self.infos2[i]['num'] = i
@@ -283,8 +295,8 @@ class Analysis:
         for i in range(lenindex):
             for j in range(i+1, lenindex):
                 if self.matrix2[i][j]['typecoupl'] == 'coupled' and \
-                  self.infos2[j]['parent2'] == -1:
-                    self.infos2[j]['parent2'] = i
+                  self.infos2[j]['parent'] == -1:
+                    self.infos2[j]['parent'] = i
                     self.infos2[j]['cat'] = 'coupled'
                     self.infos2[i]['child'].append(j)
         return
@@ -316,7 +328,7 @@ class Analysis:
                     infosp[i]['cat'] = 'secondary'
         for i in range(lenindex): 
             if infosp[i]['cat'] == 'coupled':
-                infosp[i]['pparent'] = infosp[infosp[i]['parent2']]['pparent']
+                infosp[i]['pparent'] = infosp[infosp[i]['parent']]['pparent']
             
     def _setparent2(self):
         '''set parent (Iindex with minimal diff) for each Iindex'''
@@ -324,12 +336,12 @@ class Analysis:
         lenself = len(self.iobj)
         for i in range(lenindex):
             mindiff = lenself
-            parent = -1
+            parent = None
             infoi = self.infos2[i]
             if not infoi['cat'] in ['unique', 'coupled']:
                 for j in range(lenindex):
                     matij = self.matrix2[i][j]
-                    if i != j and self.infos2[j]['parent2'] != i and \
+                    if i != j and self.infos2[j]['parent'] != i and \
                       matij['typecoupl'] in ('coupled', 'derived') and \
                       matij['diff'] < mindiff:
                         mindiff = matij['diff']
@@ -337,9 +349,10 @@ class Analysis:
                     elif i != j and matij['typecoupl'] == 'crossed' and \
                       self.infos2[j]['cat'] != 'coupled':
                         infoi['crossed'].append(j)
-                infoi['parent2'] = parent
-                #infoi['pname2'] = self.iobj.lname[parent]
-                self.infos2[parent]['child'].append(i)      
+                if not parent is None:
+                    infoi['parent'] = parent
+                    #infoi['pname2'] = self.iobj.lname[parent]
+                    self.infos2[parent]['child'].append(i)      
         return    
 
     def _setparent(self):
@@ -347,7 +360,7 @@ class Analysis:
         lenidx = self.iobj.lenidx
         lenself = len(self.iobj)
         for i in range(lenidx):
-            self.infos[i]['parent2'] = -1
+            self.infos[i]['parent'] = -1
             self.infos[i]['child'] = []
             self.infos[i]['crossed'] = []
         for i in range(lenidx):
@@ -357,14 +370,14 @@ class Analysis:
             if infoi['typecodec'] != 'unique':
                 for j in range(lenidx):
                     matij = self.matrix[i][j]
-                    if i != j and self.infos[j]['parent2'] != i and \
+                    if i != j and self.infos[j]['parent'] != i and \
                       matij['typecoupl'] in ('coupled', 'derived') and \
                       matij['diff'] < mindiff:
                         mindiff = matij['diff']
                         parent = j
                     elif i != j and matij['typecoupl'] == 'crossed':
                         infoi['crossed'].append(j)
-                infoi['parent2'] = parent
+                infoi['parent'] = parent
                 infoi['pname2'] = self.iobj.lname[parent]
                 self.infos[parent]['child'].append(i)
         return
@@ -385,9 +398,14 @@ class Analysis:
     def _setpartition(self):
         '''set partition (list of Iindex partitions)'''
         brother = {idx['num']:idx['crossed'] for idx in self.infos2 if idx['crossed']}
+        self.partition = []
+        chemin = []
         for cros in brother:
             chemin = []
             self._addchemin(chemin, cros, 1, brother)
+        childroot = [idx['num'] for idx in self.infos2 
+                     if idx['parent'] == -1 and idx['typecodec'] == 'complete']
+        self.partition.append(childroot)
         return None
     
     def _addchemin(self, chemin, node, lchemin, brother):

@@ -43,15 +43,9 @@ class Test_Ilist(unittest.TestCase):
         iidx = Ilist.obj ([['datationvalue', [10, 20, 30]],
                       ['locationvalue', [100, 200, 300], 0],
                       ['propertyvalue', [True, False]]])
-        '''iidx1 = Ilist.obj ([['datationvalue', [10, 20, 30]],
-                       ['locationvalue', [100, 200, 300], 0],
-                       ['propertyvalue', [True, False]]], length=6)'''
         iidx2 = Ilist.obj ([['datationvalue', [10, 20, 30], [0, 0, 1, 1, 2, 2]],
                        ['locationvalue', [100, 200, 300], [0, 0, 1, 1, 2, 2]],
                        ['propertyvalue', [True, False], [0, 1, 0, 1, 0, 1]]])
-        '''iidx3 = Ilist.obj ([['datationvalue', [10, 10, 20, 20, 30, 30]],
-                       ['locationvalue', [100, 100, 200, 200, 300, 300]],
-                       ['propertyvalue', [True, False, True, False, True, False]]], length=6)'''
         iidx4 = Ilist.obj ([['datationvalue', [10, 10, 20, 20, 30, 30]],
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
@@ -180,11 +174,10 @@ class Test_Ilist(unittest.TestCase):
                    ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
         # il.reindex()
         #self.assertEqual(il.idxref, [0, 1, 0, 5, 4, 5])
-        self.assertEqual(il.idxlen, [2, 3, 2, 2, 1, 3])
-        self.assertEqual(il.dimension, 3)
-        self.assertEqual(il.lencomplete, 18)
-        il = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1],
-                   [0, 2, 0, 0], [30, 12, 20, 20]])
+        self.assertEqual(il.indexlen, [3, 2, 3, 2, 2, 1, 3])
+        self.assertEqual(il.dimension, 2)
+        self.assertEqual(il.lencomplete, 4)
+        il = Ilist.obj([[0, 2, 0, 0], [30, 12, 20, 20]])
         # il.reindex()
         self.assertFalse(il.consistent)
         il = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1],
@@ -207,7 +200,7 @@ class Test_Ilist(unittest.TestCase):
                          [100, 100, 200, 200, 300, 300],
                          [True, False, True, False, True, False]], var=0)
         il.setcanonorder()
-        self.assertTrue(il.iscanonorder())
+        self.assertTrue(il.iscanonorder2())
 
     def test_addindex(self):
         iidx = Ilist.obj([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
@@ -334,19 +327,19 @@ class Test_Ilist(unittest.TestCase):
                           [nan, nan, nan, 'gr1', 'gr1', 'gr2'],
                           ['philippe white', 'philippe white', 'philippe white',
                            'anne white', 'anne white', 'anne white']])
-        self.assertEqual(ilm.primary, [0, 2])
+        self.assertEqual(ilm.primary, [])
         ilm = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 12, 15],
                      [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
-        self.assertEqual(ilm.primary, [0, 1, 5])
+        self.assertEqual(ilm.primary, [0, 2])
         ilm = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2], [30, 12, 20, 30],
                      [2, 0, 2, 0], [2, 2, 0, 0], ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
-        self.assertEqual(ilm.primary, [0, 1, 3])
+        self.assertEqual(ilm.primary, [0, 2])
         ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
                           ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
-        self.assertEqual(ilm.primary, [0, 1, 5])
+        self.assertEqual(ilm.primary, [0, 2])
         ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                           ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
-        self.assertEqual(ilm.primary, [0, 1, 3])
+        self.assertEqual(ilm.primary, [0, 2])
 
     def test_to_obj(self):
         ilm = Ilist.ext([[0,     0,   2,   3,   4,   4,   6,   7,   8,   9,   9,  11,  12],
@@ -600,7 +593,7 @@ class Test_Ilist(unittest.TestCase):
         ilm.nindex('product').coupling(ilm.nindex('plants'))
         ilx = ilm.to_xarray()
         self.assertEqual(float(ilx.sel(quantity='10 kg', product='apple').values),
-                         float(ilm.loc(['fruit', '10 kg', 'apple'])[0]))
+                         float(ilm.loc(['10 kg', 'apple'])[0]))
         self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])[0]) in
                         str(ilx.sel(quantity='10 kg', product='banana').values))
         fruit = Ilist.obj([['product', ['apple', 'apple', 'orange', 'orange', 'banana', 'banana']],
