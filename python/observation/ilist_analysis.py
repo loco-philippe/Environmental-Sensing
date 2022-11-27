@@ -279,9 +279,12 @@ class Analysis:
         Infos is an array with infos of each index :
             - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
         lenindex = self.iobj.lenindex
+        leniobj = len(self.iobj)
         self.infos2 = [{} for i in range(lenindex)]
         for i in range(lenindex):
             self.infos2[i]['parent'] = -1
+            self.infos2[i]['diffparent'] = -1
+            self.infos2[i]['mindiff'] = leniobj
             self.infos2[i]['child'] = []
             self.infos2[i]['crossed'] = []
             self.infos2[i]['num'] = i
@@ -333,11 +336,15 @@ class Analysis:
     def _setparent2(self):
         '''set parent (Iindex with minimal diff) for each Iindex'''
         lenindex = self.iobj.lenindex
-        lenself = len(self.iobj)
+        leniobj = len(self.iobj)
         for i in range(lenindex):
-            mindiff = lenself
+            mindiff = leniobj
+            mindiffall = leniobj - len(self.iobj.lindex[i].codec) # root diff
+            diffparent =  None
+            diffrate = None
             parent = None
             infoi = self.infos2[i]
+            infoi['mindiff'] = mindiffall
             if not infoi['cat'] in ['unique', 'coupled']:
                 for j in range(lenindex):
                     matij = self.matrix2[i][j]
@@ -349,10 +356,18 @@ class Analysis:
                     elif i != j and matij['typecoupl'] == 'crossed' and \
                       self.infos2[j]['cat'] != 'coupled':
                         infoi['crossed'].append(j)
+                    if i != j and self.infos2[j]['diffparent'] != i and \
+                      matij['typecoupl'] in ('coupled', 'derived', 'linked', 'crossed') and \
+                      matij['diff'] < mindiffall:
+                        mindiffall = matij['diff']
+                        diffparent = j
                 if not parent is None:
                     infoi['parent'] = parent
                     #infoi['pname2'] = self.iobj.lname[parent]
                     self.infos2[parent]['child'].append(i)      
+                if not diffparent is None:
+                    infoi['diffparent'] = diffparent
+                    infoi['mindiff'] = mindiffall
         return    
 
     def _setparent(self):
@@ -405,7 +420,7 @@ class Analysis:
             self._addchemin(chemin, cros, 1, brother)
         childroot = [idx['num'] for idx in self.infos2 
                      if idx['parent'] == -1 and idx['typecodec'] == 'complete']
-        self.partition.append(childroot)
+        if childroot: self.partition.append(childroot)
         return None
     
     def _addchemin(self, chemin, node, lchemin, brother):

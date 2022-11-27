@@ -462,7 +462,7 @@ class IlistInterface:
                     lis.append(idx.to_obj(parent=inf['parent'],
                                           name=iname, **option2))
                 else:
-                    keys = idx.derkeys(inf['parent'])
+                    keys = idx.derkeys(self.lindex[inf['parent']])
                     lis.append(idx.to_obj(keys=keys, parent=inf['parent'],
                                           name=iname, **option2))
         return lis

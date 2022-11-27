@@ -124,7 +124,7 @@ class Test_Ilist(unittest.TestCase):
         except: res3 = False
         self.assertTrue(not res1 and res2 and not res3 and len(il2) == 6)
 
-    def test_var(self):
+    """def test_var(self):
         il2 = Ilist.obj([['namvalue', ["a", "b", "c", "d", "e", "f"], -1],
                     ['datationvalue', [10, 10, 20, 20, 30, 30]],
                     ['locationvalue', [100, 100, 200, 200, 300, 300]],
@@ -134,7 +134,7 @@ class Test_Ilist(unittest.TestCase):
         il2.setvar()
         self.assertEqual(il2.lvarname, [])
         il2.setvar('namvalue')
-        self.assertEqual(il2.lvarname, ['namvalue'])
+        self.assertEqual(il2.lvarname, ['namvalue'])"""
 
     def test_creation_dic_ext_variable(self):
         iidx = Ilist.dic({'varvalue': ['a', 'b', 'c', 'd', 'e', 'f'],
@@ -266,18 +266,17 @@ class Test_Ilist(unittest.TestCase):
         il2 = Ilist.obj([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 12, 10, 12, 10],
                      [110, 10, 120, 120, 115]])
         il3 = il1 | il2
-        self.assertEqual(il3.lenidx, il2.lenidx)
+        self.assertEqual(il3, il1)
         il = Ilist.ext([['er', 'rt', 'er', 'ry', 'ab', 'ert']], var=0)
         ilx = Ilist.ext([[0, 0, 0, 1, 1, 1], [0, 1, 2, 3, 4, 1]])
         il2 = il | ilx
-        self.assertEqual(il2.lidx[0], ilx.lidx[1])
-        self.assertEqual(il2.lvar, il .lvar)
+        self.assertEqual(il2.lindex[0], il.lindex[0])
         il2 = Ilist.obj([[['_er', '_rt', '_er', '_ry', '_ab'], -1], [10, 2, 10, 12, 10],
                      [110, 0, 120, 120, 115]])
         il2.addindex(['truc', ['un', 'deux'], [0, 0, 1, 1, 0]])
         il2.addindex(['truc2', ['un', 'de', 'un', 'de', 'un']])
         il2.reindex()
-        self.assertEqual(il2.loc([12, 120, "deux", "de"]), ['_ry'])
+        self.assertEqual(il2.loc(['_ry', 12, 120, "deux", "de"], row=True), [3])
 
     def test_append(self):
         il = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 15]])
@@ -296,11 +295,11 @@ class Test_Ilist(unittest.TestCase):
         il = Ilist.obj([[['er', 'rt', 'er', 'ry'], -1],
                    [0, 2, 0, 2], [30, 12, 20, 15]])
         il.append(['truc', 0, 20], unique=True)
-        self.assertEqual(len(il), 4)
-        il.append(['truc', 0, 40])
+        self.assertEqual(len(il), 5)
+        il.append(['truc', 0, 20], unique=True)
         self.assertEqual(len(il), 5)
         self.assertEqual(il, Ilist.ext([['er', 'rt', 'er', 'ry', 'truc'],
-                                    [0, 2, 0, 2, 0], [30, 12, 20, 15, 40]], var=0))
+                                    [0, 2, 0, 2, 0], [30, 12, 20, 15, 20]], var=0))
 
     def test_magic(self):
         iidx5 = Ilist.obj([['datationvalue', [10, 10, 20, 20, 30, 30]],
@@ -394,24 +393,22 @@ class Test_Ilist(unittest.TestCase):
         ilx = Ilist.ext([['a', 'b', 'b', 'c', 'c', 'a'],
                           [20,  10,  10,  10,  10,  20], [200, 200, 300, 200, 300, 300]])
         self.assertTrue(ilx.complete)
-        ilx.coupling(derived=False)
-        self.assertTrue(ilx.indexinfos()[1]['typecoupl'] == 'coupled')
+        ilx.lindex[1].coupling(ilx.lindex[0], derived=False)
+        self.assertTrue(ilx.indexinfos()[1]['cat'] == 'coupled')
         ilx.reindex()
-        ilx.coupling()
-        self.assertTrue(ilx.indexinfos()[1]['typecoupl'] == 'derived')
+        self.assertTrue(ilx.indexinfos()[1]['cat'] == 'secondary')
         il = Ilist.obj([[[1, 2, 3, 4, 5, 6], -1], ['a', 'b', 'b', 'c', 'c', 'a'],
                     [20,  10,  10,  10,  10,  20], [200, 200, 300, 200, 300, 300]])
         self.assertTrue(il.complete)
-        il.coupling(derived=False)
-        self.assertTrue(il.indexinfos()[1]['typecoupl'] == 'coupled')
+        il.lindex[2].coupling(il.lindex[1], derived=False)
+        self.assertTrue(il.indexinfos()[2]['cat'] == 'coupled')
         il.reindex()
-        il.coupling()
-        self.assertTrue(il.indexinfos()[1]['typecoupl'] == 'derived')
+        self.assertTrue(il.indexinfos()[2]['cat'] == 'secondary')
 
     def test_duplicates(self):
         ilx = Ilist.ext([['a', 'b', 'b', 'c', 'c', 'a'],
-                          [20,  10,  10,  10,  10,  20], [
-                              200, 200, 400, 200, 300, 300],
+                          [20,  10,  10,  10,  10,  20], 
+                          [200, 200, 400, 200, 300, 300],
                           [1, 1, 2, 2, 3, 3]])
         ilx.coupling(derived=False, rate=0.6)
         ilx.getduplicates(['i2'], 'test')
@@ -435,7 +432,7 @@ class Test_Ilist(unittest.TestCase):
     def test_full(self):
         ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                           ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
-        self.assertFalse(ilm.complete)
+        self.assertTrue(ilm.complete)
         ilm.full()
         self.assertTrue(ilm.lidx[0].iscrossed(ilm.lidx[1]) == ilm.lidx[0].iscrossed(ilm.lidx[2])
                         == ilm.lidx[1].iscrossed(ilm.lidx[2]) == True)
@@ -591,7 +588,7 @@ class Test_Ilist(unittest.TestCase):
                                        'peppers', 'peppers', 'banana', 'banana']],
                           ['price', [1, 10, 2, 20, 1.5, 15, 0.5, 5], -1]])
         ilm.nindex('product').coupling(ilm.nindex('plants'))
-        ilx = ilm.to_xarray()
+        ilx = ilm.to_xarray(varname='price')
         self.assertEqual(float(ilx.sel(quantity='10 kg', product='apple').values),
                          float(ilm.loc(['10 kg', 'apple'])[0]))
         self.assertTrue(str(ilm.loc(['fruit', '10 kg', 'banana'])[0]) in

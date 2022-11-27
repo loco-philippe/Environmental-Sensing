@@ -246,15 +246,29 @@ class Ilist(IlistStructure, IlistInterface):
             return cls(lindex, lvarname=lvarname, reindex=reindex)
 
         crossed = []
-        if not fullmode: #au moins un fullkeys ou une longueur différente
-            if max(leng) == min(leng): 
-                length = len(keys[isfullkeys.index(True)])
-            else:
-                length = max(leng)
-            crossed = [i for i, (isfullk, ispar, lengt) in 
-                       enumerate(zip(isfullkeys, isparent, leng))
-                       if not ispar and not isfullk and 1 < lengt < length]
         #crossed : pas d'index (isfullindex false), pas de parent(isparent false)
+        if not fullmode: #au moins un fullkeys ou une longueur différente
+            if max(isfullkeys): 
+                length = len(keys[isfullkeys.index(True)])
+                crossed = [i for i, (isfullk, ispar, lengt) in 
+                           enumerate(zip(isfullkeys, isparent, leng))
+                           if not ispar and not isfullk and 1 < lengt < length]
+            else: # max(leng) != min(leng)
+                #sinon pas de fullindex => matrice et dérivés
+                crossed = [i for i,(isfullk, ispar, lengt) in 
+                           enumerate(zip(isfullkeys, isparent, leng))
+                           if not ispar and not isfullk and 1 < lengt]
+                lencrossed = [leng[ind] for ind in crossed]
+                if max(lencrossed) == min(lencrossed):
+                    length = lencrossed[0]
+                    crossed = []
+                else:
+                    length = math.prod([leng[i] for i in crossed])
+                    if length / max(lencrossed) == max(lencrossed):
+                        length = max(lencrossed)
+                        crossed = [i for i, (isfullk, ispar, lengt) in 
+                                   enumerate(zip(isfullkeys, isparent, leng))
+                                   if not ispar and not isfullk and 1 < lengt < length]                        
         '''if not fullmode or max(isvar): #au moins un fullkeys ou un var
             if not fullmode: 
                 length = len(keys[isfullkeys.index(True)])
@@ -624,6 +638,11 @@ class Ilist(IlistStructure, IlistInterface):
         return [idx.keys for idx in self.lidx]
 
     @property
+    def iindex(self):
+        ''' list of keys for each index'''
+        return [idx.keys for idx in self.lindex]
+
+    @property
     def keys(self):
         ''' list of keys for each index'''
         return [idx.keys for idx in self.lindex]
@@ -707,6 +726,11 @@ class Ilist(IlistStructure, IlistInterface):
     def tiidx(self):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iidx)))
+
+    @property
+    def tiindex(self):
+        ''' list of keys for each record'''
+        return util.list(list(zip(*self.iindex)))
 
     @property
     def textidx(self):

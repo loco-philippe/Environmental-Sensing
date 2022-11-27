@@ -82,14 +82,14 @@ class IlistStructure:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif idx.name in idxname and not merge:
+        elif idx.name in idxname and not merge: # !!! not merge suffit
             while idx.name in idxname:
                 idx.name += '(2)'
             if first:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif update:
+        elif update: # si merge
             self.lindex[idxname.index(idx.name)].setlistvalue(idx.values)
 
     def append(self, record, unique=False, typevalue=ES.def_clsName):
@@ -200,7 +200,7 @@ class IlistStructure:
         reckeys = self.valtokey(record, extern=extern)
         if None in reckeys:
             return None
-        row = self.tiidx.index(reckeys)
+        row = self.tiindex.index(reckeys)
         for idx in self:
             del idx[row]
         return row
@@ -371,17 +371,17 @@ class IlistStructure:
 
     def keytoval(self, listkey, extern=True):
         '''
-        convert a keys list (key for each idx) to a values list (value for each idx).
+        convert a keys list (key for each index) to a values list (value for each index).
 
         *Parameters*
 
-        - **listkey** : key for each idx
+        - **listkey** : key for each index
         - **extern** : boolean (default True) - if True, compare rec to val else to values
 
         *Returns*
 
         - **list** : value for each index'''
-        return [idx.keytoval(key, extern=extern) for idx, key in zip(self.lidx, listkey)]
+        return [idx.keytoval(key, extern=extern) for idx, key in zip(self.lindex, listkey)]
 
     def loc(self, rec, extern=True, row=False):
         '''
@@ -490,8 +490,8 @@ class IlistStructure:
         otherc = copy(other)
         for idx in otherc.lindex:
             self.addindex(idx, first=first, merge=merge, update=update)
-        if not self.lvarname:
-            self.lvarname = other.lvarname
+        #if not self.lvarname:
+        #    self.lvarname = other.lvarname
         return self
 
 
@@ -608,7 +608,7 @@ class IlistStructure:
         for i in range(min(self.lenindex, len(listname))):
             self.lindex[i].name = listname[i]
 
-    def setvar(self, var=None):
+    """def setvar(self, var=None):
         '''Define a var index by the name or the index row'''
         if var is None:
             self.lvarname = []
@@ -617,7 +617,7 @@ class IlistStructure:
         elif isinstance(var, str) and var in self.lname:
             self.lvarname = [var]
         else:
-            raise IlistError('var is not consistent with Ilist')
+            raise IlistError('var is not consistent with Ilist')"""
 
     def sort(self, order=None, reverse=False, func=str):
         '''Sort data following the index order and apply the ascending or descending
@@ -690,15 +690,16 @@ class IlistStructure:
             listvalue, extern=extern, typevalue=typevalue)
 
     def valtokey(self, rec, extern=True):
-        '''convert a rec list (value or val for each idx) to a key list (key for each idx).
+        '''convert a record list (value or val for each idx) to a key list 
+        (key for each index).
 
         *Parameters*
 
-        - **rec** : list of value or val for each idx
+        - **rec** : list of value or val for each index
         - **extern** : if True, the rec value has external representation, else internal
 
         *Returns*
 
-        - **list of int** : rec key for each idx'''
-        return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lidx, rec)]
+        - **list of int** : record key for each index'''
+        return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lindex, rec)]
 

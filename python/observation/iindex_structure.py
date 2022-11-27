@@ -85,7 +85,8 @@ class IindexStructure:
         *Parameters*
 
         - **idx** : single Iindex or list of Iindex to be coupled or derived.
-        - **derived** : boolean (default : True)
+        - **derived** : boolean (default : True) - if True result is derived,
+        if False coupled
 
         *Returns* : tuple with duplicate records (errors)'''
         if not isinstance(idx, list):
