@@ -14,7 +14,7 @@ An `ESSearch` instance must be created with either a MongoDB Collection (passed 
 Criteria for the query are then added one by one using `ESSearch.addCondition` or `ESSearch.orCondition`, or all together with `ESSearch.addConditions` or passed as argument **parameters** of ESSearch.
 
 A condition is composed of:
-- a **name** or a **path** indicating the name of a column or an exact path giving which element is concerned by the condition;
+- a **name** of a column or an exact **path** giving which element is concerned by the condition (name is a shortcut allowing not to enter a full path);
 - an **operand** which is the item of the comparison (if omitted, the existence of the path is tested);
 - a **comparator** which can be applied on the operand, for example '>=' or 'within' (defaults to equality in most cases);
 - optional parameters detailed in `ESSearch.addCondition` documentation, like **inverted** to add a *not*.
@@ -40,15 +40,14 @@ srch.addCondition('datation', datetime.datetime(2022, 1, 1), '>=')
 srch.addCondition('datation', datetime.datetime(2022, 12, 31), '<=')
 srch.addCondition('property', 'PM25')
 srch.addCondition(path = 'type', comparator = '==', operand = 'observation')
+result = srch.execute(single = True)
 
 # Option 2 (equivalent to option 1 but on one line)
-srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
+result = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
                  ['datation', datetime.datetime(2022, 12, 31), '<='], 
                  ['property', 'PM25'], 
                  {'path': 'type', 'comparator': '==', 'operand': 'observation'}], 
-                collec)
-
-result = srch.execute(single = True)
+                collec).execute(single = True)
 ```
 '''
 import datetime
@@ -64,7 +63,8 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
     str : {
         None:"$eq",
         "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
-        "in":"$in", "$in":"$in"
+        "in":"$in", "$in":"$in",
+        "regex":"$regex", "$regex":"$regex"
     },
     int : {
         None:"$eq",
@@ -202,6 +202,7 @@ def empty_request(collection, limit = 5): # actuellement, n'utilise pas les info
     Empty request to get an idea of what the database contains. Excessively long if *limit* parameter is too high.
     max : 100 MB
     """
+    # A RÉÉCRIRE AVEC UN SIMPLE coll.find(), LE TRAITEMENT EN PYTHON SERA PLUS RAPIDE QUE CETTE REQUÊTE ABSURDE
     count = collection.count_documents({})
     keys = collection.aggregate([{"$limit":limit},{"$project":{"_id":0}},{"$project":{"a":{"$objectToArray":"$$ROOT"}}},{"$unwind":"$a"},{"$group":{"_id":"null","keys":{"$addToSet":"$a.k"}}}])
     distinct_names = keys.next()['keys']
@@ -321,7 +322,7 @@ class ESSearch:
 
         - **comparator**:  str (default None) - str giving the comparator to use. (ex: '>=', 'in')
 
-        - **path** :  str (default None) - to use to define a precise MongoDB path. When name is given, default path is data.<name>.value.cod
+        - **path** :  str (default None) - to use to define a precise MongoDB path. When name is given, default path is data.*name*.value.codec
         
         - **or_position** :  int (default -1) - position in self.parameters in which the condition is to be inserted.
 
@@ -332,7 +333,8 @@ class ESSearch:
                     To use in case where every element of a MongoDB array (equivalent to python list) must verify the condition (by default, condition is verified when at least one element of the array verifies it).
         
         - **unwind** :  int (default None) - int corresponding to the number of additional {"$unwind" : "$" + path} to be added in the beginning of the query.
-
+        
+        - **regex_options** :  str (default None) - str associated to regex options (i, m, x and s). See [this link](https://www.mongodb.com/docs/manual/reference/operator/query/regex/) for more details.
 
         no comparator => default comparator associated with operand type in dico_alias_mongo is used (mainly equality)
         no operand => only the existence of something located at path is tested
@@ -357,8 +359,7 @@ class ESSearch:
                 if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
                     path = "data.datation.value.codec"
                 else:
-                    path = "data." + name + ".value.codec" # there is no default case when name == "name", path is set to "data.name.value.cod" and not to "name"
-                    #if name == 'property': path = path + ".prp" # à voir si format réellement utilisé à chaque fois
+                    path = "data." + name + ".value.codec" # there is no default case when name == "name": path is set to "data.name.value.cod" and not to "name"
             else: path = "data"
 
         if operand:
@@ -383,7 +384,7 @@ class ESSearch:
     def removeCondition(self, or_position = None, condnum = None):
         '''
         Removes a condition from self.parameters. By default, last element added is removed.
-        Otherwise, condition removed is self.parameters[or_position][condnum]
+        Otherwise, the removed condition is the one at self.parameters[or_position][condnum].
 
         To remove all conditions, use ESSearch.clearConditions() method.
         '''
@@ -403,7 +404,7 @@ class ESSearch:
 
     def clearConditions(self):
         '''
-        Removes all conditions from self.parameters
+        Removes all conditions from self.parameters.
         To remove all attributes, use ESSearch.clear() method.
         '''
         self.parameters = [[]]
@@ -414,7 +415,7 @@ class ESSearch:
         '''
         self = ESSearch()
 
-    def _cond(self, or_pos, operand, comparator, path, inverted = False, name = None, formatstring = None, unwind = None, **kwargs):
+    def _cond(self, or_pos, operand, comparator, path, inverted = False, name = None, formatstring = None, unwind = None, regex_options = None, **kwargs):
         '''
         Takes parameters and adds corresponding MongoDB expression to self._match.
         self._unwind and self._set are updated when necessary.
@@ -504,8 +505,11 @@ class ESSearch:
             self._geonear = self._geonear | kwargs
             if 'distanceField' not in self._geonear: raise ValueError("distanceField missing in MongoDB stage $geoNear.")
             return
-
-        cond_0 = {comparator : operand}
+        
+        if comparator == "$regex" and regex_options:
+            cond_0 = {"$regex" : operand, "$options" : regex_options}
+        else:
+            cond_0 = {comparator : operand}
         
         if inverted:
             if path in self._match[match][or_pos]:
@@ -585,7 +589,7 @@ class ESSearch:
     @property
     def request(self):
         '''
-        content of the aggregation query to be executed with ESSearch.execute()
+        Getter returning the content of the aggregation query to be executed with ESSearch.execute().
         '''
         return self._fullSearchMongo()
 
@@ -596,7 +600,7 @@ class ESSearch:
         *Parameter*
 
         - **fitered** :  bool (default False) - parameter to force filtering on Mongo out.
-        - **namefused** :  bool (default False) - Put to True to fuse observations whose names are the same together.
+        - **namefused** :  bool (default False) - Put to True to merge observations whose names are the same together.
         - **single** :  bool (default True) - Must be put to False in order to return a list of Observation instead of a single Observation.
         - **fillvalue** :  (default None) - Value to use to fill gaps when observations are fused together.
         '''
@@ -766,14 +770,13 @@ class ESSearch:
 
     def _fusion(self, obsList, namefused = False, fillvalue = None, name = None):
         '''
-        Takes a list of observations and returns one observation mixing them together in one single observation
+        Takes a list of observations and returns one observation merging them together in one single observation
         or a list of observations where all observations sharing the same name are fused together.
         '''
 # NE FONCTIONNE PAS S'IL NE S'AGIT PAS D'UNE LISTE D'OBSERVATIONS
 # parce que la conversion en observation est faite au sein d'execute et donc que les données entrées par le champ data ne sont pas converties
 # à voir pour modifier fusion / l'intégrer comme méthode de Ilist/Observation / modifier execute.
 # -> dans tous les cas, fait sens d'insérer fusion comme méthode d'Observation.
-#
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:
