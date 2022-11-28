@@ -11,13 +11,13 @@ You can then use either `insert_one_to_mongo(collection, observation)` or `inser
 
 3. **Write a request using observation.ESSearch:**
 An `ESSearch` instance must be created with either a MongoDB Collection (passed as argument **collection**) or a list of observations (passed as argument **data**).
-Criteria for the query are then added one by one using `ESSearch.addcondition` or `ESSearch.orcondition`, or all together with `ESSearch.addconditions` or passed as argument **parameters** of ESSearch.
+Criteria for the query are then added one by one using `ESSearch.addCondition` or `ESSearch.orCondition`, or all together with `ESSearch.addConditions` or passed as argument **parameters** of ESSearch.
 
 A condition is composed of:
-- a **name** or a **path** indicating the name of a column or an exact path giving which element is concerned by the condition;
+- a **name** of a column or an exact **path** giving which element is concerned by the condition (name is a shortcut allowing not to enter a full path);
 - an **operand** which is the item of the comparison (if omitted, the existence of the path is tested);
 - a **comparator** which can be applied on the operand, for example '>=' or 'within' (defaults to equality in most cases);
-- optional parameters detailed in `ESSearch.addcondition` documentation, like **inverted** to add a *not*.
+- optional parameters detailed in `ESSearch.addCondition` documentation, like **inverted** to add a *not*.
 
 Execute the research with `ESSearch.execute()`. Put the parameter **single** to True if you want the return to be a single observation
 instead of a list of observations.
@@ -36,19 +36,18 @@ collec = client[<base>][<collection>]
 
 # Option 1
 srch = ESSearch(collection = collec)
-srch.addcondition('datation', datetime.datetime(2022, 1, 1), '>=')
-srch.addcondition('datation', datetime.datetime(2022, 12, 31), '<=')
-srch.addcondition('property', 'PM25')
-srch.addcondition(path = 'type', comparator = '==', operand = 'observation')
+srch.addCondition('datation', datetime.datetime(2022, 1, 1), '>=')
+srch.addCondition('datation', datetime.datetime(2022, 12, 31), '<=')
+srch.addCondition('property', 'PM25')
+srch.addCondition(path = 'type', comparator = '==', operand = 'observation')
+result = srch.execute(single = True)
 
 # Option 2 (equivalent to option 1 but on one line)
-srch = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
+result = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
                  ['datation', datetime.datetime(2022, 12, 31), '<='], 
                  ['property', 'PM25'], 
                  {'path': 'type', 'comparator': '==', 'operand': 'observation'}], 
-                collec)
-
-result = srch.execute(single = True)
+                collec).execute(single = True)
 ```
 '''
 import datetime
@@ -64,7 +63,8 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
     str : {
         None:"$eq",
         "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
-        "in":"$in", "$in":"$in"
+        "in":"$in", "$in":"$in",
+        "regex":"$regex", "$regex":"$regex"
     },
     int : {
         None:"$eq",
@@ -202,6 +202,7 @@ def empty_request(collection, limit = 5): # actuellement, n'utilise pas les info
     Empty request to get an idea of what the database contains. Excessively long if *limit* parameter is too high.
     max : 100 MB
     """
+    # A RÉÉCRIRE AVEC UN SIMPLE coll.find(), LE TRAITEMENT EN PYTHON SERA PLUS RAPIDE QUE CETTE REQUÊTE ABSURDE
     count = collection.count_documents({})
     keys = collection.aggregate([{"$limit":limit},{"$project":{"_id":0}},{"$project":{"a":{"$objectToArray":"$$ROOT"}}},{"$unwind":"$a"},{"$group":{"_id":"null","keys":{"$addToSet":"$a.k"}}}])
     distinct_names = keys.next()['keys']
@@ -225,11 +226,11 @@ class ESSearch:
     
     *parameters for query - update methods*
 
-    - `ESSearch.addconditions`
-    - `ESSearch.addcondition`
-    - `ESSearch.orcondition`
-    - `ESSearch.removecondition`
-    - `ESSearch.clearconditions`
+    - `ESSearch.addConditions`
+    - `ESSearch.addCondition`
+    - `ESSearch.orCondition`
+    - `ESSearch.removeCondition`
+    - `ESSearch.clearConditions`
     - `ESSearch.clear`
 
     *query method*
@@ -248,7 +249,7 @@ class ESSearch:
 
         *Arguments*
 
-        - **parameters** :  dict, list (default None) - list of list or list of dictionnaries whose keys are arguments of ESSearch.addcondition method
+        - **parameters** :  dict, list (default None) - list of list or list of dictionnaries whose keys are arguments of ESSearch.addCondition method
         ex: parameters = [
             {'name' : 'datation', 'operand' : datetime.datetime(2022, 9, 19, 1), 'comparator' : '>='},
             {'name' : 'property', 'operand' : 'PM2'}
@@ -256,7 +257,7 @@ class ESSearch:
         - **data** :  list (default None) - list of Observation
         - **collection** :  pymongo.collection.Collection (default None) - MongoDB collection of Observation. Documents must have been inserted in an appropriate format
         - **heavy** :  bool (default False) - Must be True when values are defined directly and inside dictionnaries simultaneously.
-        - **kwargs** :  other parameters are used as arguments for ESSearch.addcondition method
+        - **kwargs** :  other parameters are used as arguments for ESSearch.addCondition method
         '''
         self.parameters = [[]]                                          # self.parameters
         if isinstance(data, list) or data is None:                      # self.data
@@ -270,8 +271,8 @@ class ESSearch:
             self.collection = collection
         else: raise TypeError("collection must be a pymongo.collection.Collection.")
 
-        if parameters: self.addconditions(parameters)
-        if kwargs: self.addcondition(**kwargs)
+        if parameters: self.addConditions(parameters)
+        if kwargs: self.addCondition(**kwargs)
 
     def __repr__(self):
         return "ESSearch(collection = " + str(self.collection) + ", data = " + str(self.data) + ", parameters = " + str(self.parameters) + ")"
@@ -293,20 +294,20 @@ class ESSearch:
     def __getitem__(self, key):
         return self.parameters[key]
 
-    def addconditions(self, parameters):
+    def addConditions(self, parameters):
         '''
-        Takes multiple parameters and applyes self.addcondition() on each of them.
+        Takes multiple parameters and applyes self.addCondition() on each of them.
         '''
         if isinstance(parameters, dict):
-            self.addcondition(**parameters)
+            self.addCondition(**parameters)
         elif isinstance(parameters, (list, tuple)):
             for parameter in parameters:
-                if isinstance(parameter, dict): self.addcondition(**parameter)
-                elif isinstance(parameters, (list, tuple)): self.addcondition(*parameter)
-                else: self.addcondition(parameter)
+                if isinstance(parameter, dict): self.addCondition(**parameter)
+                elif isinstance(parameters, (list, tuple)): self.addCondition(*parameter)
+                else: self.addCondition(parameter)
         else: raise TypeError("parameters must be either a dict or a list of dict.")
             
-    def addcondition(self, name = None, operand = None, comparator = None, path = None, or_position = -1, **kwargs):
+    def addCondition(self, name = None, operand = None, comparator = None, path = None, or_position = -1, **kwargs):
         '''
         Takes parameters and inserts corresponding query condition in self.parameters.
 
@@ -321,7 +322,7 @@ class ESSearch:
 
         - **comparator**:  str (default None) - str giving the comparator to use. (ex: '>=', 'in')
 
-        - **path** :  str (default None) - to use to define a precise MongoDB path. When name is given, default path is data.<name>.value.cod
+        - **path** :  str (default None) - to use to define a precise MongoDB path. When name is given, default path is data.*name*.value.codec
         
         - **or_position** :  int (default -1) - position in self.parameters in which the condition is to be inserted.
 
@@ -332,7 +333,8 @@ class ESSearch:
                     To use in case where every element of a MongoDB array (equivalent to python list) must verify the condition (by default, condition is verified when at least one element of the array verifies it).
         
         - **unwind** :  int (default None) - int corresponding to the number of additional {"$unwind" : "$" + path} to be added in the beginning of the query.
-
+        
+        - **regex_options** :  str (default None) - str associated to regex options (i, m, x and s). See [this link](https://www.mongodb.com/docs/manual/reference/operator/query/regex/) for more details.
 
         no comparator => default comparator associated with operand type in dico_alias_mongo is used (mainly equality)
         no operand => only the existence of something located at path is tested
@@ -343,10 +345,10 @@ class ESSearch:
         if or_position is not None and not isinstance(or_position, int): raise TypeError("or_position must be an int.")
 
         if name is None and operand is None and comparator is None and path is None:
-            raise ValueError("ESSearch.addcondition() requires at least one of these parameters : name, operand or path.")
+            raise ValueError("ESSearch.addCondition() requires at least one of these parameters : name, operand or path.")
 
         for item in kwargs:
-            if item not in {'formatstring', 'inverted', 'unwind', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
+            if item not in {'formatstring', 'inverted', 'unwind', 'regex_options', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
                 raise ValueError("Unknown parameter : ", item)
 
         if isinstance(operand, datetime.datetime) and (operand.tzinfo is None or operand.tzinfo.utcoffset(operand) is None):
@@ -357,8 +359,7 @@ class ESSearch:
                 if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
                     path = "data.datation.value.codec"
                 else:
-                    path = "data." + name + ".value.codec" # there is no default case when name == "name", path is set to "data.name.value.cod" and not to "name"
-                    #if name == 'property': path = path + ".prp" # à voir si format réellement utilisé à chaque fois
+                    path = "data." + name + ".value.codec" # there is no default case when name == "name": path is set to "data.name.value.cod" and not to "name"
             else: path = "data"
 
         if operand:
@@ -374,18 +375,18 @@ class ESSearch:
         else:
             self.parameters[or_position].append(condition)
 
-    def orcondition(self, *args, **kwargs):
+    def orCondition(self, *args, **kwargs):
         '''
         Adds a condition in a new sublist in self.parameters. Separations in sublists correspond to "or" in the query.
         '''
-        self.addcondition(or_position = len(self.parameters), *args, **kwargs)
+        self.addCondition(or_position = len(self.parameters), *args, **kwargs)
 
-    def removecondition(self, or_position = None, condnum = None):
+    def removeCondition(self, or_position = None, condnum = None):
         '''
         Removes a condition from self.parameters. By default, last element added is removed.
-        Otherwise, condition removed is self.parameters[or_position][condnum]
+        Otherwise, the removed condition is the one at self.parameters[or_position][condnum].
 
-        To remove all conditions, use ESSearch.clearconditions() method.
+        To remove all conditions, use ESSearch.clearConditions() method.
         '''
         if self.parameters == [[]]: return
         if or_position is None:
@@ -401,9 +402,9 @@ class ESSearch:
         if self.parameters == []:
             self.parameters = [[]]
 
-    def clearconditions(self):
+    def clearConditions(self):
         '''
-        Removes all conditions from self.parameters
+        Removes all conditions from self.parameters.
         To remove all attributes, use ESSearch.clear() method.
         '''
         self.parameters = [[]]
@@ -414,7 +415,7 @@ class ESSearch:
         '''
         self = ESSearch()
 
-    def _cond(self, or_pos, operand, comparator, path, inverted = False, name = None, formatstring = None, unwind = None, **kwargs):
+    def _cond(self, or_pos, operand, comparator, path, inverted = False, name = None, formatstring = None, unwind = None, regex_options = None, **kwargs):
         '''
         Takes parameters and adds corresponding MongoDB expression to self._match.
         self._unwind and self._set are updated when necessary.
@@ -504,8 +505,11 @@ class ESSearch:
             self._geonear = self._geonear | kwargs
             if 'distanceField' not in self._geonear: raise ValueError("distanceField missing in MongoDB stage $geoNear.")
             return
-
-        cond_0 = {comparator : operand}
+        
+        if comparator == "$regex" and regex_options:
+            cond_0 = {"$regex" : operand, "$options" : regex_options}
+        else:
+            cond_0 = {comparator : operand}
         
         if inverted:
             if path in self._match[match][or_pos]:
@@ -577,7 +581,7 @@ class ESSearch:
         if self._unwind:
             dico = {}
             for unwind in self._unwind:
-                dico |= {unwind: ["$"+unwind]} # A FAIRE CORRECTEMENT ! (tel quel, ajoute un array contenant le path entre guillemets...)
+                dico |= {unwind: ["$" + unwind]} # A FAIRE CORRECTEMENT ! (tel quel, ajoute toujours un seul array de chaque type...)
             request.append({"$set" : dico})
         if self._project: request.append({"$project" : self._project})      # Mongo stage $project
         return request
@@ -585,7 +589,7 @@ class ESSearch:
     @property
     def request(self):
         '''
-        content of the aggregation query to be executed with ESSearch.execute()
+        Getter returning the content of the aggregation query to be executed with ESSearch.execute().
         '''
         return self._fullSearchMongo()
 
@@ -596,7 +600,7 @@ class ESSearch:
         *Parameter*
 
         - **fitered** :  bool (default False) - parameter to force filtering on Mongo out.
-        - **namefused** :  bool (default False) - Put to True to fuse observations whose names are the same together.
+        - **namefused** :  bool (default False) - Put to True to merge observations whose names are the same together.
         - **single** :  bool (default True) - Must be put to False in order to return a list of Observation instead of a single Observation.
         - **fillvalue** :  (default None) - Value to use to fill gaps when observations are fused together.
         '''
@@ -604,7 +608,7 @@ class ESSearch:
         else: cursor = self.collection.aggregate(self.request)
         if not self.data: self.data = []
         if self.parameters == [[]]:
-            result = self.data
+            result = self.data # part du principe que data est bien une liste d'observations et empêche donc l'entrée de données au format json
             for item in cursor: result.append(Observation.from_obj(item))
         else:
             result = [self._filtered_observation(item) for item in self.data]            
@@ -612,7 +616,8 @@ class ESSearch:
                 for item in cursor: result.append(self._filtered_observation(Observation.from_obj(item)))
             else: 
                 for item in cursor: result.append(Observation.from_obj(item))
-        if single: return self._fusion(result, fillvalue=fillvalue)
+        if single:
+            return self._fusion(result, fillvalue=fillvalue)
         elif namefused: return self._fusion(result, namefused, fillvalue)
         else: return result
 
@@ -765,19 +770,19 @@ class ESSearch:
 
     def _fusion(self, obsList, namefused = False, fillvalue = None, name = None):
         '''
-        Takes a list of observations and returns one observation mixing them together in one single observation
+        Takes a list of observations and returns one observation merging them together in one single observation
         or a list of observations where all observations sharing the same name are fused together.
         '''
+# NE FONCTIONNE PAS S'IL NE S'AGIT PAS D'UNE LISTE D'OBSERVATIONS
+# parce que la conversion en observation est faite au sein d'execute et donc que les données entrées par le champ data ne sont pas converties
+# à voir pour modifier fusion / l'intégrer comme méthode de Ilist/Observation / modifier execute.
+# -> dans tous les cas, fait sens d'insérer fusion comme méthode d'Observation.
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:
             if not namefused:
                 lidx = []
                 new_lname = set()
-                for obs in obsList:
-                    if obs.lvarname: # toujours lvarname du premier élément... inclusion dans la boucle vraiment utile ?
-                        lvarname = obs.lvarname
-                        break
                 for obs in obsList:
                     new_lname |= set(obs.lname)
                 new_lname = list(new_lname)
@@ -791,10 +796,14 @@ class ESSearch:
                     lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
 
                 if name is None: name = "ESSearch query result on " + str(datetime.datetime.now())
-                param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
-                        'context': {'origin': 'ESSearch query', 'source_collection ': self.collection.name, 'ESSearch_parameters': str(self.parameters)}}
+                if self.collection is not None:
+                    param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                            'context': {'origin': 'ESSearch query', 'source_collection ': self.collection.name, 
+                            'ESSearch_parameters': str(self.parameters)}}
+                else:
+                    param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                            'context': {'origin': 'ESSearch query', 'ESSearch_parameters': str(self.parameters)}}
                 new_obs = Observation(lidx, name, param=param)
-                new_obs.lvarname = lvarname
                 return new_obs
             else:                   # à tester
                 new_obsList = []
