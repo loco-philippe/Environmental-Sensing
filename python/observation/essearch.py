@@ -348,7 +348,7 @@ class ESSearch:
             raise ValueError("ESSearch.addCondition() requires at least one of these parameters : name, operand or path.")
 
         for item in kwargs:
-            if item not in {'formatstring', 'inverted', 'unwind', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
+            if item not in {'formatstring', 'inverted', 'unwind', 'regex_options', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
                 raise ValueError("Unknown parameter : ", item)
 
         if isinstance(operand, datetime.datetime) and (operand.tzinfo is None or operand.tzinfo.utcoffset(operand) is None):
