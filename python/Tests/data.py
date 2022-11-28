@@ -316,33 +316,49 @@ def exemples():
     pprint(ob_signal().json())
     print(ob_signal(2).view(lenres=30, width=20))
 
-# %% principal
-
 #exemples()
     
 # jeu de tests - diversité des données
-liste_obs_mixte = []
-for i in range(20):
-    liste_obs_mixte += [ob_mixte_2(i, i, project='mixte')]
+def obs_mixte():
+    liste_obs_mixte = []
+    for i in range(20):
+        liste_obs_mixte += [ob_mixte_2(i, i, project='mixte')]
+    return liste_obs_mixte
 
 # jeu de tests - données représentatives
-liste_obs_tests = []
-for i in range(10):
-    liste_obs_tests += [ob_mesure(res=i, jour=i, mois=1, lieu=0, prop=0)]
-    liste_obs_tests += [ob_mesure(res=10+i, jour=i, mois=1, lieu=i+1, prop=1)]
-    liste_obs_tests += [ob_mesure(res=100+i, jour=i, mois=1, lieu=i+1, prop=i)]
-for i in range(10):
-    liste_obs_tests += [ob_signal(jour=i, mois=1, lieu=i, nuis=i, intens=i)]
-liste_obs_tests += [ob_fixe(dj=2, nh=24), ob_fixe(dj=3, nh=24)]
-liste_obs_tests += [ob_mob_1(d=0, nval=10), ob_mob_1(d=1, nval=10)]
-liste_obs_tests += [ob_mobile(d=1, nval=10), ob_mob_1(d=2, nval=10)]
-liste_obs_tests += [ob_multi(dj=3, nh=24, nloc=10), ob_multi(dj=4, nh=24, nloc=10)]
-liste_obs_tests += [ob_dalle(dj=4, nbd=10, lg=0.3), ob_dalle(dj=4, nbd=10, lg=0.5)]
-liste_obs_tests += [ob_multi_dalle(dj=5, nh=5, nbd=10, lg=0.3), 
-                    ob_multi_dalle(dj=6, nh=5, nbd=10, lg=0.4)]
+def obs_tests():
+    liste_obs_tests = []
+    for i in range(10):
+        liste_obs_tests += [ob_mesure(res=i, jour=i, mois=1, lieu=0, prop=0)]
+        liste_obs_tests += [ob_mesure(res=10+i, jour=i, mois=1, lieu=i+1, prop=1)]
+        liste_obs_tests += [ob_mesure(res=100+i, jour=i, mois=1, lieu=i+1, prop=i)]
+    for i in range(10):
+        liste_obs_tests += [ob_signal(jour=i, mois=1, lieu=i, nuis=i, intens=i)]
+    liste_obs_tests += [ob_fixe(dj=2, nh=24), ob_fixe(dj=3, nh=24)]
+    liste_obs_tests += [ob_mob_1(d=0, nval=10), ob_mob_1(d=1, nval=10)]
+    liste_obs_tests += [ob_mobile(d=1, nval=10), ob_mob_1(d=2, nval=10)]
+    liste_obs_tests += [ob_multi(dj=3, nh=24, nloc=10), ob_multi(dj=4, nh=24, nloc=10)]
+    liste_obs_tests += [ob_dalle(dj=4, nbd=10, lg=0.3), ob_dalle(dj=4, nbd=10, lg=0.5)]
+    liste_obs_tests += [ob_multi_dalle(dj=5, nh=5, nbd=10, lg=0.3), 
+                        ob_multi_dalle(dj=6, nh=5, nbd=10, lg=0.4)]
+    return liste_obs_tests
 
 
-print('nb observations : ', len(liste_obs_mixte), len(liste_obs_tests))
+# %% principal
+if False:
+    mixte = obs_mixte()
+    tests = obs_tests()
+    print('nb observations : ', len(mixte), len(tests))
+    
+    print('nb records : ', sum([len(obs) for obs in mixte]), 
+          sum([len(obs) for obs in tests]))
 
-print('nb records : ', sum([len(obs) for obs in liste_obs_mixte]), 
-      sum([len(obs) for obs in liste_obs_tests]))
+if False:
+    from test_mongo import clientMongo
+    client = clientMongo()
+    collec = client['test_search']['essai1']
+    
+    for obs in mixte:
+        print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
+    for obs in tests:
+        print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
