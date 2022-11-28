@@ -34,16 +34,31 @@ def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.n
 client = clientMongo()
 ob_mixte = obs_mixte()
 ob_tests = obs_tests()
+ob_mesure = ob_tests[:30]
+ob_signal = ob_tests[30:40]
+ob_fixe = ob_tests[40:42]
+ob_mob_1 = ob_tests[42:44]
+ob_mobile = ob_tests[44:46]
+ob_multi = ob_tests[46:48]
+ob_dalle = ob_tests[48:50]
+ob_m_dal = ob_tests[50:52]
+ob_liste = [ob_mesure, ob_signal, ob_fixe, ob_mob_1, ob_mobile, ob_multi, ob_dalle, ob_m_dal]
+type0 = [ob[0].param['type'] for ob in ob_liste]
+name0 = [ob[0].name for ob in ob_liste]
+len_ob = [len(ob) for ob in ob_liste]
 
 class Test_essai1(unittest.TestCase):
-    collec = client['test_search']['essai1']
+    collec = client['test_search']['jeu_data_py']
 
     def test_name(self):
         srch = ESSearch(collection=Test_essai1.collec)
-        srch.addcondition(path='name', operand='mesure10', comparator='==')
-        result = srch.execute()        
-        self.assertTrue(len(result) == 3 and result == ob_tests[0:3])
-
+        for typ, nam, leno, lis in zip(type0, name0, len_ob, ob_liste): 
+            srch.addcondition(path='param.type', operand=typ, comparator='==')
+            result = srch.execute()        
+            self.assertTrue(len(result) == leno and result == lis)
+            #srch.addcondition(path='name', comparator='in', operand='mesures')
+            #srch.clearconditions()
+        
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)        

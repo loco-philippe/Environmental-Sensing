@@ -152,8 +152,8 @@ def ob_signal(jour=1, mois=1, lieu=0, nuis=0, intens=0, project='reference'):
                     ['jour', [jour % 28], 1],
                     ['mois', [mois % 12]],
                     ['structure', ['signal']]],
-                    'name': 'signalement' + str(jour+mois*10),
-                    'param': param_val('dim3', project=project)}
+                    'name': 'signalement - ' + str(jour+mois*10),
+                    'param': param_val('2-dim3', project=project)}
                    ).setcanonorder()
 
 def ob_mixte_2(dl=7, prop=4, project='mixte'):
@@ -181,8 +181,8 @@ def ob_mesure(res=None, jour=1, mois=1, lieu=0, prop=0, project='reference'):
                     ['jour', [1 + jour % 28]],
                     ['mois', [1 + mois % 12]],
                     ['structure', ['mesure']]],
-                   'name': 'mesure' + str(jour + mois * 10),
-                   'param': param_val('dim3', project=project)}
+                   'name': 'mesure - ' + str(jour + mois * 10),
+                   'param': param_val('1-dim3', project=project)}
                    ).setcanonorder()
 
 
@@ -197,8 +197,8 @@ def ob_fixe(dj=0, nh=24, project='reference'):
                     ['mois', [date_mois[0]]],
                     ['station', ['stat-' + ville_nom[1]], 2],
                     ['structure', ['fixe']]],
-                   'name': 'mesures horaires station fixe 3 polluants-' + str(dj),
-                   'param': param_val('dim2', project=project)}
+                   'name': 'mesures horaires station fixe 3 polluants - ' + str(dj),
+                   'param': param_val('3-dim2', project=project)}
                    ).setcanonorder().sort()
 
 
@@ -212,8 +212,8 @@ def ob_mob_1(d=0, nval=10, project='reference'):
                     ['jour', list(range(1, nval+1)), 1],
                     ['mois', [date_mois[0]]],
                     ['structure', ['mobile']]],
-                   'name': 'mesures mobiles, 1 polluant-' + str(d),
-                   'param': param_val('dim1', project=project)}
+                   'name': 'mesures mobiles, 1 polluant - ' + str(d),
+                   'param': param_val('4-dim1', project=project)}
                    ).setcanonorder().sort()
 
 
@@ -228,8 +228,8 @@ def ob_mobile(d=0, nval=10, project='reference'):
                     ['jour', list(range(1, nval+1)), 1],
                     ['mois', [date_mois[0]]],
                     ['structure', ['mobile']]],
-                   'name': 'mesures mobiles, 2 polluants-' + str(d),
-                   'param': param_val('dim2', project=project)}
+                   'name': 'mesures mobiles, 2 polluants - ' + str(d),
+                   'param': param_val('5-dim2', project=project)}
                    ).setcanonorder().sort()
 
 
@@ -245,8 +245,8 @@ def ob_multi(dj=0, nh=10, nloc=5, project='reference'):
                     ['heure', list(range(nh)), 1],
                     ['mois', [date_mois[0]]],
                     ['structure', ['multi']]],
-                   'name': 'mesures horaires multi-stations, 2 polluants' + str(dj),
-                   'param': param_val('dim3', project=project)}
+                   'name': 'mesures horaires multi-stations, 2 polluants - ' + str(dj),
+                   'param': param_val('6-dim3', project=project)}
                    ).setcanonorder().sort()
 
 def ob_dalle(dj=0, lg=1, nbd=3, project='reference'):  # lg * nbd < 10
@@ -256,8 +256,8 @@ def ob_dalle(dj=0, lg=1, nbd=3, project='reference'):  # lg * nbd < 10
                     [loc, dalle(l=lg, nb=nbd)],
                     [res, [10+.1*i for i in range(nbd * nbd)], -1],
                     ['structure', ['multi']]],
-                   'name': 'mesures sur dalle' + str(dj),
-                   'param': param_val('dim1', project=project)}
+                   'name': 'mesures sur dalle - ' + str(dj),
+                   'param': param_val('7-dim1', project=project)}
                    ).setcanonorder().sort()
 
 def ob_multi_dalle(dj=0, nh=10, lg=1, nbd=3, project='reference'):  # lg * nbd < 10
@@ -270,8 +270,8 @@ def ob_multi_dalle(dj=0, nh=10, lg=1, nbd=3, project='reference'):  # lg * nbd <
                     ['heure', list(range(nh)), 1],
                     ['mois', [date_mois[0]]],
                     ['structure', ['multidalle']]],
-                   'name': 'mesures horaires sur dalle, 2 polluants' + str(dj),
-                   'param': param_val('dim3', project=project)}
+                   'name': 'mesures horaires sur dalle, 2 polluants - ' + str(dj),
+                   'param': param_val('8-dim3', project=project)}
                    ).setcanonorder().sort()
 
 # %% Exemples :
@@ -336,7 +336,7 @@ def obs_tests():
         liste_obs_tests += [ob_signal(jour=i, mois=1, lieu=i, nuis=i, intens=i)]
     liste_obs_tests += [ob_fixe(dj=2, nh=24), ob_fixe(dj=3, nh=24)]
     liste_obs_tests += [ob_mob_1(d=0, nval=10), ob_mob_1(d=1, nval=10)]
-    liste_obs_tests += [ob_mobile(d=1, nval=10), ob_mob_1(d=2, nval=10)]
+    liste_obs_tests += [ob_mobile(d=1, nval=10), ob_mobile(d=2, nval=10)]
     liste_obs_tests += [ob_multi(dj=3, nh=24, nloc=10), ob_multi(dj=4, nh=24, nloc=10)]
     liste_obs_tests += [ob_dalle(dj=4, nbd=10, lg=0.3), ob_dalle(dj=4, nbd=10, lg=0.5)]
     liste_obs_tests += [ob_multi_dalle(dj=5, nh=5, nbd=10, lg=0.3), 
@@ -356,7 +356,7 @@ if False:
 if False:
     from test_mongo import clientMongo
     client = clientMongo()
-    collec = client['test_search']['essai1']
+    collec = client['test_search']['jeu_data_py']
     
     for obs in mixte:
         print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
