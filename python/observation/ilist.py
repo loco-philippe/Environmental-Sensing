@@ -224,7 +224,8 @@ class Ilist(IlistStructure, IlistInterface):
 
         if isinstance(listidx, list) and len(listidx) == 0:
             return cls()
-
+        
+        #decode: name, typevaluedec, codec, parent, keys, isfullindex, isparent, isvar
         lidx = [list(IindexInterface.decodeobj(idx, typevalue, context)) for idx in listidx]
         for ind in range(len(lidx)):
             if lidx[ind][0] is None or lidx[ind][0] == ES.defaultindex:

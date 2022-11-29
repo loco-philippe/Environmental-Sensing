@@ -114,7 +114,7 @@ class IindexStructure:
         if default:
             return util.couplinginfos(self.values, other.values)
         if min(len(self), len(other)) == 0:
-            return {'lencoupling': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null'}
         lens = len(self._codec)
         leno = len(other._codec)
@@ -126,11 +126,11 @@ class IindexStructure:
                 typec = 'derived'
             else:
                 typec = 'derive'
-            return {'lencoupling': xmin, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': xmin, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': xmin, 'distmax': xmax, 'diff': diff, 'typecoupl': typec}
         xso = len(util.tocodec([tuple((v1, v2))
                   for v1, v2 in zip(self._keys, other._keys)]))
-        dic = {'lencoupling': xso, 'rate': (xso - xmin) / (xmax - xmin),
+        dic = {'dist': xso, 'rate': (xso - xmin) / (xmax - xmin),
                'disttomin': xso - xmin,  'disttomax': xmax - xso,
                'distmin': xmin, 'distmax': xmax, 'diff': diff}
         if dic['rate'] == 0 and dic['diff'] == 0:

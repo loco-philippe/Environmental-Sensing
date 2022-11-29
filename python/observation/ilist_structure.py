@@ -176,13 +176,19 @@ class IlistStructure:
         coupl = True
         while coupl:
             coupl = False
+            #print('while')
             for i, inf in enumerate(infos):
-                if inf['typecoupl'] != 'coupled' and \
-                    (inf['typecoupl'] not in ('derived', 'unique')
-                     or not derived) and inf['linkrate'] < rate:
-                    self.lidx[inf['parent']].coupling(
-                        self.lidx[i], derived=derived)
+                #if inf['typecoupl'] != 'coupled' and \
+                #    (inf['typecoupl'] not in ('derived', 'unique') or not derived)\
+                #    and inf['linkrate'] < rate:
+                if (inf['linkrate'] == 0 and inf['diffdistparent'] > 0 and 
+                    inf['cat'] != 'unique' and inf['distparent'] != -1 and 
+                    not derived) or (0 < inf['linkrate'] < rate and derived):
+                    self.lindex[inf['distparent']].coupling(
+                        self.lindex[i], derived=derived)
                     coupl = True
+                    #print(i, inf['distparent'])
+                    break
             infos = self.indexinfos()
         return infos
 
@@ -215,7 +221,7 @@ class IlistStructure:
         *Returns* : none '''
         self.lindex.pop(self.lname.index(indexname))
 
-    def full(self, reindex=False, indexname=None, fillvalue='-', fillextern=True,
+    """def full_old(self, reindex=False, indexname=None, fillvalue='-', fillextern=True,
              inplace=True, complete=True):
         '''tranform a list of indexes in crossed indexes (value extension).
 
@@ -271,6 +277,63 @@ class IlistStructure:
                     ilis.lvar[i].set_codec(ilis.lvar[i].codec + [fillvalue])
         if complete:
             ilis.setcanonorder()
+        return ilis"""
+    
+    def _fullindex(self, ind, keysadd, indexname, leng, fillval):
+        idx = self.lindex[ind]
+        lenadd = len(keysadd[0])
+        if len(idx) == leng:
+            return
+        inf = self.indexinfos()
+        if inf[ind]['cat'] == 'unique':
+            idx.set_keys(idx.keys + [0] * lenadd)  
+        elif self.lname[ind] in indexname:
+            idx.set_keys(idx.keys + keysadd[indexname.index(self.lname[ind])])
+        elif inf[ind]['parent'] == -1:
+            idx.set_keys(idx.keys + [len(idx.codec)] * len(keysadd[0]))
+            idx.set_codec(idx.codec + [fillval])
+        else:
+            parent = inf[ind]['parent']
+            if len(self.lindex[parent]) != leng:
+                self._fullindex(parent, keysadd, indexname, leng, fillval)
+            if inf[ind]['cat'] == 'coupled' :
+                idx.tocoupled(self.lindex[parent], coupling=True)
+            else:
+                idx.tocoupled(self.lindex[parent], coupling=False)
+        
+    def full(self, reindex=False, indexname=None, fillvalue='-', fillextern=True,
+             inplace=True, complete=True):
+        '''tranform a list of indexes in crossed indexes (value extension).
+
+        *Parameters*
+
+        - **indexname** : list of string - name of indexes to transform
+        - **reindex** : boolean (default False) - if True, set default codec before transformation
+        - **fillvalue** : object value used for var extension
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
+        - **inplace** : boolean (default True) - if True, filter is apply to self,
+        - **complete** : boolean (default True) - if True, Iindex are ordered in canonical order
+
+        *Returns* : self or new Ilist'''
+        if inplace:
+            ilis = self
+        else:
+            ilis = copy(self)
+        if not indexname:
+            indexname = ilis.primaryname
+        if reindex:
+            ilis.reindex()
+        keysadd = util.idxfull([ilis.nindex(name) for name in indexname])
+        if not keysadd or len(keysadd) == 0:
+            return ilis
+        lenadd = len(keysadd[0])
+        for ind in range(self.lenindex):
+            fillval = fillvalue
+            if fillextern:
+                fillval = util.castval(fillvalue, util.typename(ilis.lname[ind], ES.def_clsName))
+            ilis._fullindex(ind, keysadd, indexname, len(ilis) + lenadd, fillval)
+        if complete:
+            ilis.setcanonorder()
         return ilis
 
     def getduplicates(self, indexname=None, resindex=None):
@@ -278,17 +341,23 @@ class IlistStructure:
 
         *Parameters*
 
-        - **indexname** : list of string - name of indexes to check
+        - **indexname** : list of string (default none) - name of indexes to check 
+        (if None, all Iindex)
         - **resindex** : string (default None) - Add a new index with check result
 
         *Returns* : list of int - list of rows with duplicate cod '''
-        if not indexname:
+        '''if not indexname:
             primary = self.primary
         else:
             primary = [self.idxname.index(name) for name in indexname]
         duplicates = []
         for idx in primary:
-            duplicates += self.lidx[idx].getduplicates()
+            duplicates += self.lidx[idx].getduplicates()'''
+        if not indexname:
+            indexname = self.lname
+        duplicates = []
+        for name in indexname:
+            duplicates += self.nindex(name).getduplicates()
         if resindex and isinstance(resindex, str):
             newidx = Iindex([True] * len(self), name=resindex)
             for item in duplicates:

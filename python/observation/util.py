@@ -135,7 +135,7 @@ class util:
     def couplinginfos(l1, l2):
         '''return a dict with the coupling info between two list'''
         if not l1 or not l2:
-            return {'lencoupling': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null'}
         ls = len(util.tocodec(l1))
         lo = len(util.tocodec(l2))
@@ -147,10 +147,10 @@ class util:
                 typec = 'derived'
             else:
                 typec = 'derive'
-            return {'lencoupling': x0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': x0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': x0, 'distmax': x1, 'diff': diff, 'typecoupl': typec}
         x = len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
-        dic = {'lencoupling': x, 'rate': (x - x0) / (x1 - x0),
+        dic = {'dist': x, 'rate': (x - x0) / (x1 - x0),
                'disttomin': x - x0,  'disttomax': x1 - x,
                'distmin': x0, 'distmax': x1, 'diff': diff}
         if dic['rate'] == 0 and dic['diff'] == 0:

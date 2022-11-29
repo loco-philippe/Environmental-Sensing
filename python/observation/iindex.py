@@ -452,10 +452,11 @@ class Iindex(IindexStructure, IindexInterface):
                 typecodec = 'default'
             else:
                 typecodec = 'mixed'
-        disttomin = xlen - mini
-        disttomax = maxi - xlen
-        return {'lencodec': xlen, 'min': mini, 'max': maxi, 'typecodec': typecodec,
-                'rate': rate, 'disttomin': disttomin, 'disttomax': disttomax}
+        #disttomin = xlen - mini
+        #disttomax = maxi - xlen
+        return {'lencodec': xlen, 'mincodec': mini, 'maxcodec': maxi, 
+                'typecodec': typecodec, 'ratecodec': rate}
+        #, 'disttomin': disttomin, 'disttomax': disttomax}
 
     @property
     def keys(self):

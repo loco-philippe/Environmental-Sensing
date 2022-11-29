@@ -377,6 +377,7 @@ class Test_Ilist(unittest.TestCase):
         ilm.coupling()
         for ts in test:
             opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
+            #print(opt)
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)#'''
     
     def test_to_obj_variable(self):
@@ -410,17 +411,17 @@ class Test_Ilist(unittest.TestCase):
                           [20,  10,  10,  10,  10,  20], 
                           [200, 200, 400, 200, 300, 300],
                           [1, 1, 2, 2, 3, 3]])
-        ilx.coupling(derived=False, rate=0.6)
-        ilx.getduplicates(['i2'], 'test')
-        self.assertEqual(ilx.lindex[4].values, [
-                         False, False, True, False, False, False])
+        ilx.coupling(derived=False, rate=0.2)
+        ilx.getduplicates(['i1'], 'dup-i1')
+        self.assertEqual(ilx.nindex('dup-i1').values, [
+                         True, False, False, False, False, True])
         ilx = Ilist.ext([['a', 'b', 'b', 'c', 'c', 'a'],
-                          [20,  10,  10,  10,  10,  20], [
-                              200, 200, 200, 300, 300, 200],
+                          [20,  10,  10,  10,  10,  20], 
+                          [200, 200, 200, 300, 300, 200],
                           [1, 1, 1, 2, 3, 1]])
         ilx.coupling(rate=0.2)
-        ilx.getduplicates(resindex='test')
-        self.assertEqual(ilx.lindex[4].values, [
+        ilx.getduplicates(resindex='dupli')
+        self.assertEqual(ilx.nindex('dupli').values, [
                          True, True, True, False, False, True])
 
     def test_name(self):
@@ -433,25 +434,25 @@ class Test_Ilist(unittest.TestCase):
         ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                           ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertTrue(ilm.complete)
-        ilm.full()
-        self.assertTrue(ilm.lidx[0].iscrossed(ilm.lidx[1]) == ilm.lidx[0].iscrossed(ilm.lidx[2])
-                        == ilm.lidx[1].iscrossed(ilm.lidx[2]) == True)
+        self.assertTrue(ilm.full(inplace=False) == ilm)
+        ilmf = ilm.full(indexname=['i0', 'i1'], inplace=False)
+        self.assertTrue(ilmf.nindex('i0').iscrossed(ilmf.nindex('i1')))
+        self.assertTrue(ilmf.nindex('i0').iscoupled(ilmf.nindex('i2')))
+        ilm.full(indexname=['i0', 'i3', 'i5'])
+        self.assertTrue(ilm.nindex('i0').iscrossed(ilm.nindex('i3')) == 
+                        ilm.nindex('i0').iscrossed(ilm.nindex('i5')) ==
+                        ilm.nindex('i3').iscrossed(ilm.nindex('i5')) == True)
         self.assertTrue(ilm.complete)
         il = Ilist.ext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30],
-                         [2, 0, 2, 0], [2, 2, 0, 0], [
-            'info', 'info', 'info', 'info'],
-            [12, 20, 20, 12]], var=0)
-        ilc = il.full()
-        # ild=il.full(minind=False)
-        '''ild=il.full(axes=list(range(il.lenidx)))
-        self.assertEqual( len(ild), 48)
-        self.assertEqual( ild.idxref,  [0, 1, 2, 3, 4, 5])
-        self.assertEqual( ilc.extidx[1], [30, 12, 20, 30, 30, 12, 12, 20, 30, 12, 20, 20])
-        self.assertEqual( ilc.idxcoupled, il.idxcoupled)
-        self.assertTrue( ilc.idxlen == il.idxlen == ild.idxlen)
-        self.assertEqual( ilc.idxref, il.idxref)
-        self.assertTrue( ilc.idxunique == il.idxunique == ild.idxunique)'''
-
+                        [2, 0, 2, 0], [2, 2, 0, 0], 
+                        ['info', 'info', 'info', 'info'],
+                        [12, 20, 20, 12]], var=0)
+        ilc = il.full(inplace=False)
+        ild = il.full(indexname=['i2', 'i6', 'i1', 'i3', 'i4', 'i5'], inplace=False)
+        self.assertEqual(len(ild), 48)
+        self.assertTrue(il.nindex('i5').codec == ilc.nindex('i5').codec == 
+                        ild.nindex('i5').codec)
+        
     def test_valtokey(self):
         ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                           ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
@@ -581,7 +582,8 @@ class Test_Ilist(unittest.TestCase):
         '''à faire'''  # !!!
 
     def test_to_xarray(self):
-        ilm = Ilist.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit', 'vegetable', 'vegetable', 'vegetable', 'fruit']],
+        ilm = Ilist.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit', 
+                                     'vegetable', 'vegetable', 'vegetable', 'fruit']],
                           ['quantity', ['kg', '10 kg', 'kg', '10 kg',
                                         'kg', '10 kg', 'kg', '10 kg']],
                           ['product', ['apple', 'apple', 'orange', 'orange',

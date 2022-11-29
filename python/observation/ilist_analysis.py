@@ -283,8 +283,10 @@ class Analysis:
         self.infos2 = [{} for i in range(lenindex)]
         for i in range(lenindex):
             self.infos2[i]['parent'] = -1
-            self.infos2[i]['diffparent'] = -1
-            self.infos2[i]['mindiff'] = leniobj
+            self.infos2[i]['distparent'] = -1
+            self.infos2[i]['diffdistparent'] = leniobj
+            #self.infos2[i]['distmin'] = leniobj
+            self.infos2[i]['linkrate'] = 0
             self.infos2[i]['child'] = []
             self.infos2[i]['crossed'] = []
             self.infos2[i]['num'] = i
@@ -300,6 +302,8 @@ class Analysis:
                 if self.matrix2[i][j]['typecoupl'] == 'coupled' and \
                   self.infos2[j]['parent'] == -1:
                     self.infos2[j]['parent'] = i
+                    self.infos2[j]['distparent'] = i
+                    self.infos2[j]['diffdistparent'] = 0
                     self.infos2[j]['cat'] = 'coupled'
                     self.infos2[i]['child'].append(j)
         return
@@ -339,12 +343,11 @@ class Analysis:
         leniobj = len(self.iobj)
         for i in range(lenindex):
             mindiff = leniobj
-            mindiffall = leniobj - len(self.iobj.lindex[i].codec) # root diff
-            diffparent =  None
-            diffrate = None
+            ratemin = 1
+            distparent =  None
             parent = None
             infoi = self.infos2[i]
-            infoi['mindiff'] = mindiffall
+            #infoi['rate'] = ratemin
             if not infoi['cat'] in ['unique', 'coupled']:
                 for j in range(lenindex):
                     matij = self.matrix2[i][j]
@@ -356,18 +359,19 @@ class Analysis:
                     elif i != j and matij['typecoupl'] == 'crossed' and \
                       self.infos2[j]['cat'] != 'coupled':
                         infoi['crossed'].append(j)
-                    if i != j and self.infos2[j]['diffparent'] != i and \
+                    if i != j and self.infos2[j]['distparent'] != i and \
                       matij['typecoupl'] in ('coupled', 'derived', 'linked', 'crossed') and \
-                      matij['diff'] < mindiffall:
-                        mindiffall = matij['diff']
-                        diffparent = j
+                      matij['rate'] < ratemin:
+                        ratemin = matij['rate']
+                        distparent = j
                 if not parent is None:
                     infoi['parent'] = parent
                     #infoi['pname2'] = self.iobj.lname[parent]
                     self.infos2[parent]['child'].append(i)      
-                if not diffparent is None:
-                    infoi['diffparent'] = diffparent
-                    infoi['mindiff'] = mindiffall
+                if not distparent is None:
+                    infoi['distparent'] = distparent
+                    infoi['diffdistparent'] = self.matrix2[i][distparent]['diff']
+                    infoi['linkrate'] = self.matrix2[i][distparent]['rate']
         return    
 
     def _setparent(self):

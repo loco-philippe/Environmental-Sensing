@@ -452,7 +452,10 @@ class IlistInterface:
                 lis.append(idx.setkeys(self.lindex[inf['parent']].keys, inplace=False).
                            to_obj(parent=inf['parent'], name=iname, **option2))
             elif inf['parent'] == -1:
-                if len(idx.keys) == len(idx):
+                #if len(idx.keys) == len(idx):
+                if len(idx.codec) == len(idx):
+                    idx.set_codec(util.reorder(idx.codec, idx.keys))
+                    idx.set_keys(list(range(len(idx))))
                     opt = option2 | {'modecodec':'full' }
                     lis.append(idx.to_obj(name=iname, **opt))
                 else:    
