@@ -477,6 +477,14 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il.vlist(func=ESValue.vName, extern=False, index=2, default='ici'),
                          ['paris', 'ici', 'paris', 'ici'])
 
+    def test_mergerecord(self):
+        a=Ilist.ext([[1,2,3], [4,5,6]])
+        b=Ilist.ext([['x'], [a]])
+        self.assertequal(Ilist.mergerecord(b).lenindex, 3)
+        self.assertequal(Ilist.mergerecord(b, mergeidx=True).lenindex, 2)
+        self.assertequal(Ilist.mergerecord(b, mergeidx=True)[0], ['x', 4])
+        self.assertequal(Ilist.mergerecord(b, mergeidx=True, updateidx=True)[0], [1, 4])
+        
     def test_merge(self):
         il1 = Ilist.dic({'notes': [10, 11, 12],
                           'course': ['math', 'english', 'software']}, var=0)

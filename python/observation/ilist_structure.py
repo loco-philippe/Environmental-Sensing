@@ -46,6 +46,8 @@ class IlistStructure:
         - **other** : Ilist object to add to self object
         - **name** : Boolean (default False) - Add values with same index name (True) or
         same index row (False)
+        - **solve** : Boolean (default True) - If True, replace None other's codec value
+        with self codec value.
 
         *Returns* : self '''
         if self.lenindex != other.lenindex:
@@ -365,12 +367,12 @@ class IlistStructure:
             self.addindex(newidx)
         return tuple(set(duplicates))
 
-    def iscanonorder(self):     # à supprimer
+    """def iscanonorder(self):     # à supprimer
         '''return True if crossed indexes have canonical ordered keys'''
         crossed = self.crossed
         canonorder = util.canonorder(
             [len(self.lidx[idx].codec) for idx in crossed])
-        return canonorder == [self.lidx[idx].keys for idx in crossed]
+        return canonorder == [self.lidx[idx].keys for idx in crossed]"""
 
     def iscanonorder2(self):
         '''return True if primary indexes have canonical ordered keys'''
@@ -473,13 +475,14 @@ class IlistStructure:
             return locrow
         #return self.lvar[0][tuple(locrow)]
         return [self.record(locr, extern=extern) for locr in locrow]
-
-    def merge(self, name=None, fillvalue=math.nan, mergeidx=False, updateidx=False):
+ 
+    def merge_old(self, merged, name=None, fillvalue=math.nan, mergeidx=False, updateidx=False):
         '''
         Merge method replaces Ilist objects included in variable data into its constituents.
 
         *Parameters*
 
+        - **merged** : str - name of Iindex to be merged
         - **name** : str (default None) - name of the new Ilist object
         - **fillvalue** : object (default nan) - value used for the additional data
         - **mergeidx** : create a new index if mergeidx is False
@@ -495,10 +498,11 @@ class IlistStructure:
         while find:
             find = False
             for i in range(len(ilm)):
-                if not ilm.lvar[0].values[i].__class__.__name__ in ['Ilist', 'Observation']:
+                #if not ilm.lvar[0].values[i].__class__.__name__ in ['Ilist', 'Observation']:
+                if not ilm.nindex(merged).values[i].__class__.__name__ in ['Ilist', 'Observation']:
                     continue
                 find = True
-                ilis = ilm.lvar[0].values[i].merge()
+                ilis = ilm.nindex(merged).values[i].merge()
                 ilname = ilis.idxname
                 record = ilm.recidx(i, extern=False)
                 for val, j in zip(reversed(record), reversed(range(len(record)))):  # Ilist pere
@@ -541,7 +545,7 @@ class IlistStructure:
         return None
 
     def orindex(self, other, first=False, merge=False, update=False):
-        ''' Add other's index to self's index
+        ''' Add other's index to self's index (with same length)
 
         *Parameters*
 

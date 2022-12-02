@@ -489,6 +489,62 @@ class Ilist(IlistStructure, IlistInterface):
             raise IlistError("the type of parameter is not available")
         return cls._init_obj(lis, reindex=reindex, context=context)
 
+    @staticmethod
+    def mergerecord(rec, mergeidx=True, updateidx=True):
+        var = -1
+        for ind, val in enumerate(rec[0]):
+           if val.__class__.__name__ in ['Ilist', 'Observation']:
+               var = ind
+               break
+        if var < 0:
+            return (rec, None, [])
+        ilis = rec[0][var].merge()
+        oldname = rec.lname[var]
+        newname = [oldname + '-' + name for name in ilis.lname]
+        ilis.setname(newname)
+        for name in rec.lname:
+            if name in newname:
+                newname.remove(name)
+            else:
+                updidx = name in ilis.lname and not updateidx
+                ilis.addindex([name, [rec.nindex(name)[0]] * len(ilis)],
+                              merge=mergeidx, update=updidx)
+        return (ilis, oldname, newname)
+                
+    def merge(self, name=None, fillvalue=math.nan, mergeidx=False, updateidx=False):
+        '''
+        Merge method replaces Ilist objects included in variable data into its constituents.
+
+        *Parameters*
+
+        - **name** : str (default None) - name of the new Ilist object
+        - **fillvalue** : object (default nan) - value used for the additional data
+        - **mergeidx** : create a new index if mergeidx is False
+        - **updateidx** : if True (and mergeidx is True), update actual values
+        if index name is present
+
+        *Returns*: merged Ilist '''
+        ilc = copy(self)
+        delname = []
+        merged, oldname, newname = Ilist.mergerecord(Ilist.ext(ilc[0], ilc.lname))
+        if oldname:
+            delname.append(oldname)        
+        for ind in range(1, len(ilc)):
+            oldidx = ilc.nindex(oldname)
+            for name in newname:
+                ilc.addindex(Iindex(oldidx.codec, name, oldidx.keys))
+            rec, oldname, newname = Ilist.mergerecord(Ilist.ext(ilc[ind], ilc.lname))
+            delname.append(oldname)
+            for name in newname:
+                oldidx = merged.nindex(oldname)
+                merged.addindex(Iindex(oldidx.codec, name, oldidx.keys))
+            merged += rec
+        for name in set(delname):
+            if name:
+                merged.delindex(name)
+        return merged
+
+
 # %% special
     def __str__(self):
         '''return string format for var and lidx'''
