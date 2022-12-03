@@ -179,7 +179,7 @@ class Observation(Ilist):
 
         if isinstance(listidx, Observation):
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            self.lvarname = [name for name in listidx.lvarname]
+            #self.lvarname = [name for name in listidx.lvarname]
             if not listidx.param is None:
                 self.param = {k: v for k, v in listidx.param.items()}
             else:
@@ -199,7 +199,8 @@ class Observation(Ilist):
         if not listidx:
             Ilist.__init__(self)
         else:
-            Ilist.__init__(self, listidx=listidx, lvarname=lvarname, reindex=reindex)
+            #Ilist.__init__(self, listidx=listidx, lvarname=lvarname, reindex=reindex)
+            Ilist.__init__(self, listidx=listidx, reindex=reindex)
         self.name = name
         self.id = id
         self.param = param
@@ -218,9 +219,10 @@ class Observation(Ilist):
         - **name**     : string (default None) - Observation name
         - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
-        if ES.res_classES in idxdic:
-            var = list(idxdic.keys()).index(ES.res_classES)
-        listidx = Ilist.dic(idxdic, typevalue=typevalue, var=var)
+        #if ES.res_classES in idxdic:
+        #    var = list(idxdic.keys()).index(ES.res_classES)
+        #listidx = Ilist.dic(idxdic, typevalue=typevalue, var=var)
+        listidx = Ilist.dic(idxdic, typevalue=typevalue)
         return cls(listidx=listidx, name=name, id=id, param=param)
 
     @classmethod

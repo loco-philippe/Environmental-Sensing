@@ -174,15 +174,8 @@ class Ilist(IlistStructure, IlistInterface):
         self.name = self.__class__.__name__
         self.analysis = Analysis(self)
         self.lindex = []
-        '''if not lvarname:
-            self.lvarname = []
-        elif not isinstance(lvarname, list):
-            self.lvarname = [lvarname]
-        else: 
-            self.lvarname = lvarname'''
         if listidx.__class__.__name__ in ['Ilist', 'Observation']:
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            #self.lvarname = copy(listidx.lvarname)
             return
         if not listidx:
             return
@@ -191,7 +184,6 @@ class Ilist(IlistStructure, IlistInterface):
             self.reindex()
         # %%% modif
         self.analysis._actualize()              
-        #self.lvarname = self.analysis.lvarname
         return
 
     @classmethod    
@@ -206,21 +198,23 @@ class Ilist(IlistStructure, IlistInterface):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         '''
         lindex = []
-        lvarname = []
+        #lvarname = []
         if listidx.__class__.__name__ == 'DataFrame':
             lindex = [Iindex(list(idx.cat.categories), name, list(idx.cat.codes),
                              lendefault=len(listidx), castobj=False)
                      for name, idx in listidx.astype('category').items()]
-            return cls(lindex, lvarname=lvarname, reindex=reindex)
+            return cls(lindex, reindex=reindex)
+            #return cls(lindex, lvarname=lvarname, reindex=reindex)
         
         if isinstance(listidx, dict):
             for idxname in listidx:
                 var, idx = Iindex.from_dict_obj({idxname: listidx[idxname]}, 
                                                 typevalue=typevalue, reindex=reindex)
                 lindex.append(idx)
-                if var: 
-                    lvarname.append(idxname)
-            return cls(lindex, lvarname=lvarname, reindex=reindex)
+                #if var: 
+                #    lvarname.append(idxname)
+            return cls(lindex, reindex=reindex)
+            #return cls(lindex, lvarname=lvarname, reindex=reindex)
 
         if isinstance(listidx, list) and len(listidx) == 0:
             return cls()
@@ -244,7 +238,8 @@ class Ilist(IlistStructure, IlistInterface):
         #if not max(isparent) and ((fullmode and max(leng) == min(leng)) or defmode): # mode full ou mode default
         if not max(isparent) and (fullmode or defmode): # mode full ou mode default
             lindex = [Iindex(idx[2], idx[0], idx[4], idx[1], reindex=reindex) for idx in lidx]
-            return cls(lindex, lvarname=lvarname, reindex=reindex)
+            return cls(lindex, reindex=reindex)
+            #return cls(lindex, lvarname=lvarname, reindex=reindex)
 
         crossed = []
         #crossed : pas d'index (isfullindex false), pas de parent(isparent false)
@@ -298,7 +293,8 @@ class Ilist(IlistStructure, IlistInterface):
         for ind in range(len(lidx)):
             Ilist._init_keys(ind, lidx, length)
         lindex = [Iindex(idx[2], idx[0], idx[4], idx[1], reindex=reindex) for idx in lidx]
-        return cls(lindex, lvarname=lvarname, reindex=False)
+        return cls(lindex, reindex=False)
+        #return cls(lindex, lvarname=lvarname, reindex=False)
         
     @staticmethod
     def _init_keys(ind, lidx, leng):
@@ -338,14 +334,16 @@ class Ilist(IlistStructure, IlistInterface):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable'''
         if not idxdic:
-            return cls.ext(idxval=None, idxname=None, typevalue=typevalue, var=var,
+            #return cls.ext(idxval=None, idxname=None, typevalue=typevalue, var=var,
+            return cls.ext(idxval=None, idxname=None, typevalue=typevalue,
                             reindex=reindex)
         if isinstance(idxdic, Ilist):
             return idxdic
         if not isinstance(idxdic, dict):
             raise IlistError("idxdic not dict")
         return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
-                        typevalue=typevalue, var=var, reindex=reindex)
+                        typevalue=typevalue, reindex=reindex)
+                        #typevalue=typevalue, var=var, reindex=reindex)
 
     @classmethod
     def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None,
@@ -383,13 +381,14 @@ class Ilist(IlistStructure, IlistInterface):
         for ind, name in enumerate(idxname):
             if name is None or name == ES.defaultindex:
                 idxname[ind] = 'i'+str(ind)  
-        lvarname = None 
+        """lvarname = None 
         if not var is None:
-            lvarname = idxname[var]
+            lvarname = idxname[var]"""
         lidx = [list(IindexInterface.decodeobj(idx, typevalue, context=False)) for idx in val]
         lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex) 
                   for idx, name in zip(lidx, idxname)]
-        return cls(lindex, lvarname=lvarname, reindex=False)      
+        return cls(lindex, reindex=False)      
+        #return cls(lindex, lvarname=lvarname, reindex=False)      
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', var=None, header=True, nrow=None,
@@ -431,7 +430,8 @@ class Ilist(IlistStructure, IlistInterface):
                         for i in range(len(row)):
                             idxval[i].append(util.cast(row[i], dtype[i]))
                 irow += 1
-        return cls.ext(idxval, idxname, typevalue=None, var=var, reindex=True)
+        return cls.ext(idxval, idxname, typevalue=None, reindex=True)
+        #return cls.ext(idxval, idxname, typevalue=None, var=var, reindex=True)
 
     @classmethod
     def from_file(cls, filename, forcestring=False):
@@ -785,7 +785,7 @@ class Ilist(IlistStructure, IlistInterface):
     def primary(self):
         ''' list of primary idx'''
         # %%% modif
-        return self.analysis.getprimary3()
+        return self.analysis.getprimary()
         #return self.analysis.getprimary()
 
     @property
