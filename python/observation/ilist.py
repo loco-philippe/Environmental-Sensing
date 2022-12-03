@@ -491,16 +491,20 @@ class Ilist(IlistStructure, IlistInterface):
 
     @staticmethod
     def mergerecord(rec, mergeidx=True, updateidx=True):
+        row = rec[0]
+        if not isinstance(row, list):
+            row = [row]
         var = -1
-        for ind, val in enumerate(rec[0]):
+        for ind, val in enumerate(row):
            if val.__class__.__name__ in ['Ilist', 'Observation']:
                var = ind
                break
         if var < 0:
             return (rec, None, [])
-        ilis = rec[0][var].merge()
+        ilis = row[var].merge()
+        #ilis = row[var]
         oldname = rec.lname[var]
-        newname = [oldname + '-' + name for name in ilis.lname]
+        newname = [oldname + '_' + name for name in ilis.lname]
         ilis.setname(newname)
         for name in rec.lname:
             if name in newname:
@@ -511,33 +515,43 @@ class Ilist(IlistStructure, IlistInterface):
                               merge=mergeidx, update=updidx)
         return (ilis, oldname, newname)
                 
-    def merge(self, name=None, fillvalue=math.nan, mergeidx=False, updateidx=False):
+    def merge(self, name=None, fillvalue=math.nan):
         '''
-        Merge method replaces Ilist objects included in variable data into its constituents.
+        Merge method replaces Ilist objects included into its constituents.
 
         *Parameters*
 
         - **name** : str (default None) - name of the new Ilist object
         - **fillvalue** : object (default nan) - value used for the additional data
-        - **mergeidx** : create a new index if mergeidx is False
-        - **updateidx** : if True (and mergeidx is True), update actual values
-        if index name is present
 
         *Returns*: merged Ilist '''
         ilc = copy(self)
         delname = []
-        merged, oldname, newname = Ilist.mergerecord(Ilist.ext(ilc[0], ilc.lname))
+        row = ilc[0]
+        if not isinstance(row, list):
+            row = [row]
+        merged, oldname, newname = Ilist.mergerecord(Ilist.ext(row, ilc.lname))
+        '''if not isinstance(ilc[0], list):
+            merged, oldname, newname = Ilist.mergerecord(Ilist.ext([ilc[0]], ilc.lname))
+        else:
+            merged, oldname, newname = Ilist.mergerecord(Ilist.ext(ilc[0], ilc.lname))'''
+        #print('ilc0 :', merged, oldname, newname)
         if oldname:
             delname.append(oldname)        
         for ind in range(1, len(ilc)):
             oldidx = ilc.nindex(oldname)
             for name in newname:
                 ilc.addindex(Iindex(oldidx.codec, name, oldidx.keys))
-            rec, oldname, newname = Ilist.mergerecord(Ilist.ext(ilc[ind], ilc.lname))
+            row = ilc[ind]
+            if not isinstance(row, list):
+                row = [row]
+            rec, oldname, newname = Ilist.mergerecord(Ilist.ext(row, ilc.lname))
+            #print('ilci :', ind, rec, oldname, newname)
             delname.append(oldname)
             for name in newname:
                 oldidx = merged.nindex(oldname)
-                merged.addindex(Iindex(oldidx.codec, name, oldidx.keys))
+                fillval = util.castval(fillvalue, util.typename(name, ES.def_clsName))
+                merged.addindex(Iindex([fillval] * len(merged), name, oldidx.keys))
             merged += rec
         for name in set(delname):
             if name:

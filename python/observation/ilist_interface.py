@@ -264,34 +264,38 @@ class IlistInterface:
         option = {'dtype': None} | kwargs
         if not self.consistent:
             raise IlistError("Ilist not consistent")
-        if not varname and len(self.lvarname) == 0:
-            raise IlistError("Variable is not defined")
-        ivar = 0
-        if varname in self.lname:
-            ivar = self.lname.index(varname)
-        #if varname in self.lvarname:
-        #    ivar = self.lvarname.index(varname)
-        if isinstance(lisfunc, list) and len(lisfunc) == 1:
-            lisfunc = lisfunc * self.lenindex
-        elif isinstance(lisfunc, list) and len(lisfunc) != self.lenindex:
-            lisfunc = [None] * self.lenindex
-        elif not isinstance(lisfunc, list):
-            funcvar = lisfunc
-            lisfunc = [None] * self.lenindex
-            #lisfunc[self.lvarrow[0]] = funcvar
-            lisfunc[ivar] = funcvar
-        lisfuncname = dict(zip(self.lname, lisfunc))
-        if idxname is None or idxname == []:
-            idxname = self.primaryname
         #axesname = [self.idxname[i] for i in idx[:len(self.idxname)]]
         #ilf = self.full(indexname=axesname, fillvalue=fillvalue,
+        if idxname is None or idxname == []:
+            idxname = self.primaryname
         ilf = self.full(indexname=idxname, fillvalue=fillvalue,
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
+        if not varname and len(ilf.lvarname) == 0:
+            raise IlistError("Variable is not defined")
+        elif not varname:
+            varname = ilf.lvarname[0]
+        ivar = 0
+        if varname in ilf.lname:
+            ivar = ilf.lname.index(varname)
+        #if varname in self.lvarname:
+        #    ivar = self.lvarname.index(varname)
+        if isinstance(lisfunc, list) and len(lisfunc) == 1:
+            lisfunc = lisfunc * ilf.lenindex
+        elif isinstance(lisfunc, list) and len(lisfunc) != ilf.lenindex:
+            lisfunc = [None] * ilf.lenindex
+        elif not isinstance(lisfunc, list):
+            funcvar = lisfunc
+            lisfunc = [None] * ilf.lenindex
+            #lisfunc[self.lvarrow[0]] = funcvar
+            lisfunc[ivar] = funcvar
+        lisfuncname = dict(zip(ilf.lname, lisfunc))
         #idxilf = list(range(len(idx[:len(self.idxname)])))
         #coord = ilf._xcoord(idxilf, lisfuncname, **option)
-        coord = ilf._xcoord(self.idxname, lisfuncname, **option)
-        dims = self.idxname
+        #coord = ilf._xcoord(self.idxname, lisfuncname, **option)
+        coord = ilf._xcoord(idxname, lisfuncname, **option)
+        dims = idxname
+        #dims = self.idxname
         #dims = [ilf.idxname[i] for i in idxilf]
         if numeric:
             #lisfunc[self.lvarrow[0]] = util.cast
@@ -302,14 +306,15 @@ class IlistInterface:
         #data = ilf.lvar[ivar].to_numpy(func=lisfunc[self.lvarrow[ivar]],
         data = ilf.lindex[ivar].to_numpy(func=lisfunc[ivar],
                                     npdtype=npdtype, **option
-                                    ).reshape([ilf.idxlen[idx] for idx in range(len(self.idxname))])
+                                    ).reshape([len(ilf.nindex(name).codec) for name in idxname])
+        #                            ).reshape([ilf.idxlen[idx] for idx in range(len(self.idxname))])
         #                            ).reshape([ilf.idxlen[idx] for idx in idxilf])
         if not name:
-            name = self.name
+            name = ilf.name
         if not isinstance(attrs, dict):
             attrs = {}
-        for nam in self.lunicname:
-            attrs[nam] = self.nindex(nam).codec[0]
+        for nam in ilf.lunicname:
+            attrs[nam] = ilf.nindex(nam).codec[0]
         if info:
             attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)

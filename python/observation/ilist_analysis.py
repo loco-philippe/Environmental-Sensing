@@ -113,6 +113,12 @@ class Analysis:
             self._actualize()
         return self.primary3
 
+    def getpartition(self):
+        '''return attribute partition'''
+        if self.hashi != self.iobj._hashi():
+            self._actualize()
+        return self.partition
+
     """def getcrossed(self):
         '''return attribute crossed'''
         if self.hashi != self.iobj._hashi():
@@ -422,20 +428,24 @@ class Analysis:
         for cros in brother:
             chemin = []
             self._addchemin(chemin, cros, 1, brother)
+        #print('partition : ', self.partition)
         childroot = [idx['num'] for idx in self.infos2 
                      if idx['parent'] == -1 and idx['typecodec'] == 'complete']
         if childroot: self.partition.append(childroot)
         return None
     
     def _addchemin(self, chemin, node, lchemin, brother):
+        #print('add :', chemin, node, lchemin) # add : [1, 2] 1 10
         if lchemin == len(self.iobj) and node == chemin[0] and \
-          max(Counter(zip(*[self.iobj.lindex[idx] for idx in chemin])).values()) == 1:
+          max(Counter(zip(*[self.iobj.lindex[idx].keys for idx in chemin])).values()) == 1:
+          #max(Counter(zip(*[self.iobj.lindex[idx] for idx in chemin])).values()) == 1:
             part = sorted(chemin)
             if not part in self.partition:
                 if not self.partition or len(part) > len(self.partition[0]):
                     self.partition.insert(0, part)
                 else:
                     self.partition.append(part)
+                #print('added : ', part, self.partition)                
         if node in chemin[1:]: 
             return
         lnode = self.infos2[node]['lencodec']

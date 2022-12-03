@@ -166,7 +166,7 @@ class Observation(Ilist):
 
 # %% constructor
     def __init__(self, listidx=None, name=None, id=None, param=None, 
-                 lvarname=None, reindex=True,):
+                 lvarname=None, reindex=True):
         '''Observation constructor
 
         *Parameters*
@@ -190,7 +190,7 @@ class Observation(Ilist):
             return
         if isinstance(listidx, Ilist):
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            self.lvarname = [name for name in listidx.lvarname]
+            #self.lvarname = [name for name in listidx.lvarname]
             self.param = param
             self.name = name
             self.id = id

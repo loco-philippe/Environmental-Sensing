@@ -650,7 +650,7 @@ class IlistStructure:
         order += [idx for idx in self.lidxrow if not idx in order]
         order += self.lvarrow
         self.swapindex(order)
-        self.sort()
+        self.sort(reindex=False)
         self.analysis._actualize()
         return self
 
@@ -692,7 +692,7 @@ class IlistStructure:
         else:
             raise IlistError('var is not consistent with Ilist')"""
 
-    def sort(self, order=None, reverse=False, func=str):
+    def sort(self, order=None, reverse=False, func=str, reindex=True):
         '''Sort data following the index order and apply the ascending or descending
         sort function to values.
 
@@ -702,13 +702,15 @@ class IlistStructure:
         the sort function is applied to the existing order of indexes.
         - **reverse** : boolean (default False)- ascending if True, descending if False
         - **func**    : function (default str) - parameter key used in the sorted function
+        - **reindex** : boolean (default True) - if True, apply a new codec order (key = func)
 
         *Returns* : self'''
         if not order:
             order = list(range(self.lenindex))
         orderfull = order + list(set(range(self.lenindex)) - set(order))
-        for i in order:
-            self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
+        if reindex:
+            for i in order:
+                self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
         newidx = util.transpose(sorted(util.transpose(
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]),
             reverse=reverse))
