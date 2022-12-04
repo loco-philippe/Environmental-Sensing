@@ -160,7 +160,7 @@ def ob_mixte_2(dl=7, prop=4, project='mixte'):
     dl = (dl - 1) % 10 + 1
     prop = (prop - 1) % 7 + 1
     return Obs.obj({'data':
-                    [[dat,           date_mix[:dl]],
+                    [[dat,          date_mix[:dl]],
                     [loc,           ville_mix[:dl], 0],
                     [prp,           env_mix[:prop]],
                     [res,           mix_mix(dl * prop), -1],
