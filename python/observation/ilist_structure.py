@@ -60,8 +60,6 @@ class IlistStructure:
                                    solve=solve)
             else:
                 self.lindex[i].add(other.lindex[i], solve=solve)
-        #if not self.lvarname:
-        #    self.lvarname = other.lvarname
         return self
 
     def addindex(self, index, first=False, merge=False, update=False):
@@ -294,13 +292,6 @@ class IlistStructure:
         - **resindex** : string (default None) - Add a new index with check result
 
         *Returns* : list of int - list of rows with duplicate cod '''
-        '''if not indexname:
-            primary = self.primary
-        else:
-            primary = [self.idxname.index(name) for name in indexname]
-        duplicates = []
-        for idx in primary:
-            duplicates += self.lidx[idx].getduplicates()'''
         if not indexname:
             indexname = self.lname
         duplicates = []
@@ -313,14 +304,7 @@ class IlistStructure:
             self.addindex(newidx)
         return tuple(set(duplicates))
 
-    """def iscanonorder(self):     # à supprimer
-        '''return True if crossed indexes have canonical ordered keys'''
-        crossed = self.crossed
-        canonorder = util.canonorder(
-            [len(self.lidx[idx].codec) for idx in crossed])
-        return canonorder == [self.lidx[idx].keys for idx in crossed]"""
-
-    def iscanonorder2(self):
+    def iscanonorder(self):
         '''return True if primary indexes have canonical ordered keys'''
         primary = self.primary
         canonorder = util.canonorder(
@@ -415,7 +399,7 @@ class IlistStructure:
         *Returns*
 
         - **object** : variable value or None if not found'''
-        locrow = list(set.intersection(*[set(self.lidx[i].loc(rec[i], extern))
+        locrow = list(set.intersection(*[set(self.lindex[i].loc(rec[i], extern))
                                        for i in range(self.lenidx)]))
         if row:
             return locrow

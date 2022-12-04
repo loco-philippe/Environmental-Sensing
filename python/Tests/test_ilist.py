@@ -197,7 +197,7 @@ class Test_Ilist(unittest.TestCase):
                          [100, 100, 200, 200, 300, 300],
                          [True, False, True, False, True, False]])
         il.setcanonorder()
-        self.assertTrue(il.iscanonorder2())
+        self.assertTrue(il.iscanonorder())
 
     def test_addindex(self):
         iidx = Ilist.obj([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])

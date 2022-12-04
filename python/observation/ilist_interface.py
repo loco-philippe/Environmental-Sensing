@@ -408,9 +408,7 @@ class IlistInterface:
         '''return list object with primary and secondary Iindex'''
         indexinfos = self.indexinfos()
         notkeyscrd = True
-        # %%% modif
-        #if self.iscanonorder():
-        if self.iscanonorder2():
+        if self.iscanonorder():
             notkeyscrd = None
         for idx, iname, inf in zip(self.lidx, idxname, indexinfos):
             #if inf['typecoupl'] == 'unique':
@@ -451,7 +449,7 @@ class IlistInterface:
         indexinfos = self.indexinfos()
         notkeys = True
         lis = []
-        if self.iscanonorder2():
+        if self.iscanonorder():
             notkeys = None
         for idx, iname, inf in zip(self.lindex, idxname, indexinfos):
             if inf['cat'] == 'unique':

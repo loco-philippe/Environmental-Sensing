@@ -627,8 +627,8 @@ class TestObservation(unittest.TestCase):
                        ["result", [0, 1, 2, 3, 4, 5], -1]], 'name': 'test1'})
         ob1 = ob.full(fillvalue=-1, inplace=False)
         rec = [{"date1": "2021-02-04T12:05:00"}, {"paris": [2.35, 48.87]},
-               {"prp": "PM10", "unit": "kg/m3"}]
-        self.assertTrue(ob.loc(rec) == ob1.loc(rec) == [NamedValue(1)])
+               {"prp": "PM10", "unit": "kg/m3"}, 1]
+        self.assertTrue(ob.loc(rec) == ob1.loc(rec))
         self.assertEqual(len(ob1), 18)
         ob.full(fillvalue=-1, inplace=True)
         self.assertEqual(ob, ob1)
