@@ -214,72 +214,18 @@ class IlistStructure:
         return row
 
     def delindex(self, indexname):
-        '''remove an index.
+        '''remove an Iindex or a list of Iindex.
 
         *Parameters*
 
-        - **indexname** : string - name of index to remove
+        - **indexname** : string or list of string - name of index to remove
 
         *Returns* : none '''
-        self.lindex.pop(self.lname.index(indexname))
-
-    """def full_old(self, reindex=False, indexname=None, fillvalue='-', fillextern=True,
-             inplace=True, complete=True):
-        '''tranform a list of indexes in crossed indexes (value extension).
-
-        *Parameters*
-
-        - **indexname** : list of string - name of indexes to transform
-        - **reindex** : boolean (default False) - if True, set default codec before transformation
-        - **fillvalue** : object value used for var extension
-        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
-        - **inplace** : boolean (default True) - if True, filter is apply to self,
-        - **complete** : boolean (default True) - if True, Iindex are ordered in canonical order
-
-        *Returns* : self or new Ilist'''
-        if inplace:
-            ilis = self
-        else:
-            ilis = copy(self)
-        if not indexname:
-            primary = ilis.primary
-        else:
-            primary = [ilis.idxname.index(name) for name in indexname]
-        secondary = [idx for idx in range(ilis.lenidx) if idx not in primary]
-        if reindex:
-            ilis.reindex()
-        keysadd = util.idxfull([ilis.lidx[i] for i in primary])
-        if not keysadd or len(keysadd) == 0:
-            return ilis
-        leninit = len(ilis)
-        lenadd = len(keysadd[0])
-        inf = ilis.indexinfos()
-        for i, j in zip(primary, range(len(primary))):
-            if inf[i]['cat'] == 'unique':                               #!!!
-                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
-            else:
-                ilis.lidx[i].set_keys(ilis.lidx[i].keys + keysadd[j])
-        for i in secondary:
-            if inf[i]['cat'] == 'unique':
-                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
-            else:
-                ilis.lidx[i].tocoupled(
-                    ilis.lidx[inf[i]['parent']], coupling=False)
-        for i in range(ilis.lenidx):
-            if len(ilis.lidx[i].keys) != leninit + lenadd:
-                raise IlistError('primary indexes have to be present')
-        if ilis.lvarname:
-            for i in range(len(ilis.lvar)):
-                ilis.lvar[i].set_keys(ilis.lvar[i].keys + [len(ilis.lvar[i].codec)] * 
-                                      len(keysadd[0]))
-                if fillextern:
-                    ilis.lvar[i].set_codec(ilis.lvar[i].codec + [util.castval(
-                        fillvalue, util.typename(ilis.lvarname[i], ES.def_clsName))])
-                else:
-                    ilis.lvar[i].set_codec(ilis.lvar[i].codec + [fillvalue])
-        if complete:
-            ilis.setcanonorder()
-        return ilis"""
+        if isinstance(indexname, str):
+            indexname = [indexname]
+        for idxname in indexname:
+            if idxname in self.lname:
+                self.lindex.pop(self.lname.index(idxname))
     
     def _fullindex(self, ind, keysadd, indexname, leng, fillval):
         idx = self.lindex[ind]

@@ -363,7 +363,7 @@ class TestExamples(unittest.TestCase):
             ob_sensor.append([45 + i, date, loc, prop1])
             if i % 3 == 0:
                 ob_sensor.append([105 + i//3, date, loc, prop2])
-        ob_sensor.full(fillvalue=None)
+        ob_sensor.full(indexname=['datation', 'property'], fillvalue=None)
         self.assertTrue(ob_sensor.dimension == 2 and len(ob_sensor) == 12)
         # if the payload is binary payload
         payload = ob_sensor.json(encoded=True, encode_format='cbor')
@@ -416,7 +416,7 @@ class TestExamples(unittest.TestCase):
             il_sensor.append([45 + i, date, prop1])
             if i % 3 == 0:
                 il_sensor.append([105 + i//3, date, prop2])
-        il_sensor.full(fillvalue=None)
+        il_sensor.full(indexname=['datation', 'property'], fillvalue=None)
         il_sensor.nindex('property').setcodeclist([None, None])
         self.assertTrue(il_sensor.dimension == 2 and len(il_sensor) == 12)
         # send data
@@ -485,9 +485,9 @@ class TestObservation(unittest.TestCase):
                                     list(_res(6)) + [-1]]), param=truc_mach)
         self.assertTrue([ob[3][3]] ==
                         ob.loc([datetime.datetime.fromisoformat(dat3[1][1]), loc3[1][1],
-                                prop2[1][1]]) ==
+                                prop2[1][1], 3])[3] ==
                         ob.loc([DatationValue(dat3[1][1]), LocationValue(loc3[1][1]),
-                                PropertyValue(prop2[1][1])], extern=False))
+                                PropertyValue(prop2[1][1]), 3], extern=False)[3])
         ob.nindex('location').setcodecvalue(loc3[1][1], loc3[1][2])
         self.assertEqual(len(set(ob.nindex('location').codec)), 2)
         #self.assertEqual(ob.setLocation[0], ob.setLocation[2])

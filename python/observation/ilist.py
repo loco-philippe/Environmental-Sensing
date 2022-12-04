@@ -243,7 +243,9 @@ class Ilist(IlistStructure, IlistInterface):
 
         crossed = []
         #crossed : pas d'index (isfullindex false), pas de parent(isparent false)
-        if not fullmode: #au moins un fullkeys ou une longueur différente
+        if fullmode: #au moins un fullkeys ou une longueur différente
+            length = max(leng)
+        else: #au moins un fullkeys ou une longueur différente
             if max(isfullkeys): 
                 length = len(keys[isfullkeys.index(True)])
                 crossed = [i for i, (isfullk, ispar, lengt) in 

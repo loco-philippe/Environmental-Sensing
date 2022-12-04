@@ -264,22 +264,21 @@ class IlistInterface:
         option = {'dtype': None} | kwargs
         if not self.consistent:
             raise IlistError("Ilist not consistent")
-        #axesname = [self.idxname[i] for i in idx[:len(self.idxname)]]
-        #ilf = self.full(indexname=axesname, fillvalue=fillvalue,
         if idxname is None or idxname == []:
             idxname = self.primaryname
         ilf = self.full(indexname=idxname, fillvalue=fillvalue,
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
-        if not varname and len(ilf.lvarname) == 0:
-            raise IlistError("Variable is not defined")
-        elif not varname:
+        if not varname and len(ilf.lvarname) != 0:
+        #    raise IlistError("Variable is not defined")
+        #elif not varname:
             varname = ilf.lvarname[0]
-        ivar = 0
-        if varname in ilf.lname:
+        #ivar = 0
+        #if varname in ilf.lname:
+        if not varname in ilf.lname:
+            ivar = -1      
+        else:
             ivar = ilf.lname.index(varname)
-        #if varname in self.lvarname:
-        #    ivar = self.lvarname.index(varname)
         if isinstance(lisfunc, list) and len(lisfunc) == 1:
             lisfunc = lisfunc * ilf.lenindex
         elif isinstance(lisfunc, list) and len(lisfunc) != ilf.lenindex:
@@ -287,28 +286,23 @@ class IlistInterface:
         elif not isinstance(lisfunc, list):
             funcvar = lisfunc
             lisfunc = [None] * ilf.lenindex
-            #lisfunc[self.lvarrow[0]] = funcvar
-            lisfunc[ivar] = funcvar
+            if ivar != -1:
+                lisfunc[ivar] = funcvar
         lisfuncname = dict(zip(ilf.lname, lisfunc))
-        #idxilf = list(range(len(idx[:len(self.idxname)])))
-        #coord = ilf._xcoord(idxilf, lisfuncname, **option)
-        #coord = ilf._xcoord(self.idxname, lisfuncname, **option)
         coord = ilf._xcoord(idxname, lisfuncname, **option)
         dims = idxname
-        #dims = self.idxname
-        #dims = [ilf.idxname[i] for i in idxilf]
         if numeric:
-            #lisfunc[self.lvarrow[0]] = util.cast
             lisfunc[ivar] = util.cast
             fillvalue = math.nan
             npdtype = 'float'
             option['dtype'] = 'float'
-        #data = ilf.lvar[ivar].to_numpy(func=lisfunc[self.lvarrow[ivar]],
-        data = ilf.lindex[ivar].to_numpy(func=lisfunc[ivar],
-                                    npdtype=npdtype, **option
-                                    ).reshape([len(ilf.nindex(name).codec) for name in idxname])
-        #                            ).reshape([ilf.idxlen[idx] for idx in range(len(self.idxname))])
-        #                            ).reshape([ilf.idxlen[idx] for idx in idxilf])
+        if ivar == -1:
+            data = Iindex(list(range(len(ilf)))).to_numpy(npdtype='int')\
+                  .reshape([len(ilf.nindex(name).codec) for name in idxname])
+        else:
+            data = ilf.lindex[ivar]\
+                  .to_numpy(func=lisfunc[ivar], npdtype=npdtype, **option)\
+                  .reshape([len(ilf.nindex(name).codec) for name in idxname])
         if not name:
             name = ilf.name
         if not isinstance(attrs, dict):
@@ -319,22 +313,32 @@ class IlistInterface:
             attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
 
-    def voxel(self):
+    def voxel(self, idxname=None):
         '''
         Plot not null values in a cube with voxels and return indexes values.
+        
+        *Parameters*
+
+        - **idxname** : list (default none) - list of idx to be completed. If None,
+        self.primary is used.
 
         *Returns* : **dict of indexes values**
         '''
         if not self.consistent:
             return None
-        if self.lenidx > 3:
+        if idxname is None or idxname == []:
+            idxname = self.primaryname
+        
+        if len(idxname) > 3:
             raise IlistError('number of idx > 3')
-        if self.lenidx == 2:
+        if len(idxname) == 2:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
-        elif self.lenidx == 1:
+            idxname += [' ']
+        elif len(idxname) == 1:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
             self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
-        xar = self.to_xarray(idx=[0, 1, 2], fillvalue='?', fillextern=False,
+            idxname += [' ', '  ']
+        xar = self.to_xarray(idxname=idxname, fillvalue='?', fillextern=False,
                             lisfunc=util.isNotEqual, tovalue='?')
         axe = plt.figure().add_subplot(projection='3d')
         axe.voxels(xar, edgecolor='k')
@@ -345,6 +349,7 @@ class IlistInterface:
                 ylabel=xar.dims[1][:8],
                 zlabel=xar.dims[2][:8])
         plt.show()
+        self.delindex([' ', '  '])
         return {xar.dims[i]: list(xar.coords[xar.dims[i]].values)
                 for i in range(len(xar.dims))}
 

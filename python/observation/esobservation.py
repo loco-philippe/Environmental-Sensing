@@ -526,16 +526,19 @@ class Observation(Ilist):
         #print('fin', time()-t0)
         return dic
 
-    def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
-                  lisfunc=None, numeric=False, npdtype=None, **kwargs):
+    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?', 
+                  fillextern=True, lisfunc=None, numeric=False, npdtype=None, 
+                  **kwargs):
         '''
         Complete the Observation and generate a Xarray DataArray with the dimension define by idx.
 
         *Parameters*
 
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
-        - **idx** : list (default none) - list of idx to be completed. If [],
+        - **idxname** : list (default none) - list of idx to be completed. If None,
         self.primary is used.
+        - **varname** : string (default none) - Name of the variable to use. If None,
+        first lvarname is used.
         - **fillvalue** : object (default '?') - value used for the new extval
         - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
         - **lisfunc** : function (default none) - list of function to apply to indexes before export
@@ -544,9 +547,10 @@ class Observation(Ilist):
         - **kwargs** : parameter for lisfunc
 
         *Returns* : DataArray '''
-        return Ilist.to_xarray(self, info=info, idx=idx, fillvalue=fillvalue,
-                               fillextern=fillextern, lisfunc=lisfunc, name=self.name,
-                               numeric=numeric, npdtype=npdtype, attrs=self.param, **kwargs)
+        return Ilist.to_xarray(self, info=info, idxname=idxname, varname=varname, 
+                               fillvalue=fillvalue, fillextern=fillextern, 
+                               lisfunc=lisfunc, name=self.name, numeric=numeric,
+                               npdtype=npdtype, attrs=self.param, **kwargs)
 # %% internal
 
     def _info(self, **kwargs):
