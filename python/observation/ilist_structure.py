@@ -356,8 +356,8 @@ class IlistStructure:
 
         *Returns boolean* : True if found'''
         if extern:
-            return record in self.textidxext
-        return record in self.textidx
+            return record in util.transpose(self.extidxext)
+        return record in util.transpose(self.extidx)
 
     def idxrecord(self, record):
         '''return rec array (without variable) from complete record (with variable)'''

@@ -89,9 +89,6 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.lunicrow`
     - `Ilist.primaryname`
     - `Ilist.setidx`
-    - `Ilist.tiidx`
-    - `Ilist.textidx`
-    - `Ilist.textidxext`
     - `Ilist.zip`
     
     *dynamic value (getters @property)*
@@ -752,24 +749,9 @@ class Ilist(IlistStructure, IlistInterface):
         return [idx.codec for idx in self.lidx]
 
     @property
-    def tiidx(self):
-        ''' list of keys for each record'''
-        return util.list(list(zip(*self.iidx)))
-
-    @property
     def tiindex(self):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
-
-    @property
-    def textidx(self):
-        '''list of values for each rec'''
-        return util.transpose(self.extidx)
-
-    @property
-    def textidxext(self):
-        '''list of val for each rec'''
-        return util.transpose(self.extidxext)
 
     @property
     def typevalue(self):
@@ -778,8 +760,8 @@ class Ilist(IlistStructure, IlistInterface):
 
     @property
     def zip(self):
-        '''return a zip format for textidx : tuple(tuple(rec))'''
-        textidx = self.textidx
+        '''return a zip format for transpose(extidx) : tuple(tuple(rec))'''
+        textidx = util.transpose(self.extidx)
         if not textidx:
             return None
         return tuple(tuple(idx) for idx in textidx)
