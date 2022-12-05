@@ -21,13 +21,44 @@ from ilist_interface import IlistError
 
 class IlistStructure:
     '''this class includes Ilist methods :
-        
+
+    *selecting - infos methods*
+
+    - `IlistStructure.couplingmatrix`
+    - `IlistStructure.idxrecord`
+    - `IlistStructure.indexinfos`
+    - `IlistStructure.indicator`
+    - `IlistStructure.iscanonorder`
+    - `IlistStructure.isinrecord`
+    - `IlistStructure.keytoval`
+    - `IlistStructure.loc`
+    - `IlistStructure.nindex`
+    - `IlistStructure.record`
+    - `IlistStructure.recidx`
+    - `IlistStructure.recvar`
+    - `IlistStructure.valtokey`
+
+    *add - update methods*
+
+    - `IlistStructure.add`
+    - `IlistStructure.addindex`
+    - `IlistStructure.append`
+    - `IlistStructure.delindex`
+    - `IlistStructure.delrecord`
+    - `IlistStructure.orindex`
+    - `IlistStructure.renameindex`
+    - `IlistStructure.setvar`
+    - `IlistStructure.setname`
+    - `IlistStructure.updateindex`
+
+    *structure management - methods*
+
     - `IlistStructure.applyfilter`
     - `IlistStructure.coupling`
     - `IlistStructure.full`
     - `IlistStructure.getduplicates`
     - `IlistStructure.mix`
-    - `IlistStructure.merge`
+    - `IlistStructure.merging`
     - `IlistStructure.reindex`
     - `IlistStructure.reorder`
     - `IlistStructure.setfilter`
@@ -225,7 +256,7 @@ class IlistStructure:
             if idxname in self.lname:
                 self.lindex.pop(self.lname.index(idxname))
     
-    def _fullindex(self, ind, keysadd, indexname, leng, fillval):
+    def _fullindex(self, ind, keysadd, indexname, leng, fillvalue, fillextern):
         idx = self.lindex[ind]
         lenadd = len(keysadd[0])
         if len(idx) == leng:
@@ -236,12 +267,15 @@ class IlistStructure:
         elif self.lname[ind] in indexname:
             idx.set_keys(idx.keys + keysadd[indexname.index(self.lname[ind])])
         elif inf[ind]['parent'] == -1:
+            fillval = fillvalue
+            if fillextern:
+                fillval = util.castval(fillvalue, util.typename(self.lname[ind], ES.def_clsName))
             idx.set_keys(idx.keys + [len(idx.codec)] * len(keysadd[0]))
             idx.set_codec(idx.codec + [fillval])
         else:
             parent = inf[ind]['parent']
             if len(self.lindex[parent]) != leng:
-                self._fullindex(parent, keysadd, indexname, leng, fillval)
+                self._fullindex(parent, keysadd, indexname, leng, fillvalue, fillextern)
             if inf[ind]['cat'] == 'coupled' :
                 idx.tocoupled(self.lindex[parent], coupling=True)
             else:
@@ -273,11 +307,11 @@ class IlistStructure:
         if not keysadd or len(keysadd) == 0:
             return ilis
         lenadd = len(keysadd[0])
-        for ind in range(self.lenindex):
-            fillval = fillvalue
+        for ind in range(ilis.lenindex):
+            '''fillval = fillvalue
             if fillextern:
-                fillval = util.castval(fillvalue, util.typename(ilis.lname[ind], ES.def_clsName))
-            ilis._fullindex(ind, keysadd, indexname, len(ilis) + lenadd, fillval)
+                fillval = util.castval(fillvalue, util.typename(ilis.lname[ind], ES.def_clsName))'''
+            ilis._fullindex(ind, keysadd, indexname, len(ilis) + lenadd, fillvalue, fillextern)
         if complete:
             ilis.setcanonorder()
         return ilis
@@ -386,7 +420,7 @@ class IlistStructure:
 
     def loc(self, rec, extern=True, row=False):
         '''
-        Return variable value or row corresponding to a list of idx values.
+        Return record or row corresponding to a list of idx values.
 
         *Parameters*
 
@@ -394,63 +428,22 @@ class IlistStructure:
         - **extern** : boolean (default True) - if True, compare rec to val,
         else to values
         - **row** : Boolean (default False) - if True, return list of row,
-        else list of first variable values
+        else list of records
 
         *Returns*
 
         - **object** : variable value or None if not found'''
-        locrow = list(set.intersection(*[set(self.lindex[i].loc(rec[i], extern))
-                                       for i in range(self.lenidx)]))
+        if len(rec) == self.lenindex:
+            locrow = list(set.intersection(*[set(self.lindex[i].loc(rec[i], extern))
+                                           for i in range(self.lenindex)]))
+        elif len(rec) == self.lenidx:
+            locrow = list(set.intersection(*[set(self.lidx[i].loc(rec[i], extern))
+                                           for i in range(self.lenidx)]))
         if row:
             return locrow
         #return self.lvar[0][tuple(locrow)]
         return [self.record(locr, extern=extern) for locr in locrow]
  
-    def merge_old(self, merged, name=None, fillvalue=math.nan, mergeidx=False, updateidx=False):
-        '''
-        Merge method replaces Ilist objects included in variable data into its constituents.
-
-        *Parameters*
-
-        - **merged** : str - name of Iindex to be merged
-        - **name** : str (default None) - name of the new Ilist object
-        - **fillvalue** : object (default nan) - value used for the additional data
-        - **mergeidx** : create a new index if mergeidx is False
-        - **updateidx** : if True (and mergeidx is True), update actual values
-        if index name is present
-
-        *Returns*: merged Ilist '''
-        find = True
-        ilm = copy(self)
-        if name:
-            ilm.name = name
-        nameinit = ilm.idxname
-        while find:
-            find = False
-            for i in range(len(ilm)):
-                #if not ilm.lvar[0].values[i].__class__.__name__ in ['Ilist', 'Observation']:
-                if not ilm.nindex(merged).values[i].__class__.__name__ in ['Ilist', 'Observation']:
-                    continue
-                find = True
-                ilis = ilm.nindex(merged).values[i].merge()
-                ilname = ilis.idxname
-                record = ilm.recidx(i, extern=False)
-                for val, j in zip(reversed(record), reversed(range(len(record)))):  # Ilist pere
-                    nameidx = ilm.lidx[j].name
-                    updidx = nameidx in nameinit and not updateidx
-                    ilis.addindex([nameidx, [val] * len(ilis)], first=True,
-                                  merge=mergeidx, update=updidx)  # ajout des index au fils
-                for nam in ilname:
-                    fillval = util.castval(
-                        fillvalue, util.typename(nam, ES.def_clsName))
-                    ilm.addindex([nam, [fillval] * len(ilm)],
-                                 merge=mergeidx, update=False)  # ajout des index au père
-                del ilm[i]
-                ilis.renameindex(ilis.lvarname[0], ilm.lvarname[0])
-                ilm += ilis
-                break
-        return ilm
-
     def mix(self, other, fillvalue=None):
         '''add other Iindex not included in self and add other's values'''
         sname = set(self.lname)
@@ -511,6 +504,7 @@ class IlistStructure:
         - **list** : val record or value record'''
         if extern:
             return [idx.valrow(row) for idx in self.lindex]
+            #return [idx.val[row] for idx in self.lindex]
         return [idx.values[row] for idx in self.lindex]
 
     def recidx(self, row, extern=True):

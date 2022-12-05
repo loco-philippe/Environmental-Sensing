@@ -566,7 +566,7 @@ class IindexStructure:
         return self.__class__(codec=codec, name=self.name, keys=keys, castobj=False)
 
     def valrow(self, row):
-        ''' return val for a record
+        ''' return json val for a record
 
         *Parameters*
 

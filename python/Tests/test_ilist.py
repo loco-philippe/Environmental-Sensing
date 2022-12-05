@@ -139,8 +139,7 @@ class Test_Ilist(unittest.TestCase):
         iidx = Ilist.dic({'varvalue': ['a', 'b', 'c', 'd', 'e', 'f'],
                            'datationvalue': [10, 10, 20, 20, 30, 30],
                            'locationvalue': [100, 100, 200, 200, 300, 300],
-                           'propertyvalue': [True, False, True, False, True, False]},
-                          var=0)
+                           'propertyvalue': [True, False, True, False, True, False]})
         iidx1 = Ilist.ext([['a', 'b', 'c', 'd', 'e', 'f'],
                             [10, 10, 20, 20, 30, 30],
                            [100, 100, 200, 200, 300, 300],
@@ -479,7 +478,7 @@ class Test_Ilist(unittest.TestCase):
     def test_mergerecord(self):
         a=Ilist.ext([[1,2,3], [4,5,6]])
         b=Ilist.ext([['x'], [a]], ['merge_i0', 'merge'])
-        self.assertEqual(Ilist.mergerecord(b)[0].lenindex, 3)
+        self.assertEqual(Ilist._mergerecord(b)[0].lenindex, 3)
         
     def test_merge(self):
         il1 = Ilist.dic({'notes': [10, 11, 12],
@@ -498,7 +497,7 @@ class Test_Ilist(unittest.TestCase):
     def test_csv(self):
         il = Ilist.obj([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 15]])
         il.to_csv('test.csv')
-        il2 = Ilist.from_csv('test.csv', var=0)
+        il2 = Ilist.from_csv('test.csv')
         self.assertTrue(il == il2)
         if ES.def_clsName:
             il.to_csv(ifunc=ESValue.vSimple)
@@ -509,8 +508,8 @@ class Test_Ilist(unittest.TestCase):
                         [10, 0, 20, 20, 15], [1, 2, 1, 2, 1]])
         il.to_csv('test.csv', optcsv={
                   'dialect': 'excel', 'delimiter': ';', 'quoting': csv.QUOTE_NONNUMERIC})
-        il2 = Ilist.from_csv('test.csv', var=0, optcsv={'dialect': 'excel', 'delimiter': ';',
-                                                        'quoting': csv.QUOTE_NONNUMERIC})
+        il2 = Ilist.from_csv('test.csv', optcsv={'dialect': 'excel', 'delimiter': ';',
+                                                 'quoting': csv.QUOTE_NONNUMERIC})
         self.assertTrue(il == il2)
 
     def test_axes(self):

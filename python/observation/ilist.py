@@ -57,7 +57,6 @@ class Ilist(IlistStructure, IlistInterface):
     *Attributes (for @property see methods)* :
 
     - **lindex** : list of Iindex
-    - **lvarname** : variable name (list of string)
     - **analysis** : Analysis object (data structure)
 
     The methods defined in this class are :
@@ -70,29 +69,40 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.from_csv`
     - `Ilist.from_obj`
     - `Ilist.from_file`
+    - `Ilist.merge`
 
-    *dynamic value (getters @property)*
-
+    *dynamic value - module analysis (getters @property)*
+ 
     - `Ilist.extidx`
     - `Ilist.extidxext`
     - `Ilist.idxname`
     - `Ilist.idxlen`
     - `Ilist.iidx`
-    - `Ilist.keys`
-    - `Ilist.lenindex`
     - `Ilist.lenidx`
     - `Ilist.lidx`
     - `Ilist.lidxrow`
     - `Ilist.lisvar`
     - `Ilist.lvar`
+    - `Ilist.lvarname`
     - `Ilist.lvarrow`
-    - `Ilist.lname`
     - `Ilist.lunicname`
     - `Ilist.lunicrow`
+    - `Ilist.primaryname`
     - `Ilist.setidx`
     - `Ilist.tiidx`
     - `Ilist.textidx`
     - `Ilist.textidxext`
+    - `Ilist.zip`
+    
+    *dynamic value (getters @property)*
+
+    - `Ilist.keys`
+    - `Ilist.iindex`
+    - `Ilist.indexlen`
+    - `Ilist.lenindex`
+    - `Ilist.lname`
+    - `Ilist.tiindex`
+    - `Ilist.typevalue`
 
     *global value (getters @property)*
 
@@ -101,7 +111,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.dimension`
     - `Ilist.lencomplete`
     - `Ilist.primary`
-    - `Ilist.zip`
+    - `Ilist.secondary`
 
     *selecting - infos methods (`observation.ilist_structure.IlistStructure`)*
 
@@ -139,7 +149,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.full`
     - `Ilist.getduplicates`
     - `Ilist.mix`
-    - `Ilist.merge`
+    - `Ilist.merging`
     - `Ilist.reindex`
     - `Ilist.reorder`
     - `Ilist.setfilter`
@@ -168,7 +178,6 @@ class Ilist(IlistStructure, IlistInterface):
         *Parameters*
 
         - **listidx** :  list (default None) - list of Iindex data
-        - **lvarname** :  list (default None) - list of name of variable
         - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
 
         self.name = self.__class__.__name__
@@ -185,6 +194,203 @@ class Ilist(IlistStructure, IlistInterface):
         self.analysis._actualize()              
         return
 
+
+        
+    @classmethod
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, reindex=True):
+        '''
+        Ilist constructor (external dictionnary).
+
+        *Parameters*
+
+        - **idxdic** : {name : values}  (see data model)
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
+        if not idxdic:
+            return cls.ext(idxval=None, idxname=None, typevalue=typevalue,
+                            reindex=reindex)
+        if isinstance(idxdic, Ilist):
+            return idxdic
+        if not isinstance(idxdic, dict):
+            raise IlistError("idxdic not dict")
+        return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
+                        typevalue=typevalue, reindex=reindex)
+
+    @classmethod
+    def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, reindex=True):
+        '''
+        Ilist constructor (external index).
+
+        *Parameters*
+
+        - **idxval** : list of Iindex or list of values (see data model)
+        - **idxname** : list of string (default None) - list of Iindex name (see data model)
+        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
+        #print('debut ext')
+        #t0 = time()
+
+        if idxval is None:
+            idxval = []
+        if not isinstance(idxval, list):
+            return None
+        val = []
+        for idx in idxval:
+            if not isinstance(idx, list):
+                val.append([idx])
+            else:
+                val.append(idx)
+        lenval = [len(idx) for idx in val]
+        if lenval and max(lenval) != min(lenval):
+            raise IlistError('the length of Iindex are different')
+        length = 0
+        if lenval:
+            length = lenval[0]
+        if idxname is None:
+            idxname = [None] * len(val)
+        for ind, name in enumerate(idxname):
+            if name is None or name == ES.defaultindex:
+                idxname[ind] = 'i'+str(ind)  
+        lidx = [list(IindexInterface.decodeobj(idx, typevalue, context=False)) for idx in val]
+        lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex) 
+                  for idx, name in zip(lidx, idxname)]
+        return cls(lindex, reindex=False)      
+
+    @classmethod
+    def from_csv(cls, filename='ilist.csv', header=True, nrow=None,
+                 optcsv={'quoting': csv.QUOTE_NONNUMERIC}, dtype=ES.def_dtype):
+        '''
+        Ilist constructor (from a csv file). Each column represents index values.
+
+        *Parameters*
+
+        - **filename** : string (default 'ilist.csv'), name of the file to read
+        - **header** : boolean (default True). If True, the first raw is dedicated to names
+        - **nrow** : integer (default None). Number of row. If None, all the row else nrow
+        - **dtype** : list of string (default None) - data type for each column (default str)
+        - **optcsv** : dict (default : quoting) - see csv.reader options'''
+        if not optcsv:
+            optcsv = {}
+        if not nrow:
+            nrow = -1
+        with open(filename, newline='', encoding="utf-8") as file:
+            reader = csv.reader(file, **optcsv)
+            irow = 0
+            for row in reader:
+                if irow == nrow:
+                    break
+                # elif irow == 0:
+                if irow == 0:
+                    if dtype and not isinstance(dtype, list):
+                        dtype = [dtype] * len(row)
+                    idxval = [[] for i in range(len(row))]
+                    idxname = None
+                if irow == 0 and header:
+                    idxname = row
+                else:
+                    if not dtype:
+                        for i in range(len(row)):
+                            idxval[i].append(row[i])
+                    else:
+                        for i in range(len(row)):
+                            idxval[i].append(util.cast(row[i], dtype[i]))
+                irow += 1
+        return cls.ext(idxval, idxname, typevalue=None, reindex=True)
+
+    @classmethod
+    def from_file(cls, filename, forcestring=False):
+        '''
+        Generate Object from file storage.
+
+         *Parameters*
+
+        - **filename** : string - file name (with path)
+        - **forcestring** : boolean (default False) - if True,
+        forces the UTF-8 data format, else the format is calculated
+
+        *Returns* : new Object'''
+        with open(filename, 'rb') as file:
+            btype = file.read(1)
+        if btype == bytes('[', 'UTF-8') or btype == bytes('{', 'UTF-8') or forcestring:
+            with open(filename, 'r', newline='', encoding="utf-8") as file:
+                bjson = file.read()
+        else:
+            with open(filename, 'rb') as file:
+                bjson = file.read()
+        return cls.from_obj(bjson, reindex=True)
+
+    @classmethod
+    def obj(cls, bsd=None, reindex=True, context=True):
+        '''
+        Generate a new Object from a bytes, string or list value
+
+        *Parameters*
+
+        - **bsd** : bytes, string or list data to convert
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **context** : boolean (default True) - if False, only codec and keys are included'''
+        return cls.from_obj(bsd, reindex=reindex, context=context)
+
+    @classmethod
+    def from_obj(cls, bsd=None, reindex=True, context=True):
+        '''
+        Generate an Ilist Object from a bytes, string or list value
+
+        *Parameters*
+
+        - **bsd** : bytes, string, DataFrame or list data to convert
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **context** : boolean (default True) - if False, only codec and keys are included'''
+        if bsd is None:
+            bsd = []
+        if isinstance(bsd, bytes):
+            lis = cbor2.loads(bsd)
+        elif isinstance(bsd, str):
+            lis = json.loads(bsd, object_hook=CborDecoder().codecbor)
+        elif isinstance(bsd, (list, dict)) or bsd.__class__.__name__ == 'DataFrame':
+            lis = bsd
+        else:
+            raise IlistError("the type of parameter is not available")
+        return cls._init_obj(lis, reindex=reindex, context=context)
+
+    def merge(self, name=None, fillvalue=math.nan):
+        '''
+        Merge method replaces Ilist objects included into its constituents.
+
+        *Parameters*
+
+        - **name** : str (default None) - name of the new Ilist object
+        - **fillvalue** : object (default nan) - value used for the additional data
+
+        *Returns*: merged Ilist '''
+        ilc = copy(self)
+        delname = []
+        row = ilc[0]
+        if not isinstance(row, list):
+            row = [row]
+        merged, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname))
+        #print('ilc0 :', merged, oldname, newname)
+        if oldname:
+            delname.append(oldname)        
+        for ind in range(1, len(ilc)):
+            oldidx = ilc.nindex(oldname)
+            for name in newname:
+                ilc.addindex(Iindex(oldidx.codec, name, oldidx.keys))
+            row = ilc[ind]
+            if not isinstance(row, list):
+                row = [row]
+            rec, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname))
+            #print('ilci :', ind, rec, oldname, newname)
+            delname.append(oldname)
+            for name in newname:
+                oldidx = merged.nindex(oldname)
+                fillval = util.castval(fillvalue, util.typename(name, ES.def_clsName))
+                merged.addindex(Iindex([fillval] * len(merged), name, oldidx.keys))
+            merged += rec
+        for name in set(delname):
+            if name:
+                merged.delindex(name)
+        return merged
+
+# %% internal
     @classmethod    
     def _init_obj(cls, listidx=None, reindex=True, typevalue=ES.def_clsName, context=True):
         '''
@@ -294,168 +500,9 @@ class Ilist(IlistStructure, IlistInterface):
         # derived keys
         lidx[ind][4] = Iindex.keysfromderkeys(lidx[lidx[ind][3]][4], lidx[ind][4])
         return    
-        
-    @classmethod
-    def dic(cls, idxdic=None, typevalue=ES.def_clsName, var=None, reindex=True):
-        '''
-        Ilist constructor (external dictionnary).
-
-        *Parameters*
-
-        - **idxdic** : {name : values}  (see data model)
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
-        - **var** :  int (default None) - row of the variable'''
-        if not idxdic:
-            return cls.ext(idxval=None, idxname=None, typevalue=typevalue,
-                            reindex=reindex)
-        if isinstance(idxdic, Ilist):
-            return idxdic
-        if not isinstance(idxdic, dict):
-            raise IlistError("idxdic not dict")
-        return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
-                        typevalue=typevalue, reindex=reindex)
-
-    @classmethod
-    def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, var=None,
-             reindex=True):
-        '''
-        Ilist constructor (external index).
-
-        *Parameters*
-
-        - **idxval** : list of Iindex or list of values (see data model)
-        - **idxname** : list of string (default None) - list of Iindex name (see data model)
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
-        - **var** :  int (default None) - row of the variable'''
-        #print('debut ext')
-        #t0 = time()
-
-        if idxval is None:
-            idxval = []
-        if not isinstance(idxval, list):
-            return None
-        val = []
-        for idx in idxval:
-            if not isinstance(idx, list):
-                val.append([idx])
-            else:
-                val.append(idx)
-        lenval = [len(idx) for idx in val]
-        if lenval and max(lenval) != min(lenval):
-            raise IlistError('the length of Iindex are different')
-        length = 0
-        if lenval:
-            length = lenval[0]
-        if idxname is None:
-            idxname = [None] * len(val)
-        for ind, name in enumerate(idxname):
-            if name is None or name == ES.defaultindex:
-                idxname[ind] = 'i'+str(ind)  
-        lidx = [list(IindexInterface.decodeobj(idx, typevalue, context=False)) for idx in val]
-        lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex) 
-                  for idx, name in zip(lidx, idxname)]
-        return cls(lindex, reindex=False)      
-
-    @classmethod
-    def from_csv(cls, filename='ilist.csv', var=None, header=True, nrow=None,
-                 optcsv={'quoting': csv.QUOTE_NONNUMERIC}, dtype=ES.def_dtype):
-        '''
-        Ilist constructor (from a csv file). Each column represents index values.
-
-        *Parameters*
-
-        - **filename** : string (default 'ilist.csv'), name of the file to read
-        - **var** : integer (default None). column row for variable data
-        - **header** : boolean (default True). If True, the first raw is dedicated to names
-        - **nrow** : integer (default None). Number of row. If None, all the row else nrow
-        - **dtype** : list of string (default None) - data type for each column (default str)
-        - **optcsv** : dict (default : quoting) - see csv.reader options'''
-        if not optcsv:
-            optcsv = {}
-        if not nrow:
-            nrow = -1
-        with open(filename, newline='', encoding="utf-8") as file:
-            reader = csv.reader(file, **optcsv)
-            irow = 0
-            for row in reader:
-                if irow == nrow:
-                    break
-                # elif irow == 0:
-                if irow == 0:
-                    if dtype and not isinstance(dtype, list):
-                        dtype = [dtype] * len(row)
-                    idxval = [[] for i in range(len(row))]
-                    idxname = None
-                if irow == 0 and header:
-                    idxname = row
-                else:
-                    if not dtype:
-                        for i in range(len(row)):
-                            idxval[i].append(row[i])
-                    else:
-                        for i in range(len(row)):
-                            idxval[i].append(util.cast(row[i], dtype[i]))
-                irow += 1
-        return cls.ext(idxval, idxname, typevalue=None, reindex=True)
-
-    @classmethod
-    def from_file(cls, filename, forcestring=False):
-        '''
-        Generate Object from file storage.
-
-         *Parameters*
-
-        - **filename** : string - file name (with path)
-        - **forcestring** : boolean (default False) - if True,
-        forces the UTF-8 data format, else the format is calculated
-
-        *Returns* : new Object'''
-        with open(filename, 'rb') as file:
-            btype = file.read(1)
-        if btype == bytes('[', 'UTF-8') or btype == bytes('{', 'UTF-8') or forcestring:
-            with open(filename, 'r', newline='', encoding="utf-8") as file:
-                bjson = file.read()
-        else:
-            with open(filename, 'rb') as file:
-                bjson = file.read()
-        return cls.from_obj(bjson, reindex=True)
-
-    @classmethod
-    def obj(cls, bsd=None, reindex=True, context=True):
-        '''
-        Generate a new Object from a bytes, string or list value
-
-        *Parameters*
-
-        - **bsd** : bytes, string or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
-        - **context** : boolean (default True) - if False, only codec and keys are included'''
-        return cls.from_obj(bsd, reindex=reindex, context=context)
-
-    @classmethod
-    def from_obj(cls, bsd=None, reindex=True, context=True):
-        '''
-        Generate an Ilist Object from a bytes, string or list value
-
-        *Parameters*
-
-        - **bsd** : bytes, string, DataFrame or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
-        - **context** : boolean (default True) - if False, only codec and keys are included'''
-        if bsd is None:
-            bsd = []
-        if isinstance(bsd, bytes):
-            lis = cbor2.loads(bsd)
-        elif isinstance(bsd, str):
-            lis = json.loads(bsd, object_hook=CborDecoder().codecbor)
-        elif isinstance(bsd, (list, dict)) or bsd.__class__.__name__ == 'DataFrame':
-            lis = bsd
-        else:
-            raise IlistError("the type of parameter is not available")
-        return cls._init_obj(lis, reindex=reindex, context=context)
-
+    
     @staticmethod
-    def mergerecord(rec, mergeidx=True, updateidx=True):
+    def _mergerecord(rec, mergeidx=True, updateidx=True):
         row = rec[0]
         if not isinstance(row, list):
             row = [row]
@@ -479,47 +526,7 @@ class Ilist(IlistStructure, IlistInterface):
                 ilis.addindex([name, [rec.nindex(name)[0]] * len(ilis)],
                               merge=mergeidx, update=updidx)
         return (ilis, oldname, newname)
-                
-    def merge(self, name=None, fillvalue=math.nan):
-        '''
-        Merge method replaces Ilist objects included into its constituents.
-
-        *Parameters*
-
-        - **name** : str (default None) - name of the new Ilist object
-        - **fillvalue** : object (default nan) - value used for the additional data
-
-        *Returns*: merged Ilist '''
-        ilc = copy(self)
-        delname = []
-        row = ilc[0]
-        if not isinstance(row, list):
-            row = [row]
-        merged, oldname, newname = Ilist.mergerecord(Ilist.ext(row, ilc.lname))
-        #print('ilc0 :', merged, oldname, newname)
-        if oldname:
-            delname.append(oldname)        
-        for ind in range(1, len(ilc)):
-            oldidx = ilc.nindex(oldname)
-            for name in newname:
-                ilc.addindex(Iindex(oldidx.codec, name, oldidx.keys))
-            row = ilc[ind]
-            if not isinstance(row, list):
-                row = [row]
-            rec, oldname, newname = Ilist.mergerecord(Ilist.ext(row, ilc.lname))
-            #print('ilci :', ind, rec, oldname, newname)
-            delname.append(oldname)
-            for name in newname:
-                oldidx = merged.nindex(oldname)
-                fillval = util.castval(fillvalue, util.typename(name, ES.def_clsName))
-                merged.addindex(Iindex([fillval] * len(merged), name, oldidx.keys))
-            merged += rec
-        for name in set(delname):
-            if name:
-                merged.delindex(name)
-        return merged
-
-
+                    
 # %% special
     def __str__(self):
         '''return string format for var and lidx'''
@@ -733,6 +740,11 @@ class Ilist(IlistStructure, IlistInterface):
     def primary(self):
         ''' list of primary idx'''
         return self.analysis.getprimary()
+
+    @property
+    def secondary(self):
+        ''' list of secondary idx'''
+        return self.analysis.getsecondary()
 
     @property
     def setidx(self):

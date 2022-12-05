@@ -33,7 +33,7 @@ class Analysis:
     - `Analysis.getinfos`
     - `Analysis.getmatrix`
     - `Analysis.getprimary`
-    - `Analysis.getcrossed`
+    - `Analysis.getpartition`
     - `Analysis.tree`
     '''
     # %% methods
@@ -102,6 +102,12 @@ class Analysis:
         if self.hashi != self.iobj._hashi():
             self._actualize()
         return self.primary
+
+    def getsecondary(self):
+        '''return attribute secondary'''
+        if self.hashi != self.iobj._hashi():
+            self._actualize()
+        return self.secondary
 
     def getpartition(self):
         '''return attribute partition'''

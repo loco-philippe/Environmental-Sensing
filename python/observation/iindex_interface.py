@@ -312,7 +312,8 @@ class IindexInterface:
         else:
             values = util.funclist(self._codec, func, **kwargs)
         npdtype1 = npdtype 
-        if isinstance(values[0], (str, datetime.datetime)):
+        #if isinstance(values[0], (str, datetime.datetime)):
+        if isinstance(values[0], (datetime.datetime)):
             npdtype1 = np.datetime64
         #else:
         #    npdtype=None

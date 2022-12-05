@@ -229,7 +229,7 @@ class IlistInterface:
                 lis = [idx.to_obj(name=iname, **option2) 
                        for idx, iname in zip(self.lindex, indexname)]
             else:
-                lis = self._optimize_obj2(indexname, **option2)
+                lis = self._optimize_obj(indexname, **option2)
 
         if option['encoded'] and option['encode_format'] == 'json':
             return json.dumps(lis, cls=IindexEncoder)
@@ -270,11 +270,7 @@ class IlistInterface:
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
         if not varname and len(ilf.lvarname) != 0:
-        #    raise IlistError("Variable is not defined")
-        #elif not varname:
             varname = ilf.lvarname[0]
-        #ivar = 0
-        #if varname in ilf.lname:
         if not varname in ilf.lname:
             ivar = -1      
         else:
@@ -404,47 +400,7 @@ class IlistInterface:
         return self.lindex[index].vlist(func, *args, **kwargs)
 
     # %%internal
-    def _optimize_obj(self, idxname, lis, **option2):
-        '''return list object with primary and secondary Iindex'''
-        indexinfos = self.indexinfos()
-        notkeyscrd = True
-        if self.iscanonorder():
-            notkeyscrd = None
-        for idx, iname, inf in zip(self.lidx, idxname, indexinfos):
-            #if inf['typecoupl'] == 'unique':
-            if inf['cat'] == 'unique':
-                lis.append(idx.tostdcodec(full=False).to_obj(
-                    name=iname, **option2))
-                #elif inf['typecoupl'] == 'crossed':
-            elif inf['cat'] == 'primary':
-                lis.append(idx.to_obj(keys=notkeyscrd,
-                           name=iname, **option2))
-                #elif inf['typecoupl'] == 'coupled':
-            elif inf['cat'] == 'coupled':
-                if self.lidx[inf['parent']].keys == list(range(len(self))):
-                    lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                           to_obj(name=iname, **option2))
-                else:
-                    lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                           to_obj(parent=self.lidxrow[inf['parent']],
-                                  name=iname, **option2))
-                    #elif inf['typecoupl'] == 'linked':
-            elif inf['parent'] == -1:
-                lis.append(idx.to_obj(keys=True, name=iname, **option2))
-            #elif inf['typecoupl'] == 'derived':
-            else:
-                if idx.iskeysfromderkeys(self.lidx[inf['parent']]):
-                    lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']],
-                                          name=iname, **option2))
-                else:
-                    keys = idx.derkeys(self.lidx[inf['parent']])
-                    lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']],
-                                          name=iname, **option2))
-            #else:
-            #   raise IlistError('Iindex type undefined')
-        return lis
-    
-    def _optimize_obj2(self, idxname, **option2):
+    def _optimize_obj(self, idxname, **option2):
         '''return list object with optimize modecodec'''
         indexinfos = self.indexinfos()
         notkeys = True
@@ -460,7 +416,6 @@ class IlistInterface:
                 lis.append(idx.setkeys(self.lindex[inf['parent']].keys, inplace=False).
                            to_obj(parent=inf['parent'], name=iname, **option2))
             elif inf['parent'] == -1:
-                #if len(idx.keys) == len(idx):
                 if len(idx.codec) == len(idx):
                     idx.set_codec(util.reorder(idx.codec, idx.keys))
                     idx.set_keys(list(range(len(idx))))
@@ -555,17 +510,15 @@ class IlistInterface:
         coord = {}
         for i in self.lidxrow:
             fieldi = info[i]
+            iname = self.idxname[i]
             if fieldi['cat'] == 'unique':  #!!!
                 continue
             if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
-                funci = lisfuncname[self.lname[i]]
+                funci = lisfuncname[iname]
             else:
                 funci = None
-            iname = self.idxname[i]
-            #if i in axe:
             if iname in axename:
-                coord[iname] = self.lidx[i].to_numpy(
-                    func=funci, codec=True, **kwargs)
+                coord[iname] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
                 coord[iname+'_row'] = (iname, np.arange(len(coord[iname])))
                 coord[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast,
                                        codec=True, dtype='str', maxlen=maxlen))

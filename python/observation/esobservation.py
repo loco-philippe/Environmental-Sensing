@@ -165,21 +165,18 @@ class Observation(Ilist):
     """
 
 # %% constructor
-    def __init__(self, listidx=None, name=None, id=None, param=None, 
-                 lvarname=None, reindex=True):
+    def __init__(self, listidx=None, name=None, id=None, param=None, reindex=True):
         '''Observation constructor
 
         *Parameters*
 
         - **listidx**  : object (default None) - list of Iindex data or Ilist or Observation
-        - **lvarname** : list (default None) - list of variable names
         - **name**     : string (default None) - Obs name
         - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
 
         if isinstance(listidx, Observation):
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            #self.lvarname = [name for name in listidx.lvarname]
             if not listidx.param is None:
                 self.param = {k: v for k, v in listidx.param.items()}
             else:
@@ -190,7 +187,6 @@ class Observation(Ilist):
             return
         if isinstance(listidx, Ilist):
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            #self.lvarname = [name for name in listidx.lvarname]
             self.param = param
             self.name = name
             self.id = id
@@ -199,15 +195,13 @@ class Observation(Ilist):
         if not listidx:
             Ilist.__init__(self)
         else:
-            #Ilist.__init__(self, listidx=listidx, lvarname=lvarname, reindex=reindex)
             Ilist.__init__(self, listidx=listidx, reindex=reindex)
         self.name = name
         self.id = id
         self.param = param
 
     @classmethod
-    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, 
-            param=None, var=None):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None):
         '''
         Observation constructor (external dictionnary).
 
