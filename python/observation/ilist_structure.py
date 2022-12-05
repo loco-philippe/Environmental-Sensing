@@ -433,12 +433,18 @@ class IlistStructure:
         *Returns*
 
         - **object** : variable value or None if not found'''
-        if len(rec) == self.lenindex:
-            locrow = list(set.intersection(*[set(self.lindex[i].loc(rec[i], extern))
-                                           for i in range(self.lenindex)]))
-        elif len(rec) == self.lenidx:
-            locrow = list(set.intersection(*[set(self.lidx[i].loc(rec[i], extern))
-                                           for i in range(self.lenidx)]))
+        locrow = None
+        try:
+            if len(rec) == self.lenindex:
+                locrow = list(set.intersection(*[set(self.lindex[i].loc(rec[i], extern))
+                                               for i in range(self.lenindex)]))
+            elif len(rec) == self.lenidx:
+                locrow = list(set.intersection(*[set(self.lidx[i].loc(rec[i], extern))
+                                               for i in range(self.lenidx)]))
+        except:
+            pass
+        if locrow is None:
+            return None
         if row:
             return locrow
         #return self.lvar[0][tuple(locrow)]
@@ -565,14 +571,9 @@ class IlistStructure:
         '''Set the canonical index order : primary - secondary/unique - variable.
         Set the canonical keys order : ordered keys in the first columns.
         Return self'''
-        #crossed = self.crossed
-        primary = self.primary
-        # %%% modif
-        order = [self.lidxrow[idx] for idx in primary]
-        #order = [self.lidxrow[idx] for idx in crossed]
-        #order += [self.lidxrow[idx] for idx in primary if not idx in crossed]
-        order += [idx for idx in self.lidxrow if not idx in order]
-        order += self.lvarrow
+        order   = [self.lidxrow[idx] for idx in self.primary]
+        order  += [idx for idx in self.lidxrow if not idx in order]
+        order  += self.lvarrow
         self.swapindex(order)
         self.sort(reindex=False)
         self.analysis._actualize()
@@ -648,12 +649,16 @@ class IlistStructure:
 
         *Parameters*
 
-        - **order** : list of int - new order of index to apply.
+        - **order** : list of int or list of name - new order of index to apply.
 
         *Returns* : self '''
         if self.lenindex != len(order):
             raise IlistError('length of order and Ilist different')
-        self.lindex = [self.lindex[order[i]] for i in range(len(order))]
+        #self.lindex = [self.lindex[order[i]] for i in range(len(order))]
+        if isinstance(order[0], int):
+            self.lindex = [self.lindex[ind] for ind in order]
+        if isinstance(order[0], str):
+            self.lindex = [self.nindex(name) for name in order]
         return self
 
     def tostdcodec(self, inplace=False, full=True):
