@@ -220,6 +220,10 @@ class ESSearch:
 
     The methods defined in this class are (documentations in methods definitions):
     
+    *setter*
+
+    - `ESSearch.setCollection`
+    
     *dynamic value (getter @property)*
 
     - `ESSearch.request`
@@ -294,6 +298,12 @@ class ESSearch:
     def __getitem__(self, key):
         return self.parameters[key]
 
+    def setCollection(self, collection):
+        '''
+        Sets self.collection to a given value.
+        '''
+        self.collection = collection
+
     def addConditions(self, parameters):
         '''
         Takes multiple parameters and applyes self.addCondition() on each of them.
@@ -364,7 +374,7 @@ class ESSearch:
 
         if operand:
             try: comparator = dico_alias_mongo[type(operand)][comparator]
-            except: raise ValueError("Incompatible values for comparator and operand.")
+            except: raise ValueError("Incompatible values for comparator and operand. Ensure parameters are in the correct order.")
         elif comparator:
             raise ValueError("operand must be defined when comparator is used.")
 
@@ -613,13 +623,59 @@ class ESSearch:
         else:
             result = [self._filtered_observation(item) for item in self.data]            
             if filtered:
-                for item in cursor: result.append(self._filtered_observation(Observation.from_obj(item)))
-            else: 
-                for item in cursor: result.append(Observation.from_obj(item))
+                for item in cursor: 
+                    obs_out = self._mongo_out_to_obs(item)
+                    if obs_out:
+                        result.append(self._filtered_observation(obs_out))
+            else:
+                for item in cursor:
+                    obs_out = self._mongo_out_to_obs(item)
+                    if obs_out:
+                        result.append(obs_out)
         if single:
             return self._fusion(result, fillvalue=fillvalue)
         elif namefused: return self._fusion(result, namefused, fillvalue)
         else: return result
+
+    def _mongo_out_to_obs(self, dico):
+        '''
+        Takes a dictionnary output by the Mongo request and filters it to return an Observation which contains only valid measures.
+        '''
+        valid_records = set()
+        first_column = True
+        for column_key in dico['data']:
+            if first_column:
+                for i in range(len(dico['data'][column_key]['value'])):
+                    if isinstance(dico['data'][column_key]['value'][i]['record'], int):
+                        valid_records.add(dico['data'][column_key]['value'][i]['record'])
+                    elif isinstance(dico['data'][column_key]['value'][i]['record'], list):
+                        for k in dico['data'][column_key]['value'][i]['record']:
+                            valid_records.add(k)
+                first_column = False
+            else:
+                next_valid_records = set()
+                for i in range(len(dico['data'][column_key]['value'])):
+                    if isinstance(dico['data'][column_key]['value'][i]['record'], int) and \
+                            dico['data'][column_key]['value'][i]['record'] in valid_records:
+                        next_valid_records.add(dico['data'][column_key]['value'][i]['record'])
+                    elif isinstance(dico['data'][column_key]['value'][i]['record'], list):
+                        for k in dico['data'][column_key]['value'][i]['record']:
+                            if k in valid_records:
+                                next_valid_records.add(k)
+                valid_records = next_valid_records
+        if len(valid_records) == 0: return None
+        for column_key in dico['data']:
+            for i in range(len(dico['data'][column_key]['value'])-1, -1, -1):
+                if isinstance(dico['data'][column_key]['value'][i]['record'], int) and \
+                        dico['data'][column_key]['value'][i]['record'] not in valid_records:
+                    del dico['data'][column_key]['value'][i]
+                elif isinstance(dico['data'][column_key]['value'][i]['record'], list):
+                        for j in range(len(dico['data'][column_key]['value'][i]['record'])-1, -1, -1):
+                            if dico['data'][column_key]['value'][i]['record'][j] not in valid_records:
+                                del dico['data'][column_key]['value'][i]['record'][j]
+                        if len(dico['data'][column_key]['value'][i]['record']) == 0:
+                            del dico['data'][column_key]['value'][i]
+        return Observation.from_obj(dico)
 
     def _filtered_observation(self, obs):
         '''
@@ -707,7 +763,7 @@ class ESSearch:
                 cond["comparator"] = dico_alias_python[TimeSlot][cond["comparator"]]
                 return item.link(cond["operand"])[0] == cond["comparator"]
             else:
-                if not inverted in cond and inverted: inverted = False
+                if not 'inverted' in cond and cond['inverted']: inverted = False
                 else: inverted = True
                 try: return dico_alias_python[TimeSlot][inverted](item, cond["operand"])
                 except: raise ValueError("Comparator not supported for TimeSlot.")

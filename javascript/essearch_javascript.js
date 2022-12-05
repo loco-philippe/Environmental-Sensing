@@ -1,12 +1,28 @@
-
 import pythonBridge from 'python-bridge';
+import moment from 'moment';
 const python = pythonBridge();
+Date.prototype.toJSON = function(){ return moment(this).format(); }
+
+export async function emptyRequest(collection) {
+  /* Returns Collection count and existing column names */
+  let count = 0, cursor = collection.find(), column_names = [];
+  for await (const doc of cursor) {
+    count += 1;
+    for (const column_name in doc['data']) {
+      if (!(column_names.includes(column_name))) {
+        column_names.push(column_name);
+      }
+    }
+  }
+  return {count:count, column_names:column_names};
+}
 
 const dico_alias_mongo = {
   'string' : {
     undefined:"$eq",
     "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
-    "in":"$in", "$in":"$in"
+    "in":"$in", "$in":"$in",
+    "regex":"$regex", "$regex":"$regex"
   },
   'number' : {
     undefined:"$eq",
@@ -319,16 +335,19 @@ export class ESSearch {
     return request;
   }
 
-  async execute(single = true, with_python = true) {
+  async execute({with_python = true, single = true, modecodec = 'dict'}) {
+    /*
+    modecodec : 'dict' or 'optimize'
+    */
     let cursor, result = [];
     cursor = this.collection.aggregate(this._fullSearchMongo());
-    for await (const item of cursor) {result.push(item);}
+    for await (const item of cursor) {result.push(JSON.stringify(item));}
     if (with_python) {
       python.ex`from observation import Observation`;
       python.ex`from observation.essearch import ESSearch`;
-      let result_json = await python`ESSearch(data = [Observation.from_obj(item) for item in ${result}]).execute(single = ${single}).json()`;
+      let result_json = await python`ESSearch(data = [Observation.from_obj(item) for item in ${result}]).execute(single = ${single}).to_obj(encoded = True, modecodec=${modecodec})`;
       python.end();
-      return result_json;
+      return JSON.parse(result_json);
     }
     else {
       return result;

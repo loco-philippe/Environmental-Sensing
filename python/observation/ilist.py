@@ -361,7 +361,7 @@ class Ilist(IlistStructure, IlistInterface):
         lidx = [list(IindexInterface.decodeobj(idx, typevalue, context=False)) for idx in val]
         lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex) 
                   for idx, name in zip(lidx, idxname)]
-        return cls(lindex, lvarname=lvarname, reindex=False)      
+        return cls(lindex, lvarname=lvarname, reindex=False)
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', var=None, header=True, nrow=None,
