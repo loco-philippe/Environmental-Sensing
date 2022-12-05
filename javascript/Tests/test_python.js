@@ -19,7 +19,7 @@ async function run() {
     //srch.addCondition('datation', new Date(2022, 11, 32), '<=');
     srch.addCondition('property', 'PM25');
     //srch.addCondition(undefined, 'observation', '==', 'type');
-    let result = await srch.execute(false, false);
+    let result = await srch.execute({with_python: false});
     let result_json = await python`ESSearch(data = [Observation.from_obj(item) for item in ${result}]).execute(single = True).json()`;
     python.end();
     console.log(result_json);
