@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Oct 14 21:36:10 2022
-
 @author: a179227
 """
 import datetime
@@ -152,8 +151,8 @@ def ob_signal(jour=1, mois=1, lieu=0, nuis=0, intens=0, project='reference'):
                     ['jour', [jour % 28], 1],
                     ['mois', [mois % 12]],
                     ['structure', ['signal']]],
-                    'name': 'signalement - ' + str(jour+mois*10),
-                    'param': param_val('2-dim3', project=project)}
+                    'name': 'signalement -  - ' + str(jour+mois*10),
+                    'param': param_val('2-2-dim3', project=project)}
                    ).setcanonorder()
 
 def ob_mixte_2(dl=7, prop=4, project='mixte'):

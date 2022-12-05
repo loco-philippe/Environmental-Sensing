@@ -66,6 +66,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     - `Ilist.dic`
     - `Ilist.ext`
+    - `Ilist.fusion`
     - `Ilist.obj`
     - `Ilist.from_csv`
     - `Ilist.from_obj`
@@ -362,6 +363,33 @@ class Ilist(IlistStructure, IlistInterface):
         lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex) 
                   for idx, name in zip(lidx, idxname)]
         return cls(lindex, lvarname=lvarname, reindex=False)      
+
+    @classmethod
+    def fusion(cls, ilistList=None, name = None, fillvalue = None):
+        '''
+        Observation constructor (list of Observation).
+
+        *Parameters*
+
+        - **ilistList** : list (default None) - list of Ilist
+        - **name** : str (default None) - Name of the Ilist
+        - **fillvalue** :  (default None) - Value to use to fill gaps
+        '''
+        new_lname = set()
+        lidx = []
+        for ili in ilistList:
+            new_lname |= set(ili.lname)
+        new_lname = list(new_lname)
+                
+        for i in range(len(new_lname)):
+            values = []
+            for ili in ilistList:
+                if new_lname[i] in ili.lname: values += ili.lindex[ili.lname.index(new_lname[i])].values
+                else: values += [fillvalue] * len(ili)
+            codec = util.tocodec(values)
+            lidx[i] = Iindex(codec, new_lname[i], util.tokeys(values, codec))
+                
+        return cls(listidx=lidx, name=name, reindex=False)
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', var=None, header=True, nrow=None,

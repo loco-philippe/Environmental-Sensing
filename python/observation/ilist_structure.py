@@ -455,6 +455,26 @@ class IlistStructure:
             copother.addindex([nam, [fillvalue] * len(copother)])
         return newself.add(copother, name=True, solve=False)
 
+    def mix_2(self, other, fillvalue=None):
+        '''add other Iindex not included in self and add other's values'''
+        sname = set(self.lname)
+        oname = set(other.lname)
+        newself = copy(self)
+        for nam in oname - sname:
+            newself.addindex([nam, [fillvalue] * len(self)])
+
+        for i in range(newself.lenindex):
+            if newself.lname[i] in oname:
+                values = newself.lindex[i].values + other.lindex[other.lname.index(newself.lname[i])].values
+            else: values = newself.lindex[i].values + [fillvalue] * len(newself)
+            codec = util.tocodec(values)
+            if set(codec) != set(newself.lindex[i]._codec):
+                newself.lindex[i]._codec = codec
+            newself.lindex[i]._keys = util.tokeys(values, newself.lindex[i]._codec)
+        if not newself.lvarname:
+            newself.lvarname = other.lvarname
+        return newself
+
     def merging(self, listname=None):
         ''' add a new Iindex build with Iindex define in listname.
         Values of the new Iindex are set of values in listname Iindex'''

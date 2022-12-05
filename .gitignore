@@ -21,3 +21,13 @@ Project1/
 .cache
 .vscode
 .gitignore
+javascript/Tests/test.html
+javascript/Tests/test2.html
+javascript/Tests/test3.html
+javascript/Tests/conso-elec-gaz-annuelle-par-naf-agregee-region.csv
+javascript/Tests/testd3.js
+javascript/Tests/boilerplate.html
+javascript/Tests/test_observable_plot.js
+javascript/Tests/test1.js
+javascript/Tests/test_interface.js
+javascript/Tests/test_avec_selection.js
