@@ -188,7 +188,7 @@ class Ilist(IlistStructure, IlistInterface):
         self.lindex = listidx
         if reindex:
             self.reindex()
-        self.analysis._actualize()              
+        self.analysis.actualize()              
         return
 
 

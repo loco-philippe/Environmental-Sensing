@@ -576,7 +576,7 @@ class IlistStructure:
         order  += self.lvarrow
         self.swapindex(order)
         self.sort(reindex=False)
-        self.analysis._actualize()
+        self.analysis.actualize()
         return self
 
     def setfilter(self, filt=None, first=False, filtname=ES.filter, unique=False):

@@ -91,9 +91,6 @@ class Observation(Ilist):
     - `observation.ilist.Ilist.lunicname`
     - `observation.ilist.Ilist.lunicrow`
     - `observation.ilist.Ilist.setidx`
-    - `observation.ilist.Ilist.tiidx`
-    - `observation.ilist.Ilist.textidx`
-    - `observation.ilist.Ilist.textidxext`
 
     *global value (getters @property)*
 
@@ -129,7 +126,6 @@ class Observation(Ilist):
     - `observation.ilist.Ilist.delindex`
     - `observation.ilist.Ilist.delrecord`
     - `observation.ilist.Ilist.renameindex`
-    - `observation.ilist.Ilist.setvar`
     - `observation.ilist.Ilist.setname`
     - `observation.ilist.Ilist.updateindex`    
 

@@ -26,12 +26,15 @@ class Analysis:
     - **matrix** : square matrix with relationship properties between two fields
     - **infos** : list of characteristics (matrix synthesis)
     - **primary** : list of 'primary' fields row 
-    - **crossed** : list of 'crossed' fields row 
+    - **secondary** : list of 'secondary' fields row 
+    - **lvarname** : list of 'variable' fields name 
 
     The methods defined in this class are :
 
     - `Analysis.getinfos`
     - `Analysis.getmatrix`
+    - `Analysis.getvarname`
+    - `Analysis.getsecondary`
     - `Analysis.getprimary`
     - `Analysis.getpartition`
     - `Analysis.tree`
@@ -58,90 +61,16 @@ class Analysis:
         self.matrix     = None
         self.infos      = None
         self.primary    = None
+        self.secondary  = None
+        self.lvarname   = None
         self.partition  = []
     
-    def getinfos(self, keys=None):
-        '''return attribute infos
-
-         *Parameters*
-
-        - **keys** : list or tuple (default None) - list of attributes to returned'''
-        if self.hashi != self.iobj._hashi():
-            self._actualize()
-        if not keys:
-            return self.infos
-        return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
-    
-    def getmatrix(self, name=None):
-        '''return attribute matrix or only one value of the matrix defined by two names
+    def actualize(self, partition=None):
+        ''' update all data with new values of iobj
         
          *Parameters*
 
-        - **name** : list or tuple (default None) - list of two fields names        
-        '''
-        if self.hashi != self.iobj._hashi():
-            self._actualize()
-        if not name or not isinstance(name, list):
-            return self.matrix
-        if name[0] in self.iobj.indexname:
-            ind0 = self.iobj.indexname.index(name[0])
-            if len(name) == 1:
-                return self.matrix[ind0]
-            if len(name) > 1 and name[1] in self.iobj.indexname:
-                return self.matrix[ind0][self.iobj.indexname.index(name[1])]
-        return None
-    
-    def getvarname(self):
-        '''return variable Iindex name'''
-        if self.hashi != self.iobj._hashi():
-            self._actualize()
-        return self.lvarname
-
-    def getprimary(self):
-        '''return attribute primary'''
-        if self.hashi != self.iobj._hashi():
-            self._actualize()
-        return self.primary
-
-    def getsecondary(self):
-        '''return attribute secondary'''
-        if self.hashi != self.iobj._hashi():
-            self._actualize()
-        return self.secondary
-
-    def getpartition(self):
-        '''return attribute partition'''
-        if self.hashi != self.iobj._hashi():
-            self._actualize()
-        return self.partition
-
-    def tree(self, width=5, lname=20):
-        '''return a string with a tree of derived Iindex.
-                
-         *Parameters*
-
-        - **lname** : integer (default 20) - length of the names        
-        - **width** : integer (default 5) - length of the lines        
-        '''
-        #from pprint import pformat        
-        if self.hashi != self.iobj._hashi():
-            self._actualize()
-        child = [None] * (len(self.infos) + 1)
-        for i in range(len(self.infos)):
-            parent = self.infos[i]['parent']
-            if child[parent + 1] is None:
-                child[parent + 1] = []
-            child[parent + 1].append(i)
-        tr = self._dic_noeud(-1, child, lname)
-        tre = pprint.pformat(tr, indent=0, width=width)
-        tre = tre.replace('---', ' - ')
-        tre = tre.replace('*', ' ')
-        for c in ["'", "\"", "{", "[", "]", "}", ","]: 
-            tre = tre.replace (c, "")
-        return tre
-    
-    # %% internal methods
-    def _actualize(self, forcing=False, partition=None):
+        - **partition** : list of int (default None) - partition to be used '''
         #t0=time()
         self.matrix = self._setmatrix()
         self._setinfos()
@@ -160,7 +89,87 @@ class Analysis:
                     and self.infos[idx['parent']]['cat'] in ('primary', 'secondary')]
         self.secondary += coupledsec
         #print('update ', time()-t0, self.primary, str(self.hashi))
+    
+    def getinfos(self, keys=None):
+        '''return attribute infos
 
+         *Parameters*
+
+        - **keys** : list or tuple (default None) - list of attributes to returned'''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        if not keys:
+            return self.infos
+        return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
+    
+    def getmatrix(self, name=None):
+        '''return attribute matrix or only one value of the matrix defined by two names
+        
+         *Parameters*
+
+        - **name** : list or tuple (default None) - list of two fields names        
+        '''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        if not name or not isinstance(name, list):
+            return self.matrix
+        if name[0] in self.iobj.indexname:
+            ind0 = self.iobj.indexname.index(name[0])
+            if len(name) == 1:
+                return self.matrix[ind0]
+            if len(name) > 1 and name[1] in self.iobj.indexname:
+                return self.matrix[ind0][self.iobj.indexname.index(name[1])]
+        return None
+    
+    def getvarname(self):
+        '''return variable Iindex name'''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        return self.lvarname
+
+    def getprimary(self):
+        '''return attribute primary'''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        return self.primary
+
+    def getsecondary(self):
+        '''return attribute secondary'''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        return self.secondary
+
+    def getpartition(self):
+        '''return attribute partition'''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        return self.partition
+
+    def tree(self, width=5, lname=20):
+        '''return a string with a tree of derived Iindex.
+                
+         *Parameters*
+
+        - **lname** : integer (default 20) - length of the names        
+        - **width** : integer (default 5) - length of the lines        
+        '''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        child = [None] * (len(self.infos) + 1)
+        for i in range(len(self.infos)):
+            parent = self.infos[i]['parent']
+            if child[parent + 1] is None:
+                child[parent + 1] = []
+            child[parent + 1].append(i)
+        tr = self._dic_noeud(-1, child, lname)
+        tre = pprint.pformat(tr, indent=0, width=width)
+        tre = tre.replace('---', ' - ')
+        tre = tre.replace('*', ' ')
+        for c in ["'", "\"", "{", "[", "]", "}", ","]: 
+            tre = tre.replace (c, "")
+        return tre
+    
+    # %% internal methods
     def _setmatrix(self):
         '''set and return matrix attributes (coupling infos between each idx)'''
         lenindex = self.iobj.lenindex
@@ -214,9 +223,7 @@ class Analysis:
         return
 
     def _setinfospartition(self, partition=None):
-        '''set and return attribute 'infos'. 
-        Infos is an array with infos of each index :
-            - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
+        '''add partition data into infos attribute'''
         if not partition is None and not partition in self.partition:
             raise AnalysisError('partition is not a valid partition')
         lenindex = self.iobj.lenindex
@@ -274,6 +281,7 @@ class Analysis:
         return    
 
     def _dic_noeud(self, n, child, lname):
+        '''generate a dict with nodes data defined by 'child' '''
         if n == -1:
             lis = ['root*-*' + str(len(self.iobj))]
         else:
@@ -301,7 +309,7 @@ class Analysis:
         return None
     
     def _addchemin(self, chemin, node, lchemin, brother):
-        #print('add :', chemin, node, lchemin) # add : [1, 2] 1 10
+        '''extend 'chemin' with new nodes and add it to 'partition' ''' 
         if lchemin == len(self.iobj) and node == chemin[0] and \
           max(Counter(zip(*[self.iobj.lindex[idx].keys for idx in chemin])).values()) == 1:
             part = sorted(chemin)
@@ -310,7 +318,6 @@ class Analysis:
                     self.partition.insert(0, part)
                 else:
                     self.partition.append(part)
-                #print('added : ', part, self.partition)                
         if node in chemin[1:]: 
             return
         lnode = self.infos[node]['lencodec']
