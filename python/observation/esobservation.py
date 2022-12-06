@@ -440,7 +440,7 @@ class Observation(Ilist):
             folium.Choropleth(
                 geo_data=self.jsonFeature,
                 name=self.name,
-                data=self.to_xarray(numeric=True).to_dataframe(name='obs'),
+                data=self.to_xarray(numeric=True, coord=True).to_dataframe(name='obs'),
                 key_on="feature.id",
                 #columns=['location_row', 'obs'],
                 columns=[self.idxname[primary[0]] + '_row', 'obs'],

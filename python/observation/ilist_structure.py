@@ -316,7 +316,7 @@ class IlistStructure:
             ilis.setcanonorder()
         return ilis
 
-    def getduplicates(self, indexname=None, resindex=None):
+    def getduplicates(self, indexname=None, resindex=None, indexview=None):
         '''check duplicate cod in a list of indexes. Result is add in a new index or returned.
 
         *Parameters*
@@ -336,7 +336,10 @@ class IlistStructure:
             for item in duplicates:
                 newidx[item] = False
             self.addindex(newidx)
-        return tuple(set(duplicates))
+        dupl = tuple(set(duplicates))
+        if not indexview:
+            return dupl
+        return [tuple(self.record(ind, indexview)) for ind in dupl]
 
     def iscanonorder(self):
         '''return True if primary indexes have canonical ordered keys'''
@@ -497,21 +500,24 @@ class IlistStructure:
         return self
 
 
-    def record(self, row, extern=True):
+    def record(self, row, indexname=None, extern=True):
         '''return the record at the row
 
         *Parameters*
 
         - **row** : int - row of the record
         - **extern** : boolean (default True) - if True, return val record else value record
-
+        - **indexname** : list of str (default None) - list of fields to return
         *Returns*
 
         - **list** : val record or value record'''
+        if indexname is None:
+            indexname = self.lname
         if extern:
-            return [idx.valrow(row) for idx in self.lindex]
-            #return [idx.val[row] for idx in self.lindex]
-        return [idx.values[row] for idx in self.lindex]
+            record = [idx.valrow(row) for idx in self.lindex]
+        else:
+            record = [idx.values[row] for idx in self.lindex]
+        return [record[self.lname.index(name)] for name in indexname] 
 
     def recidx(self, row, extern=True):
         '''return the list of idx val or values at the row
@@ -655,9 +661,9 @@ class IlistStructure:
         if self.lenindex != len(order):
             raise IlistError('length of order and Ilist different')
         #self.lindex = [self.lindex[order[i]] for i in range(len(order))]
-        if isinstance(order[0], int):
+        if not order or isinstance(order[0], int):
             self.lindex = [self.lindex[ind] for ind in order]
-        if isinstance(order[0], str):
+        elif isinstance(order[0], str):
             self.lindex = [self.nindex(name) for name in order]
         return self
 

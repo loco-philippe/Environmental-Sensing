@@ -103,6 +103,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     *global value (getters @property)*
 
+    - `Ilist.category`
     - `Ilist.complete`
     - `Ilist.consistent`
     - `Ilist.dimension`
@@ -623,6 +624,11 @@ class Ilist(IlistStructure, IlistInterface):
         return max(Counter(zip(*self.iidx)).values()) == 1
 
     @property
+    def category(self):
+        ''' dict with category for each Iindex'''
+        return {field['name']:field['cat'] for field in self.indexinfos()}
+    
+    @property
     def dimension(self):
         ''' integer : number of primary Iindex'''
         return len(self.primary)
@@ -752,6 +758,11 @@ class Ilist(IlistStructure, IlistInterface):
     def tiindex(self):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
+
+    @property
+    def tree(self):
+        ''' tree of derivated Iindex'''
+        return self.analysis.tree()
 
     @property
     def typevalue(self):

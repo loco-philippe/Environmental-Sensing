@@ -86,7 +86,7 @@ class IlistInterface:
         if not self.consistent:
             return None
         xar = self.to_xarray(numeric=True, lisfunc=[util.cast], dtype='str',
-                             npdtype='str', maxlen=maxlen)
+                             npdtype='str', maxlen=maxlen, coord=True)
         if not order:
             order = [0, 1, 2]
 
@@ -238,8 +238,9 @@ class IlistInterface:
                                timezone=datetime.timezone.utc, canonical=True)
         return lis
 
-    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?', fillextern=True,
-                  lisfunc=None, name=None, numeric=False, npdtype=None, attrs=None, **kwargs):
+    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?', 
+                  fillextern=True, lisfunc=None, name=None, numeric=False, 
+                  npdtype=None, attrs=None, coord=False, **kwargs):
         '''
         Complete the Object and generate a Xarray DataArray with the dimension define by idx.
         Only the first variable is incuded.
@@ -258,6 +259,7 @@ class IlistInterface:
         - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
         - **npdtype** : string (default None) - numpy dtype for the DataArray ('object' if None)
         - **attrs** : dict (default None) - attributes for the DataArray
+        - **coord** : boolean (default False) - if True, add derivated coords
         - **kwargs** : parameter for lisfunc
 
         *Returns* : DataArray '''
@@ -285,7 +287,7 @@ class IlistInterface:
             if ivar != -1:
                 lisfunc[ivar] = funcvar
         lisfuncname = dict(zip(ilf.lname, lisfunc))
-        coord = ilf._xcoord(idxname, lisfuncname, **option)
+        coords = ilf._xcoord(idxname, lisfuncname, coord, **option)
         dims = idxname
         if numeric:
             lisfunc[ivar] = util.cast
@@ -299,15 +301,17 @@ class IlistInterface:
             data = ilf.lindex[ivar]\
                   .to_numpy(func=lisfunc[ivar], npdtype=npdtype, **option)\
                   .reshape([len(ilf.nindex(name).codec) for name in idxname])
-        if not name:
+        if not name and ivar == -1:
             name = ilf.name
+        elif not name:
+            name = ilf.lname[ivar]
         if not isinstance(attrs, dict):
             attrs = {}
         for nam in ilf.lunicname:
             attrs[nam] = ilf.nindex(nam).codec[0]
         if info:
             attrs |= ilf.indexinfos()
-        return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
+        return xarray.DataArray(data, coords, dims, attrs=attrs, name=name)
 
     def voxel(self, idxname=None):
         '''
@@ -503,11 +507,11 @@ class IlistInterface:
             tab.append(reslist)
         return tab
 
-    def _xcoord(self, axename, lisfuncname=None, **kwargs):
+    def _xcoord(self, axename, lisfuncname=None, coord=False, **kwargs):
         ''' Coords generation for Xarray'''
         maxlen = kwargs.get('maxlen', 20)
         info = self.indexinfos()
-        coord = {}
+        coords = {}
         for i in self.lidxrow:
             fieldi = info[i]
             iname = self.idxname[i]
@@ -518,12 +522,13 @@ class IlistInterface:
             else:
                 funci = None
             if iname in axename:
-                coord[iname] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
-                coord[iname+'_row'] = (iname, np.arange(len(coord[iname])))
-                coord[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast,
-                                       codec=True, dtype='str', maxlen=maxlen))
+                coords[iname] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
+                if coord:
+                    coords[iname+'_row'] = (iname, np.arange(len(coords[iname])))
+                    coords[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast,
+                                           codec=True, dtype='str', maxlen=maxlen))
             else:
                 self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)   #!!!
-                coord[iname] = (self.idxname[fieldi['pparent']],
+                coords[iname] = (self.idxname[fieldi['pparent']],
                                 self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))
-        return coord
+        return coords

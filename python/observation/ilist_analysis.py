@@ -31,6 +31,7 @@ class Analysis:
 
     The methods defined in this class are :
 
+    - `Analysis.actualize`
     - `Analysis.getinfos`
     - `Analysis.getmatrix`
     - `Analysis.getvarname`
@@ -283,10 +284,12 @@ class Analysis:
     def _dic_noeud(self, n, child, lname):
         '''generate a dict with nodes data defined by 'child' '''
         if n == -1:
-            lis = ['root*-*' + str(len(self.iobj))]
+            #lis = ['root*-*' + str(len(self.iobj))]
+            lis = ['root*(' + str(len(self.iobj)) + ')']
         else:
-            name = self.infos[n]['name'].ljust(lname)[0:lname] + '---' + \
-                   str(self.infos[n]['lencodec'])
+            #name = self.infos[n]['name'].ljust(lname)[0:lname] + '---' + \
+            #       str(self.infos[n]['lencodec'])
+            name = self.infos[n]['name'] + ' (' + str(self.infos[n]['lencodec']) + ')'
             lis = [name.replace(' ', '*').replace("'",'*')]
         if child[n+1]:
             for ch in child[n+1]:
