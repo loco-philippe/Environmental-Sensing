@@ -573,15 +573,23 @@ class IlistStructure:
             idx.keys = [idx.keys[i] for i in recorder]
         return None
 
-    def setcanonorder(self):
+    def setcanonorder(self, reindex=False):
         '''Set the canonical index order : primary - secondary/unique - variable.
         Set the canonical keys order : ordered keys in the first columns.
-        Return self'''
-        order   = [self.lidxrow[idx] for idx in self.primary]
+
+        *Parameters*
+        - **reindex** : boolean (default False) - if True, set default codec after transformation
+
+        *Return* : self'''
+        order   = self.primaryname
+        order   += self.secondaryname
+        order   += self.lvarname
+        order   += self.lunicname
+        '''order   = [self.lidxrow[idx] for idx in self.primary]
         order  += [idx for idx in self.lidxrow if not idx in order]
-        order  += self.lvarrow
+        order  += self.lvarrow'''
         self.swapindex(order)
-        self.sort(reindex=False)
+        self.sort(reindex=reindex)
         self.analysis.actualize()
         return self
 
@@ -611,7 +619,7 @@ class IlistStructure:
         '''Update Iindex name by the name in listname'''
         for i in range(min(self.lenindex, len(listname))):
             self.lindex[i].name = listname[i]
-
+        self.analysis.actualize()
     """def setvar(self, var=None):
         '''Define a var index by the name or the index row'''
         if var is None:

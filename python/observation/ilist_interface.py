@@ -512,7 +512,27 @@ class IlistInterface:
         maxlen = kwargs.get('maxlen', 20)
         info = self.indexinfos()
         coords = {}
-        for i in self.lidxrow:
+        for i in range(self.lenindex):
+            fieldi = info[i]
+            iname = self.lname[i]
+            #if fieldi['cat'] in ('unique', 'variable'):  #!!!
+            if fieldi['pparent'] == -1:
+                continue
+            if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
+                funci = lisfuncname[iname]
+            else:
+                funci = None
+            if iname in axename:
+                coords[iname] = self.lindex[i].to_numpy(func=funci, codec=True, **kwargs)
+                if coord:
+                    coords[iname+'_row'] = (iname, np.arange(len(coords[iname])))
+                    coords[iname+'_str'] = (iname, self.lindex[i].to_numpy(func=util.cast,
+                                           codec=True, dtype='str', maxlen=maxlen))
+            else:
+                self.lindex[i].setkeys(self.lindex[fieldi['pparent']].keys)   #!!!
+                coords[iname] = (self.lname[fieldi['pparent']],
+                                self.lindex[i].to_numpy(func=funci, codec=True, **kwargs))
+        '''for i in self.lidxrow:
             fieldi = info[i]
             iname = self.idxname[i]
             if fieldi['cat'] == 'unique':  #!!!
@@ -530,5 +550,5 @@ class IlistInterface:
             else:
                 self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)   #!!!
                 coords[iname] = (self.idxname[fieldi['pparent']],
-                                self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))
+                                self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))'''
         return coords

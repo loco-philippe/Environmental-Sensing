@@ -349,7 +349,7 @@ class Ilist(IlistStructure, IlistInterface):
             raise IlistError("the type of parameter is not available")
         return cls._init_obj(lis, reindex=reindex, context=context)
 
-    def merge(self, name=None, fillvalue=math.nan):
+    def merge(self, name=None, fillvalue=math.nan, reindex=False):
         '''
         Merge method replaces Ilist objects included into its constituents.
 
@@ -357,6 +357,7 @@ class Ilist(IlistStructure, IlistInterface):
 
         - **name** : str (default None) - name of the new Ilist object
         - **fillvalue** : object (default nan) - value used for the additional data
+        - **reindex** : boolean (default False) - if True, set default codec after transformation
 
         *Returns*: merged Ilist '''
         ilc = copy(self)
@@ -386,6 +387,8 @@ class Ilist(IlistStructure, IlistInterface):
         for name in set(delname):
             if name:
                 merged.delindex(name)
+        if reindex:
+            merged.reindex()
         return merged
 
 # %% internal
@@ -649,11 +652,6 @@ class Ilist(IlistStructure, IlistInterface):
         return [idx.name for idx in self.lidx]
 
     @property
-    def primaryname(self):
-        ''' list of primary name'''
-        return [self.lidx[idx].name for idx in self.primary]
-
-    @property
     def idxlen(self):
         ''' list of idx codec length'''
         return [len(idx.codec) for idx in self.lidx]
@@ -745,10 +743,20 @@ class Ilist(IlistStructure, IlistInterface):
         return self.analysis.getprimary()
 
     @property
+    def primaryname(self):
+        ''' list of primary name'''
+        return [self.lidx[idx].name for idx in self.primary]
+
+    @property
     def secondary(self):
         ''' list of secondary idx'''
         return self.analysis.getsecondary()
 
+    @property
+    def secondaryname(self):
+        ''' list of secondary name'''
+        return [self.lindex[idx].name for idx in self.secondary]
+    
     @property
     def setidx(self):
         '''list of codec for each idx'''
