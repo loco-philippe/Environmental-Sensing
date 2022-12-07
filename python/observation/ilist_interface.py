@@ -223,27 +223,14 @@ class IlistInterface:
                     dicval['var'] = True
                 lis[name] = dicval
         else:
-            lis = []
-            # add not variable Iindex
-            idxname = [option['name'] or idx.name != 'i' + str(self.lname.index(idx.name))
-                       for idx in self.lidx]
+            indexname = [option['name'] or name != 'i' + str(i) 
+                         for i, name in enumerate(self.lname)]
             if   option['modecodec'] != 'optimize':
                 lis = [idx.to_obj(name=iname, **option2) 
-                       for idx, iname in zip(self.lidx, idxname)]
+                       for idx, iname in zip(self.lindex, indexname)]
             else:
-                lis = self._optimize_obj(idxname, lis, **option2)
-            # add variable Iindex
-            for i in self.lvarrow:
-                idx = self.lindex[i]
-                idxname = option['name'] or idx.name != 'i' + \
-                    str(self.lname.index(idx.name))
-                if i != self.lenindex - 1:
-                    lis.insert(i, idx.tostdcodec(full=True).to_obj(keys=False, 
-                        parent=ES.variable, name=idxname, **option2))
-                else:
-                    lis.append(idx.tostdcodec(full=True).to_obj(keys=False, 
-                        parent=ES.variable, name=idxname, **option2))
-            
+                lis = self._optimize_obj(indexname, **option2)
+
         if option['encoded'] and option['encode_format'] == 'json':
             return json.dumps(lis, cls=IindexEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor':
@@ -251,16 +238,19 @@ class IlistInterface:
                                timezone=datetime.timezone.utc, canonical=True)
         return lis
 
-    def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
+    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?', fillextern=True,
                   lisfunc=None, name=None, numeric=False, npdtype=None, attrs=None, **kwargs):
         '''
         Complete the Object and generate a Xarray DataArray with the dimension define by idx.
-
+        Only the first variable is incuded.
+        
         *Parameters*
 
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
-        - **idx** : list (default none) - list of idx to be completed. If [],
+        - **idxname** : list (default none) - list of idx to be completed. If None,
         self.primary is used.
+        - **varname** : string (default none) - Name of the variable to use. If None,
+        first lvarname is used.
         - **fillvalue** : object (default '?') - value used for the new extval
         - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
         - **lisfunc** : function (default none) - list of function to apply to indexes before export
@@ -274,60 +264,77 @@ class IlistInterface:
         option = {'dtype': None} | kwargs
         if not self.consistent:
             raise IlistError("Ilist not consistent")
-        if len(self.lvarname) == 0:
-            raise IlistError("Variable is not defined")
-        if isinstance(lisfunc, list) and len(lisfunc) == 1:
-            lisfunc = lisfunc * self.lenindex
-        elif isinstance(lisfunc, list) and len(lisfunc) != self.lenindex:
-            lisfunc = [None] * self.lenindex
-        elif not isinstance(lisfunc, list):
-            funcvar = lisfunc
-            lisfunc = [None] * self.lenindex
-            lisfunc[self.lvarrow[0]] = funcvar
-        lisfuncname = dict(zip(self.lname, lisfunc))
-        if idx is None or idx == []:
-            idx = self.primary
-        axesname = [self.idxname[i] for i in idx[:len(self.idxname)]]
-        ilf = self.full(indexname=axesname, fillvalue=fillvalue,
+        if idxname is None or idxname == []:
+            idxname = self.primaryname
+        ilf = self.full(indexname=idxname, fillvalue=fillvalue,
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
-        idxilf = list(range(len(idx[:len(self.idxname)])))
-        coord = ilf._xcoord(idxilf, lisfuncname, **option)
-        dims = [ilf.idxname[i] for i in idxilf]
+        if not varname and len(ilf.lvarname) != 0:
+            varname = ilf.lvarname[0]
+        if not varname in ilf.lname:
+            ivar = -1      
+        else:
+            ivar = ilf.lname.index(varname)
+        if isinstance(lisfunc, list) and len(lisfunc) == 1:
+            lisfunc = lisfunc * ilf.lenindex
+        elif isinstance(lisfunc, list) and len(lisfunc) != ilf.lenindex:
+            lisfunc = [None] * ilf.lenindex
+        elif not isinstance(lisfunc, list):
+            funcvar = lisfunc
+            lisfunc = [None] * ilf.lenindex
+            if ivar != -1:
+                lisfunc[ivar] = funcvar
+        lisfuncname = dict(zip(ilf.lname, lisfunc))
+        coord = ilf._xcoord(idxname, lisfuncname, **option)
+        dims = idxname
         if numeric:
-            lisfunc[self.lvarrow[0]] = util.cast
+            lisfunc[ivar] = util.cast
             fillvalue = math.nan
             npdtype = 'float'
             option['dtype'] = 'float'
-        data = ilf.lvar[0].to_numpy(func=lisfunc[self.lvarrow[0]],
-                                    npdtype=npdtype, **option
-                                    ).reshape([ilf.idxlen[idx] for idx in idxilf])
+        if ivar == -1:
+            data = Iindex(list(range(len(ilf)))).to_numpy(npdtype='int')\
+                  .reshape([len(ilf.nindex(name).codec) for name in idxname])
+        else:
+            data = ilf.lindex[ivar]\
+                  .to_numpy(func=lisfunc[ivar], npdtype=npdtype, **option)\
+                  .reshape([len(ilf.nindex(name).codec) for name in idxname])
         if not name:
-            name = self.name
+            name = ilf.name
         if not isinstance(attrs, dict):
             attrs = {}
-        for nam in self.lunicname:
-            attrs[nam] = self.nindex(nam).codec[0]
+        for nam in ilf.lunicname:
+            attrs[nam] = ilf.nindex(nam).codec[0]
         if info:
             attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coord, dims, attrs=attrs, name=name)
 
-    def voxel(self):
+    def voxel(self, idxname=None):
         '''
         Plot not null values in a cube with voxels and return indexes values.
+        
+        *Parameters*
+
+        - **idxname** : list (default none) - list of idx to be completed. If None,
+        self.primary is used.
 
         *Returns* : **dict of indexes values**
         '''
         if not self.consistent:
             return None
-        if self.lenidx > 3:
+        if idxname is None or idxname == []:
+            idxname = self.primaryname
+        
+        if len(idxname) > 3:
             raise IlistError('number of idx > 3')
-        if self.lenidx == 2:
+        if len(idxname) == 2:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
-        elif self.lenidx == 1:
+            idxname += [' ']
+        elif len(idxname) == 1:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
             self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
-        xar = self.to_xarray(idx=[0, 1, 2], fillvalue='?', fillextern=False,
+            idxname += [' ', '  ']
+        xar = self.to_xarray(idxname=idxname, fillvalue='?', fillextern=False,
                             lisfunc=util.isNotEqual, tovalue='?')
         axe = plt.figure().add_subplot(projection='3d')
         axe.voxels(xar, edgecolor='k')
@@ -338,6 +345,7 @@ class IlistInterface:
                 ylabel=xar.dims[1][:8],
                 zlabel=xar.dims[2][:8])
         plt.show()
+        self.delindex([' ', '  '])
         return {xar.dims[i]: list(xar.coords[xar.dims[i]].values)
                 for i in range(len(xar.dims))}
 
@@ -382,7 +390,7 @@ class IlistInterface:
 
         - **func** : function (default none) - function to apply to extval or extidx
         - **args, kwargs** : parameters for the function
-        - **index** : integer - index to update (index=-1 for variable)
+        - **index** : integer - index to update (index=-1 for first variable)
 
         *Returns* : list of func result'''
         if index == -1 and self.lvar:
@@ -392,41 +400,39 @@ class IlistInterface:
         return self.lindex[index].vlist(func, *args, **kwargs)
 
     # %%internal
-    def _optimize_obj(self, idxname, lis, **option2):
-        '''return list object with primary and secondary Iindex'''
+    def _optimize_obj(self, idxname, **option2):
+        '''return list object with optimize modecodec'''
         indexinfos = self.indexinfos()
-        notkeyscrd = True
+        notkeys = True
+        lis = []
         if self.iscanonorder():
-            notkeyscrd = None
-        for idx, iname, inf in zip(self.lidx, idxname, indexinfos):
-            if inf['typecoupl'] == 'unique':
-                lis.append(idx.tostdcodec(full=False).to_obj(
-                    name=iname, **option2))
-            elif inf['typecoupl'] == 'crossed':
-                lis.append(idx.to_obj(keys=notkeyscrd,
-                           name=iname, **option2))
-            elif inf['typecoupl'] == 'coupled':
-                if self.lidx[inf['parent']].keys == list(range(len(self))):
-                    lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                           to_obj(name=iname, **option2))
-                else:
-                    lis.append(idx.setkeys(self.lidx[inf['parent']].keys, inplace=False).
-                           to_obj(parent=self.lidxrow[inf['parent']],
-                                  name=iname, **option2))
-            elif inf['typecoupl'] == 'linked':
-                lis.append(idx.to_obj(keys=True, name=iname, **option2))
-            elif inf['typecoupl'] == 'derived':
-                if idx.iskeysfromderkeys(self.lidx[inf['parent']]):
-                    lis.append(idx.to_obj(parent=self.lidxrow[inf['parent']],
+            notkeys = None
+        for idx, iname, inf in zip(self.lindex, idxname, indexinfos):
+            if inf['cat'] == 'unique':
+                lis.append(idx.tostdcodec(full=False).to_obj(name=iname, **option2))
+            elif inf['cat'] == 'primary':
+                lis.append(idx.to_obj(keys=notkeys, name=iname, **option2))
+            elif inf['cat'] == 'coupled':
+                lis.append(idx.setkeys(self.lindex[inf['parent']].keys, inplace=False).
+                           to_obj(parent=inf['parent'], name=iname, **option2))
+            elif inf['parent'] == -1:
+                if len(idx.codec) == len(idx):
+                    idx.set_codec(util.reorder(idx.codec, idx.keys))
+                    idx.set_keys(list(range(len(idx))))
+                    opt = option2 | {'modecodec':'full' }
+                    lis.append(idx.to_obj(name=iname, **opt))
+                else:    
+                    lis.append(idx.to_obj(keys=True, name=iname, **option2))
+            else: # derived
+                if idx.iskeysfromderkeys(self.lindex[inf['parent']]):
+                    lis.append(idx.to_obj(parent=inf['parent'],
                                           name=iname, **option2))
                 else:
-                    keys = idx.derkeys(self.lidx[inf['parent']])
-                    lis.append(idx.to_obj(keys=keys, parent=self.lidxrow[inf['parent']],
+                    keys = idx.derkeys(self.lindex[inf['parent']])
+                    lis.append(idx.to_obj(keys=keys, parent=inf['parent'],
                                           name=iname, **option2))
-            else:
-                raise IlistError('Iindex type undefined')
         return lis
-    
+
     def _to_tab(self, **kwargs):
         ''' data preparation (dict of dict) for view or csv export.
         Representation is included if :
@@ -497,28 +503,27 @@ class IlistInterface:
             tab.append(reslist)
         return tab
 
-    def _xcoord(self, axe, lisfuncname=None, **kwargs):
+    def _xcoord(self, axename, lisfuncname=None, **kwargs):
         ''' Coords generation for Xarray'''
         maxlen = kwargs.get('maxlen', 20)
         info = self.indexinfos()
         coord = {}
         for i in self.lidxrow:
             fieldi = info[i]
-            if fieldi['cat'] == 'unique':
+            iname = self.idxname[i]
+            if fieldi['cat'] == 'unique':  #!!!
                 continue
             if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
-                funci = lisfuncname[self.lname[i]]
+                funci = lisfuncname[iname]
             else:
                 funci = None
-            iname = self.idxname[i]
-            if i in axe:
-                coord[iname] = self.lidx[i].to_numpy(
-                    func=funci, codec=True, **kwargs)
+            if iname in axename:
+                coord[iname] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
                 coord[iname+'_row'] = (iname, np.arange(len(coord[iname])))
                 coord[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast,
                                        codec=True, dtype='str', maxlen=maxlen))
             else:
-                self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)
+                self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)   #!!!
                 coord[iname] = (self.idxname[fieldi['pparent']],
                                 self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))
         return coord

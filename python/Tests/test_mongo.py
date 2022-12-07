@@ -72,58 +72,14 @@ class Test_jeu_data_py(unittest.TestCase):
         srch.addCondition('datation', comparator='<=', operand=datetime(2022, 1, 4, 0, 0))
         srch.addCondition(path='name', comparator='regex', operand='mobile')
         result = srch.execute()
-        # une seule observation répond aux critères (avec deux enregistrements correspondants à deux dates)
-        self.assertTrue(len(result) == 2) # ok : deux resultats
-        # par contre les eux résultats ne sont pas corrects
-        
-        print(result[0])
-        '''
-            name: mesures mobiles, 1 polluant - 0
-            data:
-                ["result", [11.0, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9]]
-    
-                ["datation", ["2022-01-02T12:00:00+00:00"]]
-                ["property", [{"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}]]
-                ["location", [[7.19, 43.71], {"marseille": [[[5.28, 43.25], [5.48, 43.25], [5.48, 43.35], [5.28, 43.35], [5.28, 43.25]]]}, [1.44, 43.61], {"bordeaux": [[[-0.68, 44.79], [-0.48, 44.79], [-0.48, 44.89], [-0.68, 44.89], [-0.68, 44.79]]]}, [-1.55, 47.22], {"paris": [[[2.25, 48.82], [2.45, 48.82], [2.45, 48.92], [2.25, 48.92], [2.25, 48.82]]]}, [3.06, 50.63], {"strasbourg": [[[7.65, 48.54], [7.85, 48.54], [7.85, 48.64], [7.65, 48.64], [7.65, 48.54]]]}, [4.83, 45.76], {"clermont": [[[2.98, 45.73], [3.18, 45.73], [3.18, 45.83], [2.98, 45.83], [2.98, 45.73]]]}]]
-                ["ville", ["nice", "marseille", "toulouse", "bordeaux", "nantes", "paris", "lille", "strasbourg", "lyon", "clermont"]]
-                ["jour", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-                ["mois", [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-                ["structure", ["mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile"]]
-            param:
-                {"date": "2022-10-20", "project": "reference", "type": "4-dim1", "context": {"version": "v0", "origin": "data.py"}}
-        '''
-        print(result[1])
-        '''
-            name: mesures mobiles, 1 polluant - 0
-            data:
-                ["result", [11.0, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9]]
-    
-                ["datation", ["2022-01-03T12:00:00+00:00"]]
-                ["property", [{"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}]]
-                ["location", [[7.19, 43.71], {"marseille": [[[5.28, 43.25], [5.48, 43.25], [5.48, 43.35], [5.28, 43.35], [5.28, 43.25]]]}, [1.44, 43.61], {"bordeaux": [[[-0.68, 44.79], [-0.48, 44.79], [-0.48, 44.89], [-0.68, 44.89], [-0.68, 44.79]]]}, [-1.55, 47.22], {"paris": [[[2.25, 48.82], [2.45, 48.82], [2.45, 48.92], [2.25, 48.92], [2.25, 48.82]]]}, [3.06, 50.63], {"strasbourg": [[[7.65, 48.54], [7.85, 48.54], [7.85, 48.64], [7.65, 48.64], [7.65, 48.54]]]}, [4.83, 45.76], {"clermont": [[[2.98, 45.73], [3.18, 45.73], [3.18, 45.83], [2.98, 45.83], [2.98, 45.73]]]}]]
-                ["ville", ["nice", "marseille", "toulouse", "bordeaux", "nantes", "paris", "lille", "strasbourg", "lyon", "clermont"]]
-                ["jour", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-                ["mois", [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-                ["structure", ["mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile"]]
-            param:
-                {"date": "2022-10-20", "project": "reference", "type": "4-dim1", "context": {"version": "v0", "origin": "data.py"}}
-        '''
-        print(ob_tests[42])
-        '''
-            name: mesures mobiles, 1 polluant - 0
-            data:
-                ["result", [11.0, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, 11.9]]
-    
-                ["datation", ["2022-01-01T12:00:00+00:00", "2022-01-02T12:00:00+00:00", "2022-01-03T12:00:00+00:00", "2022-01-04T12:00:00+00:00", "2022-01-05T12:00:00+00:00", "2022-01-06T12:00:00+00:00", "2022-01-07T12:00:00+00:00", "2022-01-08T12:00:00+00:00", "2022-01-09T12:00:00+00:00", "2022-01-10T12:00:00+00:00"]]
-                ["property", [{"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}, {"prp": "PM25", "unit": "kg/m3", "sampling": "instantaneous", "domain": "air", "type": "pollutant"}]]
-                ["location", [[7.19, 43.71], {"marseille": [[[5.28, 43.25], [5.48, 43.25], [5.48, 43.35], [5.28, 43.35], [5.28, 43.25]]]}, [1.44, 43.61], {"bordeaux": [[[-0.68, 44.79], [-0.48, 44.79], [-0.48, 44.89], [-0.68, 44.89], [-0.68, 44.79]]]}, [-1.55, 47.22], {"paris": [[[2.25, 48.82], [2.45, 48.82], [2.45, 48.92], [2.25, 48.92], [2.25, 48.82]]]}, [3.06, 50.63], {"strasbourg": [[[7.65, 48.54], [7.85, 48.54], [7.85, 48.64], [7.65, 48.64], [7.65, 48.54]]]}, [4.83, 45.76], {"clermont": [[[2.98, 45.73], [3.18, 45.73], [3.18, 45.83], [2.98, 45.83], [2.98, 45.73]]]}]]
-                ["ville", ["nice", "marseille", "toulouse", "bordeaux", "nantes", "paris", "lille", "strasbourg", "lyon", "clermont"]]
-                ["jour", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-                ["mois", [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-                ["structure", ["mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile", "mobile"]]
-            param:
-                {"date": "2022-10-20", "project": "reference", "type": "4-dim1", "context": {"version": "v0", "origin": "data.py"}}
-        '''
+        self.assertTrue(len(result) == 2)
+        result[0].swapindex(ob_tests[42].lname)
+        self.assertTrue(ob_tests[42].loc(result[0][0], row=True) == [1])
+        result[1].swapindex(ob_tests[42].lname)
+        self.assertTrue(ob_tests[42].loc(result[1][0], row=True) == [2])
+        result[0].add(result[1], name=True)
+        self.assertTrue(result[0].idxlen == [2, 1, 2, 2, 2, 2, 1, 1])
+
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)        

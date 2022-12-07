@@ -363,7 +363,7 @@ class TestExamples(unittest.TestCase):
             ob_sensor.append([45 + i, date, loc, prop1])
             if i % 3 == 0:
                 ob_sensor.append([105 + i//3, date, loc, prop2])
-        ob_sensor.full(fillvalue=None)
+        ob_sensor.full(indexname=['datation', 'property'], fillvalue=None)
         self.assertTrue(ob_sensor.dimension == 2 and len(ob_sensor) == 12)
         # if the payload is binary payload
         payload = ob_sensor.json(encoded=True, encode_format='cbor')
@@ -381,7 +381,7 @@ class TestExamples(unittest.TestCase):
         # print(ob_init.json)
         # operation phase (sensor) -> regularly
         res = 25
-        il_operat = Ilist.dic({'res': [res]}, var=0)
+        il_operat = Ilist.dic({'res': [res]})
         # if the payload is character payload
         payload1 = il_operat.json(encoded=True)
         #print(len(payload1), payload1)
@@ -397,7 +397,7 @@ class TestExamples(unittest.TestCase):
                         il_operat)   # it's True !!
         # complete observation
         ob_complet = Observation.dic({'res': il_receive1, 'datation': date_receive,
-                               'location': [coord], 'property': prop}, var=0).merge()
+                               'location': [coord], 'property': prop}).merge()
         # print(ob_complet)
 
         # case 5 : Sensor with two properties (minimize data)
@@ -416,7 +416,7 @@ class TestExamples(unittest.TestCase):
             il_sensor.append([45 + i, date, prop1])
             if i % 3 == 0:
                 il_sensor.append([105 + i//3, date, prop2])
-        il_sensor.full(fillvalue=None)
+        il_sensor.full(indexname=['datation', 'property'], fillvalue=None)
         il_sensor.nindex('property').setcodeclist([None, None])
         self.assertTrue(il_sensor.dimension == 2 and len(il_sensor) == 12)
         # send data
@@ -429,7 +429,7 @@ class TestExamples(unittest.TestCase):
         il_receive.nindex('property').setcodeclist(property)
         # complete observation
         ob_complet = Observation.dic({'res': il_receive, 'location': [
-                              coord]}, var=0).merge().setcanonorder()
+                              coord]}).merge().setcanonorder()
         # print(ob_complet.to_obj(encoded=True))
         self.assertTrue(ob_complet.dimension ==
                         2 and ob_complet.complete)   # it's True !!
@@ -483,11 +483,11 @@ class TestObservation(unittest.TestCase):
     def test_obs_loc_iloc_maj(self):
         ob = Observation(Ilist.obj([list(dat3), list(loc3)+[0], list(prop2), 
                                     list(_res(6)) + [-1]]), param=truc_mach)
-        self.assertTrue([ob[3][3]] ==
+        self.assertTrue([3] ==
                         ob.loc([datetime.datetime.fromisoformat(dat3[1][1]), loc3[1][1],
-                                prop2[1][1]]) ==
+                                prop2[1][1], 3], row=True) ==
                         ob.loc([DatationValue(dat3[1][1]), LocationValue(loc3[1][1]),
-                                PropertyValue(prop2[1][1])], extern=False))
+                                PropertyValue(prop2[1][1]), 3], row=True))
         ob.nindex('location').setcodecvalue(loc3[1][1], loc3[1][2])
         self.assertEqual(len(set(ob.nindex('location').codec)), 2)
         #self.assertEqual(ob.setLocation[0], ob.setLocation[2])
@@ -580,18 +580,18 @@ class TestObservation(unittest.TestCase):
         lis = [['location', loc, 2], ['property', prp],
                ['datation', dat], ['result', res, -1]]
         ob = Observation.obj({'data': lis})
-        self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
+        self.assertEqual(ob.loc([l1, p1, d1])[0][3], 13)
         ob.sort(order=[0, 2, 1])
-        self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
+        self.assertEqual(ob.loc([l1, p1, d1])[0][3], 13)
         self.assertEqual(ob.lindex[0].vName()[:3], ['l1', 'l1', 'l3'])
         ob.sort(order=[2, 0, 1])
-        self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
+        self.assertEqual(ob.loc([l1, p1, d1])[0][3], 13)
         self.assertEqual(ob.lindex[2].vName()[:3], ['c2', 'c2', 'd1'])
         ob.sort([3])
-        self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
+        self.assertEqual(ob.loc([l1, p1, d1])[0][3], 13)
         self.assertEqual(ob.lindex[3].val, [10, 11, 12, 13, 14, 15])
         ob.sort(order=[1, 0, 2])
-        self.assertEqual(ob.loc([l1, p1, d1])[0].value, 13)
+        self.assertEqual(ob.loc([l1, p1, d1])[0][3], 13)
         self.assertEqual(ob.lindex[1].vName()[:4], ['p1', 'p1', 'p1', 'p2'])
 
     def test_obs_add(self):
@@ -625,12 +625,12 @@ class TestObservation(unittest.TestCase):
                       ["property", [{"prp": "PM25", "unit": "kg/m3"}, {"prp": "PM10", "unit": "kg/m3"}],
                                    [0, 1, 0, 1, 0, 1]],
                        ["result", [0, 1, 2, 3, 4, 5], -1]], 'name': 'test1'})
-        ob1 = ob.full(fillvalue=-1, inplace=False)
+        ob1 = ob.full(fillvalue=-1, indexname=['datation', 'location', 'property'], inplace=False)
         rec = [{"date1": "2021-02-04T12:05:00"}, {"paris": [2.35, 48.87]},
-               {"prp": "PM10", "unit": "kg/m3"}]
-        self.assertTrue(ob.loc(rec) == ob1.loc(rec) == [NamedValue(1)])
+               {"prp": "PM10", "unit": "kg/m3"}, 1]
+        self.assertTrue(ob.loc(rec) == ob1.loc(rec))
         self.assertEqual(len(ob1), 18)
-        ob.full(fillvalue=-1, inplace=True)
+        ob.full(fillvalue=-1, indexname=['datation', 'location', 'property'], inplace=True)
         self.assertEqual(ob, ob1)
 
     def test_obs_extend(self):

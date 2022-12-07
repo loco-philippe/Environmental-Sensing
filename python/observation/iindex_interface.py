@@ -301,6 +301,8 @@ class IindexInterface:
             raise IindexError("Ilist is empty")
         if npdtype: 
             npdtype = np.dtype(npdtype)
+        else:
+            npdtype ='object'
         if func is None:
             func = identity
         if func == 'index':
@@ -310,10 +312,11 @@ class IindexInterface:
         else:
             values = util.funclist(self._codec, func, **kwargs)
         npdtype1 = npdtype 
-        if isinstance(values[0], (str, datetime.datetime)):
+        #if isinstance(values[0], (str, datetime.datetime)):
+        if isinstance(values[0], (datetime.datetime)):
             npdtype1 = np.datetime64
-        else:
-            npdtype=None
+        #else:
+        #    npdtype=None
         pdindex=None 
         if index:
             pdindex = self._keys

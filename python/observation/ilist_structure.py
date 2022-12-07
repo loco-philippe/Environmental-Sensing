@@ -21,13 +21,44 @@ from ilist_interface import IlistError
 
 class IlistStructure:
     '''this class includes Ilist methods :
-        
+
+    *selecting - infos methods*
+
+    - `IlistStructure.couplingmatrix`
+    - `IlistStructure.idxrecord`
+    - `IlistStructure.indexinfos`
+    - `IlistStructure.indicator`
+    - `IlistStructure.iscanonorder`
+    - `IlistStructure.isinrecord`
+    - `IlistStructure.keytoval`
+    - `IlistStructure.loc`
+    - `IlistStructure.nindex`
+    - `IlistStructure.record`
+    - `IlistStructure.recidx`
+    - `IlistStructure.recvar`
+    - `IlistStructure.valtokey`
+
+    *add - update methods*
+
+    - `IlistStructure.add`
+    - `IlistStructure.addindex`
+    - `IlistStructure.append`
+    - `IlistStructure.delindex`
+    - `IlistStructure.delrecord`
+    - `IlistStructure.orindex`
+    - `IlistStructure.renameindex`
+    - `IlistStructure.setvar`
+    - `IlistStructure.setname`
+    - `IlistStructure.updateindex`
+
+    *structure management - methods*
+
     - `IlistStructure.applyfilter`
     - `IlistStructure.coupling`
     - `IlistStructure.full`
     - `IlistStructure.getduplicates`
     - `IlistStructure.mix`
-    - `IlistStructure.merge`
+    - `IlistStructure.merging`
     - `IlistStructure.reindex`
     - `IlistStructure.reorder`
     - `IlistStructure.setfilter`
@@ -46,6 +77,8 @@ class IlistStructure:
         - **other** : Ilist object to add to self object
         - **name** : Boolean (default False) - Add values with same index name (True) or
         same index row (False)
+        - **solve** : Boolean (default True) - If True, replace None other's codec value
+        with self codec value.
 
         *Returns* : self '''
         if self.lenindex != other.lenindex:
@@ -58,8 +91,6 @@ class IlistStructure:
                                    solve=solve)
             else:
                 self.lindex[i].add(other.lindex[i], solve=solve)
-        if not self.lvarname:
-            self.lvarname = other.lvarname
         return self
 
     def addindex(self, index, first=False, merge=False, update=False):
@@ -82,14 +113,14 @@ class IlistStructure:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif idx.name in idxname and not merge:
+        elif idx.name in idxname and not merge: # !!! not merge suffit
             while idx.name in idxname:
                 idx.name += '(2)'
             if first:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif update:
+        elif update: # si merge
             self.lindex[idxname.index(idx.name)].setlistvalue(idx.values)
 
     def append(self, record, unique=False, typevalue=ES.def_clsName):
@@ -176,13 +207,19 @@ class IlistStructure:
         coupl = True
         while coupl:
             coupl = False
+            #print('while')
             for i, inf in enumerate(infos):
-                if inf['typecoupl'] != 'coupled' and \
-                    (inf['typecoupl'] not in ('derived', 'unique')
-                     or not derived) and inf['linkrate'] < rate:
-                    self.lidx[inf['parent']].coupling(
-                        self.lidx[i], derived=derived)
+                #if inf['typecoupl'] != 'coupled' and \
+                #    (inf['typecoupl'] not in ('derived', 'unique') or not derived)\
+                #    and inf['linkrate'] < rate:
+                if (inf['linkrate'] == 0 and inf['diffdistparent'] > 0 and 
+                    inf['cat'] != 'unique' and inf['distparent'] != -1 and 
+                    not derived) or (0 < inf['linkrate'] < rate and derived):
+                    self.lindex[inf['distparent']].coupling(
+                        self.lindex[i], derived=derived)
                     coupl = True
+                    #print(i, inf['distparent'])
+                    break
             infos = self.indexinfos()
         return infos
 
@@ -200,21 +237,50 @@ class IlistStructure:
         reckeys = self.valtokey(record, extern=extern)
         if None in reckeys:
             return None
-        row = self.tiidx.index(reckeys)
+        row = self.tiindex.index(reckeys)
         for idx in self:
             del idx[row]
         return row
 
     def delindex(self, indexname):
-        '''remove an index.
+        '''remove an Iindex or a list of Iindex.
 
         *Parameters*
 
-        - **indexname** : string - name of index to remove
+        - **indexname** : string or list of string - name of index to remove
 
         *Returns* : none '''
-        self.lindex.pop(self.lname.index(indexname))
-
+        if isinstance(indexname, str):
+            indexname = [indexname]
+        for idxname in indexname:
+            if idxname in self.lname:
+                self.lindex.pop(self.lname.index(idxname))
+    
+    def _fullindex(self, ind, keysadd, indexname, leng, fillvalue, fillextern):
+        idx = self.lindex[ind]
+        lenadd = len(keysadd[0])
+        if len(idx) == leng:
+            return
+        inf = self.indexinfos()
+        if inf[ind]['cat'] == 'unique':
+            idx.set_keys(idx.keys + [0] * lenadd)  
+        elif self.lname[ind] in indexname:
+            idx.set_keys(idx.keys + keysadd[indexname.index(self.lname[ind])])
+        elif inf[ind]['parent'] == -1:
+            fillval = fillvalue
+            if fillextern:
+                fillval = util.castval(fillvalue, util.typename(self.lname[ind], ES.def_clsName))
+            idx.set_keys(idx.keys + [len(idx.codec)] * len(keysadd[0]))
+            idx.set_codec(idx.codec + [fillval])
+        else:
+            parent = inf[ind]['parent']
+            if len(self.lindex[parent]) != leng:
+                self._fullindex(parent, keysadd, indexname, leng, fillvalue, fillextern)
+            if inf[ind]['cat'] == 'coupled' :
+                idx.tocoupled(self.lindex[parent], coupling=True)
+            else:
+                idx.tocoupled(self.lindex[parent], coupling=False)
+        
     def full(self, reindex=False, indexname=None, fillvalue='-', fillextern=True,
              inplace=True, complete=True):
         '''tranform a list of indexes in crossed indexes (value extension).
@@ -234,40 +300,18 @@ class IlistStructure:
         else:
             ilis = copy(self)
         if not indexname:
-            primary = ilis.primary
-        else:
-            primary = [ilis.idxname.index(name) for name in indexname]
-        secondary = [idx for idx in range(ilis.lenidx) if idx not in primary]
+            indexname = ilis.primaryname
         if reindex:
             ilis.reindex()
-        keysadd = util.idxfull([ilis.lidx[i] for i in primary])
+        keysadd = util.idxfull([ilis.nindex(name) for name in indexname])
         if not keysadd or len(keysadd) == 0:
             return ilis
-        leninit = len(ilis)
         lenadd = len(keysadd[0])
-        inf = ilis.indexinfos()
-        for i, j in zip(primary, range(len(primary))):
-            if inf[i]['cat'] == 'unique':
-                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
-            else:
-                ilis.lidx[i].set_keys(ilis.lidx[i].keys + keysadd[j])
-        for i in secondary:
-            if inf[i]['cat'] == 'unique':
-                ilis.lidx[i].set_keys(ilis.lidx[i].keys + [0] * lenadd)
-            else:
-                ilis.lidx[i].tocoupled(
-                    ilis.lidx[inf[i]['parent']], coupling=False)
-        for i in range(ilis.lenidx):
-            if len(ilis.lidx[i].keys) != leninit + lenadd:
-                raise IlistError('primary indexes have to be present')
-        if ilis.lvarname:
-            ilis.lvar[0].set_keys(ilis.lvar[0].keys + [len(ilis.lvar[0].codec)] * 
-                                  len(keysadd[0]))
+        for ind in range(ilis.lenindex):
+            '''fillval = fillvalue
             if fillextern:
-                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [util.castval(
-                    fillvalue, util.typename(ilis.lvarname[0], ES.def_clsName))])
-            else:
-                ilis.lvar[0].set_codec(ilis.lvar[0].codec + [fillvalue])
+                fillval = util.castval(fillvalue, util.typename(ilis.lname[ind], ES.def_clsName))'''
+            ilis._fullindex(ind, keysadd, indexname, len(ilis) + lenadd, fillvalue, fillextern)
         if complete:
             ilis.setcanonorder()
         return ilis
@@ -277,17 +321,16 @@ class IlistStructure:
 
         *Parameters*
 
-        - **indexname** : list of string - name of indexes to check
+        - **indexname** : list of string (default none) - name of indexes to check 
+        (if None, all Iindex)
         - **resindex** : string (default None) - Add a new index with check result
 
         *Returns* : list of int - list of rows with duplicate cod '''
         if not indexname:
-            primary = self.primary
-        else:
-            primary = [self.idxname.index(name) for name in indexname]
+            indexname = self.lname
         duplicates = []
-        for idx in primary:
-            duplicates += self.lidx[idx].getduplicates()
+        for name in indexname:
+            duplicates += self.nindex(name).getduplicates()
         if resindex and isinstance(resindex, str):
             newidx = Iindex([True] * len(self), name=resindex)
             for item in duplicates:
@@ -296,15 +339,11 @@ class IlistStructure:
         return tuple(set(duplicates))
 
     def iscanonorder(self):
-        '''return True if crossed indexes have canonical ordered keys'''
-        crossed = self.crossed
-        canonorder = util.canonorder(
-            [len(self.lidx[idx].codec) for idx in crossed])
-        return canonorder == [self.lidx[idx].keys for idx in crossed]
-        '''primary = self.primary
+        '''return True if primary indexes have canonical ordered keys'''
+        primary = self.primary
         canonorder = util.canonorder(
             [len(self.lidx[idx].codec) for idx in primary])
-        return canonorder == [self.lidx[idx].keys for idx in primary]'''
+        return canonorder == [self.lidx[idx].keys for idx in primary]
 
     def isinrecord(self, record, extern=True):
         '''Check if record is present in self.
@@ -317,8 +356,8 @@ class IlistStructure:
 
         *Returns boolean* : True if found'''
         if extern:
-            return record in self.textidxext
-        return record in self.textidx
+            return record in util.transpose(self.extidxext)
+        return record in util.transpose(self.extidx)
 
     def idxrecord(self, record):
         '''return rec array (without variable) from complete record (with variable)'''
@@ -367,21 +406,21 @@ class IlistStructure:
 
     def keytoval(self, listkey, extern=True):
         '''
-        convert a keys list (key for each idx) to a values list (value for each idx).
+        convert a keys list (key for each index) to a values list (value for each index).
 
         *Parameters*
 
-        - **listkey** : key for each idx
+        - **listkey** : key for each index
         - **extern** : boolean (default True) - if True, compare rec to val else to values
 
         *Returns*
 
         - **list** : value for each index'''
-        return [idx.keytoval(key, extern=extern) for idx, key in zip(self.lidx, listkey)]
+        return [idx.keytoval(key, extern=extern) for idx, key in zip(self.lindex, listkey)]
 
     def loc(self, rec, extern=True, row=False):
         '''
-        Return variable value or row corresponding to a list of idx values.
+        Return record or row corresponding to a list of idx values.
 
         *Parameters*
 
@@ -389,60 +428,28 @@ class IlistStructure:
         - **extern** : boolean (default True) - if True, compare rec to val,
         else to values
         - **row** : Boolean (default False) - if True, return list of row,
-        else list of variable values
+        else list of records
 
         *Returns*
 
         - **object** : variable value or None if not found'''
-        locrow = list(set.intersection(*[set(self.lidx[i].loc(rec[i], extern))
-                                       for i in range(self.lenidx)]))
+        locrow = None
+        try:
+            if len(rec) == self.lenindex:
+                locrow = list(set.intersection(*[set(self.lindex[i].loc(rec[i], extern))
+                                               for i in range(self.lenindex)]))
+            elif len(rec) == self.lenidx:
+                locrow = list(set.intersection(*[set(self.lidx[i].loc(rec[i], extern))
+                                               for i in range(self.lenidx)]))
+        except:
+            pass
+        if locrow is None:
+            return None
         if row:
             return locrow
-        return self.lvar[0][tuple(locrow)]
-
-    def merge(self, name=None, fillvalue=math.nan, mergeidx=False, updateidx=False):
-        '''
-        Merge method replaces Ilist objects included in variable data into its constituents.
-
-        *Parameters*
-
-        - **name** : str (default None) - name of the new Ilist object
-        - **fillvalue** : object (default nan) - value used for the additional data
-        - **mergeidx** : create a new index if mergeidx is False
-        - **updateidx** : if True (and mergeidx is True), update actual values
-        if index name is present
-
-        *Returns*: merged Ilist '''
-        find = True
-        ilm = copy(self)
-        if name:
-            ilm.name = name
-        nameinit = ilm.idxname
-        while find:
-            find = False
-            for i in range(len(ilm)):
-                if not ilm.lvar[0].values[i].__class__.__name__ in ['Ilist', 'Observation']:
-                    continue
-                find = True
-                ilis = ilm.lvar[0].values[i].merge()
-                ilname = ilis.idxname
-                record = ilm.recidx(i, extern=False)
-                for val, j in zip(reversed(record), reversed(range(len(record)))):  # Ilist pere
-                    nameidx = ilm.lidx[j].name
-                    updidx = nameidx in nameinit and not updateidx
-                    ilis.addindex([nameidx, [val] * len(ilis)], first=True,
-                                  merge=mergeidx, update=updidx)  # ajout des index au fils
-                for nam in ilname:
-                    fillval = util.castval(
-                        fillvalue, util.typename(nam, ES.def_clsName))
-                    ilm.addindex([nam, [fillval] * len(ilm)],
-                                 merge=mergeidx, update=False)  # ajout des index au père
-                del ilm[i]
-                ilis.renameindex(ilis.lvarname[0], ilm.lvarname[0])
-                ilm += ilis
-                break
-        return ilm
-
+        #return self.lvar[0][tuple(locrow)]
+        return [self.record(locr, extern=extern) for locr in locrow]
+ 
     def mix(self, other, fillvalue=None):
         '''add other Iindex not included in self and add other's values'''
         sname = set(self.lname)
@@ -467,7 +474,7 @@ class IlistStructure:
         return None
 
     def orindex(self, other, first=False, merge=False, update=False):
-        ''' Add other's index to self's index
+        ''' Add other's index to self's index (with same length)
 
         *Parameters*
 
@@ -485,8 +492,8 @@ class IlistStructure:
         otherc = copy(other)
         for idx in otherc.lindex:
             self.addindex(idx, first=first, merge=merge, update=update)
-        if not self.lvarname:
-            self.lvarname = other.lvarname
+        #if not self.lvarname:
+        #    self.lvarname = other.lvarname
         return self
 
 
@@ -503,6 +510,7 @@ class IlistStructure:
         - **list** : val record or value record'''
         if extern:
             return [idx.valrow(row) for idx in self.lindex]
+            #return [idx.val[row] for idx in self.lindex]
         return [idx.values[row] for idx in self.lindex]
 
     def recidx(self, row, extern=True):
@@ -563,14 +571,12 @@ class IlistStructure:
         '''Set the canonical index order : primary - secondary/unique - variable.
         Set the canonical keys order : ordered keys in the first columns.
         Return self'''
-        crossed = self.crossed
-        primary = self.primary
-        order = [self.lidxrow[idx] for idx in crossed]
-        order += [self.lidxrow[idx] for idx in primary if not idx in crossed]
-        order += [idx for idx in self.lidxrow if not idx in order]
-        order += self.lvarrow
+        order   = [self.lidxrow[idx] for idx in self.primary]
+        order  += [idx for idx in self.lidxrow if not idx in order]
+        order  += self.lvarrow
         self.swapindex(order)
-        self.sort()
+        self.sort(reindex=False)
+        self.analysis._actualize()
         return self
 
     def setfilter(self, filt=None, first=False, filtname=ES.filter, unique=False):
@@ -600,7 +606,7 @@ class IlistStructure:
         for i in range(min(self.lenindex, len(listname))):
             self.lindex[i].name = listname[i]
 
-    def setvar(self, var=None):
+    """def setvar(self, var=None):
         '''Define a var index by the name or the index row'''
         if var is None:
             self.lvarname = []
@@ -609,9 +615,9 @@ class IlistStructure:
         elif isinstance(var, str) and var in self.lname:
             self.lvarname = [var]
         else:
-            raise IlistError('var is not consistent with Ilist')
+            raise IlistError('var is not consistent with Ilist')"""
 
-    def sort(self, order=None, reverse=False, func=str):
+    def sort(self, order=None, reverse=False, func=str, reindex=True):
         '''Sort data following the index order and apply the ascending or descending
         sort function to values.
 
@@ -621,13 +627,15 @@ class IlistStructure:
         the sort function is applied to the existing order of indexes.
         - **reverse** : boolean (default False)- ascending if True, descending if False
         - **func**    : function (default str) - parameter key used in the sorted function
+        - **reindex** : boolean (default True) - if True, apply a new codec order (key = func)
 
         *Returns* : self'''
         if not order:
             order = list(range(self.lenindex))
         orderfull = order + list(set(range(self.lenindex)) - set(order))
-        for i in order:
-            self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
+        if reindex:
+            for i in order:
+                self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
         newidx = util.transpose(sorted(util.transpose(
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]),
             reverse=reverse))
@@ -641,12 +649,16 @@ class IlistStructure:
 
         *Parameters*
 
-        - **order** : list of int - new order of index to apply.
+        - **order** : list of int or list of name - new order of index to apply.
 
         *Returns* : self '''
         if self.lenindex != len(order):
             raise IlistError('length of order and Ilist different')
-        self.lindex = [self.lindex[order[i]] for i in range(len(order))]
+        #self.lindex = [self.lindex[order[i]] for i in range(len(order))]
+        if isinstance(order[0], int):
+            self.lindex = [self.lindex[ind] for ind in order]
+        if isinstance(order[0], str):
+            self.lindex = [self.nindex(name) for name in order]
         return self
 
     def tostdcodec(self, inplace=False, full=True):
@@ -682,15 +694,16 @@ class IlistStructure:
             listvalue, extern=extern, typevalue=typevalue)
 
     def valtokey(self, rec, extern=True):
-        '''convert a rec list (value or val for each idx) to a key list (key for each idx).
+        '''convert a record list (value or val for each idx) to a key list 
+        (key for each index).
 
         *Parameters*
 
-        - **rec** : list of value or val for each idx
+        - **rec** : list of value or val for each index
         - **extern** : if True, the rec value has external representation, else internal
 
         *Returns*
 
-        - **list of int** : rec key for each idx'''
-        return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lidx, rec)]
+        - **list of int** : record key for each index'''
+        return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lindex, rec)]
 

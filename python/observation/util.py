@@ -135,7 +135,7 @@ class util:
     def couplinginfos(l1, l2):
         '''return a dict with the coupling info between two list'''
         if not l1 or not l2:
-            return {'lencoupling': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null'}
         ls = len(util.tocodec(l1))
         lo = len(util.tocodec(l2))
@@ -147,10 +147,10 @@ class util:
                 typec = 'derived'
             else:
                 typec = 'derive'
-            return {'lencoupling': x0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': x0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': x0, 'distmax': x1, 'diff': diff, 'typecoupl': typec}
         x = len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
-        dic = {'lencoupling': x, 'rate': (x - x0) / (x1 - x0),
+        dic = {'dist': x, 'rate': (x - x0) / (x1 - x0),
                'disttomin': x - x0,  'disttomax': x1 - x,
                'distmin': x0, 'distmax': x1, 'diff': diff}
         if dic['rate'] == 0 and dic['diff'] == 0:
@@ -245,10 +245,11 @@ class util:
     @staticmethod
     def idxlink(ref, l2):
         ''' return a dict for each different tuple (ref value, l2 value)'''
-        lis = set(util.tuple(util.transpose([ref, l2])))
-        if not len(lis) == len(set(ref)):
-            return {}
-        return dict(lis)
+        return dict(set(zip(ref, l2)))
+        #lis = set(util.tuple(util.transpose([ref, l2])))
+        #if not len(lis) == len(set(ref)):
+        #    return {}
+        #return dict(lis)
 
     @staticmethod
     def json(val, **option):
@@ -290,8 +291,11 @@ class util:
     @staticmethod
     def pparent(row, infos):
         '''return field 'pparent' '''
+        if row < 0:
+            return row
         field = infos[row]
-        if field['pparent'] != 0:
+        #if field['pparent'] != 0:
+        if field['pparent'] != -2:
             return field['pparent']
         if field['cat'] == 'primary':
             field['pparent'] = field['num']
@@ -301,6 +305,23 @@ class util:
             field['pparent'] = util.pparent(field['parent'], infos)
         return field['pparent']
 
+    @staticmethod
+    def pparent2(row, infos):
+        '''return field 'pparent' '''
+        if row < 0:
+            return row
+        field = infos[row]
+        #if field['pparent'] != 0:
+        if field['pparent'] != -2:
+            return field['pparent']
+        if field['cat'] == 'primary':
+            field['pparent'] = field['num']
+        elif field['cat'] == 'unique':
+            field['pparent'] = -1
+        else:
+            field['pparent'] = util.pparent2(field['parent'], infos)
+        return field['pparent']
+    
     @staticmethod
     def reindex(oldkeys, oldcodec, newcodec):
         '''new keys with new order of codec'''

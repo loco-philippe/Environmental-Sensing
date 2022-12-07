@@ -78,7 +78,6 @@ class Observation(Ilist):
     - `observation.ilist.Ilist.extidx`
     - `observation.ilist.Ilist.extidxext`
     - `observation.ilist.Ilist.idxname`
-    - `observation.ilist.Ilist.idxref`
     - `observation.ilist.Ilist.idxlen`
     - `observation.ilist.Ilist.iidx`
     - `observation.ilist.Ilist.keys`
@@ -166,21 +165,18 @@ class Observation(Ilist):
     """
 
 # %% constructor
-    def __init__(self, listidx=None, name=None, id=None, param=None, 
-                 lvarname=None, reindex=True,):
+    def __init__(self, listidx=None, name=None, id=None, param=None, reindex=True):
         '''Observation constructor
 
         *Parameters*
 
         - **listidx**  : object (default None) - list of Iindex data or Ilist or Observation
-        - **lvarname** : list (default None) - list of variable names
         - **name**     : string (default None) - Obs name
         - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
 
         if isinstance(listidx, Observation):
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            self.lvarname = [name for name in listidx.lvarname]
             if not listidx.param is None:
                 self.param = {k: v for k, v in listidx.param.items()}
             else:
@@ -191,7 +187,6 @@ class Observation(Ilist):
             return
         if isinstance(listidx, Ilist):
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            self.lvarname = [name for name in listidx.lvarname]
             self.param = param
             self.name = name
             self.id = id
@@ -200,14 +195,13 @@ class Observation(Ilist):
         if not listidx:
             Ilist.__init__(self)
         else:
-            Ilist.__init__(self, listidx=listidx, lvarname=lvarname, reindex=reindex)
+            Ilist.__init__(self, listidx=listidx, reindex=reindex)
         self.name = name
         self.id = id
         self.param = param
 
     @classmethod
-    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, 
-            param=None, var=None):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None):
         '''
         Observation constructor (external dictionnary).
 
@@ -219,9 +213,10 @@ class Observation(Ilist):
         - **name**     : string (default None) - Observation name
         - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
-        if ES.res_classES in idxdic:
-            var = list(idxdic.keys()).index(ES.res_classES)
-        listidx = Ilist.dic(idxdic, typevalue=typevalue, var=var)
+        #if ES.res_classES in idxdic:
+        #    var = list(idxdic.keys()).index(ES.res_classES)
+        #listidx = Ilist.dic(idxdic, typevalue=typevalue, var=var)
+        listidx = Ilist.dic(idxdic, typevalue=typevalue)
         return cls(listidx=listidx, name=name, id=id, param=param)
 
     @classmethod
@@ -525,16 +520,19 @@ class Observation(Ilist):
         #print('fin', time()-t0)
         return dic
 
-    def to_xarray(self, info=False, idx=None, fillvalue='?', fillextern=True,
-                  lisfunc=None, numeric=False, npdtype=None, **kwargs):
+    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?', 
+                  fillextern=True, lisfunc=None, numeric=False, npdtype=None, 
+                  **kwargs):
         '''
         Complete the Observation and generate a Xarray DataArray with the dimension define by idx.
 
         *Parameters*
 
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
-        - **idx** : list (default none) - list of idx to be completed. If [],
+        - **idxname** : list (default none) - list of idx to be completed. If None,
         self.primary is used.
+        - **varname** : string (default none) - Name of the variable to use. If None,
+        first lvarname is used.
         - **fillvalue** : object (default '?') - value used for the new extval
         - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
         - **lisfunc** : function (default none) - list of function to apply to indexes before export
@@ -543,9 +541,10 @@ class Observation(Ilist):
         - **kwargs** : parameter for lisfunc
 
         *Returns* : DataArray '''
-        return Ilist.to_xarray(self, info=info, idx=idx, fillvalue=fillvalue,
-                               fillextern=fillextern, lisfunc=lisfunc, name=self.name,
-                               numeric=numeric, npdtype=npdtype, attrs=self.param, **kwargs)
+        return Ilist.to_xarray(self, info=info, idxname=idxname, varname=varname, 
+                               fillvalue=fillvalue, fillextern=fillextern, 
+                               lisfunc=lisfunc, name=self.name, numeric=numeric,
+                               npdtype=npdtype, attrs=self.param, **kwargs)
 # %% internal
 
     def _info(self, **kwargs):

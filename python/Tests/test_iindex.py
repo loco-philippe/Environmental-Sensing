@@ -85,17 +85,14 @@ class Test_iindex(unittest.TestCase):
 
     def test_infos(self):
         idx = Iindex.ext(['er', 2, [1, 2]])
-        self.assertTrue(idx.infos == {'lencodec': 3, 'min': 3, 'max': 3,
-                                      'typecodec': 'complete', 'rate': 0.0,
-                                      'disttomin': 0, 'disttomax': 0})
+        self.assertTrue(idx.infos == {'lencodec': 3, 'mincodec': 3, 'maxcodec': 3,
+                                      'typecodec': 'complete', 'ratecodec': 0.0})
         idx2 = Iindex.ext(['er', Ilist(), Ilist()], 'result')
-        self.assertTrue(idx2.infos == {'lencodec': 2, 'min': 2, 'max': 3,
-                                       'typecodec': 'default', 'rate': 1.0,
-                                       'disttomin': 0, 'disttomax': 1})
+        self.assertTrue(idx2.infos == {'lencodec': 2, 'mincodec': 2, 'maxcodec': 3,
+                                       'typecodec': 'default', 'ratecodec': 1.0})
         idx2 = Iindex()
-        self.assertTrue(idx2.infos == {'lencodec': 0, 'min': 0, 'max': 0,
-                                       'typecodec': 'null', 'rate': 0.0,
-                                       'disttomin': 0, 'disttomax': 0})
+        self.assertTrue(idx2.infos == {'lencodec': 0, 'mincodec': 0, 'maxcodec': 0,
+                                       'typecodec': 'null', 'ratecodec': 0.0})
 
     def test_append(self):
         idx = Iindex.ext(['er', 2, [1, 2]])
@@ -176,16 +173,16 @@ class Test_iindex(unittest.TestCase):
     def test_coupling_infos(self):
         ia = Iindex.ext()
         ib = Iindex.ext([25, 25, 12, 12, 25])
-        self.assertEqual(ia.couplinginfos(ib), {'lencoupling': 0, 'rate': 0,
+        self.assertEqual(ia.couplinginfos(ib), {'dist': 0, 'rate': 0,
                                                 'disttomin': 0, 'disttomax': 0, 'distmin': 0, 'distmax': 0,
                                                 'diff': 0, 'typecoupl': 'null'})
         ia = Iindex.ext(['anne', 'paul', 'anne', 'lea', 'anne'])
-        self.assertEqual(ia.couplinginfos(ib), {'lencoupling': 4, 'rate': 0.3333333333333333,
+        self.assertEqual(ia.couplinginfos(ib), {'dist': 4, 'rate': 0.3333333333333333,
                                                 'disttomin': 1, 'disttomax': 2, 'distmin': 3, 'distmax': 6,
                                                 'diff': 1, 'typecoupl': 'link'})
         self.assertTrue(ia.islinked(ib))
         ia = Iindex.ext(['anne', 'lea', 'anne', 'lea', 'anne'])
-        self.assertEqual(ia.couplinginfos(ib), {'lencoupling': 4, 'rate': 1.0,
+        self.assertEqual(ia.couplinginfos(ib), {'dist': 4, 'rate': 1.0,
                                                 'disttomin': 2, 'disttomax': 0, 'distmin': 2, 'distmax': 4,
                                                 'diff': 0, 'typecoupl': 'crossed'})
         self.assertTrue(ia.iscrossed(ib))
