@@ -19,13 +19,13 @@ export async function emptyRequest(collection) {
 
 const dico_alias_mongo = {
   'string' : {
-    undefined:"$eq",
+    undefined:"$eq", '':"$eq",
     "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
     "in":"$in", "$in":"$in",
     "regex":"$regex", "$regex":"$regex"
   },
   'number' : {
-    undefined:"$eq",
+    undefined:"$eq", '':"$eq",
     "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
     "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
     "gt":"$gt", ">":"$gt", "$gt":"$gt",
@@ -34,7 +34,7 @@ const dico_alias_mongo = {
     "in":"$in", "$in":"$in"
   },
   'date' : { //attention, typeof détecte object
-    undefined:"$eq",
+    undefined:"$eq", '':"$eq",
     "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
     "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
     "gt":"$gt", ">":"$gt", "$gt":"$gt",
@@ -43,7 +43,7 @@ const dico_alias_mongo = {
     "in":"$in", "$in":"$in"
   },
   'array' : { //attention, typeof détecte object
-    undefined:"$geoIntersects",
+    undefined:"$geoIntersects", '':"$geoIntersects",
     "eq":"equals", "=":"equals", "==":"equals", "$eq":"equals", "equals":"equals", "$equals":"equals",
     "$geowithin":"$geoWithin", "geowithin":"$geoWithin", "$geoWithin":"$geoWithin", "geoWithin":"$geoWithin", "within":"$geoWithin", "$within":"$geoWithin",
     "disjoint":"disjoint", "$disjoint":"disjoint",
@@ -76,11 +76,11 @@ export class ESSearch {
     }
   }
 
-  addCondition(name, operand, comparator, path, or_position = this.parameters.length - 1, others = {}) {
+  addCondition({name, operand, comparator, path, or_position = this.parameters.length - 1, others = {}}) {
     let condition;
     
-    if (path === undefined) {
-      if (name) {
+    if (path === undefined || path === '') {
+      if (name !== undefined && name !== '') {
         if (["$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"].includes(name)) {
           path = "data.datation.value.codec";
         } else {
@@ -89,7 +89,7 @@ export class ESSearch {
       } else { path = "data";}
     }
 
-    if (operand) {
+    if (operand !== undefined && operand !== '') {
       try {comparator = dico_alias_mongo[typeof operand][comparator];}
       catch {
         if (Object.prototype.toString.call(operand) === '[object Date]' || others.formatstring) {
@@ -156,14 +156,15 @@ export class ESSearch {
           this._unwind.push(cond.unwind[0]);
         }
       }
-    } else if (name && operand && !(this._unwind.includes("data." + name + ".value"))) {
+    } else if (name !== undefined && name !== '' && operand != undefined && operand !== '' && 
+                !(this._unwind.includes("data." + name + ".value"))) {
       this._unwind.push("data." + name + ".value");
-    } else if (path && path.slice(0, 5) !== "data.") {match = '1';}
-    if (this.heavy && operand && path && path.slice(0, 4) === "data") {
+    } else if (path !== undefined && path !== '' && path.slice(0, 5) !== "data.") {match = '1';}
+    if (this.heavy && operand !== undefined && operand !== '' && path !== undefined && path !== '' && path.slice(0, 4) === "data") {
       if (!(this._heavystages.includes(path))) {this._heavystages.concat([path]);}
       path = "_" + path + ".v";
     }
-    if (operand === undefined) {
+    if (operand === undefined || operand === '') {
       if (name) {path = "data." + name;}
       comparator = "$exists";
       operand = 1;
@@ -341,7 +342,8 @@ export class ESSearch {
     */
     let cursor, result = [];
     cursor = this.collection.aggregate(this._fullSearchMongo());
-    for await (const item of cursor) {result.push(JSON.stringify(item));}
+    for await (const item of cursor) {result.push(JSON.stringify(_mongo_out_to_obs(item)));}
+    console.log(result); // à retirer
     if (with_python) {
       python.ex`from observation import Observation`;
       python.ex`from observation.essearch import ESSearch`;
@@ -353,27 +355,57 @@ export class ESSearch {
       return result;
     }
   }
+
+  _mongo_out_to_obs(dico) { // non testé
+    let valid_records = [], first_column = True, next_valid_records;
+    for (const column_key in dico['data']) {
+      if (first_column) {
+        for (let i = 0; i < dico['data'][column_key]['value'].length; i++) {
+          if (typeof dico['data'][column_key]['value'][i]['record'] === 'int') {
+            valid_records.push(dico['data'][column_key]['value'][i]['record']);
+          } else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {
+            for (const k of dico['data'][column_key]['value'][i]['record']) {
+              valid_records.push(k);
+            }
+          }
+        }
+        first_column = False
+      } else {
+        next_valid_records = [];
+        for (let i = 0; i < dico['data'][column_key]['value'].length; i++) {
+          if (typeof dico['data'][column_key]['value'][i]['record'] === int &&
+              valid_records.includes(dico['data'][column_key]['value'][i]['record'])) {
+            next_valid_records.push(dico['data'][column_key]['value'][i]['record']);
+          }
+          else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {
+            for (const k of dico['data'][column_key]['value'][i]['record']) {
+              if (valid_records.includes(k)) {
+                next_valid_records.push(k);
+              }
+            }
+          }
+        }
+        valid_records = next_valid_records;
+      }
+      if (valid_records.length === 0) {return null;}
+    }
+    for (const column_key in dico['data']) {
+      for (let i = dico['data'][column_key]['value'].length - 1; i > -1 ; i--) {
+        if (typeof dico['data'][column_key]['value'][i]['record'] === int &&
+              !(valid_records.includes(dico['data'][column_key]['value'][i]['record']))) {
+          dico['data'][column_key]['value'].splice(i, 1);
+        } else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {
+          for (let j = dico['data'][column_key]['value'][i]['record'].length - 1; j > -1 ; j--) {
+            if (!(valid_records.includes(dico['data'][column_key]['value'][i]['record'][j]))) {
+              delete dico['data'][column_key]['value'][i]['record'][j];
+            }
+          }
+          if (dico['data'][column_key]['value'][i]['record'].length === 0) {
+            dico['data'][column_key]['value'].splice(i, 1);
+          }
+        }
+      }
+    }
+    return dico;
+  }
 }
-
-// Tests à retirer
-/*
-let srch = new ESSearch({collection: 'collec'});
-srch.addCondition('datation', new Date(2022, 0, 1), '>=');
-srch.addCondition('datation', new Date(2022, 11, 32), '<=');
-srch.addCondition('property', 'PM25');
-srch.addCondition(undefined, 'observation', '==', 'type');
-console.log(srch.parameters);
-console.log(srch.request);
-console.log(JSON.stringify(srch.request, null, 2));
-
-let srch2 = new ESSearch({parameters: [['datation', new Date(2022, 0, 1), '>='],
-                        ['datation', new Date(2022, 11, 32), '<='], 
-                        ['property', 'PM25'], 
-                        [undefined, 'observation', '==', 'type']],
-                        collection: 'collec'})
-console.log(srch2.parameters);
-console.log(srch2.request);
-console.log(JSON.stringify(srch2.request, null, 2));
-console.log(srch.parameters == srch2.parameters);
-console.log(srch.request == srch2.request);
-*/

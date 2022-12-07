@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="icon" href="https://loco-philippe.github.io/ES/logo_loco.png"> <!-- pas très lisible -->
+        <title>Outil de recherche Essearch basé sur MongoDB</title>
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+        <script type="text/javascript">
+            var uri = '', database_name = '', collection_name = '', req_count = -1, condArray = [], nb_cond = 1;
+
+            function set_uri (value) {uri = value; Validation_Mongo();}
+            function set_database_name (value) {database_name = value; Validation_Mongo();}
+            function set_collection_name (value) {collection_name = value; Validation_Mongo();}
+            function set_parameter (parameter_name, value, i) {
+                if (condArray[i] === undefined) {condArray[i] = {}}
+                condArray[i][parameter_name] = value;
+                console.log(JSON.stringify(condArray));
+            }
+
+            function setMongoValidity (validity) {
+                if (validity === 'Valide') {
+                    document.getElementById("mongo_validity").innerHTML = "Valide";
+                    document.getElementById("mongo_validity").style.color = "green";
+                    document.getElementById("coll_stats").innerHTML = "...";
+                } else if (validity === 'Invalide') {
+                    document.getElementById("mongo_validity").innerHTML = "Invalide";
+                    document.getElementById("mongo_validity").style.color = "red";
+                    document.getElementById("coll_stats").innerHTML = "";
+                } else {
+                    document.getElementById("mongo_validity").innerHTML = "Erreur";
+                    document.getElementById("mongo_validity").style.color = "red";
+                    document.getElementById("coll_stats").innerHTML = "";
+                }
+            }
+
+            function loadCondition (i) {
+                // à faire
+                if (document.getElementById("name-select_" + i).value === "exact-path") {document.getElementById("exact-path-input-div_" + i).hidden = false;}
+                else {document.getElementById("exact-path-input-div_" + i).hidden = true;}
+            }
+
+            function exactPath_visibility (i) {
+                if (document.getElementById("name-select_" + i).value === "exact-path") {
+                    document.getElementById("exact-path-input-div_" + i).hidden = false;
+                    set_parameter ('name', '', i);
+                    set_parameter ('path', document.getElementById("exact-path-input_" + i).value, i);
+                } else {
+                    document.getElementById("exact-path-input-div_" + i).hidden = true;
+                    set_parameter ('name', document.getElementById("name-select_" + i).value, i);
+                    set_parameter ('path', '', i);
+                }
+            }
+
+            function addCondition () {
+
+                nb_cond += 1;
+            }
+
+            function Validation_Mongo () {
+                // Effectue la requête POST envoyant uri, database_name et collection_name
+                req_count += 1;
+                var req_id = req_count;
+                if (document.getElementById("mongo_validity").innerHTML === "Valide") {document.getElementById("coll_stats").innerHTML = "...";}
+                var name_selectors = document.querySelectorAll("name-select");
+                for (var i = 0; i < name_selectors.length; i++) {exact_path_fields[i].disabled = true;}
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open("POST", "/", true);
+                xmlHttp.setRequestHeader("Content-Type", "application/json");
+                xmlHttp.send(JSON.stringify({request_type:'mongo-validation', uri:uri, database_name:database_name, collection_name:collection_name}));
+                xmlHttp.onload = () => { if (xmlHttp.readyState === xmlHttp.DONE && xmlHttp.status === 200 && req_id === req_count) {
+                    if (xmlHttp.responseText === "mongo_data is valid") {
+                        setMongoValidity ("Valide");
+                        var ask = new XMLHttpRequest();
+                        ask.open("POST", "/", true);
+                        ask.setRequestHeader("Content-Type", "application/json");
+                        ask.send(JSON.stringify({request_type:'mongo-validation-namelist', uri:uri, database_name:database_name, 
+                                    collection_name:collection_name}));
+                        ask.onreadystatechange = () => {if (ask.readyState === ask.DONE && ask.status === 200 && req_id === req_count) {
+                            var json_ask = JSON.parse(ask.responseText);
+                            document.getElementById("coll_stats").innerHTML = "La collection contient " + json_ask.count + " éléments.";
+                            if (json_ask.count === 0) {document.getElementById("coll_stats").innerHTML += 
+                                    " Cela signifie que cette collection MongoDB n'existe pas ou qu'aucune donnée n'y a été insérée."}
+                            var name_selectors = document.getElementsByClassName("name-select");
+                            for (var i = 0; i < name_selectors.length; i++) {
+                                name_selectors[i].options.length = 0;
+                                json_ask.column_names.forEach(option => name_selectors[i].add(new Option(option, option)));
+                                name_selectors[i].add(new Option("Entrer un chemin exact.", "exact-path"))
+                                name_selectors[i].disabled = false;
+                                exactPath_visibility (i);
+                            }
+                            var exact_path_fields = document.querySelectorAll("option[value='exact-path']");
+                            for (var i = 0; i < exact_path_fields.length; i++) {exact_path_fields[i].style.fontStyle = 'italic';}
+                        }} 
+                    } else {
+                        setMongoValidity ("Invalide");
+                    }
+                }}
+                xmlHttp.onerror = () => { setMongoValidity ("Erreur"); }
+            }
+
+            function execute () {
+                if (document.getElementById("mongo_validity").innerHTML === "Valide") {
+                    document.getElementById("request-result").innerHTML = "..."
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", "/", true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                    xhr.send(JSON.stringify({request_type:'execute', uri:uri, database_name:database_name,
+                            collection_name:collection_name, parameters:condArray}));
+                    xhr.onerror = () => {
+                        document.getElementById("request-result").innerHTML = "Erreur";
+                        document.getElementById("request-result").style.color = "red";
+                    }
+                    xhr.onreadystatechange = () => { if (xhr.readyState === xhr.DONE && xhr.status === 200) {
+                        document.getElementById("request-result").innerHTML = xhr.responseText;
+                        document.getElementById("request-result").style.color = "black";
+                        /* à faire
+                        Ce qui est reçu est ... ? à voir ; voir ce qui est fait côté client et côté serveur
+                        */
+                    }}
+                } else {
+                    document.getElementById("request-result").innerHTML = "La collection est invalide. Impossible d'exécuter la requête."
+                    document.getElementById("request-result").style.color = "red";
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Outil de requêtes</h1>
+        <h2>Paramètres de la base de données</h2>
+        <!-- Considérer l'utilisation de Cookies pour retrouver les valeurs précédentes -->
+        <p id="db_selection">
+            URI complète : <input type="text" id="URI_mongo-input" oninput="set_uri (this.value)">
+            <!-- si possible, ajouter un point d'interrogation expliquant au survol ce qu'est une URI Mongo et comment la créer -->
+            Nom de la base : <input type="text" id="base_name-input" oninput="set_database_name (this.value)">
+            Nom de la collection : <input type="text" id="collection_name-input" oninput="set_collection_name (this.value)">
+        </p>
+        <div id="mongo_validity"></div>
+        <div id="coll_stats"></div>
+        <h2>Paramètres de la requête</h2>
+        <!-- Ne s'affiche / n'est dégrisé qu'une fois l'étape précédente validée (la requête vide a lieu entre temps) -->
+        <p class="cond" id="cond_0">
+            Colonne : <select name="column_name" class="name-select" id="name-select_0" oninput="set_parameter ('name', this.value, 0); exactPath_visibility (0)"></select>
+            Opérateur : <input type="text" class="operator-input" id="operator-input_0" oninput="set_parameter ('operator', this.value, 0)">
+            <!-- à voir si une liste des opérateurs associés à la colonne choisie peut être déterminée avec les infos
+                (liste n'empêchant pas la saisie manuelle) -->
+            Valeur de comparaison : <input type="text" class="operand-input" id="operand-input_0" oninput="set_parameter ('operand', this.value, 0)">
+        </p>
+        <div class="exact-path-input-div" id="exact-path-input-div_0" hidden>Chemin exact : <input type="text" class="exact-path-input" id="exact-path-input_0" oninput="set_parameter ('path', this.value, 0)"></div>
+        <button id="add_condition" onclick="addCondition ()">Ajouter une condition</button>
+        <button id="execute" onclick="execute ()">Exécuter la requête</button>
+        <div id="request-result"></div>
+        <h2>Affichage des données</h2>
+        <p>
+            Type d'affichage : 
+            <select name="rendering_format" id="rendering-select">
+                <option value="bar-chart">Histogramme</option>
+                <option value="curve">Courbe</option>
+                <option value="map">Carte</option>
+            </select>
+            <!--
+                Peu pertinent d'écrire la suite maintenant sans savoir quels seront les paramètres demandés
+                + Ils seront potentiellement différents pour chaque type de graphique.
+            -->
+
+        </p>
+        <div class='container'>
+            <figure id='graphic'>
+
+            </figure>
+        </div>
+    </body>
+</html>
