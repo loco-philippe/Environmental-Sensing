@@ -79,8 +79,10 @@ export class ESSearch {
   addCondition({name, operand, comparator, path, or_position = this.parameters.length - 1, others = {}}) {
     let condition;
     
-    if (path === undefined || path === '') {
-      if (name !== undefined && name !== '') {
+    if ((!path || path === '') && (operand && operand !== '') && (!name && name === '')) {return;}
+
+    if (!path || path === '') {
+      if (name && name !== '') {
         if (["$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"].includes(name)) {
           path = "data.datation.value.codec";
         } else {
@@ -89,7 +91,7 @@ export class ESSearch {
       } else { path = "data";}
     }
 
-    if (operand !== undefined && operand !== '') {
+    if (operand && operand !== '') {
       try {comparator = dico_alias_mongo[typeof operand][comparator];}
       catch {
         if (Object.prototype.toString.call(operand) === '[object Date]' || others.formatstring) {
@@ -116,8 +118,8 @@ export class ESSearch {
 
   removeCondition(or_position, condnum) {
     if (this.parameters.length === 0 && this.parameters[0].length === 0) {return;}
-    if (or_position === undefined) {
-      if (condnum === undefined) {
+    if (!or_position) {
+      if (!condnum) {
         if (this.parameters[this.parameters.length-1].length > 1) {this.parameters[-1].pop(-1);}
         else {this.parameters.pop(-1);}
       } else {
@@ -125,7 +127,7 @@ export class ESSearch {
         else {this.parameters.pop(-1);}
       }
     } else {
-      if (condnum === undefined || (this.parameters[or_position].length === 1 && condnum === 0)) {this.parameters.pop(or_position);}
+      if (!condnum || (this.parameters[or_position].length === 1 && condnum === 0)) {this.parameters.pop(or_position);}
       else {this.parameters[or_position].pop(condnum);}
     }
     if (this.parameters.length === 0) {
@@ -156,15 +158,14 @@ export class ESSearch {
           this._unwind.push(cond.unwind[0]);
         }
       }
-    } else if (name !== undefined && name !== '' && operand != undefined && operand !== '' && 
-                !(this._unwind.includes("data." + name + ".value"))) {
+    } else if (name && name !== '' && operand && operand !== '' && !(this._unwind.includes("data." + name + ".value"))) {
       this._unwind.push("data." + name + ".value");
-    } else if (path !== undefined && path !== '' && path.slice(0, 5) !== "data.") {match = '1';}
-    if (this.heavy && operand !== undefined && operand !== '' && path !== undefined && path !== '' && path.slice(0, 4) === "data") {
+    } else if (path && path !== '' && path.slice(0, 5) !== "data.") {match = '1';}
+    if (this.heavy && operand && operand !== '' && path && path !== '' && path.slice(0, 4) === "data") {
       if (!(this._heavystages.includes(path))) {this._heavystages.concat([path]);}
       path = "_" + path + ".v";
     }
-    if (operand === undefined || operand === '') {
+    if (!operand || operand === '') {
       if (name) {path = "data." + name;}
       comparator = "$exists";
       operand = 1;
@@ -342,7 +343,10 @@ export class ESSearch {
     */
     let cursor, result = [];
     cursor = this.collection.aggregate(this._fullSearchMongo());
-    for await (const item of cursor) {result.push(JSON.stringify(_mongo_out_to_obs(item)));}
+    for await (const item of cursor) {
+      const filtered_out = this._mongo_out_to_obs(item);
+      if (filtered_out) {result.push(JSON.stringify(filtered_out));}
+    }
     console.log(result); // à retirer
     if (with_python) {
       python.ex`from observation import Observation`;
@@ -356,8 +360,8 @@ export class ESSearch {
     }
   }
 
-  _mongo_out_to_obs(dico) { // non testé
-    let valid_records = [], first_column = True, next_valid_records;
+  _mongo_out_to_obs(dico) {
+    let valid_records = [], first_column = true, next_valid_records;
     for (const column_key in dico['data']) {
       if (first_column) {
         for (let i = 0; i < dico['data'][column_key]['value'].length; i++) {
@@ -369,11 +373,11 @@ export class ESSearch {
             }
           }
         }
-        first_column = False
+        first_column = false;
       } else {
         next_valid_records = [];
         for (let i = 0; i < dico['data'][column_key]['value'].length; i++) {
-          if (typeof dico['data'][column_key]['value'][i]['record'] === int &&
+          if (typeof dico['data'][column_key]['value'][i]['record'] === 'int' &&
               valid_records.includes(dico['data'][column_key]['value'][i]['record'])) {
             next_valid_records.push(dico['data'][column_key]['value'][i]['record']);
           }
@@ -391,7 +395,7 @@ export class ESSearch {
     }
     for (const column_key in dico['data']) {
       for (let i = dico['data'][column_key]['value'].length - 1; i > -1 ; i--) {
-        if (typeof dico['data'][column_key]['value'][i]['record'] === int &&
+        if (typeof dico['data'][column_key]['value'][i]['record'] === 'int' &&
               !(valid_records.includes(dico['data'][column_key]['value'][i]['record']))) {
           dico['data'][column_key]['value'].splice(i, 1);
         } else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {

@@ -7,7 +7,7 @@
         <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
         <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
         <script type="text/javascript">
-            var uri = '', database_name = '', collection_name = '', req_count = -1, condArray = [], nb_cond = 1;
+            var uri = '', database_name = '', collection_name = '', req_count = -1, column_names, condArray = [], nb_cond = 1;
 
             function set_uri (value) {uri = value; Validation_Mongo();}
             function set_database_name (value) {database_name = value; Validation_Mongo();}
@@ -35,12 +35,12 @@
             }
 
             function loadCondition (i) {
-                // à faire
+                // à faire (affichage de la partie conditions une fois que la base est valide)
                 if (document.getElementById("name-select_" + i).value === "exact-path") {document.getElementById("exact-path-input-div_" + i).hidden = false;}
                 else {document.getElementById("exact-path-input-div_" + i).hidden = true;}
             }
 
-            function exactPath_visibility (i) {
+            function exactPathVisibility (i) {
                 if (document.getElementById("name-select_" + i).value === "exact-path") {
                     document.getElementById("exact-path-input-div_" + i).hidden = false;
                     set_parameter ('name', '', i);
@@ -52,9 +52,47 @@
                 }
             }
 
-            function addCondition () {
+            function insertNamesInSelectors () {
+                var name_selectors = document.getElementsByClassName("name-select");
+                for (var i = 0; i < name_selectors.length; i++) {
+                    name_selectors[i].options.length = 0;
+                    column_names.forEach(option => name_selectors[i].add(new Option(option, option)));
+                    name_selectors[i].add(new Option("Entrer un chemin exact.", "exact-path"))
+                    name_selectors[i].disabled = false;
+                    exactPathVisibility (i);
+                }
+                var exact_path_fields = document.querySelectorAll("option[value='exact-path']");
+                for (var i = 0; i < exact_path_fields.length; i++) {exact_path_fields[i].style.fontStyle = 'italic';}
+            }
 
+            function addCondition () {
+                var parent = document.getElementById("conds");
+                var div = document.createElement("div");
+                div.className = "cond";
+                div.id = "cond_" + nb_cond;
+                div.innerHTML = "<p>Colonne : <select name=\"column_name\" \
+                    class=\"name-select\" id=\"name-select_" + nb_cond + "\" oninput=\"set_parameter ('name', this.value, " + 
+                    nb_cond + "); exactPathVisibility (" + nb_cond + ")\"></select> Opérateur : <input type=\"text\" \
+                    class=\"operator-input\" id=\"operator-input_" + nb_cond + "\" oninput=\"set_parameter \
+                    ('operator', this.value, " + nb_cond + ")\"> Valeur de comparaison : <input type=\"text\" \
+                    class=\"operand-input\" id=\"operand-input_" + nb_cond + "\" oninput=\"set_parameter ('operand', this.value, " + 
+                    nb_cond + ")\"> <button id=\"remove_condition_" +  nb_cond + "\" onclick=\"removeCondition (" +  nb_cond + ")\">\
+                    Enlever cette condition</button></p><div class=\"exact-path-input-div\" id=\"exact-path-input-div_" + nb_cond + 
+                    "\" hidden>Chemin exact : <input type=\"text\" class=\"exact-path-input\" id=\"exact-path-input_" + nb_cond + 
+                    "\" oninput=\"set_parameter ('path', this.value, " + nb_cond + ")\"></div>";
+                parent.appendChild(div);
+                var sel = document.getElementById("name-select_" + nb_cond);
+                console.log
+                column_names.forEach(option => sel.add(new Option(option, option)));
+                sel.add(new Option("Entrer un chemin exact.", "exact-path"))
+                document.querySelectorAll("option[value='exact-path']")[nb_cond].style.fontStyle = 'italic';
+                exactPathVisibility (nb_cond);
                 nb_cond += 1;
+            }
+
+            function removeCondition (i) {
+                document.getElementById("conds").removeChild(document.getElementById("cond_" + i));
+                delete condArray[i];
             }
 
             function Validation_Mongo () {
@@ -81,16 +119,8 @@
                             document.getElementById("coll_stats").innerHTML = "La collection contient " + json_ask.count + " éléments.";
                             if (json_ask.count === 0) {document.getElementById("coll_stats").innerHTML += 
                                     " Cela signifie que cette collection MongoDB n'existe pas ou qu'aucune donnée n'y a été insérée."}
-                            var name_selectors = document.getElementsByClassName("name-select");
-                            for (var i = 0; i < name_selectors.length; i++) {
-                                name_selectors[i].options.length = 0;
-                                json_ask.column_names.forEach(option => name_selectors[i].add(new Option(option, option)));
-                                name_selectors[i].add(new Option("Entrer un chemin exact.", "exact-path"))
-                                name_selectors[i].disabled = false;
-                                exactPath_visibility (i);
-                            }
-                            var exact_path_fields = document.querySelectorAll("option[value='exact-path']");
-                            for (var i = 0; i < exact_path_fields.length; i++) {exact_path_fields[i].style.fontStyle = 'italic';}
+                            column_names = json_ask.column_names;
+                            insertNamesInSelectors ();
                         }} 
                     } else {
                         setMongoValidity ("Invalide");
@@ -102,17 +132,31 @@
             function execute () {
                 if (document.getElementById("mongo_validity").innerHTML === "Valide") {
                     document.getElementById("request-result").innerHTML = "..."
+                    document.getElementById("request-result").style.color = "black";
                     var xhr = new XMLHttpRequest();
                     xhr.open("POST", "/", true);
                     xhr.setRequestHeader("Content-Type", "application/json");
+                    var cleanCondArray = [], i = 0;
+                    for (const cond_id in condArray) {
+                        if (condArray[cond_id] !== null) {
+                            cleanCondArray.push({})
+                            var cond = {};
+                            for (const param_key in condArray[cond_id]) {
+                                if (condArray[cond_id][param_key] !== "") {
+                                    cleanCondArray[i][param_key] = condArray[cond_id][param_key];
+                                }
+                            }
+                            i ++;
+                        }
+                    }
                     xhr.send(JSON.stringify({request_type:'execute', uri:uri, database_name:database_name,
-                            collection_name:collection_name, parameters:condArray}));
+                            collection_name:collection_name, parameters:cleanCondArray}));
                     xhr.onerror = () => {
                         document.getElementById("request-result").innerHTML = "Erreur";
                         document.getElementById("request-result").style.color = "red";
                     }
                     xhr.onreadystatechange = () => { if (xhr.readyState === xhr.DONE && xhr.status === 200) {
-                        document.getElementById("request-result").innerHTML = xhr.responseText;
+                        document.getElementById("request-result").innerHTML = xhr.responseText; // temp
                         document.getElementById("request-result").style.color = "black";
                         /* à faire
                         Ce qui est reçu est ... ? à voir ; voir ce qui est fait côté client et côté serveur
@@ -139,14 +183,19 @@
         <div id="coll_stats"></div>
         <h2>Paramètres de la requête</h2>
         <!-- Ne s'affiche / n'est dégrisé qu'une fois l'étape précédente validée (la requête vide a lieu entre temps) -->
-        <p class="cond" id="cond_0">
-            Colonne : <select name="column_name" class="name-select" id="name-select_0" oninput="set_parameter ('name', this.value, 0); exactPath_visibility (0)"></select>
+        <div id="conds">
+            <div class="cond" id="cond_0">
+        <p>
+            Colonne : <select name="column_name" class="name-select" id="name-select_0" oninput="set_parameter ('name', this.value, 0); exactPathVisibility (0)"></select>
             Opérateur : <input type="text" class="operator-input" id="operator-input_0" oninput="set_parameter ('operator', this.value, 0)">
             <!-- à voir si une liste des opérateurs associés à la colonne choisie peut être déterminée avec les infos
                 (liste n'empêchant pas la saisie manuelle) -->
             Valeur de comparaison : <input type="text" class="operand-input" id="operand-input_0" oninput="set_parameter ('operand', this.value, 0)">
+            <button id="remove_condition_0" onclick="removeCondition (0)">Enlever cette condition</button>
         </p>
         <div class="exact-path-input-div" id="exact-path-input-div_0" hidden>Chemin exact : <input type="text" class="exact-path-input" id="exact-path-input_0" oninput="set_parameter ('path', this.value, 0)"></div>
+        </div>
+        </div>
         <button id="add_condition" onclick="addCondition ()">Ajouter une condition</button>
         <button id="execute" onclick="execute ()">Exécuter la requête</button>
         <div id="request-result"></div>
@@ -161,6 +210,9 @@
             <!--
                 Peu pertinent d'écrire la suite maintenant sans savoir quels seront les paramètres demandés
                 + Ils seront potentiellement différents pour chaque type de graphique.
+                -> Si traitement côté client, nécessaire d'avoir la conversion de format observation côté client.
+                -> Si traitement côté serveur, nécessaire d'effectuer une nouvelle requête pour changer le type de diagramme
+                 (pas garanti que le format adapté soit réellement différent selon les cas)
             -->
 
         </p>

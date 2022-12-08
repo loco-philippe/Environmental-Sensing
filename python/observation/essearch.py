@@ -663,18 +663,18 @@ class ESSearch:
                             if k in valid_records:
                                 next_valid_records.add(k)
                 valid_records = next_valid_records
-        if len(valid_records) == 0: return None
+            if len(valid_records) == 0: return None
         for column_key in dico['data']:
             for i in range(len(dico['data'][column_key]['value'])-1, -1, -1):
                 if isinstance(dico['data'][column_key]['value'][i]['record'], int) and \
                         dico['data'][column_key]['value'][i]['record'] not in valid_records:
-                    del dico['data'][column_key]['value'][i]
+                    del dico['data'][column_key]['value'][i] # optimisation : reconstruire la liste au fur et à mesure plutôt que déplacer à chaque del
                 elif isinstance(dico['data'][column_key]['value'][i]['record'], list):
-                        for j in range(len(dico['data'][column_key]['value'][i]['record'])-1, -1, -1):
-                            if dico['data'][column_key]['value'][i]['record'][j] not in valid_records:
-                                del dico['data'][column_key]['value'][i]['record'][j]
-                        if len(dico['data'][column_key]['value'][i]['record']) == 0:
-                            del dico['data'][column_key]['value'][i]
+                    for j in range(len(dico['data'][column_key]['value'][i]['record'])-1, -1, -1):
+                        if dico['data'][column_key]['value'][i]['record'][j] not in valid_records:
+                            del dico['data'][column_key]['value'][i]['record'][j]
+                    if len(dico['data'][column_key]['value'][i]['record']) == 0:
+                        del dico['data'][column_key]['value'][i]
         return Observation.from_obj(dico)
 
     def _filtered_observation(self, obs):

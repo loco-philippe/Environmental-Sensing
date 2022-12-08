@@ -52,7 +52,9 @@ all_obs = {
     'test_location_valid_3'     : Observation.from_obj({'name':'test_location_valid_3',     'data':[['location', [{'type':'Polygon', 'coordinates':[[[0, 0], [50, 0], [50, 50], [0, 50], [0, 0]]]}]]]}),
     'test_location_not_valid'   : Observation.from_obj({'name':'test_location_not_valid',   'data':[['location', [[2.2, 45.2]]]]}),
     'test_location_not_valid_2' : Observation.from_obj({'name':'test_location_not_valid_2', 'data':[['location', [{'type':'Point', 'coordinates':[2.2, 45.2]}]]]}),
-    'empty'                     : Observation.from_obj({'name':'empty', 'data':[]})
+    'empty'                     : Observation.from_obj({'name':'empty', 'data':[]}),
+    'obs1'                      : Observation.from_obj({'name':'obs1',                      'data':[['datation', [datetime.datetime(2022, i, 1) for i in range(1, 13)]], ['property', ['PM25', 'PM1', 'PM25', 'PM25', 'PM1', 'PM25', 'PM1', 'PM25', 'PM25', 'PM1', 'PM1', 'PM25']]]}),
+    'obs2'                      : Observation.from_obj({'name':'obs2',                      'data':[['datation', [datetime.datetime(2021, 8, 1), datetime.datetime(2021, 10, 1), datetime.datetime(2021, 12, 1), datetime.datetime(2022, 2, 1), datetime.datetime(2022, 4, 1)]], ['property', ['PM25', 'PM1', 'PM25', 'PM25', 'PM1']]]})
 }
 coll.insert_many([obs.to_obj(modecodec='dict') for obs in all_obs.values()])
 
@@ -63,7 +65,7 @@ class TestSearch(unittest.TestCase):
     def test_property(self):
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('property', 'PM25')
+        research.addCondition('property', 'PM25')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -80,7 +82,7 @@ class TestSearch(unittest.TestCase):
     def test_datation(self):
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('datation')
+        research.addCondition('datation')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute() #single=True)
@@ -95,8 +97,8 @@ class TestSearch(unittest.TestCase):
     def test_datation_1(self):
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('datation')
-        research.addcondition('datation', datetime.datetime(2022, 2, 1))
+        research.addCondition('datation')
+        research.addCondition('datation', datetime.datetime(2022, 2, 1))
         print("Requête effectuée :", research.request, '\n')
         for el in coll.aggregate(research.request):print(el)
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
@@ -112,7 +114,7 @@ class TestSearch(unittest.TestCase):
     def test_inverted(self):
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('datation', datetime.datetime(2022, 1, 1, 0), ">=", inverted = True) #sort quand même un résultat car le inverted met un "$not"
+        research.addCondition('datation', datetime.datetime(2022, 1, 1, 0), ">=", inverted = True) #sort quand même un résultat car le inverted met un "$not"
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -123,7 +125,7 @@ class TestSearch(unittest.TestCase):
     def test_formatstring(self):
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('datation', datetime.datetime(2022, 3, 9), ">=", formatstring='default')
+        research.addCondition('datation', datetime.datetime(2022, 3, 9), ">=", formatstring='default')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -134,7 +136,7 @@ class TestSearch(unittest.TestCase):
     def test_location(self): #ACTUELLEMENT NE FONCTIONNE PAS CAR GÉOMÉTRIES MAL RENTRÉES DANS LA BASE
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('location', [2.1, 45.1])
+        research.addCondition('location', [2.1, 45.1])
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -161,10 +163,10 @@ class TestSearch(unittest.TestCase):
     def complex_test_2(self):
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('property', 'PM1')
-        research.addcondition('datation', '2022-09-01T00:00:00+00:00', formatstring='default')
+        research.addCondition('property', 'PM1')
+        research.addCondition('datation', '2022-09-01T00:00:00+00:00', formatstring='default')
         research.orcondition('datation', '2022-09-02T00:00:00+00:00', formatstring='default')
-        research.addcondition('property', 'PM2')
+        research.addCondition('property', 'PM2')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
@@ -175,10 +177,10 @@ class TestSearch(unittest.TestCase):
     def complex_test_3(self):
         t = time.time()
         research = ESSearch(collection=coll)
-        research.addcondition('property', 'PM1')
-        research.addcondition('datation', '2022-09-01T00:00:00+00:00')
+        research.addCondition('property', 'PM1')
+        research.addCondition('datation', '2022-09-01T00:00:00+00:00')
         research.orcondition('datation', '2022-09-02T00:00:00+00:00')
-        research.addcondition('property', 'PM2')
+        research.addCondition('property', 'PM2')
         print("Requête effectuée :", research.request, '\n')
         self.assertNotEqual(research.request, [{'$match': {'type': 'obs'}}, {'$project': {'information': 0}}])
         result = research.execute()
