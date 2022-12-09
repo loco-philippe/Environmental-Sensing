@@ -57,7 +57,6 @@ app.post('/', async function (req, res) {
     //for (const obs of result) {console.log(obs);}
     res.writeHead(200, {'Content-Type': 'application/json'});
     res.end(JSON.stringify(result));
-
   } else {
   res.writeHead(200, {'Content-Type': 'text/html'});
   let html = jsdom.serialize();

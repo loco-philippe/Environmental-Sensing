@@ -29,13 +29,15 @@ from observation.essearch import ESSearch
 import datetime
 
 client = Mongoclient(<Mongo-auth>)
-collec = client[<base>][<collection>]
+collection = client[<base>][<collection>]
 
 # In this example, we search for measures of property PM25 taken between 2022/01/01 
 # and 2022/31/12 and we ensure the measure is an Observation.
+# We execute with argument single = True to merge the result in one single
+# Observation.
 
 # Option 1
-srch = ESSearch(collection = collec)
+srch = ESSearch(collection)
 srch.addCondition('datation', datetime.datetime(2022, 1, 1), '>=')
 srch.addCondition('datation', datetime.datetime(2022, 12, 31), '<=')
 srch.addCondition('property', 'PM25')
@@ -43,20 +45,24 @@ srch.addCondition(path = 'type', comparator = '==', operand = 'observation')
 result = srch.execute(single = True)
 
 # Option 2 (equivalent to option 1 but on one line)
-result = ESSearch([['datation', datetime.datetime(2022, 1, 1), '>='], 
-                 ['datation', datetime.datetime(2022, 12, 31), '<='], 
-                 ['property', 'PM25'], 
-                 {'path': 'type', 'comparator': '==', 'operand': 'observation'}], 
-                collec).execute(single = True)
+result = ESSearch(collection,
+                [['datation', datetime.datetime(2022, 1, 1), '>='], 
+                ['datation', datetime.datetime(2022, 12, 31), '<='], 
+                ['property', 'PM25'], 
+                {'path': 'type', 'comparator': '==', 'operand': 'observation'}] 
+                ).execute(single = True)
 ```
 '''
 import datetime
 import shapely.geometry
 from pymongo.collection import Collection
+from pymongo.cursor import Cursor
+from pymongo.command_cursor import CommandCursor
 from esobservation import Observation
 from iindex import Iindex
 from util import util
 from timeslot import TimeSlot
+import bson
 
 dico_alias_mongo = { # dictionnary of the different names accepted for each comparator and each given type. <key>:<value> -> <accepted name>:<name in MongoDB>
     # any type other than those used as keys is considered non valid
@@ -64,7 +70,8 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
         None:"$eq",
         "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
         "in":"$in", "$in":"$in",
-        "regex":"$regex", "$regex":"$regex"
+        "regex":"$regex", "$regex":"$regex",
+        "oid":"$oid","$oid":"$oid"
     },
     int : {
         None:"$eq",
@@ -104,6 +111,11 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
         "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear",
         
         "in":"$in", "$in":"$in" # only in case where a list is not a geometry
+    },
+    bson.objectid.ObjectId : {
+        None:"$eq",
+        "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
+        "in":"$in", "$in":"$in"
     }
 }
 dico_alias_mongo[float] = dico_alias_mongo[int]
@@ -215,18 +227,24 @@ class ESSearch:
     *Attributes (for @property, see methods)* :
 
     - **parameters** : list of list of conditions for queries, to be interpreted as : parameters = [[cond_1 AND cond_2 AND cond_3] OR [cond_4 AND cond_5 AND cond_6]] where conds are criteria for queries
-    - **collection** : pymongo.collection.Collection on which we want to query.
-    - **data** : iterable on which we want to query. Must contain observations only.
+    - **input** : input on which the query is done. Must be one of or a list of these : 
+        - pymongo.collection.Collection
+        - pymongo.cursor.Cursor
+        - pymongo.command_cursor.CommandCursor
+        - Observation
 
     The methods defined in this class are (documentations in methods definitions):
     
     *setter*
 
-    - `ESSearch.setCollection`
+    - `ESSearch.addInput`
+    - `ESSearch.removeInputs`
+    - `ESSearch.setHeavy`
     
     *dynamic value (getter @property)*
 
     - `ESSearch.request`
+    - `ESSearch.cursor`
     
     *parameters for query - update methods*
 
@@ -241,18 +259,22 @@ class ESSearch:
 
     - `ESSearch.execute`
     """
-    def __init__(self, 
+    def __init__(self,
+                    input = None,
                     parameters = None,
-                    collection = None,
-                    data = None,
                     heavy = True,
                     **kwargs
                     ):
+# MODIFIER POUR AVOIR JUSTE « input », « parameters » ET « heavy » (DANS CET ORDRE) OÙ input PREND EN ARGUMENT UNE OBSERVATION, 
+# UNE COLLECTION OU UN CURSEUR, OU BIEN UNE LISTE DE CES ÉLÉMENTS EN QUANTITÉ ARBITRAIRE.
+# -> Réfléchir au traitemnt le plus approprié pour les listes d'observations L'idéal serait de pouvoir tout mélanger sans se poser
+# de questions et de laisser le programme se débrouiller.
         '''
         ESSearch constructor. Parameters can also be defined and updated using class methods.
 
         *Arguments*
 
+# METTRE A JOUR DOC SUR INPUT
         - **parameters** :  dict, list (default None) - list of list or list of dictionnaries whose keys are arguments of ESSearch.addCondition method
         ex: parameters = [
             {'name' : 'datation', 'operand' : datetime.datetime(2022, 9, 19, 1), 'comparator' : '>='},
@@ -264,22 +286,26 @@ class ESSearch:
         - **kwargs** :  other parameters are used as arguments for ESSearch.addCondition method
         '''
         self.parameters = [[]]                                          # self.parameters
-        if isinstance(data, list) or data is None:                      # self.data
-            self.data = data
-        elif isinstance(data, Observation):
-            self.data = [data]
-        else: raise TypeError("data must be a list.")
         if isinstance(heavy, bool): self.heavy = heavy                  # self.heavy
         else: raise TypeError("heavy must be a bool.")
-        if isinstance(collection, Collection) or collection is None:    # self.collection
-            self.collection = collection
-        else: raise TypeError("collection must be a pymongo.collection.Collection.")
+
+        self.input = []                                                 # self.input
+        if isinstance(input, list): pile = input
+        else: pile = [input]
+        while not len(pile) == 0:
+            obj = pile.pop()
+            if isinstance(obj, list):
+                pile += obj
+            elif not isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
+                raise TypeError("Unsupported type for input.") # à voir pour le json depuis dict et str, from_obj sait se débrouiller donc ne pose pas de problèmes a priori
+                                                            # dans tous les cas, si une conversion est nécessaire elle a lieu ici ou dans addInput et est considérée efféctuée pour le reste
+            else: self.input.append(obj)
 
         if parameters: self.addConditions(parameters)
         if kwargs: self.addCondition(**kwargs)
 
     def __repr__(self):
-        return "ESSearch(collection = " + str(self.collection) + ", data = " + str(self.data) + ", parameters = " + str(self.parameters) + ")"
+        return "ESSearch(input = " + str(self.input) + ", parameters = " + str(self.parameters) + ")"
 
     def __str__(self):
         return str(self.parameters)
@@ -298,11 +324,32 @@ class ESSearch:
     def __getitem__(self, key):
         return self.parameters[key]
 
-    def setCollection(self, collection):
+    def addInput(self, input):
+        """
+        Adds an input given by argument input on which the query is to be executed
+        """
+        if isinstance(input, list): pile = input
+        else: pile = [input]
+        while not len(pile) == 0:
+            obj = pile.pop()
+            if isinstance(obj, list):
+                pile += obj
+            elif not isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
+                raise TypeError("Unsupported type for input.")
+        if isinstance(input, list): self.input += input
+        else: self.input += [input]
+
+    def removeInputs(self):
+        """
+        Removes all inputs from self.
+        """
+        self.input = []
+
+    def setHeavy(self, heavy):
         '''
-        Sets self.collection to a given value.
+        Sets self.heavy to a value given by argument heavy.
         '''
-        self.collection = collection
+        self.heavy = heavy
 
     def addConditions(self, parameters):
         '''
@@ -550,7 +597,7 @@ class ESSearch:
         self._set = {}
         self._geonear = {}
         self._match['2'] = [] # second match stage contains conditions which require to be after unwind and/or set stages.
-        self._project = {"_id" : 0, "_data" : 0, "information" : 0}
+        self._project = {"_data" : 0} #{"_id" : 0, "_data" : 0, "information" : 0}
         
         for i in range(len(self.parameters)): # rewriting conditions in MongoDB format
             self._match['1'].append({})
@@ -603,6 +650,22 @@ class ESSearch:
         '''
         return self._fullSearchMongo()
 
+    @property
+    def cursor(self, input):
+        '''
+        Getter returning the coursors of the aggregation query result on all collections and cursors contained in self.input
+        or on the argument input if given.
+        '''
+        if input: return input.aggregate(self._fullSearchMongo())
+        cursor_list = []
+        for item in self.input:
+            if isinstance(item, (Collection, Cursor, CommandCursor)):
+                cursor_list.append(item.aggregate(self._fullSearchMongo()))
+        if len(cursor_list) == 1:
+            return cursor_list[0]
+        else:
+            return cursor_list
+
     def execute(self, filtered = False, namefused = False, single = False, fillvalue = None):
         '''
         Executes the request and returns its result, either in one or many Observations.
@@ -614,24 +677,29 @@ class ESSearch:
         - **single** :  bool (default True) - Must be put to False in order to return a list of Observation instead of a single Observation.
         - **fillvalue** :  (default None) - Value to use to fill gaps when observations are fused together.
         '''
-        if self.collection is None: cursor = []
-        else: cursor = self.collection.aggregate(self.request)
-        if not self.data: self.data = []
-        if self.parameters == [[]]:
-            result = self.data # part du principe que data est bien une liste d'observations et empêche donc l'entrée de données au format json
-            for item in cursor: result.append(Observation.from_obj(item))
+        result = []
+        if self.parameters == [[]]: # à voir, car ne prend pas en compte un potentiel self.project ou similaire déclaré 
+                                    # autrement qu'au sein d'une condition. (ce qui, après tout, ne fait pas vraiment sens)
+            for data in self.input:
+                if isinstance(data, Observation):
+                    result.append(Observation)
+                else:
+                    for item in data.find(): result.append(Observation.from_obj(item))
         else:
-            result = [self._filtered_observation(item) for item in self.data]            
-            if filtered:
-                for item in cursor: 
-                    obs_out = self._mongo_out_to_obs(item)
-                    if obs_out:
-                        result.append(self._filtered_observation(obs_out))
-            else:
-                for item in cursor:
-                    obs_out = self._mongo_out_to_obs(item)
-                    if obs_out:
-                        result.append(obs_out)
+            for data in self.input:
+                if isinstance(data, Observation):
+                    result.append(self._filtered_observation(item))
+                else:
+                    if filtered:
+                        for item in data.aggregate(self._fullSearchMongo()): 
+                            obs_out = self._mongo_out_to_obs(item)
+                            if obs_out:
+                                result.append(self._filtered_observation(obs_out))
+                    else:
+                        for item in data.aggregate(self._fullSearchMongo()):
+                            obs_out = self._mongo_out_to_obs(item)
+                            if obs_out:
+                                result.append(obs_out)
         if single:
             return self._fusion(result, fillvalue=fillvalue)
         elif namefused: return self._fusion(result, namefused, fillvalue)
@@ -852,13 +920,26 @@ class ESSearch:
                     lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
 
                 if name is None: name = "ESSearch query result on " + str(datetime.datetime.now())
-                if self.collection is not None:
-                    param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
-                            'context': {'origin': 'ESSearch query', 'source_collection ': self.collection.name, 
-                            'ESSearch_parameters': str(self.parameters)}}
-                else:
-                    param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
-                            'context': {'origin': 'ESSearch query', 'ESSearch_parameters': str(self.parameters)}}
+                sources = []
+                for item in self.input:
+                    if isinstance(item, Observation):
+                        if item.name is not None:
+                            sources.append('Observation: ' + item.name)
+                        else:
+                            sources.append('data')
+                    elif isinstance(item, Collection):
+                        sources.append('MongoDB collection:' + item.name + ' from database: ' + item.database.name)
+                    elif isinstance(item, Cursor):
+                        sources.append('Pymongo cursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    elif isinstance(item, CommandCursor):
+                        sources.append('Pymongo commandcursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    else: # should not happen
+                        sources.append('data')
+                param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                        'context': {'origin': 'ESSearch query', 'sources ': sources, 
+                        'ESSearch_parameters': str(self.parameters)}}
                 new_obs = Observation(lidx, name, param=param)
                 return new_obs
             else:                   # à tester
@@ -873,3 +954,27 @@ class ESSearch:
                 for i in range(len(new_obsList)):
                     new_obsList[i] = self._fusion(new_obsList[i], False, fillvalue, new_obsList[i][0].name)
                 return new_obsList
+        else:
+            if not namefused:
+                sources = []
+                for item in self.input:
+                    if isinstance(item, Observation):
+                        if item.name is not None:
+                            sources.append('Observation: ' + item.name)
+                        else:
+                            sources.append('data')
+                    elif isinstance(item, Collection):
+                        sources.append('MongoDB collection:' + item.name + ' from database: ' + item.database.name)
+                    elif isinstance(item, Cursor):
+                        sources.append('Pymongo cursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    elif isinstance(item, CommandCursor):
+                        sources.append('Pymongo commandcursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    else: # should not happen
+                        sources.append('data')
+                param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                        'context': {'origin': 'ESSearch query', 'sources ': sources, 
+                        'ESSearch_parameters': str(self.parameters)}}               
+                return Observation(param=param)
+            else: return []
