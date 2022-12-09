@@ -392,19 +392,23 @@ class IlistStructure:
             fullsize = len(self.to_obj(encoded=True, modecodec='full'))
         if not size:
             size = len(self.to_obj(encoded=True))
-        lenidx = self.lenidx
-        nval = len(self) * (lenidx + 1)
+        #lenidx = self.lenidx
+        #nval = len(self) * (lenidx + 1)
+        nval = len(self) * (self.lenindex + 1)
         sval = fullsize / nval
-        ncod = sum(self.idxlen) + lenidx
+        #ncod = sum(self.idxlen) + lenidx
+        ncod = sum(self.indexlen) + self.lenindex
         if nval != ncod:
             scod = (size - ncod * sval) / (nval - ncod)
             olight = scod / sval
         else:
             olight = None
-        return {'init values': nval, 'mean size': round(sval, 3),
+        return {'total values': nval, 'mean size': round(sval, 3),
                 'unique values': ncod, 'mean coding size': round(scod, 3),
                 'unicity level': round(ncod / nval, 3),
+                'optimize level': round(size / fullsize, 3),
                 'object lightness': round(olight, 3),
+                'maxgain': round((nval - ncod) / nval, 3),
                 'gain': round((fullsize - size) / fullsize, 3)}
 
     def keytoval(self, listkey, extern=True):
