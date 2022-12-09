@@ -349,7 +349,7 @@ class Ilist(IlistStructure, IlistInterface):
             raise IlistError("the type of parameter is not available")
         return cls._init_obj(lis, reindex=reindex, context=context)
 
-    def merge(self, name=None, fillvalue=math.nan, reindex=False):
+    def merge(self, name=None, fillvalue=math.nan, reindex=False, simplename=False):
         '''
         Merge method replaces Ilist objects included into its constituents.
 
@@ -358,6 +358,8 @@ class Ilist(IlistStructure, IlistInterface):
         - **name** : str (default None) - name of the new Ilist object
         - **fillvalue** : object (default nan) - value used for the additional data
         - **reindex** : boolean (default False) - if True, set default codec after transformation
+        - **simplename** : boolean (default False) - if True, new Iindex name are
+        the same as mergedincluded Iindex name else it is a composed name.
 
         *Returns*: merged Ilist '''
         ilc = copy(self)
@@ -365,7 +367,8 @@ class Ilist(IlistStructure, IlistInterface):
         row = ilc[0]
         if not isinstance(row, list):
             row = [row]
-        merged, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname))
+        merged, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname),
+                                                      simplename=simplename)
         #print('ilc0 :', merged, oldname, newname)
         if oldname:
             delname.append(oldname)        
@@ -376,7 +379,8 @@ class Ilist(IlistStructure, IlistInterface):
             row = ilc[ind]
             if not isinstance(row, list):
                 row = [row]
-            rec, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname))
+            rec, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname), 
+                                                       simplename=simplename)
             #print('ilci :', ind, rec, oldname, newname)
             delname.append(oldname)
             for name in newname:
@@ -503,7 +507,7 @@ class Ilist(IlistStructure, IlistInterface):
         return    
     
     @staticmethod
-    def _mergerecord(rec, mergeidx=True, updateidx=True):
+    def _mergerecord(rec, mergeidx=True, updateidx=True, simplename=False):
         row = rec[0]
         if not isinstance(row, list):
             row = [row]
@@ -517,8 +521,11 @@ class Ilist(IlistStructure, IlistInterface):
         ilis = row[var].merge()
         #ilis = row[var]
         oldname = rec.lname[var]
-        newname = [oldname + '_' + name for name in ilis.lname]
-        ilis.setname(newname)
+        if not simplename:
+            newname = [oldname + '_' + name for name in ilis.lname]
+            ilis.setname(newname)
+        else:
+            newname = copy(ilis.lname)
         for name in rec.lname:
             if name in newname:
                 newname.remove(name)

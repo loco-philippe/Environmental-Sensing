@@ -11,6 +11,7 @@ The dataset used is defined in `observation.Tests.data.py`
 import unittest
 from datetime import datetime
 from tabulate import tabulate
+import requests as rq
 from pymongo import MongoClient
 from pprint import pprint
 from observation.essearch import ESSearch
@@ -31,6 +32,33 @@ def clientMongo(user='ESobsUser', pwd='observation', site='esobs.gwpay.mongodb.n
             '&' + appName + \
             '&' + ssl    
     return MongoClient(st)
+
+def envoi_mongo_url(data):
+    url = "https://webhooks.mongodb-realm.com/api/client/v2.0/app/observation_app-wsjge/service/postObs/incoming_webhook/api?secret=10minutes"
+    r = rq.post(url, data=data)
+    print("réponse : ", r.text, "\n")
+    return r.status_code
+
+
+def envoi_mongo_python(data):
+    user = 'ESobsUser'
+    pwd = 'observation'
+    site = 'esobs.gwpay.mongodb.net/test'
+
+    st = 'mongodb+srv://' + user + ':' + pwd + '@' + site + \
+        '?' + 'authSource=admin' + \
+        '&' + 'replicaSet=atlas-13vws6-shard-0' + \
+        '&' + 'readPreference=primary' + \
+        '&' + 'appname=MongoDB%20Compass' + \
+        '&' + 'ssl=true'
+    client = MongoClient(st)
+
+    baseMongo = 'test_obs'
+    collection = 'observation'
+    collec = client[baseMongo][collection]
+    return collec.insert_one(data).inserted_id
+    # try : return collec.insert_one(data).inserted_id
+    # except : return None
 
 client = clientMongo()
 ob_mixte = obs_mixte()
@@ -78,7 +106,7 @@ class Test_jeu_data_py(unittest.TestCase):
         result[1].swapindex(ob_tests[42].lname)
         self.assertTrue(ob_tests[42].loc(result[1][0], row=True) == [2])
         result[0].add(result[1], name=True)
-        self.assertTrue(result[0].idxlen == [2, 1, 2, 2, 2, 2, 1, 1])
+        self.assertTrue(result[0].idxlen == [2, 2, 2, 2, 2, 1, 1, 1])
 
         
 if __name__ == '__main__':

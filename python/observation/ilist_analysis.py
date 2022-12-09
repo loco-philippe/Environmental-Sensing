@@ -5,6 +5,7 @@ Created on Sun Oct  2 22:24:59 2022
 @author: philippe@loco-labs.io
 
 The `observation.ilist_analysis` module contains the `Analysis` class.
+
 """
 
 # %% declarations
@@ -16,8 +17,13 @@ from util import util
 
 
 class Analysis:
-    '''this class analyses relationships included in a tabular object 
+    '''This class analyses relationships included in a tabular object 
     (Pandas DataFrame, Ilist, Observation, list of list).
+    
+    The Analysis class includes the following functions:
+    - identification and qualification of the relationships between Iindex,
+    - generation of the global properties of the structure
+    - data actualization based on structure updates
     
     *Attributes* :
 

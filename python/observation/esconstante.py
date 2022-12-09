@@ -462,7 +462,8 @@ class Es:
         self.miniStr          = 10
         self.distRef          = [48.87, 2.35] # coordonnées Paris lat/lon
         #self.nullDate         = datetime(1970, 1, 1)
-        self.nullDate         = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+        #self.nullDate         = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+        self.nullDate         = None
         self.nullCoor         = [-1, -1]
         self.nullInd          = [-1, -1, -1]
         self.nullAtt          = "null"

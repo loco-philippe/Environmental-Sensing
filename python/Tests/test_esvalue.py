@@ -211,8 +211,8 @@ class TestObsUnitaire(unittest.TestCase):
 
     def test_cast(self):
         data = [[ESValue.from_obj({'pos': [1.2, 3.4]}, 'LocationValue'), [1.2, 3.4], {'pos': [1.2, 3.4]}],
-                [ESValue.from_obj({'datvalue': 'date1'}),
-                 datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), 'date1'],
+                [ESValue.from_obj({'datvalue': 'date1'}), ES.nullDate, 'date1'],
+                 #datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), 'date1'],
                 [{'pos': [1.2, 3.4]}, {'pos': [1.2, 3.4]}, {'pos': [1.2, 3.4]}],
                 [[1.2, 3.4], [1.2, 3.4], [1.2, 3.4]],
                 [{'tes': 3, 'tr': 1}, {'tes': 3, 'tr': 1}, {'tes': 3, 'tr': 1}]]

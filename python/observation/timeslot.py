@@ -359,7 +359,7 @@ class TimeSlot:
     @staticmethod
     def _listed(idx):
         '''transform a tuple of tuple in a list of list'''
-        if hasattr(idx, '__iter__'):
+        if not isinstance(idx, str) and hasattr(idx, '__iter__'):
             return [val if not isinstance(val, tuple) else TimeSlot._listed(val) for val in idx]
         return idx
 

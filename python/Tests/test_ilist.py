@@ -491,6 +491,11 @@ class Test_Ilist(unittest.TestCase):
                           'firstname': ['philippe', 'anne'],
                           'student_group': ['gr1', 'gr2']})
         self.assertEqual(il3.merge()[4], [14, 'english', 'anne white', 'anne', 'gr1'])
+        il3s = Ilist.dic({'student': [il1, il2],
+                          'name': ['philippe white', 'anne white'],
+                          'firstname': ['philippe', 'anne'],
+                          'group': ['gr1', 'gr2']})
+        self.assertEqual(il3s.merge(simplename=True)[4], [14, 'english', 'anne white', 'anne', 'gr1'])
         il3 = Ilist.ext([[il1, il2]], typevalue=None)
         self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])
 
