@@ -209,16 +209,20 @@ def insert_many_to_mongo(collection, objList, info=True):
         objList[i] = objList[i].json(json_info=info, modecodec='dict')
     collection.insert_many(objList)
 
-def empty_request(collection, limit = 5): # actuellement, n'utilise pas les informations et requête LOURDE si on enlève le $limit (et si on le laisse, résultat inexact)
+def empty_request(collection):
     """
-    Empty request to get an idea of what the database contains. Excessively long if *limit* parameter is too high.
-    max : 100 MB
+    Empty request to get an idea of what the database contains.
+    Currently returns the count of elements in the collection and the names of each column.
     """
-    # A RÉÉCRIRE AVEC UN SIMPLE coll.find(), LE TRAITEMENT EN PYTHON SERA PLUS RAPIDE QUE CETTE REQUÊTE ABSURDE
-    count = collection.count_documents({})
-    keys = collection.aggregate([{"$limit":limit},{"$project":{"_id":0}},{"$project":{"a":{"$objectToArray":"$$ROOT"}}},{"$unwind":"$a"},{"$group":{"_id":"null","keys":{"$addToSet":"$a.k"}}}])
-    distinct_names = keys.next()['keys']
-    return count, distinct_names
+    count = 0
+    column_names = []
+    cursor = collection.find()
+    for doc in cursor:
+        count += 1
+        for column_name in doc['data']:
+            if column_name not in column_names:
+                column_names.append(column_name)
+    return count, column_names
 
 class ESSearch:
     """
@@ -227,11 +231,11 @@ class ESSearch:
     *Attributes (for @property, see methods)* :
 
     - **parameters** : list of list of conditions for queries, to be interpreted as : parameters = [[cond_1 AND cond_2 AND cond_3] OR [cond_4 AND cond_5 AND cond_6]] where conds are criteria for queries
-    - **input** : input on which the query is done. Must be one of or a list of these : 
+    - **input** : input on which the query is done. One of or a list of these : 
         - pymongo.collection.Collection
         - pymongo.cursor.Cursor
         - pymongo.command_cursor.CommandCursor
-        - Observation
+        - Observation (can be defined from a str or a dict)
 
     The methods defined in this class are (documentations in methods definitions):
     
@@ -240,6 +244,7 @@ class ESSearch:
     - `ESSearch.addInput`
     - `ESSearch.removeInputs`
     - `ESSearch.setHeavy`
+    - `ESSearch.clear`
     
     *dynamic value (getter @property)*
 
@@ -253,7 +258,6 @@ class ESSearch:
     - `ESSearch.orCondition`
     - `ESSearch.removeCondition`
     - `ESSearch.clearConditions`
-    - `ESSearch.clear`
 
     *query method*
 
@@ -265,16 +269,18 @@ class ESSearch:
                     heavy = True,
                     **kwargs
                     ):
-# MODIFIER POUR AVOIR JUSTE « input », « parameters » ET « heavy » (DANS CET ORDRE) OÙ input PREND EN ARGUMENT UNE OBSERVATION, 
-# UNE COLLECTION OU UN CURSEUR, OU BIEN UNE LISTE DE CES ÉLÉMENTS EN QUANTITÉ ARBITRAIRE.
-# -> Réfléchir au traitemnt le plus approprié pour les listes d'observations L'idéal serait de pouvoir tout mélanger sans se poser
-# de questions et de laisser le programme se débrouiller.
         '''
         ESSearch constructor. Parameters can also be defined and updated using class methods.
 
         *Arguments*
 
-# METTRE A JOUR DOC SUR INPUT
+        - **input** : input on which the query is done. Must be one of or a list of these (can be nested): 
+            - pymongo.collection.Collection
+            - pymongo.cursor.Cursor
+            - pymongo.command_cursor.CommandCursor
+            - Observation
+            - str corresponding to a json Observation
+            - dict corresponding to a json Observation
         - **parameters** :  dict, list (default None) - list of list or list of dictionnaries whose keys are arguments of ESSearch.addCondition method
         ex: parameters = [
             {'name' : 'datation', 'operand' : datetime.datetime(2022, 9, 19, 1), 'comparator' : '>='},
@@ -296,10 +302,14 @@ class ESSearch:
             obj = pile.pop()
             if isinstance(obj, list):
                 pile += obj
-            elif not isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
-                raise TypeError("Unsupported type for input.") # à voir pour le json depuis dict et str, from_obj sait se débrouiller donc ne pose pas de problèmes a priori
-                                                            # dans tous les cas, si une conversion est nécessaire elle a lieu ici ou dans addInput et est considérée efféctuée pour le reste
-            else: self.input.append(obj)
+            elif isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
+                self.input.append(obj)
+            elif isinstance(obj, (str, dict)):
+                try:
+                    self.input.append(Observation.from_obj(obj))
+                except:
+                    raise ValueError("Cannot convert " + str(obj) + " to an Observation ")
+            else: raise TypeError("Unsupported type for input " + str(obj))
 
         if parameters: self.addConditions(parameters)
         if kwargs: self.addCondition(**kwargs)
@@ -326,18 +336,24 @@ class ESSearch:
 
     def addInput(self, input):
         """
-        Adds an input given by argument input on which the query is to be executed
+        Adds one or many inputs on which the query is to be executed given by argument input
         """
+        added_input = []
         if isinstance(input, list): pile = input
         else: pile = [input]
         while not len(pile) == 0:
             obj = pile.pop()
             if isinstance(obj, list):
                 pile += obj
-            elif not isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
-                raise TypeError("Unsupported type for input.")
-        if isinstance(input, list): self.input += input
-        else: self.input += [input]
+            elif isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
+                added_input.append(obj)
+            elif isinstance(obj, (str, dict)):
+                try:
+                    added_input.append(Observation.from_obj(obj))
+                except:
+                    raise ValueError("Cannot convert " + str(obj) + " to an Observation ")
+            else: raise TypeError("Unsupported type for input " + str(obj))
+        self.input += added_input
 
     def removeInputs(self):
         """
