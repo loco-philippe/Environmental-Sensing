@@ -7,16 +7,12 @@
         <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
         <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
         <script type="text/javascript">
-            var uri = '', database_name = '', collection_name = '', req_count = -1, column_names, condArray = [], nb_cond = 1;
+            var uri = '', database_name = '', collection_name = '', req_count = -1, column_names, 
+                added_fields = [0];
 
             function set_uri (value) {uri = value; Validation_Mongo();}
             function set_database_name (value) {database_name = value; Validation_Mongo();}
             function set_collection_name (value) {collection_name = value; Validation_Mongo();}
-            function set_parameter (parameter_name, value, i) {
-                if (condArray[i] === undefined) {condArray[i] = {}}
-                condArray[i][parameter_name] = value;
-                console.log(JSON.stringify(condArray));
-            }
 
             function setMongoValidity (validity) {
                 if (validity === 'Valide') {
@@ -41,15 +37,8 @@
             }
 
             function exactPathVisibility (i) {
-                if (document.getElementById("name-select_" + i).value === "exact-path") {
-                    document.getElementById("exact-path-input-div_" + i).hidden = false;
-                    set_parameter ('name', '', i);
-                    set_parameter ('path', document.getElementById("exact-path-input_" + i).value, i);
-                } else {
-                    document.getElementById("exact-path-input-div_" + i).hidden = true;
-                    set_parameter ('name', document.getElementById("name-select_" + i).value, i);
-                    set_parameter ('path', '', i);
-                }
+                document.getElementById("exact-path-input-div_" + i).hidden = 
+                        !(document.getElementById("name-select_" + i).value === "exact-path");
             }
 
             function insertNamesInSelectors () {
@@ -65,34 +54,48 @@
                 for (var i = 0; i < exact_path_fields.length; i++) {exact_path_fields[i].style.fontStyle = 'italic';}
             }
 
+            function addField (i) {
+                const parent = document.getElementById("cond_" + i)
+                parent.insertAdjacentHTML("beforeend", "<div class=\"additional-field\" id=\"additional-field_" + i + "_" + 
+                    added_fields[i] + "\">Paramètre supplémentaire : <input type='text' class=\"param-name-field\" \
+                    > Valeur : <input type='text' class=\"param-value-field\"> <button id=\"remove_field_" +
+                    i + "_" + added_fields[i] + "\" onclick=\"removeField(" + i + "," + added_fields[i] +
+                    ")\">Enlever ce champ</button></div>");
+                added_fields[i] += 1;
+            }
+
+            function removeField (i, j) {
+                document.getElementById("cond_" + i).removeChild(document.getElementById("additional-field_" + i + "_" + j));
+            }
+
             function addCondition () {
                 var parent = document.getElementById("conds");
                 var div = document.createElement("div");
                 div.className = "cond";
-                div.id = "cond_" + nb_cond;
+                div.id = "cond_" + added_fields.length;
                 div.innerHTML = "<p>Colonne : <select name=\"column_name\" \
-                    class=\"name-select\" id=\"name-select_" + nb_cond + "\" oninput=\"set_parameter ('name', this.value, " + 
-                    nb_cond + "); exactPathVisibility (" + nb_cond + ")\"></select> Opérateur : <input type=\"text\" \
-                    class=\"operator-input\" id=\"operator-input_" + nb_cond + "\" oninput=\"set_parameter \
-                    ('operator', this.value, " + nb_cond + ")\"> Valeur de comparaison : <input type=\"text\" \
-                    class=\"operand-input\" id=\"operand-input_" + nb_cond + "\" oninput=\"set_parameter ('operand', this.value, " + 
-                    nb_cond + ")\"> <button id=\"remove_condition_" +  nb_cond + "\" onclick=\"removeCondition (" +  nb_cond + ")\">\
-                    Enlever cette condition</button></p><div class=\"exact-path-input-div\" id=\"exact-path-input-div_" + nb_cond + 
-                    "\" hidden>Chemin exact : <input type=\"text\" class=\"exact-path-input\" id=\"exact-path-input_" + nb_cond + 
-                    "\" oninput=\"set_parameter ('path', this.value, " + nb_cond + ")\"></div>";
+                    class=\"name-select\" id=\"name-select_" + added_fields.length + "\" oninput=\"exactPathVisibility (" +
+                    added_fields.length + ")\"></select> Opérateur : <input type=\"text\" \
+                    class=\"operator-input\" id=\"operator-input_" + added_fields.length + 
+                    "\"> Valeur de comparaison : <input type=\"text\" class=\"operand-input\" id=\"operand-input_" +
+                    added_fields.length + "\"> <button id=\"add_field_" + added_fields.length + 
+                    "\" onclick=\"addField (" + added_fields.length + ")\">Ajouter un champ à cette condition</button> \
+                    <button id=\"remove_condition_" +  added_fields.length + "\" onclick=\"removeCondition (" +  
+                    added_fields.length + ")\">Enlever cette condition</button></p><div class=\"exact-path-input-div\" \
+                    id=\"exact-path-input-div_" + added_fields.length + "\" hidden>Chemin exact : <input type=\"text\" \
+                    class=\"exact-path-input\" id=\"exact-path-input_" + added_fields.length + "\"></div>";
                 parent.appendChild(div);
-                var sel = document.getElementById("name-select_" + nb_cond);
-                console.log
+                var sel = document.getElementById("name-select_" + added_fields.length);
                 column_names.forEach(option => sel.add(new Option(option, option)));
                 sel.add(new Option("Entrer un chemin exact.", "exact-path"))
-                document.querySelectorAll("option[value='exact-path']")[nb_cond].style.fontStyle = 'italic';
-                exactPathVisibility (nb_cond);
-                nb_cond += 1;
+                document.querySelectorAll("option[value='exact-path']")[added_fields.length].style.fontStyle = 'italic';
+                exactPathVisibility (added_fields.length);
+                added_fields[added_fields.length] = 0;
             }
 
             function removeCondition (i) {
                 document.getElementById("conds").removeChild(document.getElementById("cond_" + i));
-                delete condArray[i];
+                delete added_fields[i];
             }
 
             function Validation_Mongo () {
@@ -136,21 +139,30 @@
                     var xhr = new XMLHttpRequest();
                     xhr.open("POST", "/", true);
                     xhr.setRequestHeader("Content-Type", "application/json");
-                    var cleanCondArray = [], i = 0;
-                    for (const cond_id in condArray) {
-                        if (condArray[cond_id] !== null) {
-                            cleanCondArray.push({})
-                            var cond = {};
-                            for (const param_key in condArray[cond_id]) {
-                                if (condArray[cond_id][param_key] !== "") {
-                                    cleanCondArray[i][param_key] = condArray[cond_id][param_key];
-                                }
-                            }
-                            i ++;
+                    var condArray = [], param;
+                    for (var i in added_fields) {
+                        var div = document.getElementById("cond_" + i); // est-ce bien le plus optimisé ?
+                        condArray.push({});
+                        param = div.querySelector('#name-select_' + i).value;
+                        if (param && param !== '' && param !== "Entrer un chemin exact.") {
+                            condArray[i]['name'] = param;
+                        } else if (param === "Entrer un chemin exact.") {
+                            var path = div.querySelector('#exact-path-input_' + i).value;
+                            if (path && path !== '') {condArray[i]['path'] = path;}
+                        }
+                        param = div.querySelector('#operator-input_' + i).value;
+                        if (param && param !== '') {condArray[i]['operator'] = param;}
+                        param = div.querySelector('#operand-input_' + i).value;
+                        if (param && param !== '') {condArray[i]['operand'] = param;}
+                        var add = div.getElementsByClassName('additional-field');
+                        for (var j = 0; j < add.length; j++) {
+                            var n = add[j].getElementsByClassName("param-name-field")[0].value,
+                                v = add[j].getElementsByClassName("param-value-field")[0].value;
+                            if (n && v && n !== '' && v !== '') {condArray[i][n] = v;}
                         }
                     }
                     xhr.send(JSON.stringify({request_type:'execute', uri:uri, database_name:database_name,
-                            collection_name:collection_name, parameters:cleanCondArray}));
+                            collection_name:collection_name, parameters:condArray}));
                     xhr.onerror = () => {
                         document.getElementById("request-result").innerHTML = "Erreur";
                         document.getElementById("request-result").style.color = "red";
@@ -186,14 +198,15 @@
         <div id="conds">
             <div class="cond" id="cond_0">
         <p>
-            Colonne : <select name="column_name" class="name-select" id="name-select_0" oninput="set_parameter ('name', this.value, 0); exactPathVisibility (0)"></select>
-            Opérateur : <input type="text" class="operator-input" id="operator-input_0" oninput="set_parameter ('operator', this.value, 0)">
+            Colonne : <select name="column_name" class="name-select" id="name-select_0" oninput="exactPathVisibility (0)"></select>
+            Opérateur : <input type="text" class="operator-input" id="operator-input_0">
             <!-- à voir si une liste des opérateurs associés à la colonne choisie peut être déterminée avec les infos
                 (liste n'empêchant pas la saisie manuelle) -->
-            Valeur de comparaison : <input type="text" class="operand-input" id="operand-input_0" oninput="set_parameter ('operand', this.value, 0)">
+            Valeur de comparaison : <input type="text" class="operand-input" id="operand-input_0">
+            <button id="add_field_0" onclick="addField (0)">Ajouter un champ à cette condition</button>
             <button id="remove_condition_0" onclick="removeCondition (0)">Enlever cette condition</button>
         </p>
-        <div class="exact-path-input-div" id="exact-path-input-div_0" hidden>Chemin exact : <input type="text" class="exact-path-input" id="exact-path-input_0" oninput="set_parameter ('path', this.value, 0)"></div>
+        <div class="exact-path-input-div" id="exact-path-input-div_0" hidden>Chemin exact : <input type="text" class="exact-path-input" id="exact-path-input_0"></div>
         </div>
         </div>
         <button id="add_condition" onclick="addCondition ()">Ajouter une condition</button>

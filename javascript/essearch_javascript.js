@@ -1,10 +1,11 @@
+import Mongo from 'mongodb';
 import pythonBridge from 'python-bridge';
 import moment from 'moment';
 Date.prototype.toJSON = function(){ return moment(this).format(); }
 
-export async function emptyRequest(collection) {
+export async function emptyRequest(input) {
   /* Returns Collection count and existing column names */
-  let count = 0, cursor = collection.find(), column_names = [];
+  let count = 0, cursor = input.find(), column_names = [];
   for await (const doc of cursor) {
     count += 1;
     for (const column_name in doc['data']) {
@@ -57,9 +58,13 @@ const dico_alias_mongo = {
 };
 
 export class ESSearch {
-  constructor({parameters, collection, heavy}) {
+  constructor({input, parameters, heavy}) {
+    if (Array.isArray(input)) {
+      this.input = input;
+    } else {
+      this.input = [input];
+    }
     this.parameters = [[]];
-    this.collection = collection;
     this.heavy = heavy;
     if (parameters) {this.addConditions(parameters);}
   }
@@ -91,7 +96,7 @@ export class ESSearch {
     }
 
     if (operand && operand !== '') {
-      try {operator = dico_alias_mongo[typeof operand][operator];}
+      try {operator = dico_alias_mongo[typeof operand][operator];} // operator vaut undefined en cas d'erreur (pas souhaité, mais comme ça pour le moment)
       catch {
         if (Object.prototype.toString.call(new Date(operand)) === '[object Date]' || others.formatstring) {
           operand = new Date(operand);
@@ -140,8 +145,8 @@ export class ESSearch {
   }
 
   clear() {
+    this.input = [];
     this.parameters = [[]];
-    this.collection = undefined;
     this.heavy = undefined;
   }
 
@@ -270,7 +275,7 @@ export class ESSearch {
     this._set = {};
     this._geonear = {};
     this._match['2'] = [{}];
-    this._project = {"_id" : 0, "_data" : 0, "information" : 0};
+    this._project = {"_data" : 0}; //{"_id" : 0, "_data" : 0, "information" : 0};
         
     for (let i = 0; i < this.parameters.length; i++) {
       this._match['1'].concat([{}]);
@@ -342,18 +347,32 @@ export class ESSearch {
     modecodec : 'dict' or 'optimize'
     */
     let cursor, result = [];
-    cursor = this.collection.aggregate(this._fullSearchMongo());
-    for await (const item of cursor) {
-      console.log(JSON.stringify(item));
-      const filtered_out = this._mongo_out_to_obs(item);
-      if (filtered_out) {result.push(JSON.stringify(filtered_out));}
+    for (const mongo_source of this.input) {
+      cursor = mongo_source.aggregate(this._fullSearchMongo());
+      for await (const item of cursor) {
+        console.log(JSON.stringify(item));
+        const filtered_out = this._mongo_out_to_obs(item);
+        if (filtered_out) {result.push(JSON.stringify(filtered_out));}
+      }
     }
     console.log(result); // à retirer
     if (with_python) {
+      let sources = [];
+      for (const item of this.input) {
+        if (item instanceof Mongo.Collection) {
+          sources.push(item.namespace);
+        } else if (item instanceof Mongo.Cursor) {
+          sources.push('mongo cursor from namespace : ' + item.namespace);
+        } else if (item instanceof Mongo.CommandCursor) {
+          sources.push('mongo commandcursor from namespace : ' + item.namespace);
+        } else {
+          sources.push('data')
+        }
+      }
       const python = pythonBridge();
       python.ex`from observation import Observation`;
       python.ex`from observation.essearch import ESSearch`;
-      let result_json = await python`ESSearch(data = [Observation.from_obj(item) for item in ${result}]).execute(single = ${single}).to_obj(encoded = True, modecodec=${modecodec})`
+      let result_json = await python`ESSearch([Observation.from_obj(item) for item in ${result}], sources=${sources}).execute(single = ${single}).to_obj(encoded = True, modecodec=${modecodec})`
       python.end();
       return JSON.parse(result_json);
     }

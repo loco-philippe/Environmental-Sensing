@@ -50,7 +50,7 @@ app.post('/', async function (req, res) {
       res.writeHead(200, {'Content-Type': 'text/html'});
       res.end('mongo_data is invalid');
     }
-    let srch = new ESSearch({parameters:req.body.parameters, collection:collection});
+    let srch = new ESSearch({input:collection, parameters:req.body.parameters});
     console.log(JSON.stringify(srch.request));
     let result = await srch.execute({});
     console.log(result);
