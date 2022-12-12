@@ -53,8 +53,8 @@ all situations (platform)
 
 - Project presentation
     - overview of [tabular structures (french)](./documentation/FR_tabular_structure.ipynb)
-    - general presentation of the Environmental Sensing project [document(french)](./ES-presentation.pdf) and [slides(french)](./presentation_projet.pdf)
-    - [interoperability](./interoperability.pdf) of environmental data
+    - [interoperability](./documentation/interoperability.pdf) of environmental data
+    - general presentation of the Environmental Sensing project [document(french)](./documentation/ES-presentation.pdf) and [slides(french)](./documentation/presentation_projet.pdf)
 - Data exchange format (three documents)
     - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
 - Data structure
