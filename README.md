@@ -50,11 +50,13 @@ all situations (platform)
 
 ## Documentation
 
-- Data exchange format (three documents)
-    - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
+
 - Project presentation
+    - overview of [tabular structures (french)](./documentation/FR_tabular_structure.ipynb)
     - general presentation of the Environmental Sensing project [document(french)](./ES-presentation.pdf) and [slides(french)](./presentation_projet.pdf)
     - [interoperability](./interoperability.pdf) of environmental data
+- Data exchange format (three documents)
+    - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
 - Data structure
     - [observation](./documentation/Observation.pdf) presentation,
     - presentation of the concepts and principles of [indexed lists principles](./documentation/Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
