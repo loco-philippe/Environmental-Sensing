@@ -433,7 +433,7 @@ class Iindex(IindexStructure, IindexInterface):
 
     @property
     def infos(self):
-        '''return dict with lencodec, typecodec, rate, disttomin, disttomax'''
+        '''return dict with lencodec, typecodec, ratecodec, mincodec, maxcodec'''
         maxi = len(self)
         mini = len(set(self._codec))
         xlen = len(self._codec)

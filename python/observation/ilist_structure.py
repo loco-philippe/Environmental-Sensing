@@ -281,13 +281,13 @@ class IlistStructure:
             else:
                 idx.tocoupled(self.lindex[parent], coupling=False)
         
-    def full(self, reindex=False, indexname=None, fillvalue='-', fillextern=True,
+    def full(self, reindex=False, idxname=None, fillvalue='-', fillextern=True,
              inplace=True, complete=True):
         '''tranform a list of indexes in crossed indexes (value extension).
 
         *Parameters*
 
-        - **indexname** : list of string - name of indexes to transform
+        - **idxname** : list of string - name of indexes to transform
         - **reindex** : boolean (default False) - if True, set default codec before transformation
         - **fillvalue** : object value used for var extension
         - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
@@ -299,19 +299,16 @@ class IlistStructure:
             ilis = self
         else:
             ilis = copy(self)
-        if not indexname:
-            indexname = ilis.primaryname
+        if not idxname:
+            idxname = ilis.primaryname
         if reindex:
             ilis.reindex()
-        keysadd = util.idxfull([ilis.nindex(name) for name in indexname])
+        keysadd = util.idxfull([ilis.nindex(name) for name in idxname])
         if not keysadd or len(keysadd) == 0:
             return ilis
         lenadd = len(keysadd[0])
         for ind in range(ilis.lenindex):
-            '''fillval = fillvalue
-            if fillextern:
-                fillval = util.castval(fillvalue, util.typename(ilis.lname[ind], ES.def_clsName))'''
-            ilis._fullindex(ind, keysadd, indexname, len(ilis) + lenadd, fillvalue, fillextern)
+            ilis._fullindex(ind, keysadd, idxname, len(ilis) + lenadd, fillvalue, fillextern)
         if complete:
             ilis.setcanonorder()
         return ilis
@@ -367,15 +364,18 @@ class IlistStructure:
         return [record[self.lidxrow[i]] for i in range(len(self.lidxrow))]
 
     def indexinfos(self, keys=None):
-        '''return an array with infos of each index :
-            - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate
-            - lencodec, min, max, typecodec, rate, disttomin, disttomax (base info)
+        '''return a dict with infos of each index :
+            - num, name, cat, typecoupl, diffdistparent, child, parent, distparent, 
+            crossed, pparent, linkrate (struct info)
+            - lencodec, mincodec, maxcodec, typecodec, ratecodec (base info)
 
         *Parameters*
 
-        - **keys** : list (default none) - list of information to return (reduct dict), all if None
-
-        *Returns* : array'''
+        - **keys** : string, list or tuple (default None) - list of attributes to returned.
+        if 'all' or None, all attributes are returned.
+        if 'struct', only structural attributes are returned.
+        
+        *Returns* : dict'''
         return self.analysis.getinfos(keys)
 
     def indicator(self, fullsize=None, size=None):
@@ -574,7 +574,7 @@ class IlistStructure:
         if recorder is None or set(recorder) != set(range(len(self))):
             return None
         for idx in self.lindex:
-            idx.keys = [idx.keys[i] for i in recorder]
+            idx.set_keys([idx.keys[i] for i in recorder])
         return None
 
     def setcanonorder(self, reindex=False):

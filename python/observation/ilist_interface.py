@@ -268,7 +268,7 @@ class IlistInterface:
             raise IlistError("Ilist not consistent")
         if idxname is None or idxname == []:
             idxname = self.primaryname
-        ilf = self.full(indexname=idxname, fillvalue=fillvalue,
+        ilf = self.full(idxname=idxname, fillvalue=fillvalue,
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
         if not varname and len(ilf.lvarname) != 0:

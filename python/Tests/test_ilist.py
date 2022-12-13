@@ -435,10 +435,10 @@ class Test_Ilist(unittest.TestCase):
                           ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertTrue(ilm.complete)
         self.assertTrue(ilm.full(inplace=False) == ilm)
-        ilmf = ilm.full(indexname=['i0', 'i1'], inplace=False)
+        ilmf = ilm.full(idxname=['i0', 'i1'], inplace=False)
         self.assertTrue(ilmf.nindex('i0').iscrossed(ilmf.nindex('i1')))
         self.assertTrue(ilmf.nindex('i0').iscoupled(ilmf.nindex('i2')))
-        ilm.full(indexname=['i0', 'i3', 'i5'])
+        ilm.full(idxname=['i0', 'i3', 'i5'])
         self.assertTrue(ilm.nindex('i0').iscrossed(ilm.nindex('i3')) == 
                         ilm.nindex('i0').iscrossed(ilm.nindex('i5')) ==
                         ilm.nindex('i3').iscrossed(ilm.nindex('i5')) == True)
@@ -447,7 +447,7 @@ class Test_Ilist(unittest.TestCase):
                         [2, 0, 2, 0], [2, 2, 0, 0], 
                         ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         ilc = il.full(inplace=False)
-        ild = il.full(indexname=['i2', 'i6', 'i1', 'i3', 'i4', 'i5'], inplace=False)
+        ild = il.full(idxname=['i2', 'i6', 'i1', 'i3', 'i4', 'i5'], inplace=False)
         self.assertEqual(len(ild), 48)
         self.assertTrue(il.nindex('i5').codec == ilc.nindex('i5').codec == 
                         ild.nindex('i5').codec)
@@ -590,7 +590,7 @@ class Test_Ilist(unittest.TestCase):
                                        'peppers', 'peppers', 'banana', 'banana']],
                           ['price', [1, 10, 2, 20, 1.5, 15, 0.5, 5]]])
         ilm.nindex('product').coupling(ilm.nindex('plants'))
-        ilm.full(indexname=['product', 'quantity'])
+        ilm.full(idxname=['product', 'quantity'])
         ilx = ilm.to_xarray()
         self.assertEqual(float(ilx.sel(quantity='10 kg', product='apple').values),
                          float(ilm.loc(['10 kg', 'apple', 'fruit'])[0][3]))
