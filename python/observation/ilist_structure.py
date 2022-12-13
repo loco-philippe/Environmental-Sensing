@@ -256,7 +256,9 @@ class IlistStructure:
             if idxname in self.lname:
                 self.lindex.pop(self.lname.index(idxname))
     
-    def _fullindex(self, ind, keysadd, indexname, leng, fillvalue, fillextern):
+    def _fullindex(self, ind, keysadd, indexname, varname, leng, fillvalue, fillextern):
+        if not varname:
+            varname = []
         idx = self.lindex[ind]
         lenadd = len(keysadd[0])
         if len(idx) == leng:
@@ -266,7 +268,7 @@ class IlistStructure:
             idx.set_keys(idx.keys + [0] * lenadd)  
         elif self.lname[ind] in indexname:
             idx.set_keys(idx.keys + keysadd[indexname.index(self.lname[ind])])
-        elif inf[ind]['parent'] == -1:
+        elif inf[ind]['parent'] == -1 or self.lname[ind] in varname:
             fillval = fillvalue
             if fillextern:
                 fillval = util.castval(fillvalue, util.typename(self.lname[ind], ES.def_clsName))
@@ -275,19 +277,20 @@ class IlistStructure:
         else:
             parent = inf[ind]['parent']
             if len(self.lindex[parent]) != leng:
-                self._fullindex(parent, keysadd, indexname, leng, fillvalue, fillextern)
+                self._fullindex(parent, keysadd, indexname, varname, leng, fillvalue, fillextern)
             if inf[ind]['cat'] == 'coupled' :
                 idx.tocoupled(self.lindex[parent], coupling=True)
             else:
                 idx.tocoupled(self.lindex[parent], coupling=False)
         
-    def full(self, reindex=False, idxname=None, fillvalue='-', fillextern=True,
-             inplace=True, complete=True):
+    def full(self, reindex=False, idxname=None, varname=None, fillvalue='-', 
+             fillextern=True, inplace=True, complete=True):
         '''tranform a list of indexes in crossed indexes (value extension).
 
         *Parameters*
 
         - **idxname** : list of string - name of indexes to transform
+        - **varname** : string - name of indexes to use
         - **reindex** : boolean (default False) - if True, set default codec before transformation
         - **fillvalue** : object value used for var extension
         - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
@@ -308,7 +311,7 @@ class IlistStructure:
             return ilis
         lenadd = len(keysadd[0])
         for ind in range(ilis.lenindex):
-            ilis._fullindex(ind, keysadd, idxname, len(ilis) + lenadd, fillvalue, fillextern)
+            ilis._fullindex(ind, keysadd, idxname, varname, len(ilis) + lenadd, fillvalue, fillextern)
         if complete:
             ilis.setcanonorder()
         return ilis
