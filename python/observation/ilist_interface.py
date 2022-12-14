@@ -87,6 +87,8 @@ class IlistInterface:
         - **None**  '''
         if not self.consistent:
             return None
+        if idxname:
+            idxname = [name for name in idxname if len(self.nindex(name).codec) > 1]
         xar = self.to_xarray(numeric=True, varname=varname, idxname=idxname, lisfunc=[util.cast], 
                              dtype='str', npdtype='str', maxlen=maxlen, coord=True)
         if not order:
@@ -208,15 +210,17 @@ class IlistInterface:
         if 'default' each index has keys, if 'optimize' keys are optimized, 
         if 'dict' dict format is used, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
+        - **fullvar** : boolean (default True) - if True and modecodec='optimize, 
+        variable index is with a full codec
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
         option = {'modecodec':'optimize', 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'geojson': False} | kwargs
+                  'geojson': False, 'fullvar': True} | kwargs
         option2 = {'encoded': False, 'encode_format': 'json',
                    'codif': option['codif'], 'geojson': option['geojson'],
-                   'modecodec': option['modecodec']}
+                   'modecodec': option['modecodec'], 'fullvar': option['fullvar']}
         if option['modecodec'] == 'dict':
             lis = {}
             for idx in self.lindex:
@@ -424,8 +428,11 @@ class IlistInterface:
             elif inf['cat'] == 'coupled':
                 lis.append(idx.setkeys(self.lindex[inf['parent']].keys, inplace=False).
                            to_obj(parent=inf['parent'], name=iname, **option2))
-            elif inf['parent'] == -1:
-                if len(idx.codec) == len(idx):
+            elif inf['parent'] == -1: # cat='variable'
+                if option2['fullvar'] and not(inf['child']):
+                    opt = option2 | {'modecodec':'full' }
+                    lis.append(idx.to_obj(name=iname, **opt))                    
+                elif len(idx.codec) == len(idx):
                     idx.set_codec(util.reorder(idx.codec, idx.keys))
                     idx.set_keys(list(range(len(idx))))
                     opt = option2 | {'modecodec':'full' }
