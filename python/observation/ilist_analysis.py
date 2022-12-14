@@ -102,10 +102,15 @@ class Analysis:
 
          *Parameters*
 
-        - **keys** : list or tuple (default None) - list of attributes to returned'''
+        - **keys** : string, list or tuple (default None) - list of attributes to returned
+        if 'all' or None, all attributes are returned
+        if 'struct', only structural attributes are returned'''
         if self.hashi != self.iobj._hashi():
             self.actualize()
-        if not keys:
+        if keys == 'struct':
+            keys = ['num', 'name', 'cat', 'child', 'crossed', 'distparent',
+                    'diffdistparent', 'typecoupl', 'parent', 'pparent', 'linkrate']
+        if not keys or keys == 'all':
             return self.infos
         return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
     
@@ -199,21 +204,22 @@ class Analysis:
     def _setinfos(self):
         '''set and return attribute 'infos'. 
         Infos is an array with infos of each index :
-            - num, name, cat, typecoupl, diff, parent, pname, pparent, linkrate'''
+            - num, name, cat, child, crossed, distparent, diffdistparent, 
+            typecoupl, parent, pparent, linkrate'''
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         self.infos = [{} for i in range(lenindex)]
         for i in range(lenindex):
+            self.infos[i]['num'] = i
+            self.infos[i]['name'] = self.iobj.lname[i]           
+            self.infos[i]['cat'] = 'null'
             self.infos[i]['parent'] = -1
             self.infos[i]['distparent'] = -1
+            self.infos[i]['pparent'] = -2
             self.infos[i]['diffdistparent'] = leniobj
             self.infos[i]['linkrate'] = 0
             self.infos[i]['child'] = []
             self.infos[i]['crossed'] = []
-            self.infos[i]['num'] = i
-            self.infos[i]['name'] = self.iobj.lname[i]           
-            self.infos[i]['cat'] = 'null'
-            self.infos[i]['pparent'] = -2
             self.infos[i] |= self.iobj.lindex[i].infos
             if self.infos[i]['typecodec'] == 'unique':
                 self.infos[i]['pparent'] = -1

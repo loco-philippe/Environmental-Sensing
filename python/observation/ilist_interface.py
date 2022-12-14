@@ -68,12 +68,14 @@ class IlistInterface:
         *Returns* : string or dict'''
         return self.to_obj(**kwargs)
 
-    def plot(self, order=None, line=True, size=5, marker='o', maxlen=20):
+    def plot(self, varname=None, idxname=None, order=None, line=True, size=5, marker='o', maxlen=20):
         '''
         This function visualize data with line or colormesh.
 
         *Parameters*
 
+        - **varname** : string (default none) - Name of the variable to use. If None,
+        first lvarname is used.
         - **line** : Boolean (default True) - Choice line or colormesh.
         - **order** : list (defaut None) - order of the axes (x, y, hue or col)
         - **size** : int (defaut 5) - plot size
@@ -85,8 +87,10 @@ class IlistInterface:
         - **None**  '''
         if not self.consistent:
             return None
-        xar = self.to_xarray(numeric=True, lisfunc=[util.cast], dtype='str',
-                             npdtype='str', maxlen=maxlen, coord=True)
+        if idxname:
+            idxname = [name for name in idxname if len(self.nindex(name).codec) > 1]
+        xar = self.to_xarray(numeric=True, varname=varname, idxname=idxname, lisfunc=[util.cast], 
+                             dtype='str', npdtype='str', maxlen=maxlen, coord=True)
         if not order:
             order = [0, 1, 2]
 
@@ -206,15 +210,17 @@ class IlistInterface:
         if 'default' each index has keys, if 'optimize' keys are optimized, 
         if 'dict' dict format is used, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
+        - **fullvar** : boolean (default True) - if True and modecodec='optimize, 
+        variable index is with a full codec
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
         option = {'modecodec':'optimize', 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'geojson': False} | kwargs
+                  'geojson': False, 'fullvar': True} | kwargs
         option2 = {'encoded': False, 'encode_format': 'json',
                    'codif': option['codif'], 'geojson': option['geojson'],
-                   'modecodec': option['modecodec']}
+                   'modecodec': option['modecodec'], 'fullvar': option['fullvar']}
         if option['modecodec'] == 'dict':
             lis = {}
             for idx in self.lindex:
@@ -268,7 +274,7 @@ class IlistInterface:
             raise IlistError("Ilist not consistent")
         if idxname is None or idxname == []:
             idxname = self.primaryname
-        ilf = self.full(indexname=idxname, fillvalue=fillvalue,
+        ilf = self.full(idxname=idxname, varname=varname, fillvalue=fillvalue,
                         fillextern=fillextern, inplace=False)
         ilf.setcanonorder()
         if not varname and len(ilf.lvarname) != 0:
@@ -287,7 +293,7 @@ class IlistInterface:
             if ivar != -1:
                 lisfunc[ivar] = funcvar
         lisfuncname = dict(zip(ilf.lname, lisfunc))
-        coords = ilf._xcoord(idxname, lisfuncname, coord, **option)
+        coords = ilf._xcoord(idxname, ivar, lisfuncname, coord, **option)
         dims = idxname
         if numeric:
             lisfunc[ivar] = util.cast
@@ -313,7 +319,7 @@ class IlistInterface:
             attrs |= ilf.indexinfos()
         return xarray.DataArray(data, coords, dims, attrs=attrs, name=name)
 
-    def voxel(self, idxname=None):
+    def voxel(self, idxname=None, varname=None):
         '''
         Plot not null values in a cube with voxels and return indexes values.
         
@@ -321,6 +327,8 @@ class IlistInterface:
 
         - **idxname** : list (default none) - list of idx to be completed. If None,
         self.primary is used.
+        - **varname** : string (default none) - Name of the variable to use. If None,
+        first lvarname is used.
 
         *Returns* : **dict of indexes values**
         '''
@@ -328,7 +336,8 @@ class IlistInterface:
             return None
         if idxname is None or idxname == []:
             idxname = self.primaryname
-        
+        if varname is None and self.lvarname:
+            varname = self.lvarname[0]        
         if len(idxname) > 3:
             raise IlistError('number of idx > 3')
         if len(idxname) == 2:
@@ -338,8 +347,8 @@ class IlistInterface:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
             self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
             idxname += [' ', '  ']
-        xar = self.to_xarray(idxname=idxname, fillvalue='?', fillextern=False,
-                            lisfunc=util.isNotEqual, tovalue='?')
+        xar = self.to_xarray(idxname=idxname, varname=varname, fillvalue='?', 
+                             fillextern=False, lisfunc=util.isNotEqual, tovalue='?')
         axe = plt.figure().add_subplot(projection='3d')
         axe.voxels(xar, edgecolor='k')
         axe.set_xticks(np.arange(self.idxlen[self.idxname.index(xar.dims[0])]))
@@ -419,8 +428,11 @@ class IlistInterface:
             elif inf['cat'] == 'coupled':
                 lis.append(idx.setkeys(self.lindex[inf['parent']].keys, inplace=False).
                            to_obj(parent=inf['parent'], name=iname, **option2))
-            elif inf['parent'] == -1:
-                if len(idx.codec) == len(idx):
+            elif inf['parent'] == -1: # cat='variable'
+                if option2['fullvar'] and not(inf['child']):
+                    opt = option2 | {'modecodec':'full' }
+                    lis.append(idx.to_obj(name=iname, **opt))                    
+                elif len(idx.codec) == len(idx):
                     idx.set_codec(util.reorder(idx.codec, idx.keys))
                     idx.set_keys(list(range(len(idx))))
                     opt = option2 | {'modecodec':'full' }
@@ -507,7 +519,7 @@ class IlistInterface:
             tab.append(reslist)
         return tab
 
-    def _xcoord(self, axename, lisfuncname=None, coord=False, **kwargs):
+    def _xcoord(self, axename, ivar, lisfuncname=None, coord=False, **kwargs):
         ''' Coords generation for Xarray'''
         maxlen = kwargs.get('maxlen', 20)
         info = self.indexinfos()
@@ -516,7 +528,7 @@ class IlistInterface:
             fieldi = info[i]
             iname = self.lname[i]
             #if fieldi['cat'] in ('unique', 'variable'):  #!!!
-            if fieldi['pparent'] == -1:
+            if fieldi['pparent'] == -1 or i == ivar:
                 continue
             if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
                 funci = lisfuncname[iname]

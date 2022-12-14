@@ -471,6 +471,8 @@ class Observation(Ilist):
         if 'default' each index has keys, if 'optimize' keys are optimized, 
         if 'dict' dict format is used, if 'nokeys' keys are absent
         - **name** : boolean (default False) - if False, default index name are not included
+        - **fullvar** : boolean (default True) - if True and modecodec='optimize, 
+        variable index is with a full codec
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         - **json_param**     : Boolean - include Obs Param
@@ -480,8 +482,8 @@ class Observation(Ilist):
         *Returns* : string, bytes or dict'''
         option = {'modecodec': 'optimize', 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'json_param': False, 'json_info': False, 'json_info_detail': False
-                  } | kwargs
+                  'json_param': False, 'json_info': False, 'json_info_detail': False,
+                  'geojson': False, 'fullvar': True} | kwargs
         option2 = option | {'encoded': False, 'encode_format': 'json'}
         #from time import time
         #t0 = time()

@@ -359,7 +359,7 @@ class Ilist(IlistStructure, IlistInterface):
         - **fillvalue** : object (default nan) - value used for the additional data
         - **reindex** : boolean (default False) - if True, set default codec after transformation
         - **simplename** : boolean (default False) - if True, new Iindex name are
-        the same as mergedincluded Iindex name else it is a composed name.
+        the same as merged Iindex name else it is a composed name.
 
         *Returns*: merged Ilist '''
         ilc = copy(self)
@@ -370,7 +370,7 @@ class Ilist(IlistStructure, IlistInterface):
         merged, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname),
                                                       simplename=simplename)
         #print('ilc0 :', merged, oldname, newname)
-        if oldname:
+        if oldname and not oldname in merged.lname:
             delname.append(oldname)        
         for ind in range(1, len(ilc)):
             oldidx = ilc.nindex(oldname)
@@ -382,7 +382,8 @@ class Ilist(IlistStructure, IlistInterface):
             rec, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname), 
                                                        simplename=simplename)
             #print('ilci :', ind, rec, oldname, newname)
-            delname.append(oldname)
+            if oldname and newname != [oldname]:
+                delname.append(oldname)        
             for name in newname:
                 oldidx = merged.nindex(oldname)
                 fillval = util.castval(fillvalue, util.typename(name, ES.def_clsName))
@@ -393,7 +394,8 @@ class Ilist(IlistStructure, IlistInterface):
                 merged.delindex(name)
         if reindex:
             merged.reindex()
-        return merged
+        ilc.lindex = merged.lindex
+        return ilc
 
 # %% internal
     @classmethod    
@@ -518,10 +520,13 @@ class Ilist(IlistStructure, IlistInterface):
                break
         if var < 0:
             return (rec, None, [])
-        ilis = row[var].merge()
-        #ilis = row[var]
+        #ilis = row[var].merge(simplename=simplename)
+        ilis = row[var]
         oldname = rec.lname[var]
-        if not simplename:
+        if ilis.lname == ['i0']:
+            newname = [oldname]
+            ilis.setname(newname)
+        elif not simplename:
             newname = [oldname + '_' + name for name in ilis.lname]
             ilis.setname(newname)
         else:

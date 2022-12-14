@@ -363,7 +363,7 @@ class TestExamples(unittest.TestCase):
             ob_sensor.append([45 + i, date, loc, prop1])
             if i % 3 == 0:
                 ob_sensor.append([105 + i//3, date, loc, prop2])
-        ob_sensor.full(indexname=['datation', 'property'], fillvalue=None)
+        ob_sensor.full(idxname=['datation', 'property'], fillvalue=None)
         self.assertTrue(ob_sensor.dimension == 2 and len(ob_sensor) == 12)
         # if the payload is binary payload
         payload = ob_sensor.json(encoded=True, encode_format='cbor')
@@ -416,7 +416,7 @@ class TestExamples(unittest.TestCase):
             il_sensor.append([45 + i, date, prop1])
             if i % 3 == 0:
                 il_sensor.append([105 + i//3, date, prop2])
-        il_sensor.full(indexname=['datation', 'property'], fillvalue=None)
+        il_sensor.full(idxname=['datation', 'property'], fillvalue=None)
         il_sensor.nindex('property').setcodeclist([None, None])
         self.assertTrue(il_sensor.dimension == 2 and len(il_sensor) == 12)
         # send data
@@ -625,12 +625,12 @@ class TestObservation(unittest.TestCase):
                       ["property", [{"prp": "PM25", "unit": "kg/m3"}, {"prp": "PM10", "unit": "kg/m3"}],
                                    [0, 1, 0, 1, 0, 1]],
                        ["result", [0, 1, 2, 3, 4, 5], -1]], 'name': 'test1'})
-        ob1 = ob.full(fillvalue=-1, indexname=['datation', 'location', 'property'], inplace=False)
+        ob1 = ob.full(fillvalue=-1, idxname=['datation', 'location', 'property'], inplace=False)
         rec = [{"date1": "2021-02-04T12:05:00"}, {"paris": [2.35, 48.87]},
                {"prp": "PM10", "unit": "kg/m3"}, 1]
         self.assertTrue(ob.loc(rec) == ob1.loc(rec))
         self.assertEqual(len(ob1), 18)
-        ob.full(fillvalue=-1, indexname=['datation', 'location', 'property'], inplace=True)
+        ob.full(fillvalue=-1, idxname=['datation', 'location', 'property'], inplace=True)
         self.assertEqual(ob, ob1)
 
     def test_obs_extend(self):
