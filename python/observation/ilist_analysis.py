@@ -109,7 +109,7 @@ class Analysis:
             self.actualize()
         if keys == 'struct':
             keys = ['num', 'name', 'cat', 'child', 'crossed', 'distparent',
-                    'diffdistparent', 'typecoupl', 'parent', 'pparent', 'linkrate']
+                    'diffdistparent', 'parent', 'pparent', 'linkrate']
         if not keys or keys == 'all':
             return self.infos
         return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
@@ -205,7 +205,7 @@ class Analysis:
         '''set and return attribute 'infos'. 
         Infos is an array with infos of each index :
             - num, name, cat, child, crossed, distparent, diffdistparent, 
-            typecoupl, parent, pparent, linkrate'''
+            parent, pparent, linkrate'''
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         self.infos = [{} for i in range(lenindex)]

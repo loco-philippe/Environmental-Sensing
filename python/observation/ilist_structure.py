@@ -368,7 +368,7 @@ class IlistStructure:
 
     def indexinfos(self, keys=None):
         '''return a dict with infos of each index :
-            - num, name, cat, typecoupl, diffdistparent, child, parent, distparent, 
+            - num, name, cat, diffdistparent, child, parent, distparent, 
             crossed, pparent, linkrate (struct info)
             - lencodec, mincodec, maxcodec, typecodec, ratecodec (base info)
 
