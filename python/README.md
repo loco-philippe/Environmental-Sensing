@@ -7,6 +7,7 @@ The Python connectors are defined :
 - in the [documentation](https://loco-philippe.github.io/observation.html)
 - in the [code](./observation/README.md)  files 
 - in the [examples](./Examples/README.md)
+- in the [validation dataset](./Validation/README.md)
 
 ## Installation
 Observation itself is a pure Python package. It can be installed with pip 
