@@ -102,8 +102,8 @@ class IindexStructure:
         return self.getduplicates()
 
     def couplinginfos(self, other, default=False):
-        '''return a dict with the coupling info between other (lencoupling, rate,
-        disttomin, disttomax, distmin, distmax, diff, typecoupl)
+        '''return a dict with the coupling info between other (distance, rate,
+        dist, disttomin, disttomax, distmin, distmax, diff, typecoupl)
 
         *Parameters*
 
@@ -114,8 +114,9 @@ class IindexStructure:
         if default:
             return util.couplinginfos(self.values, other.values)
         if min(len(self), len(other)) == 0:
-            return {'dist': 0, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null'}
+            return {'dist': 0, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
+                    'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null',
+                    'distance': 0, 'rate': 0}
         lens = len(self._codec)
         leno = len(other._codec)
         xmin = max(lens, leno)
@@ -126,20 +127,23 @@ class IindexStructure:
                 typec = 'derived'
             else:
                 typec = 'derive'
-            return {'dist': xmin, 'rate': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': xmin, 'distmax': xmax, 'diff': diff, 'typecoupl': typec}
+            return {'dist': xmin, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
+                    'distmin': xmin, 'distmax': xmax, 'diff': diff, 'typecoupl': typec,
+                    'distance': diff, 'rate': diff / (xmax - xmin + diff)}
         xso = len(util.tocodec([tuple((v1, v2))
                   for v1, v2 in zip(self._keys, other._keys)]))
-        dic = {'dist': xso, 'rate': (xso - xmin) / (xmax - xmin),
+        dic = {'dist': xso, 'distrate': (xso - xmin) / (xmax - xmin),
                'disttomin': xso - xmin,  'disttomax': xmax - xso,
-               'distmin': xmin, 'distmax': xmax, 'diff': diff}
-        if dic['rate'] == 0 and dic['diff'] == 0:
+               'distmin': xmin, 'distmax': xmax, 'diff': diff, 
+               'distance': xso - xmin + diff, 
+               'rate': (xso - xmin + diff) / (xmax - xmin + diff)}
+        if dic['distrate'] == 0 and dic['diff'] == 0:
             dic['typecoupl'] = 'coupled'
-        elif dic['rate'] == 0 and lens < leno:
+        elif dic['distrate'] == 0 and lens < leno:
             dic['typecoupl'] = 'derived'
-        elif dic['rate'] == 0 and lens > leno:
+        elif dic['distrate'] == 0 and lens > leno:
             dic['typecoupl'] = 'derive'
-        elif dic['rate'] == 1:
+        elif dic['distrate'] == 1:
             dic['typecoupl'] = 'crossed'
         elif lens < leno:
             dic['typecoupl'] = 'linked'
@@ -211,17 +215,17 @@ class IindexStructure:
 
     def iscrossed(self, other):
         '''return True if self is crossed to other'''
-        return self.couplinginfos(other)['rate'] == 1.0
+        return self.couplinginfos(other)['distrate'] == 1.0
 
     def iscoupled(self, other):
         '''return True if self is coupled to other'''
         info = self.couplinginfos(other)
-        return info['diff'] == 0 and info['rate'] == 0
+        return info['diff'] == 0 and info['distrate'] == 0
 
     def isderived(self, other):
         '''return True if self is derived from other'''
         info = self.couplinginfos(other)
-        return info['diff'] != 0 and info['rate'] == 0.0
+        return info['diff'] != 0 and info['distrate'] == 0.0
 
     def iskeysfromderkeys(self, other):
         '''return True if self._keys is relative from other._keys'''
@@ -233,7 +237,7 @@ class IindexStructure:
 
     def islinked(self, other):
         '''return True if self is linked to other'''
-        rate = self.couplinginfos(other)['rate']
+        rate = self.couplinginfos(other)['distrate']
         return 0.0 < rate < 1.0
 
     def isvalue(self, value, extern=True):

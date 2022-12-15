@@ -260,6 +260,9 @@ class Analysis:
             
     def _setparent(self):
         '''set parent (Iindex with minimal diff) for each Iindex'''
+        # parent : min(diff)
+        # distparent : min(distrate) -> diffdistparent, linkrate
+        # minparent : min(distance) -> rate, distance
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         for i in range(lenindex):
@@ -281,8 +284,8 @@ class Analysis:
                         infoi['crossed'].append(j)
                     if i != j and self.infos[j]['distparent'] != i and \
                       matij['typecoupl'] in ('coupled', 'derived', 'linked', 'crossed') and \
-                      matij['rate'] < ratemin:
-                        ratemin = matij['rate']
+                      matij['distrate'] < ratemin:
+                        ratemin = matij['distrate']
                         distparent = j
                 if not parent is None:
                     infoi['parent'] = parent
@@ -290,7 +293,7 @@ class Analysis:
                 if not distparent is None:
                     infoi['distparent'] = distparent
                     infoi['diffdistparent'] = self.matrix[i][distparent]['diff']
-                    infoi['linkrate'] = self.matrix[i][distparent]['rate']
+                    infoi['linkrate'] = self.matrix[i][distparent]['distrate']
         return    
 
     def _dic_noeud(self, n, child, lname):
