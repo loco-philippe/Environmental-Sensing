@@ -1,19 +1,17 @@
-import http from 'http';
-import url from 'url';
 import express from 'express';
-import {JSDOM} from "jsdom"; // On ne peut pas se passer de jsdom si Observable Plot est côté serveur.
-// -> Pour améliorer la rapidité, Observable Plot doit être côté client donc jsdom n'est pas nécessaire.
+import fs from "fs";
 import { MongoClient } from "mongodb";
 import { emptyRequest, ESSearch} from "../essearch_javascript.js";
 
-let jsdom = await JSDOM.fromFile("html_initial.html");
 const app = express();
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.writeHead(200, {'Content-Type': 'text/html'});
-  let html = jsdom.serialize();
-  res.end(html);
+  fs.readFile("html_initial.html", (err, data) => {
+    res.write(data);
+    return res.end();
+  });
   console.log('get');
 });
 

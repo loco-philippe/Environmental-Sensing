@@ -4,11 +4,13 @@
         <meta charset="UTF-8">
         <link rel="icon" href="https://loco-philippe.github.io/ES/logo_loco.png"> <!-- pas très lisible -->
         <title>Outil de recherche Essearch basé sur MongoDB</title>
-        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script> <!-- inutile actuellement -->
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script> <!-- inutile actuellement -->
+        <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6"></script>
         <script type="text/javascript">
-            var uri = '', database_name = '', collection_name = '', req_count = -1, column_names, 
-                added_fields = [0];
+            var uri = '', database_name = '', collection_name = '', req_count = -1, column_names, added_fields = [0],
+                responseText, result_data, formatted_data, formatted_data_promise, plot_count = 0;
 
             function set_uri (value) {uri = value; Validation_Mongo();}
             function set_database_name (value) {database_name = value; Validation_Mongo();}
@@ -30,15 +32,12 @@
                 }
             }
 
-            function loadCondition (i) {
-                // à faire (affichage de la partie conditions une fois que la base est valide)
-                if (document.getElementById("name-select_" + i).value === "exact-path") {document.getElementById("exact-path-input-div_" + i).hidden = false;}
-                else {document.getElementById("exact-path-input-div_" + i).hidden = true;}
-            }
-
             function exactPathVisibility (i) {
-                document.getElementById("exact-path-input-div_" + i).hidden = 
-                        !(document.getElementById("name-select_" + i).value === "exact-path");
+                if (document.getElementById("name-select_" + i).value === "exact-path") {
+                    document.getElementById("exact-path-input-div_" + i).style.display = 'block';
+                } else {
+                    document.getElementById("exact-path-input-div_" + i).style.display = 'none';
+                }
             }
 
             function insertNamesInSelectors () {
@@ -50,12 +49,20 @@
                     name_selectors[i].disabled = false;
                     exactPathVisibility (i);
                 }
+                var project_selector = document.getElementById("project-select"); // Comprendre pourquoi ne se met pas à jour après changement de base de données
+                project_selector.innerHTML = '';
+                column_names.forEach(option => {
+                    var checkbox = document.createElement("div");
+                    checkbox.innerHTML = "<input type=\"checkbox\" id=\"" + option + "\" value=\"" + option + "\" checked> \
+                                    <label for=\"" + option + "\">" + option + "</label>"
+                    project_selector.appendChild(checkbox);
+                });
                 var exact_path_fields = document.querySelectorAll("option[value='exact-path']");
                 for (var i = 0; i < exact_path_fields.length; i++) {exact_path_fields[i].style.fontStyle = 'italic';}
             }
 
             function addField (i) {
-                const parent = document.getElementById("cond_" + i)
+                var parent = document.getElementById("cond_" + i)
                 parent.insertAdjacentHTML("beforeend", "<div class=\"additional-field\" id=\"additional-field_" + i + "_" + 
                     added_fields[i] + "\">Paramètre supplémentaire : <input type='text' class=\"param-name-field\" \
                     > Valeur : <input type='text' class=\"param-value-field\"> <button id=\"remove_field_" +
@@ -73,7 +80,7 @@
                 var div = document.createElement("div");
                 div.className = "cond";
                 div.id = "cond_" + added_fields.length;
-                div.innerHTML = "<p>Colonne : <select name=\"column_name\" \
+                div.innerHTML = "<div>Colonne : <select name=\"column_name\" \
                     class=\"name-select\" id=\"name-select_" + added_fields.length + "\" oninput=\"exactPathVisibility (" +
                     added_fields.length + ")\"></select> Opérateur : <input type=\"text\" \
                     class=\"operator-input\" id=\"operator-input_" + added_fields.length + 
@@ -81,8 +88,8 @@
                     added_fields.length + "\"> <button id=\"add_field_" + added_fields.length + 
                     "\" onclick=\"addField (" + added_fields.length + ")\">Ajouter un champ à cette condition</button> \
                     <button id=\"remove_condition_" +  added_fields.length + "\" onclick=\"removeCondition (" +  
-                    added_fields.length + ")\">Enlever cette condition</button></p><div class=\"exact-path-input-div\" \
-                    id=\"exact-path-input-div_" + added_fields.length + "\" hidden>Chemin exact : <input type=\"text\" \
+                    added_fields.length + ")\">Enlever cette condition</button></div><div class=\"exact-path-input-div\" \
+                    id=\"exact-path-input-div_" + added_fields.length + "\"  style=\"display: none;\">Chemin exact : <input type=\"text\" \
                     class=\"exact-path-input\" id=\"exact-path-input_" + added_fields.length + "\"></div>";
                 parent.appendChild(div);
                 var sel = document.getElementById("name-select_" + added_fields.length);
@@ -103,6 +110,7 @@
                 req_count += 1;
                 var req_id = req_count;
                 if (document.getElementById("mongo_validity").innerHTML === "Valide") {document.getElementById("coll_stats").innerHTML = "...";}
+                document.getElementById("request-result").innerHTML = "";
                 var name_selectors = document.querySelectorAll("name-select");
                 for (var i = 0; i < name_selectors.length; i++) {exact_path_fields[i].disabled = true;}
                 var xmlHttp = new XMLHttpRequest();
@@ -132,9 +140,14 @@
                 xmlHttp.onerror = () => { setMongoValidity ("Erreur"); }
             }
 
+            function showProject () {
+                document.getElementById("project-select").style.display = 'block';
+            }
+
             function execute () {
+                document.getElementById("export_div").style.display = 'none';
                 if (document.getElementById("mongo_validity").innerHTML === "Valide") {
-                    document.getElementById("request-result").innerHTML = "..."
+                    document.getElementById("request-result").innerHTML = "Requête en cours...";
                     document.getElementById("request-result").style.color = "black";
                     var xhr = new XMLHttpRequest();
                     xhr.open("POST", "/", true);
@@ -144,9 +157,9 @@
                         var div = document.getElementById("cond_" + i); // est-ce bien le plus optimisé ?
                         condArray.push({});
                         param = div.querySelector('#name-select_' + i).value;
-                        if (param && param !== '' && param !== "Entrer un chemin exact.") {
+                        if (param && param !== '' && param !== "exact-path") {
                             condArray[i]['name'] = param;
-                        } else if (param === "Entrer un chemin exact.") {
+                        } else if (param === "exact-path") {
                             var path = div.querySelector('#exact-path-input_' + i).value;
                             if (path && path !== '') {condArray[i]['path'] = path;}
                         }
@@ -168,16 +181,175 @@
                         document.getElementById("request-result").style.color = "red";
                     }
                     xhr.onreadystatechange = () => { if (xhr.readyState === xhr.DONE && xhr.status === 200) {
-                        document.getElementById("request-result").innerHTML = xhr.responseText; // temp
-                        document.getElementById("request-result").style.color = "black";
-                        /* à faire
-                        Ce qui est reçu est ... ? à voir ; voir ce qui est fait côté client et côté serveur
-                        */
+                        responseText = xhr.responseText; // Used only for json export
+                        resp = JSON.parse(xhr.responseText);
+                        document.getElementById("request-result").style.color = "green";
+                        document.getElementById("request-result").innerHTML = "Requête effectuée ✓";
+                        result_data = resp["data"];
+                        formatted_data_promise = dataFormatting ();
+                        updateRenderingParameters (document.getElementById("rendering-select").value);
+                        document.getElementById("export_div").style.display = 'block';
                     }}
                 } else {
                     document.getElementById("request-result").innerHTML = "La collection est invalide. Impossible d'exécuter la requête."
                     document.getElementById("request-result").style.color = "red";
                 }
+            }
+
+            async function exportResult () {
+                var link = document.createElement("a");
+                if (document.getElementById("export-select").value === 'json') {
+                    link.setAttribute("href", encodeURI("data:application/json;charset=utf-8," + responseText));
+                    link.setAttribute("download", database_name + "." + collection_name + "-" + new Date().getFullYear() + 
+                                                    "-" + (new Date().getMonth() + 1) + "-" + new Date().getDate() + ".json");
+                } else if (document.getElementById("export-select").value === 'csv') {
+                    var export_data, first_column = true;
+                    export_data = "data:text/csv;charset=utf-8,";
+                    for (var column_name in await formatted_data[0]) { // remplacer par la variable globale des noms des colonnes en sortie. (mais attention, car en l'état n'attend pas que la promesse soit résolue)
+                        if (first_column) {
+                            export_data += column_name;
+                            first_column = false;
+                        } else {
+                            export_data += ',' + column_name;
+                        }
+                    }
+                    export_data += "\r\n";
+                    await formatted_data.forEach(function(line) {
+                        first_key = true;
+                        for (var item_key in line) { // PROBLEMES AVEC L'ORDRE POURRAIENT SURVENIR
+                            var item;
+                            if (line[item_key] instanceof Date) {
+                                item = line[item_key].toLocaleDateString('fr-FR', {timeZone: 'UTC', month: 'long', 
+                                                        day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'});
+                            } else if (typeof line[item_key] === 'object') {
+                                item = JSON.stringify(line[item_key]);
+                            } else {
+                                item = line[item_key];
+                            }
+                            if (first_key) {
+                                export_data += item;
+                                first_key = false;
+                            } else {
+                                export_data += ';' + item;
+                            }
+                        }
+                        export_data += "\r\n";
+                    });
+                    link.setAttribute("href", encodeURI(export_data));
+                    link.setAttribute("download", database_name + "." + collection_name + "-" + new Date().getFullYear() + 
+                                                    "-" + (new Date().getMonth() + 1) + "-" + new Date().getDate() + ".csv");
+                }
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function updateRenderingParameters (graph_type) {
+                plot_count = 0;
+                if (graph_type === 'bar-chart') {
+                    document.getElementById("rendering_parameters").innerHTML = 'Axe des x : <select name="x_field" \
+                    id="x_field-select" oninput="render ()"></select> <button \
+                    id="add_render_field" onclick="addRenderField ()">+</button>';
+                    fieldOptions ([document.getElementById("x_field-select")]);
+                } else if (graph_type === 'curve') {
+                    document.getElementById("rendering_parameters").innerHTML = 'Axe des x : <select name="x_field" \
+                    id="x_field-select" oninput="render ()"></select> Axe des y : <select name="y_field" id="y_field-select" oninput="render ()"></select> <button \
+                    id="add_render_field" onclick="addRenderField ()">+</button>';
+                    fieldOptions ([document.getElementById("x_field-select"), document.getElementById("y_field-select")]);
+                } else if (graph_type === 'map') {
+                    document.getElementById("rendering_parameters").innerHTML = '<i>à venir</i>';
+                }
+                render ();
+            }
+
+            function fieldOptions (fields) {
+                for (var column_name in result_data) {
+                    for (var field_key in fields) {
+                        fields[field_key].add(new Option(column_name, column_name));
+                    }
+                }
+            }
+
+            function addRenderField () {
+                // Tel quel, champs ajoutés disparaissent si changement de format d'affichage puis retour
+                plot_count += 1;
+                if (plot_count >= column_names.length) {return;} // Créer une autre variable globale pour le retour
+                var new_field_select = document.createElement("select");
+                new_field_select.name = "additional_field";
+                new_field_select.id = "field-select_" + plot_count;
+                new_field_select.oninput = "render ()";
+                for (var column_name in result_data) {
+                    new_field_select.add(new Option(column_name, column_name));
+                }
+                document.getElementById("rendering_parameters")
+                        .insertBefore(new_field_select, document.getElementById("add_render_field"));
+            }
+
+            async function dataFormatting () {
+                // Que faire dans le cas où heavy = true ? Données non utilisables en l'état.
+                formatted_data = [];
+                for (var column_name in result_data) {
+                    for (var value in result_data[column_name]['value']) {
+                        if (Array.isArray(result_data[column_name]['value'][value]["record"])) {
+                            for (var record_key in result_data[column_name]['value'][value]["record"]) {
+                                if (formatted_data[result_data[column_name]['value'][value]["record"][record_key]] === undefined) {
+                                    formatted_data[result_data[column_name]['value'][value]["record"][record_key]] = {};
+                                }
+                                if (result_data[column_name]['type'] === "DatationValue") {
+                                    formatted_data[result_data[column_name]['value'][value]["record"][record_key]][column_name] = new Date(result_data[column_name]['value'][value]["codec"]);
+                                } else {
+                                    formatted_data[result_data[column_name]['value'][value]["record"][record_key]][column_name] = result_data[column_name]['value'][value]["codec"];
+                                }
+                            }
+                        } else {
+                            if (formatted_data[result_data[column_name]['value'][value]["record"]] === undefined) {
+                                formatted_data[result_data[column_name]['value'][value]["record"]] = {};
+                            }
+                            if (result_data[column_name]['type'] === "DatationValue") {
+                                formatted_data[result_data[column_name]['value'][value]["record"]][column_name] = new Date(result_data[column_name]['value'][value]["codec"]);
+                            } else {
+                                formatted_data[result_data[column_name]['value'][value]["record"]][column_name] = result_data[column_name]['value'][value]["codec"];
+                            }
+                        }
+                    }
+                }
+            }
+
+            function render () {
+                // Ajouter l'échelle appropriée aux dates
+                // De manière générale, trouver une solution pour la lisibilité
+                graph_type = document.getElementById("rendering-select").value;
+                formatted_data_promise.then((resolve, reject) => {
+                    var plot;
+                    if (graph_type === 'bar-chart') {
+                        console.log("Affichage d'un histogramme");
+                        console.log(formatted_data);
+                        plot = Plot.plot({
+                                    y: {
+                                        label: "↑ Fréquence",
+                                        grid: true
+                                    },
+                                    marks: [
+// COMPRENDRE CE QUI POSE PROBLEME AVEC L'AFFICHAGE DE DONNEES AU FORMAT CHAINE DE CARACTERES
+                                        Plot.barY(formatted_data, Plot.binX({y: "count"}, {x: document.getElementById("x_field-select").value})),
+                                        Plot.ruleY([0])
+                                    ]
+                                    })
+                    } else if (graph_type === 'curve') {
+                        // Ajouter le cas de l'affichage en fonction de dates.
+                        console.log("Affichage d'une courbe");
+                        console.log(formatted_data);
+                        plot = Plot.dot(formatted_data, {x: document.getElementById("x_field-select").value, 
+                                                                    y: document.getElementById("y_field-select").value}).plot();
+                    } else if (graph_type === 'map') {
+                        console.log("Affichage d'une carte");
+                        console.log(formatted_data);
+                        plot = createElement(i);
+                        plot.innerHTML = '<i>à venir</i>';
+                    }
+                    document.getElementById('graphic').appendChild(plot);
+                });
             }
         </script>
     </head>
@@ -185,19 +357,19 @@
         <h1>Outil de requêtes</h1>
         <h2>Paramètres de la base de données</h2>
         <!-- Considérer l'utilisation de Cookies pour retrouver les valeurs précédentes -->
-        <p id="db_selection">
+        <div id="db_selection">
             URI complète : <input type="text" id="URI_mongo-input" oninput="set_uri (this.value)">
             <!-- si possible, ajouter un point d'interrogation expliquant au survol ce qu'est une URI Mongo et comment la créer -->
             Nom de la base : <input type="text" id="base_name-input" oninput="set_database_name (this.value)">
             Nom de la collection : <input type="text" id="collection_name-input" oninput="set_collection_name (this.value)">
-        </p>
+        </div>
         <div id="mongo_validity"></div>
         <div id="coll_stats"></div>
         <h2>Paramètres de la requête</h2>
         <!-- Ne s'affiche / n'est dégrisé qu'une fois l'étape précédente validée (la requête vide a lieu entre temps) -->
         <div id="conds">
             <div class="cond" id="cond_0">
-        <p>
+        <div>
             Colonne : <select name="column_name" class="name-select" id="name-select_0" oninput="exactPathVisibility (0)"></select>
             Opérateur : <input type="text" class="operator-input" id="operator-input_0">
             <!-- à voir si une liste des opérateurs associés à la colonne choisie peut être déterminée avec les infos
@@ -205,34 +377,36 @@
             Valeur de comparaison : <input type="text" class="operand-input" id="operand-input_0">
             <button id="add_field_0" onclick="addField (0)">Ajouter un champ à cette condition</button>
             <button id="remove_condition_0" onclick="removeCondition (0)">Enlever cette condition</button>
-        </p>
-        <div class="exact-path-input-div" id="exact-path-input-div_0" hidden>Chemin exact : <input type="text" class="exact-path-input" id="exact-path-input_0"></div>
+        </div>
+        <div class="exact-path-input-div" id="exact-path-input-div_0" style="display: none;">Chemin exact : <input type="text" class="exact-path-input" id="exact-path-input_0"></div>
         </div>
         </div>
         <button id="add_condition" onclick="addCondition ()">Ajouter une condition</button>
+        <div id="project-select" style="display: none;"></div>
+        <button id="show_project" onclick="showProject ()">Sélectionner les champs à renvoyer</button>
         <button id="execute" onclick="execute ()">Exécuter la requête</button>
         <div id="request-result"></div>
+        <div id="export_div" style="display: none;">
+        Exporter au format :
+        <select name="export_format" id="export-select">
+            <option value="json">json</option>
+            <option value="csv">csv</option>
+        </select>
+        <button id="export-button" onclick="exportResult ()">Exporter</button> <!-- Griser ce bouton et ne le dégriser que quand l'export est possible -->
+        </div>
         <h2>Affichage des données</h2>
-        <p>
+        <div>
             Type d'affichage : 
-            <select name="rendering_format" id="rendering-select">
+            <select name="rendering_format" id="rendering-select" oninput="updateRenderingParameters (this.value);">
                 <option value="bar-chart">Histogramme</option>
                 <option value="curve">Courbe</option>
                 <option value="map">Carte</option>
             </select>
-            <!--
-                Peu pertinent d'écrire la suite maintenant sans savoir quels seront les paramètres demandés
-                + Ils seront potentiellement différents pour chaque type de graphique.
-                -> Si traitement côté client, nécessaire d'avoir la conversion de format observation côté client.
-                -> Si traitement côté serveur, nécessaire d'effectuer une nouvelle requête pour changer le type de diagramme
-                 (pas garanti que le format adapté soit réellement différent selon les cas)
-            -->
-
-        </p>
+            <div id="rendering_parameters"></div>
+        </div>
         <div class='container'>
-            <figure id='graphic'>
-
-            </figure>
+            <div class='title'></div>
+            <figure id='graphic'></figure>
         </div>
     </body>
 </html>

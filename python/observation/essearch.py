@@ -709,7 +709,7 @@ class ESSearch:
                                     # autrement qu'au sein d'une condition. (ce qui, après tout, ne fait pas vraiment sens)
             for data in self.input:
                 if isinstance(data, Observation):
-                    result.append(Observation)
+                    result.append(data)
                 else:
                     for item in data.find(): result.append(Observation.from_obj(item))
         else:
@@ -770,6 +770,8 @@ class ESSearch:
                             del dico['data'][column_key]['value'][i]['record'][j]
                     if len(dico['data'][column_key]['value'][i]['record']) == 0:
                         del dico['data'][column_key]['value'][i]
+                    elif len(dico['data'][column_key]['value'][i]['record']) == 1:
+                        dico['data'][column_key]['value'][i]['record'] = dico['data'][column_key]['value'][i]['record'][0]
         return Observation.from_obj(dico)
 
     def _filtered_observation(self, obs):
@@ -928,6 +930,7 @@ class ESSearch:
 # parce que la conversion en observation est faite au sein d'execute et donc que les données entrées par le champ data ne sont pas converties
 # à voir pour modifier fusion / l'intégrer comme méthode de Ilist/Observation / modifier execute.
 # -> dans tous les cas, fait sens d'insérer fusion comme méthode d'Observation.
+        print(obsList)
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:

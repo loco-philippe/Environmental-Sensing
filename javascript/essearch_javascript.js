@@ -96,8 +96,9 @@ export class ESSearch {
     }
 
     if (operand && operand !== '') {
-      try {operator = dico_alias_mongo[typeof operand][operator];} // operator vaut undefined en cas d'erreur (pas souhaité, mais comme ça pour le moment)
-      catch {
+      if (dico_alias_mongo[typeof operand][operator] !== undefined) {
+        operator = dico_alias_mongo[typeof operand][operator];
+      } else {
         if (Object.prototype.toString.call(new Date(operand)) === '[object Date]' || others.formatstring) {
           operand = new Date(operand);
           operator = dico_alias_mongo['date'][operator];
@@ -350,7 +351,7 @@ export class ESSearch {
     for (const mongo_source of this.input) {
       cursor = mongo_source.aggregate(this._fullSearchMongo());
       for await (const item of cursor) {
-        console.log(JSON.stringify(item));
+        //console.log(JSON.stringify(item));
         const filtered_out = this._mongo_out_to_obs(item);
         if (filtered_out) {result.push(JSON.stringify(filtered_out));}
       }
@@ -366,7 +367,7 @@ export class ESSearch {
         } else if (item instanceof Mongo.CommandCursor) {
           sources.push('mongo commandcursor from namespace : ' + item.namespace);
         } else {
-          sources.push('data')
+          sources.push('data');
         }
       }
       const python = pythonBridge();
@@ -420,13 +421,20 @@ export class ESSearch {
               !(valid_records.includes(dico['data'][column_key]['value'][i]['record']))) {
           dico['data'][column_key]['value'].splice(i, 1);
         } else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {
-          for (let j = dico['data'][column_key]['value'][i]['record'].length - 1; j > -1 ; j--) {
-            if (!(valid_records.includes(dico['data'][column_key]['value'][i]['record'][j]))) {
-              delete dico['data'][column_key]['value'][i]['record'][j];
+          let k = 0;
+          for (let j = 0; j < dico['data'][column_key]['value'][i]['record'].length; j++) {
+            if (valid_records.includes(dico['data'][column_key]['value'][i]['record'][j])) {
+              if (k < j) {
+                dico['data'][column_key]['value'][i]['record'][k] = dico['data'][column_key]['value'][i]['record'][j];
+              }
+              k += 1;
             }
           }
+          dico['data'][column_key]['value'][i]['record'].splice(k, dico['data'][column_key]['value'][i]['record'].length - k)
           if (dico['data'][column_key]['value'][i]['record'].length === 0) {
             dico['data'][column_key]['value'].splice(i, 1);
+          } else if (dico['data'][column_key]['value'][i]['record'].length === 1) {
+            dico['data'][column_key]['value'][i]['record'] = dico['data'][column_key]['value'][i]['record'][0];
           }
         }
       }
