@@ -320,11 +320,13 @@
                 // Ajouter l'échelle appropriée aux dates
                 // De manière générale, trouver une solution pour la lisibilité
                 graph_type = document.getElementById("rendering-select").value;
+                document.getElementById('graphic').innerHTML = '';
                 formatted_data_promise.then((resolve, reject) => {
                     var plot;
                     if (graph_type === 'bar-chart') {
                         console.log("Affichage d'un histogramme");
                         console.log(formatted_data);
+                        console.log(Plot.binX({y: "count"}, {x: document.getElementById("x_field-select").value}));
                         plot = Plot.plot({
                                     y: {
                                         label: "↑ Fréquence",
