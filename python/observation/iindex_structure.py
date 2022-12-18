@@ -123,13 +123,16 @@ class IindexStructure:
         xmax = lens * leno
         diff = abs(lens - leno)
         if min(lens, leno) == 1:
+            rate = 0
+            if xmax - xmin + diff != 0:
+                rate = diff / (xmax - xmin + diff)
             if lens == 1:
                 typec = 'derived'
             else:
                 typec = 'derive'
             return {'dist': xmin, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': xmin, 'distmax': xmax, 'diff': diff, 'typecoupl': typec,
-                    'distance': diff, 'rate': diff / (xmax - xmin + diff)}
+                    'distmin': xmin, 'distmax': xmax, 'diff': diff, 
+                    'typecoupl': typec, 'distance': diff, 'rate': rate}
         xso = len(util.tocodec([tuple((v1, v2))
                   for v1, v2 in zip(self._keys, other._keys)]))
         dic = {'dist': xso, 'distrate': (xso - xmin) / (xmax - xmin),

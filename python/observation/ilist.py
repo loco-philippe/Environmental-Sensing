@@ -125,6 +125,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.record`
     - `Ilist.recidx`
     - `Ilist.recvar`
+    - `Ilist.tree`
     - `Ilist.valtokey`
 
     *add - update methods (`observation.ilist_structure.IlistStructure`)*
@@ -778,11 +779,6 @@ class Ilist(IlistStructure, IlistInterface):
     def tiindex(self):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
-
-    @property
-    def tree(self):
-        ''' tree of derivated Iindex'''
-        return self.analysis.tree()
 
     @property
     def typevalue(self):
