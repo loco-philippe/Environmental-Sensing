@@ -109,7 +109,7 @@ class Analysis:
             self.actualize()
         if keys == 'struct':
             keys = ['num', 'name', 'cat', 'child', 'crossed', 'distparent',
-                    'diffdistparent', 'typecoupl', 'parent', 'pparent', 'linkrate']
+                    'diffdistparent', 'parent', 'pparent', 'linkrate']
         if not keys or keys == 'all':
             return self.infos
         return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
@@ -157,29 +157,44 @@ class Analysis:
             self.actualize()
         return self.partition
 
-    def tree(self, width=5, lname=20):
+    def tree(self, mode='derived', width=5, lname=20, string=True):
         '''return a string with a tree of derived Iindex.
                 
          *Parameters*
 
         - **lname** : integer (default 20) - length of the names        
         - **width** : integer (default 5) - length of the lines        
+        - **mode** : string (default 'derived') - kind of tree :
+            'derived' : derived tree
+            'distance': min distance tree
+            'diff': min dist rate tree
         '''
+        if mode == 'derived':
+            modeparent = 'parent'
+        elif mode == 'distance':
+            modeparent = 'minparent'
+        elif mode == 'diff':
+            modeparent = 'distparent'
+        else:
+            raise AnalysisError('mode is unknown')
         if self.hashi != self.iobj._hashi():
             self.actualize()
         child = [None] * (len(self.infos) + 1)
         for i in range(len(self.infos)):
-            parent = self.infos[i]['parent']
+            parent = self.infos[i][modeparent]
             if child[parent + 1] is None:
                 child[parent + 1] = []
             child[parent + 1].append(i)
-        tr = self._dic_noeud(-1, child, lname)
-        tre = pprint.pformat(tr, indent=0, width=width)
-        tre = tre.replace('---', ' - ')
-        tre = tre.replace('*', ' ')
-        for c in ["'", "\"", "{", "[", "]", "}", ","]: 
-            tre = tre.replace (c, "")
-        return tre
+        tr = self._dic_noeud(-1, child, lname, mode)
+        if string:
+            tre = pprint.pformat(tr, indent=0, width=width)
+            tre = tre.replace('---', ' - ')
+            tre = tre.replace('  ', ' ')
+            tre = tre.replace('*', ' ')
+            for c in ["'", "\"", "{", "[", "]", "}", ","]: 
+                tre = tre.replace (c, "")
+            return tre
+        return tr
     
     # %% internal methods
     def _setmatrix(self):
@@ -205,7 +220,7 @@ class Analysis:
         '''set and return attribute 'infos'. 
         Infos is an array with infos of each index :
             - num, name, cat, child, crossed, distparent, diffdistparent, 
-            typecoupl, parent, pparent, linkrate'''
+            parent, pparent, linkrate'''
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         self.infos = [{} for i in range(lenindex)]
@@ -215,15 +230,20 @@ class Analysis:
             self.infos[i]['cat'] = 'null'
             self.infos[i]['parent'] = -1
             self.infos[i]['distparent'] = -1
+            self.infos[i]['minparent'] = -1
             self.infos[i]['pparent'] = -2
-            self.infos[i]['diffdistparent'] = leniobj
-            self.infos[i]['linkrate'] = 0
+            self.infos[i]['diffdistparent'] = -1
+            self.infos[i]['distance'] = leniobj * leniobj
+            self.infos[i]['rate'] = 1
+            self.infos[i]['linkrate'] = 1
             self.infos[i]['child'] = []
             self.infos[i]['crossed'] = []
             self.infos[i] |= self.iobj.lindex[i].infos
             if self.infos[i]['typecodec'] == 'unique':
                 self.infos[i]['pparent'] = -1
                 self.infos[i]['cat'] = 'unique'
+                self.infos[i]['diffdistparent'] = leniobj - 1
+                self.infos[i]['linkrate'] = 0               
         for i in range(lenindex):
             for j in range(i+1, lenindex):
                 if self.matrix[i][j]['typecoupl'] == 'coupled' and \
@@ -231,6 +251,7 @@ class Analysis:
                     self.infos[j]['parent'] = i
                     self.infos[j]['distparent'] = i
                     self.infos[j]['diffdistparent'] = 0
+                    self.infos[j]['linkrate'] = 0               
                     self.infos[j]['cat'] = 'coupled'
                     self.infos[i]['child'].append(j)
         return
@@ -260,17 +281,22 @@ class Analysis:
             
     def _setparent(self):
         '''set parent (Iindex with minimal diff) for each Iindex'''
+        # parent : min(diff)
+        # distparent : min(distrate) -> diffdistparent, linkrate
+        # minparent : min(distance) -> rate, distance
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         for i in range(lenindex):
             mindiff = leniobj
-            ratemin = 1
+            distratemin = 1
+            distancemin = leniobj * leniobj
             distparent =  None
+            minparent =  None
             parent = None
             infoi = self.infos[i]
-            if not infoi['cat'] in ['unique', 'coupled']:
-                for j in range(lenindex):
-                    matij = self.matrix[i][j]
+            for j in range(lenindex):
+                matij = self.matrix[i][j]
+                if not infoi['cat'] in ['unique', 'coupled']:
                     if i != j and self.infos[j]['parent'] != i and \
                       matij['typecoupl'] in ('coupled', 'derived') and \
                       matij['diff'] < mindiff:
@@ -281,32 +307,48 @@ class Analysis:
                         infoi['crossed'].append(j)
                     if i != j and self.infos[j]['distparent'] != i and \
                       matij['typecoupl'] in ('coupled', 'derived', 'linked', 'crossed') and \
-                      matij['rate'] < ratemin:
-                        ratemin = matij['rate']
+                      matij['distrate'] < distratemin:
+                        distratemin = matij['distrate']
                         distparent = j
+                if i != j and self.infos[j]['minparent'] != i and \
+                  matij['distance'] < distancemin and \
+                  infoi['lencodec'] <= self.infos[j]['lencodec'] and \
+                    self.infos[j]['cat'] != 'coupled':
+                    distancemin = matij['distance']
+                    minparent = j
+            if not infoi['cat'] in ['unique', 'coupled']:
                 if not parent is None:
                     infoi['parent'] = parent
                     self.infos[parent]['child'].append(i)      
                 if not distparent is None:
                     infoi['distparent'] = distparent
                     infoi['diffdistparent'] = self.matrix[i][distparent]['diff']
-                    infoi['linkrate'] = self.matrix[i][distparent]['rate']
+                    infoi['linkrate'] = self.matrix[i][distparent]['distrate']
+            if not minparent is None:
+                infoi['minparent'] = minparent
+                infoi['distance'] = self.matrix[i][minparent]['distance']
+                infoi['rate'] = self.matrix[i][minparent]['rate']
+            else:
+                infoi['distance'] = leniobj - infoi['lencodec']            
         return    
 
-    def _dic_noeud(self, n, child, lname):
+    def _dic_noeud(self, n, child, lname, mode):
         '''generate a dict with nodes data defined by 'child' '''
         if n == -1:
-            #lis = ['root*-*' + str(len(self.iobj))]
-            lis = ['root*(' + str(len(self.iobj)) + ')']
+            lis = ['root-' + mode + '*(' + str(len(self.iobj)) + ')']
         else:
-            #name = self.infos[n]['name'].ljust(lname)[0:lname] + '---' + \
-            #       str(self.infos[n]['lencodec'])
-            name = self.infos[n]['name'] + ' (' + str(self.infos[n]['lencodec']) + ')'
+            adding = ''
+            if mode == 'distance':
+                adding = str(self.infos[n]['distance']) + ' - ' 
+            elif mode == 'diff':
+                adding = str(format(self.infos[n]['linkrate'],'.2e')) + ' - '
+            adding += str(self.infos[n]['lencodec'])
+            name = self.infos[n]['name'] + ' (' + adding + ')'
             lis = [name.replace(' ', '*').replace("'",'*')]
         if child[n+1]:
             for ch in child[n+1]:
                 if ch != n:
-                    lis.append(self._dic_noeud(ch, child, lname))
+                    lis.append(self._dic_noeud(ch, child, lname, mode))
         return {str(n).ljust(2,'*'): lis}
     
     def _setpartition(self):

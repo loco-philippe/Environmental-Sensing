@@ -36,6 +36,7 @@ class IlistStructure:
     - `IlistStructure.record`
     - `IlistStructure.recidx`
     - `IlistStructure.recvar`
+    - `IlistStructure.tree`
     - `IlistStructure.valtokey`
 
     *add - update methods*
@@ -212,9 +213,11 @@ class IlistStructure:
                 #if inf['typecoupl'] != 'coupled' and \
                 #    (inf['typecoupl'] not in ('derived', 'unique') or not derived)\
                 #    and inf['linkrate'] < rate:
-                if (inf['linkrate'] == 0 and inf['diffdistparent'] > 0 and 
-                    inf['cat'] != 'unique' and inf['distparent'] != -1 and 
-                    not derived) or (0 < inf['linkrate'] < rate and derived):
+                #if (inf['linkrate'] == 0 and inf['diffdistparent'] > 0 and 
+                #    inf['cat'] != 'unique' and inf['distparent'] != -1 and 
+                #    not derived) or (0 < inf['linkrate'] < rate and derived):
+                if inf['cat'] not in ('coupled', 'unique') and inf['distparent'] != -1\
+                and inf['linkrate'] < rate and (not derived or inf['linkrate'] > 0.0):                    
                     self.lindex[inf['distparent']].coupling(
                         self.lindex[i], derived=derived)
                     coupl = True
@@ -368,7 +371,7 @@ class IlistStructure:
 
     def indexinfos(self, keys=None):
         '''return a dict with infos of each index :
-            - num, name, cat, typecoupl, diffdistparent, child, parent, distparent, 
+            - num, name, cat, diffdistparent, child, parent, distparent, 
             crossed, pparent, linkrate (struct info)
             - lencodec, mincodec, maxcodec, typecodec, ratecodec (base info)
 
@@ -699,6 +702,20 @@ class IlistStructure:
             self.lindex = lindex
             return self
         return self.__class__(lindex, self.lvarname)
+
+    def tree(self, mode='derived', width=5, lname=20, string=True):
+        '''return a string with a tree of derived Iindex.
+                
+         *Parameters*
+
+        - **lname** : integer (default 20) - length of the names        
+        - **width** : integer (default 5) - length of the lines        
+        - **mode** : string (default 'derived') - kind of tree :
+            'derived' : derived tree
+            'distance': min distance tree
+            'diff': min dist rate tree
+        '''
+        return self.analysis.tree(width=width, lname=lname, mode=mode, string=string)
 
     def updateindex(self, listvalue, index, extern=True, typevalue=None):
         '''update values of an index.
