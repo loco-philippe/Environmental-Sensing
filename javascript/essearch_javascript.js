@@ -1,11 +1,11 @@
+import Mongo from 'mongodb';
 import pythonBridge from 'python-bridge';
 import moment from 'moment';
-const python = pythonBridge();
 Date.prototype.toJSON = function(){ return moment(this).format(); }
 
-export async function emptyRequest(collection) {
+export async function emptyRequest(input) {
   /* Returns Collection count and existing column names */
-  let count = 0, cursor = collection.find(), column_names = [];
+  let count = 0, cursor = input.find(), column_names = [];
   for await (const doc of cursor) {
     count += 1;
     for (const column_name in doc['data']) {
@@ -19,13 +19,13 @@ export async function emptyRequest(collection) {
 
 const dico_alias_mongo = {
   'string' : {
-    undefined:"$eq",
+    undefined:"$eq", '':"$eq",
     "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
     "in":"$in", "$in":"$in",
     "regex":"$regex", "$regex":"$regex"
   },
   'number' : {
-    undefined:"$eq",
+    undefined:"$eq", '':"$eq",
     "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
     "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
     "gt":"$gt", ">":"$gt", "$gt":"$gt",
@@ -34,7 +34,7 @@ const dico_alias_mongo = {
     "in":"$in", "$in":"$in"
   },
   'date' : { //attention, typeof détecte object
-    undefined:"$eq",
+    undefined:"$eq", '':"$eq",
     "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
     "gte":"$gte", ">=":"$gte", "=>":"$gte", "$gte":"$gte",
     "gt":"$gt", ">":"$gt", "$gt":"$gt",
@@ -43,7 +43,7 @@ const dico_alias_mongo = {
     "in":"$in", "$in":"$in"
   },
   'array' : { //attention, typeof détecte object
-    undefined:"$geoIntersects",
+    undefined:"$geoIntersects", '':"$geoIntersects",
     "eq":"equals", "=":"equals", "==":"equals", "$eq":"equals", "equals":"equals", "$equals":"equals",
     "$geowithin":"$geoWithin", "geowithin":"$geoWithin", "$geoWithin":"$geoWithin", "geoWithin":"$geoWithin", "within":"$geoWithin", "$within":"$geoWithin",
     "disjoint":"disjoint", "$disjoint":"disjoint",
@@ -58,9 +58,13 @@ const dico_alias_mongo = {
 };
 
 export class ESSearch {
-  constructor({parameters, collection, heavy}) {
+  constructor({input, parameters, heavy}) {
+    if (Array.isArray(input)) {
+      this.input = input;
+    } else {
+      this.input = [input];
+    }
     this.parameters = [[]];
-    this.collection = collection;
     this.heavy = heavy;
     if (parameters) {this.addConditions(parameters);}
   }
@@ -76,11 +80,13 @@ export class ESSearch {
     }
   }
 
-  addCondition(name, operand, comparator, path, or_position = this.parameters.length - 1, others = {}) {
+  addCondition({name, operand, operator, path, or_position = this.parameters.length - 1, others = {}}) {
     let condition;
     
-    if (path === undefined) {
-      if (name) {
+    if ((!path || path === '') && (operand && operand !== '') && (!name && name === '')) {return;}
+
+    if (!path || path === '') {
+      if (name && name !== '') {
         if (["$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"].includes(name)) {
           path = "data.datation.value.codec";
         } else {
@@ -89,18 +95,20 @@ export class ESSearch {
       } else { path = "data";}
     }
 
-    if (operand) {
-      try {comparator = dico_alias_mongo[typeof operand][comparator];}
-      catch {
-        if (Object.prototype.toString.call(operand) === '[object Date]' || others.formatstring) {
-          comparator = dico_alias_mongo['date'][comparator];
+    if (operand && operand !== '') {
+      if (dico_alias_mongo[typeof operand][operator] !== undefined) {
+        operator = dico_alias_mongo[typeof operand][operator];
+      } else {
+        if (Object.prototype.toString.call(new Date(operand)) === '[object Date]' || others.formatstring) {
+          operand = new Date(operand);
+          operator = dico_alias_mongo['date'][operator];
         } else if (Array.isArray(operand)) {
-          comparator = dico_alias_mongo['array'][comparator];
+          operator = dico_alias_mongo['array'][operator];
         }
       }
     }
 
-    condition = Object.assign({"comparator" : comparator, "operand" : operand, "path" : path, "name" : name}, others);
+    condition = Object.assign({"operator" : operator, "operand" : operand, "path" : path, "name" : name}, others);
 
     if (Array.isArray(this.parameters[or_position])) {
       this.parameters[or_position] = this.parameters[or_position].concat([condition]);
@@ -116,8 +124,8 @@ export class ESSearch {
 
   removeCondition(or_position, condnum) {
     if (this.parameters.length === 0 && this.parameters[0].length === 0) {return;}
-    if (or_position === undefined) {
-      if (condnum === undefined) {
+    if (!or_position) {
+      if (!condnum) {
         if (this.parameters[this.parameters.length-1].length > 1) {this.parameters[-1].pop(-1);}
         else {this.parameters.pop(-1);}
       } else {
@@ -125,7 +133,7 @@ export class ESSearch {
         else {this.parameters.pop(-1);}
       }
     } else {
-      if (condnum === undefined || (this.parameters[or_position].length === 1 && condnum === 0)) {this.parameters.pop(or_position);}
+      if (!condnum || (this.parameters[or_position].length === 1 && condnum === 0)) {this.parameters.pop(or_position);}
       else {this.parameters[or_position].pop(condnum);}
     }
     if (this.parameters.length === 0) {
@@ -138,13 +146,13 @@ export class ESSearch {
   }
 
   clear() {
+    this.input = [];
     this.parameters = [[]];
-    this.collection = undefined;
     this.heavy = undefined;
   }
 
   _cond(or_pos, cond) {
-    let match, name = cond.name, path = cond.path, comparator = cond.comparator, operand = cond.operand;
+    let match, name = cond.name, path = cond.path, operator = cond.operator, operand = cond.operand;
     match = '2';
     if (cond.unwind) {
       if (typeof cond.unwind === 'string') {
@@ -156,16 +164,16 @@ export class ESSearch {
           this._unwind.push(cond.unwind[0]);
         }
       }
-    } else if (name && operand && !(this._unwind.includes("data." + name + ".value"))) {
+    } else if (name && name !== '' && operand && operand !== '' && !(this._unwind.includes("data." + name + ".value"))) {
       this._unwind.push("data." + name + ".value");
-    } else if (path && path.slice(0, 5) !== "data.") {match = '1';}
-    if (this.heavy && operand && path && path.slice(0, 4) === "data") {
+    } else if (path && path !== '' && path.slice(0, 5) !== "data.") {match = '1';}
+    if (this.heavy && operand && operand !== '' && path && path !== '' && path.slice(0, 4) === "data") {
       if (!(this._heavystages.includes(path))) {this._heavystages.concat([path]);}
       path = "_" + path + ".v";
     }
-    if (operand === undefined) {
+    if (!operand || operand === '') {
       if (name) {path = "data." + name;}
-      comparator = "$exists";
+      operator = "$exists";
       operand = 1;
     }
     if (["$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"].includes(name)) {
@@ -200,7 +208,7 @@ export class ESSearch {
       }
     }
 
-    if (comparator === "$geoIntersects" || comparator === "$geoWithin") {
+    if (operator === "$geoIntersects" || operator === "$geoWithin") {
       let geom_type, coordinates;
       if (Array.isArray(operand)) {
         if (!(Array.isArray(operand[0]))) {
@@ -228,14 +236,14 @@ export class ESSearch {
       } else if (typeof operand === 'object' && !(Object.values(operand).includes('$geometry'))) {
         operand = {"$geometry" : operand};
       }
-    } else if (comparator === "$geoNear") {
+    } else if (operator === "$geoNear") {
       /* ne fonctionnera pas en l'état */
       Object.assign(this._geonear, cond); // paramètres à mentionner explicitement, puisque cond contient aussi des informations sans rapport
       return;
     }
 
     let cond_0 = {};
-    cond_0[comparator] = operand;
+    cond_0[operator] = operand;
     
     if (cond.inverted) {
       if (Object.values(this._match[match][or_pos]).includes(path)) {
@@ -268,7 +276,7 @@ export class ESSearch {
     this._set = {};
     this._geonear = {};
     this._match['2'] = [{}];
-    this._project = {"_id" : 0, "_data" : 0, "information" : 0};
+    this._project = {"_data" : 0}; //{"_id" : 0, "_data" : 0, "information" : 0};
         
     for (let i = 0; i < this.parameters.length; i++) {
       this._match['1'].concat([{}]);
@@ -340,12 +348,32 @@ export class ESSearch {
     modecodec : 'dict' or 'optimize'
     */
     let cursor, result = [];
-    cursor = this.collection.aggregate(this._fullSearchMongo());
-    for await (const item of cursor) {result.push(JSON.stringify(item));}
+    for (const mongo_source of this.input) {
+      cursor = mongo_source.aggregate(this._fullSearchMongo());
+      for await (const item of cursor) {
+        //console.log(JSON.stringify(item));
+        const filtered_out = this._mongo_out_to_obs(item);
+        if (filtered_out) {result.push(JSON.stringify(filtered_out));}
+      }
+    }
+    console.log(result); // à retirer
     if (with_python) {
+      let sources = [];
+      for (const item of this.input) {
+        if (item instanceof Mongo.Collection) {
+          sources.push(item.namespace);
+        } else if (item instanceof Mongo.Cursor) {
+          sources.push('mongo cursor from namespace : ' + item.namespace);
+        } else if (item instanceof Mongo.CommandCursor) {
+          sources.push('mongo commandcursor from namespace : ' + item.namespace);
+        } else {
+          sources.push('data');
+        }
+      }
+      const python = pythonBridge();
       python.ex`from observation import Observation`;
       python.ex`from observation.essearch import ESSearch`;
-      let result_json = await python`ESSearch(data = [Observation.from_obj(item) for item in ${result}]).execute(single = ${single}).to_obj(encoded = True, modecodec=${modecodec})`;
+      let result_json = await python`ESSearch([Observation.from_obj(item) for item in ${result}], sources=${sources}).execute(single = ${single}).to_obj(encoded = True, modecodec=${modecodec})`
       python.end();
       return JSON.parse(result_json);
     }
@@ -353,27 +381,64 @@ export class ESSearch {
       return result;
     }
   }
+
+  _mongo_out_to_obs(dico) {
+    let valid_records = [], first_column = true, next_valid_records;
+    for (const column_key in dico['data']) {
+      if (first_column) {
+        for (let i = 0; i < dico['data'][column_key]['value'].length; i++) {
+          if (typeof dico['data'][column_key]['value'][i]['record'] === 'number') {
+            valid_records.push(dico['data'][column_key]['value'][i]['record']);
+          } else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {
+            for (const k of dico['data'][column_key]['value'][i]['record']) {
+              valid_records.push(k);
+            }
+          }
+        }
+        first_column = false;
+      } else {
+        next_valid_records = [];
+        for (let i = 0; i < dico['data'][column_key]['value'].length; i++) {
+          if (typeof dico['data'][column_key]['value'][i]['record'] === 'number' &&
+              valid_records.includes(dico['data'][column_key]['value'][i]['record'])) {
+            next_valid_records.push(dico['data'][column_key]['value'][i]['record']);
+          }
+          else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {
+            for (const k of dico['data'][column_key]['value'][i]['record']) {
+              if (valid_records.includes(k)) {
+                next_valid_records.push(k);
+              }
+            }
+          }
+        }
+        valid_records = next_valid_records;
+      }
+      if (valid_records.length === 0) {return null;}
+    }
+    for (const column_key in dico['data']) {
+      for (let i = dico['data'][column_key]['value'].length - 1; i > -1 ; i--) {
+        if (typeof dico['data'][column_key]['value'][i]['record'] === 'number' &&
+              !(valid_records.includes(dico['data'][column_key]['value'][i]['record']))) {
+          dico['data'][column_key]['value'].splice(i, 1);
+        } else if (Array.isArray(dico['data'][column_key]['value'][i]['record'])) {
+          let k = 0;
+          for (let j = 0; j < dico['data'][column_key]['value'][i]['record'].length; j++) {
+            if (valid_records.includes(dico['data'][column_key]['value'][i]['record'][j])) {
+              if (k < j) {
+                dico['data'][column_key]['value'][i]['record'][k] = dico['data'][column_key]['value'][i]['record'][j];
+              }
+              k += 1;
+            }
+          }
+          dico['data'][column_key]['value'][i]['record'].splice(k, dico['data'][column_key]['value'][i]['record'].length - k)
+          if (dico['data'][column_key]['value'][i]['record'].length === 0) {
+            dico['data'][column_key]['value'].splice(i, 1);
+          } else if (dico['data'][column_key]['value'][i]['record'].length === 1) {
+            dico['data'][column_key]['value'][i]['record'] = dico['data'][column_key]['value'][i]['record'][0];
+          }
+        }
+      }
+    }
+    return dico;
+  }
 }
-
-// Tests à retirer
-/*
-let srch = new ESSearch({collection: 'collec'});
-srch.addCondition('datation', new Date(2022, 0, 1), '>=');
-srch.addCondition('datation', new Date(2022, 11, 32), '<=');
-srch.addCondition('property', 'PM25');
-srch.addCondition(undefined, 'observation', '==', 'type');
-console.log(srch.parameters);
-console.log(srch.request);
-console.log(JSON.stringify(srch.request, null, 2));
-
-let srch2 = new ESSearch({parameters: [['datation', new Date(2022, 0, 1), '>='],
-                        ['datation', new Date(2022, 11, 32), '<='], 
-                        ['property', 'PM25'], 
-                        [undefined, 'observation', '==', 'type']],
-                        collection: 'collec'})
-console.log(srch2.parameters);
-console.log(srch2.request);
-console.log(JSON.stringify(srch2.request, null, 2));
-console.log(srch.parameters == srch2.parameters);
-console.log(srch.request == srch2.request);
-*/
