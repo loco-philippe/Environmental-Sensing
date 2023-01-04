@@ -25,6 +25,7 @@ def identity(*args, **kwargs):
         return kwargs[list(kwargs.keys())[0]]
     return None
 
+
 class util:
     ''' common functions for Iindex and Ilist class'''
 # %% util
@@ -125,10 +126,10 @@ class util:
             return util.cast(ESValue.from_obj(val, classvalue), dtype)
         if classvalue == ES.ES_clsName:   # cast auto ESValue
             return _classval()[ESValue.valClassName(val)].from_obj(val)
-            #return _classval()[ESValue.valClassName(val)](val)
+            # return _classval()[ESValue.valClassName(val)](val)
         if classvalue in ES.className:
             return _classval()[classvalue].obj(value)
-            #return _classval()[classvalue](value)
+            # return _classval()[classvalue](value)
         return val
 
     @staticmethod
@@ -205,7 +206,7 @@ class util:
     @staticmethod
     def hash(listval):
         ''' return sum of hash values in the list'''
-        #return sum([hash(i) for i in listval])
+        # return sum([hash(i) for i in listval])
         return hash(tuple(listval))
 
     @staticmethod
@@ -247,9 +248,9 @@ class util:
         ''' return a dict for each different tuple (ref value, l2 value)'''
         return dict(set(zip(ref, l2)))
         #lis = set(util.tuple(util.transpose([ref, l2])))
-        #if not len(lis) == len(set(ref)):
+        # if not len(lis) == len(set(ref)):
         #    return {}
-        #return dict(lis)
+        # return dict(lis)
 
     @staticmethod
     def json(val, **option):
@@ -294,7 +295,7 @@ class util:
         if row < 0:
             return row
         field = infos[row]
-        #if field['pparent'] != 0:
+        # if field['pparent'] != 0:
         if field['pparent'] != -2:
             return field['pparent']
         if field['cat'] == 'primary':
@@ -311,7 +312,7 @@ class util:
         if row < 0:
             return row
         field = infos[row]
-        #if field['pparent'] != 0:
+        # if field['pparent'] != 0:
         if field['pparent'] != -2:
             return field['pparent']
         if field['cat'] == 'primary':
@@ -321,7 +322,7 @@ class util:
         else:
             field['pparent'] = util.pparent2(field['parent'], infos)
         return field['pparent']
-    
+
     @staticmethod
     def reindex(oldkeys, oldcodec, newcodec):
         '''new keys with new order of codec'''

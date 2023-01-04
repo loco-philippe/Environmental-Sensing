@@ -134,7 +134,7 @@ class DatationValue(ESValue):   # !!! début ESValue
         ''' return a tuple (datmin, datmax) with bounds values'''
         return [min([val.value.slot[0].start for val in listValue]),
                 max([val.value.slot[len(val.value) - 1].end for val in listValue])]
-        #return (TimeSlot.form(self.slot[0].start), TimeSlot.form(self.slot[len(self) - 1].end))
+        # return (TimeSlot.form(self.slot[0].start), TimeSlot.form(self.slot[len(self) - 1].end))
 
     def getInstant(self):
         '''return datetime if 'instant', none else'''
@@ -272,7 +272,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
         ''' return minimal distance between a fixed point'''
         if self.__class__.__name__ != other.__class__.__name__:
             return hash(self) < hash(other)
-        #if self.coorInv == ES.nullCoor:
+        # if self.coorInv == ES.nullCoor:
         if self.coorInv == other.coorInv:
             return self.name < other.name
         return distance.distance(self.coorInv, ES.distRef) <  \
@@ -378,7 +378,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
         if isinstance(coord, tuple):
             coor = json.dumps(list(coord), cls=ESValueEncoder)
         elif isinstance(coord, list):
-            coor = json.dumps(coord, cls=ESValueEncoder)        
+            coor = json.dumps(coord, cls=ESValueEncoder)
         elif isinstance(coord, dict):
             coor = json.dumps(coord, cls=ESValueEncoder)
         elif isinstance(coord, str):

@@ -25,29 +25,31 @@ i1 = 'i1'
 class Test_Analysis(unittest.TestCase):
 
     def test_modele_mixte(self):
-        ilm = Ilist.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit', 
+        ilm = Ilist.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit',
                                      'vegetable', 'vegetable', 'vegetable', 'vegetable']],
-                          ['quantity', ['1 kg', '10 kg', '1 kg', '10 kg',
-                                        '1 kg', '10 kg', '1 kg', '10 kg']],
-                          ['product', ['apple', 'apple', 'orange', 'orange',
-                                       'peppers', 'peppers', 'banana', 'banana']],
-                          ['price', [1, 10, 2, 20, 1.5, 15, 1, 1.5]],
-                          ['group', ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
-                                     'veget', 'veget', 'veget', 'veget']],
-                          ['id', [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008]]])
-        pprint(ilm.indexinfos(keys=['num', 'name', 'lencodec', 'parent', 'typecoupl']), width=100)
+                         ['quantity', ['1 kg', '10 kg', '1 kg', '10 kg',
+                                       '1 kg', '10 kg', '1 kg', '10 kg']],
+                         ['product', ['apple', 'apple', 'orange', 'orange',
+                                      'peppers', 'peppers', 'banana', 'banana']],
+                         ['price', [1, 10, 2, 20, 1.5, 15, 1, 1.5]],
+                         ['group', ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
+                                    'veget', 'veget', 'veget', 'veget']],
+                         ['id', [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008]]])
+        pprint(ilm.indexinfos(
+            keys=['num', 'name', 'lencodec', 'parent', 'typecoupl']), width=100)
         # not full
-        ilm_nf = Ilist.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit', 
-                                     'vegetable', 'vegetable', 'vegetable']],
-                          ['quantity', ['1 kg', '10 kg', '1 kg', '10 kg',
-                                        '1 kg', '10 kg', '1 kg']],
-                          ['product', ['apple', 'apple', 'orange', 'orange',
-                                       'peppers', 'peppers', 'banana']],
-                          ['price', [1, 10, 2, 20, 1.5, 15, 1]],
-                          ['group', ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
-                                     'veget', 'veget', 'veget']],
-                          ['id', [1001, 1002, 1003, 1004, 1005, 1006, 1007]]])
-        
+        ilm_nf = Ilist.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit',
+                                        'vegetable', 'vegetable', 'vegetable']],
+                            ['quantity', ['1 kg', '10 kg', '1 kg', '10 kg',
+                                          '1 kg', '10 kg', '1 kg']],
+                            ['product', ['apple', 'apple', 'orange', 'orange',
+                                         'peppers', 'peppers', 'banana']],
+                            ['price', [1, 10, 2, 20, 1.5, 15, 1]],
+                            ['group', ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
+                                       'veget', 'veget', 'veget']],
+                            ['id', [1001, 1002, 1003, 1004, 1005, 1006, 1007]]])
+
+
 """        self.assertTrue(Ilist().to_obj() == [])
         self.assertTrue(Ilist.obj([1, 2, 3]).to_obj() == [[1], [2], [3]])
         self.assertTrue(Ilist.obj([[1, 2, 3]]).to_obj() == [[1, 2, 3]])
@@ -706,7 +708,7 @@ class Test_Analysis(unittest.TestCase):
             ilf.to_file('testf.tst', encode_format=forma)
             self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
             self.assertEqual(ilf, il.from_file('testf.tst'))'''
-"""        
+"""
 
 '''if __name__ == '__main__':
     unittest.main(verbosity=2)'''

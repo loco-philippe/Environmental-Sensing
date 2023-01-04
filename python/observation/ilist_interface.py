@@ -36,7 +36,7 @@ class IlistError(Exception):
 
 class IlistInterface:
     '''this class includes Ilist methods :
-        
+
     - `IlistInterface.json`
     - `IlistInterface.plot`
     - `IlistInterface.to_obj`
@@ -88,8 +88,9 @@ class IlistInterface:
         if not self.consistent:
             return None
         if idxname:
-            idxname = [name for name in idxname if len(self.nindex(name).codec) > 1]
-        xar = self.to_xarray(numeric=True, varname=varname, idxname=idxname, lisfunc=[util.cast], 
+            idxname = [name for name in idxname if len(
+                self.nindex(name).codec) > 1]
+        xar = self.to_xarray(numeric=True, varname=varname, idxname=idxname, lisfunc=[util.cast],
                              dtype='str', npdtype='str', maxlen=maxlen, coord=True)
         if not order:
             order = [0, 1, 2]
@@ -99,7 +100,6 @@ class IlistInterface:
         elif len(xar.dims) == 2 and line:
             xar.plot.line(x=xar.dims[order[0]] + '_row',
                           xticks=list(xar.coords[xar.dims[0]+'_row'].values),
-                          # hue=xar.dims[order[1]]+'_row', size=size, marker=marker)
                           hue=xar.dims[order[1]], size=size, marker=marker)
         elif len(xar.dims) == 2 and not line:
             xar.plot(x=xar.dims[order[0]]+'_row', y=xar.dims[order[1]]+'_row',
@@ -215,7 +215,7 @@ class IlistInterface:
         - **geojson** : boolean (default False) - geojson for LocationValue if True
 
         *Returns* : string, bytes or dict'''
-        option = {'modecodec':'optimize', 'encoded': False,
+        option = {'modecodec': 'optimize', 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
                   'geojson': False, 'fullvar': True} | kwargs
         option2 = {'encoded': False, 'encode_format': 'json',
@@ -229,10 +229,10 @@ class IlistInterface:
                     dicval['var'] = True
                 lis[name] = dicval
         else:
-            indexname = [option['name'] or name != 'i' + str(i) 
+            indexname = [option['name'] or name != 'i' + str(i)
                          for i, name in enumerate(self.lname)]
-            if   option['modecodec'] != 'optimize':
-                lis = [idx.to_obj(name=iname, **option2) 
+            if option['modecodec'] != 'optimize':
+                lis = [idx.to_obj(name=iname, **option2)
                        for idx, iname in zip(self.lindex, indexname)]
             else:
                 lis = self._optimize_obj(indexname, **option2)
@@ -244,13 +244,13 @@ class IlistInterface:
                                timezone=datetime.timezone.utc, canonical=True)
         return lis
 
-    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?', 
-                  fillextern=True, lisfunc=None, name=None, numeric=False, 
+    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?',
+                  fillextern=True, lisfunc=None, name=None, numeric=False,
                   npdtype=None, attrs=None, coord=False, **kwargs):
         '''
         Complete the Object and generate a Xarray DataArray with the dimension define by idx.
         Only the first variable is incuded.
-        
+
         *Parameters*
 
         - **info** : boolean (default False) - if True, add _dict attributes to attrs Xarray
@@ -280,7 +280,7 @@ class IlistInterface:
         if not varname and len(ilf.lvarname) != 0:
             varname = ilf.lvarname[0]
         if not varname in ilf.lname:
-            ivar = -1      
+            ivar = -1
         else:
             ivar = ilf.lname.index(varname)
         if isinstance(lisfunc, list) and len(lisfunc) == 1:
@@ -302,11 +302,11 @@ class IlistInterface:
             option['dtype'] = 'float'
         if ivar == -1:
             data = Iindex(list(range(len(ilf)))).to_numpy(npdtype='int')\
-                  .reshape([len(ilf.nindex(name).codec) for name in idxname])
+                .reshape([len(ilf.nindex(name).codec) for name in idxname])
         else:
             data = ilf.lindex[ivar]\
-                  .to_numpy(func=lisfunc[ivar], npdtype=npdtype, **option)\
-                  .reshape([len(ilf.nindex(name).codec) for name in idxname])
+                .to_numpy(func=lisfunc[ivar], npdtype=npdtype, **option)\
+                .reshape([len(ilf.nindex(name).codec) for name in idxname])
         if not name and ivar == -1:
             name = ilf.name
         elif not name:
@@ -322,7 +322,7 @@ class IlistInterface:
     def voxel(self, idxname=None, varname=None):
         '''
         Plot not null values in a cube with voxels and return indexes values.
-        
+
         *Parameters*
 
         - **idxname** : list (default none) - list of idx to be completed. If None,
@@ -337,7 +337,7 @@ class IlistInterface:
         if idxname is None or idxname == []:
             idxname = self.primaryname
         if varname is None and self.lvarname:
-            varname = self.lvarname[0]        
+            varname = self.lvarname[0]
         if len(idxname) > 3:
             raise IlistError('number of idx > 3')
         if len(idxname) == 2:
@@ -347,7 +347,7 @@ class IlistInterface:
             self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
             self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
             idxname += [' ', '  ']
-        xar = self.to_xarray(idxname=idxname, varname=varname, fillvalue='?', 
+        xar = self.to_xarray(idxname=idxname, varname=varname, fillvalue='?',
                              fillextern=False, lisfunc=util.isNotEqual, tovalue='?')
         axe = plt.figure().add_subplot(projection='3d')
         axe.voxels(xar, edgecolor='k')
@@ -422,25 +422,25 @@ class IlistInterface:
             notkeys = None
         for idx, iname, inf in zip(self.lindex, idxname, indexinfos):
             if inf['cat'] == 'unique':
-                lis.append(idx.tostdcodec(full=False).to_obj(name=iname, **option2))
+                lis.append(idx.tostdcodec(full=False).to_obj(
+                    name=iname, **option2))
             elif inf['cat'] == 'primary':
                 lis.append(idx.to_obj(keys=notkeys, name=iname, **option2))
             elif inf['cat'] == 'coupled':
                 lis.append(idx.setkeys(self.lindex[inf['parent']].keys, inplace=False).
                            to_obj(parent=inf['parent'], name=iname, **option2))
-            elif inf['parent'] == -1: # cat='variable'
-                if option2['fullvar'] and not(inf['child']):
-                    opt = option2 | {'modecodec':'full' }
-                    lis.append(idx.to_obj(name=iname, **opt))                    
-                elif len(idx.codec) == len(idx):
-                    idx.set_codec(util.reorder(idx.codec, idx.keys))
-                    idx.set_keys(list(range(len(idx))))
-                    opt = option2 | {'modecodec':'full' }
+            elif inf['parent'] == -1:  # cat='variable' or 'secondary'
+                if option2['fullvar'] and inf['cat'] == 'variable' and not(inf['child']):
+                    opt = option2 | {'modecodec': 'full'}
                     lis.append(idx.to_obj(name=iname, **opt))
-                else:    
+                elif idx.keys == list(range(len(self))):
+                    lis.append(idx.to_obj(name=iname, **option2))
+                else:
                     lis.append(idx.to_obj(keys=True, name=iname, **option2))
-            else: # derived
-                if idx.iskeysfromderkeys(self.lindex[inf['parent']]):
+            else:  # derived
+                if len(self.lindex[inf['parent']].codec) == len(self):
+                    lis.append(idx.to_obj(keys=True, name=iname, **option2))
+                elif idx.iskeysfromderkeys(self.lindex[inf['parent']]):
                     lis.append(idx.to_obj(parent=inf['parent'],
                                           name=iname, **option2))
                 else:
@@ -527,7 +527,6 @@ class IlistInterface:
         for i in range(self.lenindex):
             fieldi = info[i]
             iname = self.lname[i]
-            #if fieldi['cat'] in ('unique', 'variable'):  #!!!
             if fieldi['pparent'] == -1 or i == ivar:
                 continue
             if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
@@ -535,32 +534,16 @@ class IlistInterface:
             else:
                 funci = None
             if iname in axename:
-                coords[iname] = self.lindex[i].to_numpy(func=funci, codec=True, **kwargs)
+                coords[iname] = self.lindex[i].to_numpy(
+                    func=funci, codec=True, **kwargs)
                 if coord:
-                    coords[iname+'_row'] = (iname, np.arange(len(coords[iname])))
+                    coords[iname+'_row'] = (iname,
+                                            np.arange(len(coords[iname])))
                     coords[iname+'_str'] = (iname, self.lindex[i].to_numpy(func=util.cast,
-                                           codec=True, dtype='str', maxlen=maxlen))
+                                                                           codec=True, dtype='str', maxlen=maxlen))
             else:
-                self.lindex[i].setkeys(self.lindex[fieldi['pparent']].keys)   #!!!
+                self.lindex[i].setkeys(
+                    self.lindex[fieldi['pparent']].keys)  # !!!
                 coords[iname] = (self.lname[fieldi['pparent']],
-                                self.lindex[i].to_numpy(func=funci, codec=True, **kwargs))
-        '''for i in self.lidxrow:
-            fieldi = info[i]
-            iname = self.idxname[i]
-            if fieldi['cat'] == 'unique':  #!!!
-                continue
-            if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
-                funci = lisfuncname[iname]
-            else:
-                funci = None
-            if iname in axename:
-                coords[iname] = self.lidx[i].to_numpy(func=funci, codec=True, **kwargs)
-                if coord:
-                    coords[iname+'_row'] = (iname, np.arange(len(coords[iname])))
-                    coords[iname+'_str'] = (iname, self.lidx[i].to_numpy(func=util.cast,
-                                           codec=True, dtype='str', maxlen=maxlen))
-            else:
-                self.lidx[i].setkeys(self.lidx[fieldi['pparent']].keys)   #!!!
-                coords[iname] = (self.idxname[fieldi['pparent']],
-                                self.lidx[i].to_numpy(func=funci, codec=True, **kwargs))'''
+                                 self.lindex[i].to_numpy(func=funci, codec=True, **kwargs))
         return coords
