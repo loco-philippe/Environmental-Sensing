@@ -77,7 +77,7 @@ Modules contain the following classes:
 
 - Observation :
 
-    - `observation.Observation`
+    - `observation.esobservation`
 
 - ESValue :
 
