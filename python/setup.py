@@ -21,7 +21,7 @@ setup(
     author="Philippe Thomy",
     author_email="philippe@loco-labs.io",
     classifiers=[
-        "Development Status :: 4 - Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         "License :: OSI Approved :: MIT License",
