@@ -35,7 +35,7 @@ python/Examples/Ilist)
 # %% declarations
 from collections import Counter
 from copy import copy
-import math 
+import math
 import json
 import csv
 import cbor2
@@ -72,7 +72,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.merge`
 
     *dynamic value - module analysis (getters @property)*
- 
+
     - `Ilist.extidx`
     - `Ilist.extidxext`
     - `Ilist.idxname`
@@ -90,7 +90,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.primaryname`
     - `Ilist.setidx`
     - `Ilist.zip`
-    
+
     *dynamic value (getters @property)*
 
     - `Ilist.keys`
@@ -170,6 +170,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.vlist`
     - `Ilist.voxel`
     '''
+
     def __init__(self, listidx=None, lvarname=None, reindex=True):
         '''
         Ilist constructor.
@@ -190,11 +191,9 @@ class Ilist(IlistStructure, IlistInterface):
         self.lindex = listidx
         if reindex:
             self.reindex()
-        self.analysis.actualize()              
+        self.analysis.actualize()
         return
 
-
-        
     @classmethod
     def dic(cls, idxdic=None, typevalue=ES.def_clsName, reindex=True):
         '''
@@ -206,13 +205,13 @@ class Ilist(IlistStructure, IlistInterface):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
         if not idxdic:
             return cls.ext(idxval=None, idxname=None, typevalue=typevalue,
-                            reindex=reindex)
+                           reindex=reindex)
         if isinstance(idxdic, Ilist):
             return idxdic
         if not isinstance(idxdic, dict):
             raise IlistError("idxdic not dict")
         return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
-                        typevalue=typevalue, reindex=reindex)
+                       typevalue=typevalue, reindex=reindex)
 
     @classmethod
     def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, reindex=True):
@@ -224,9 +223,6 @@ class Ilist(IlistStructure, IlistInterface):
         - **idxval** : list of Iindex or list of values (see data model)
         - **idxname** : list of string (default None) - list of Iindex name (see data model)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
-        #print('debut ext')
-        #t0 = time()
-
         if idxval is None:
             idxval = []
         if not isinstance(idxval, list):
@@ -247,11 +243,12 @@ class Ilist(IlistStructure, IlistInterface):
             idxname = [None] * len(val)
         for ind, name in enumerate(idxname):
             if name is None or name == ES.defaultindex:
-                idxname[ind] = 'i'+str(ind)  
-        lidx = [list(IindexInterface.decodeobj(idx, typevalue, context=False)) for idx in val]
-        lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex) 
+                idxname[ind] = 'i'+str(ind)
+        lidx = [list(IindexInterface.decodeobj(
+            idx, typevalue, context=False)) for idx in val]
+        lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex)
                   for idx, name in zip(lidx, idxname)]
-        return cls(lindex, reindex=False)      
+        return cls(lindex, reindex=False)
 
     @classmethod
     def from_csv(cls, filename='ilist.csv', header=True, nrow=None,
@@ -276,7 +273,6 @@ class Ilist(IlistStructure, IlistInterface):
             for row in reader:
                 if irow == nrow:
                     break
-                # elif irow == 0:
                 if irow == 0:
                     if dtype and not isinstance(dtype, list):
                         dtype = [dtype] * len(row)
@@ -370,9 +366,8 @@ class Ilist(IlistStructure, IlistInterface):
             row = [row]
         merged, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname),
                                                       simplename=simplename)
-        #print('ilc0 :', merged, oldname, newname)
         if oldname and not oldname in merged.lname:
-            delname.append(oldname)        
+            delname.append(oldname)
         for ind in range(1, len(ilc)):
             oldidx = ilc.nindex(oldname)
             for name in newname:
@@ -380,15 +375,16 @@ class Ilist(IlistStructure, IlistInterface):
             row = ilc[ind]
             if not isinstance(row, list):
                 row = [row]
-            rec, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname), 
+            rec, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname),
                                                        simplename=simplename)
-            #print('ilci :', ind, rec, oldname, newname)
             if oldname and newname != [oldname]:
-                delname.append(oldname)        
+                delname.append(oldname)
             for name in newname:
                 oldidx = merged.nindex(oldname)
-                fillval = util.castval(fillvalue, util.typename(name, ES.def_clsName))
-                merged.addindex(Iindex([fillval] * len(merged), name, oldidx.keys))
+                fillval = util.castval(
+                    fillvalue, util.typename(name, ES.def_clsName))
+                merged.addindex(
+                    Iindex([fillval] * len(merged), name, oldidx.keys))
             merged += rec
         for name in set(delname):
             if name:
@@ -399,7 +395,7 @@ class Ilist(IlistStructure, IlistInterface):
         return ilc
 
 # %% internal
-    @classmethod    
+    @classmethod
     def _init_obj(cls, listidx=None, reindex=True, typevalue=ES.def_clsName, context=True):
         '''
         Ilist constructor.
@@ -414,21 +410,22 @@ class Ilist(IlistStructure, IlistInterface):
         if listidx.__class__.__name__ == 'DataFrame':
             lindex = [Iindex(list(idx.cat.categories), name, list(idx.cat.codes),
                              lendefault=len(listidx), castobj=False)
-                     for name, idx in listidx.astype('category').items()]
+                      for name, idx in listidx.astype('category').items()]
             return cls(lindex, reindex=reindex)
-        
+
         if isinstance(listidx, dict):
             for idxname in listidx:
-                var, idx = Iindex.from_dict_obj({idxname: listidx[idxname]}, 
+                var, idx = Iindex.from_dict_obj({idxname: listidx[idxname]},
                                                 typevalue=typevalue, reindex=reindex)
                 lindex.append(idx)
             return cls(lindex, reindex=reindex)
 
         if isinstance(listidx, list) and len(listidx) == 0:
             return cls()
-        
-        #decode: name, typevaluedec, codec, parent, keys, isfullindex, isparent, isvar
-        lidx = [list(IindexInterface.decodeobj(idx, typevalue, context)) for idx in listidx]
+
+        # decode: name, typevaluedec, codec, parent, keys, isfullkeys, isparent, isvar
+        lidx = [list(IindexInterface.decodeobj(idx, typevalue, context))
+                for idx in listidx]
         for ind in range(len(lidx)):
             if lidx[ind][0] is None or lidx[ind][0] == ES.defaultindex:
                 lidx[ind][0] = 'i'+str(ind)
@@ -438,28 +435,31 @@ class Ilist(IlistStructure, IlistInterface):
             tuple(zip(*lidx))
 
         leng = [len(cod) for cod in codec]
-        fullmode = not max(isfullkeys) and max(leng) == min(leng)  # mode full : tous False
-        defmode = min(isfullkeys)       # mode default : tous True (idem all(isfullkeys))
+        fullmode = not max(isfullkeys) and max(
+            leng) == min(leng)  # mode full : tous False
+        # mode default : tous True (idem all(isfullkeys))
+        defmode = min(isfullkeys)
 
         # not max(isparent) : tous isparent = False
-        #if not max(isparent) and ((fullmode and max(leng) == min(leng)) or defmode): # mode full ou mode default
-        if not max(isparent) and (fullmode or defmode): # mode full ou mode default
-            lindex = [Iindex(idx[2], idx[0], idx[4], idx[1], reindex=reindex) for idx in lidx]
+        # if not max(isparent) and ((fullmode and max(leng) == min(leng)) or defmode): # mode full ou mode default
+        if not max(isparent) and (fullmode or defmode):  # mode full ou mode default
+            lindex = [Iindex(idx[2], idx[0], idx[4], idx[1],
+                             reindex=reindex) for idx in lidx]
             return cls(lindex, reindex=reindex)
 
         crossed = []
-        #crossed : pas d'index (isfullindex false), pas de parent(isparent false)
-        if fullmode: #au moins un fullkeys ou une longueur différente
+        # crossed : pas d'index (isfullindex false), pas de parent(isparent false)
+        if fullmode:  # au moins un fullkeys ou une longueur différente
             length = max(leng)
-        else: #au moins un fullkeys ou une longueur différente
-            if max(isfullkeys): 
+        else:  # au moins un fullkeys ou une longueur différente
+            if max(isfullkeys):
                 length = len(keys[isfullkeys.index(True)])
-                crossed = [i for i, (isfullk, ispar, lengt) in 
+                crossed = [i for i, (isfullk, ispar, lengt) in
                            enumerate(zip(isfullkeys, isparent, leng))
                            if not ispar and not isfullk and 1 < lengt < length]
-            else: # max(leng) != min(leng)
-                #sinon pas de fullindex => matrice et dérivés
-                crossed = [i for i,(isfullk, ispar, lengt) in 
+            else:  # max(leng) != min(leng)
+                # sinon pas de fullindex => matrice et dérivés
+                crossed = [i for i, (isfullk, ispar, lengt) in
                            enumerate(zip(isfullkeys, isparent, leng))
                            if not ispar and not isfullk and 1 < lengt]
                 lencrossed = [leng[ind] for ind in crossed]
@@ -470,45 +470,51 @@ class Ilist(IlistStructure, IlistInterface):
                     length = math.prod([leng[i] for i in crossed])
                     if length / max(lencrossed) == max(lencrossed):
                         length = max(lencrossed)
-                        crossed = [i for i, (isfullk, ispar, lengt) in 
+                        crossed = [i for i, (isfullk, ispar, lengt) in
                                    enumerate(zip(isfullkeys, isparent, leng))
                                    if not ispar and not isfullk and 1 < lengt < length]
         keyscross = util.canonorder([leng[i] for i in crossed])
         for ind in range(len(crossed)):
-            lidx[crossed[ind]][4] = keyscross[ind] # keys
+            lidx[crossed[ind]][4] = keyscross[ind]  # keys
 
         for ind in range(len(lidx)):
             Ilist._init_keys(ind, lidx, length)
-        lindex = [Iindex(idx[2], idx[0], idx[4], idx[1], reindex=reindex) for idx in lidx]
+        # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
+        lindex = [Iindex(idx[2], idx[0], idx[4], idx[1],
+                         reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=False)
-        
+
     @staticmethod
     def _init_keys(ind, lidx, leng):
-        # codec: 2, parent: 3, keys: 4
-        if lidx[ind][4] and (lidx[ind][3] is None or lidx[ind][3] < 0): 
+        ''' initialization of keys data'''
+        if lidx[ind][4] and (lidx[ind][3] is None or lidx[ind][3] < 0):
+            return
+        if lidx[ind][4] and len(lidx[ind][4]) == leng:
             return
         if len(lidx[ind][2]) == 1:
             lidx[ind][4] = [0] * leng
-            return 
+            return
         if lidx[ind][3] is None:
             raise IlistError('keys not referenced')
         if lidx[ind][3] < 0:
             lidx[ind][4] = list(range(leng))
             return
-        if not lidx[lidx[ind][3]][4]:
+        if not lidx[lidx[ind][3]][4] or len(lidx[lidx[ind][3]][4]) != leng:
             Ilist._init_keys(lidx[ind][3], lidx, leng)
         if not lidx[ind][4]:
             if len(lidx[ind][2]) == len(lidx[lidx[ind][3]][2]):    # coupled format
                 lidx[ind][4] = lidx[lidx[ind][3]][4]
                 return
             # derived format without keys
-            lencodp = len(lidx[lidx[ind][3]][2])  # codec
-            lidx[ind][4] = [(i*len(lidx[ind][2]))//lencodp for i in range(lencodp)]
+            lencodp = len(lidx[lidx[ind][3]][2])  # len codec parent
+            lidx[ind][4] = [(i*len(lidx[ind][2])) //
+                            lencodp for i in range(lencodp)]
             return
         # derived keys
-        lidx[ind][4] = Iindex.keysfromderkeys(lidx[lidx[ind][3]][4], lidx[ind][4])
-        return    
-    
+        lidx[ind][4] = Iindex.keysfromderkeys(
+            lidx[lidx[ind][3]][4], lidx[ind][4])
+        return
+
     @staticmethod
     def _mergerecord(rec, mergeidx=True, updateidx=True, simplename=False):
         row = rec[0]
@@ -516,12 +522,11 @@ class Ilist(IlistStructure, IlistInterface):
             row = [row]
         var = -1
         for ind, val in enumerate(row):
-           if val.__class__.__name__ in ['Ilist', 'Observation']:
-               var = ind
-               break
+            if val.__class__.__name__ in ['Ilist', 'Observation']:
+                var = ind
+                break
         if var < 0:
             return (rec, None, [])
-        #ilis = row[var].merge(simplename=simplename)
         ilis = row[var]
         oldname = rec.lname[var]
         if ilis.lname == ['i0']:
@@ -540,7 +545,7 @@ class Ilist(IlistStructure, IlistInterface):
                 ilis.addindex([name, [rec.nindex(name)[0]] * len(ilis)],
                               merge=mergeidx, update=updidx)
         return (ilis, oldname, newname)
-                    
+
 # %% special
     def __str__(self):
         '''return string format for var and lidx'''
@@ -589,13 +594,9 @@ class Ilist(IlistStructure, IlistInterface):
     def __hash__(self):
         '''return sum of all hash(Iindex)'''
         return sum([hash(idx) for idx in self.lindex])
-        #return sum([hash(idx) for idx in self.lindex]) + hash(tuple(self.lvarname))
 
     def _hashi(self):
         '''return sum of all hashi(Iindex)'''
-        '''return hash(tuple(tuple([idx._hashi() for idx in self.lindex]),
-                          tuple([idx._hashi() for idx in self.lindex]),
-                          tuple(self.lvarname)))'''
         return sum([idx._hashi() for idx in self.lindex])
 
     def __eq__(self, other):
@@ -642,8 +643,8 @@ class Ilist(IlistStructure, IlistInterface):
     @property
     def category(self):
         ''' dict with category for each Iindex'''
-        return {field['name']:field['cat'] for field in self.indexinfos()}
-    
+        return {field['name']: field['cat'] for field in self.indexinfos()}
+
     @property
     def dimension(self):
         ''' integer : number of primary Iindex'''
@@ -692,7 +693,7 @@ class Ilist(IlistStructure, IlistInterface):
     @property
     def lencomplete(self):
         '''number of values if complete (prod(idxlen primary))'''
-        primary = self.primary        
+        primary = self.primary
         return util.mul([self.idxlen[i] for i in primary])
 
     @property
@@ -724,7 +725,7 @@ class Ilist(IlistStructure, IlistInterface):
     def lvarname(self):
         ''' list of variable Iindex name'''
         return self.analysis.getvarname()
-    
+
     @property
     def lunicrow(self):
         '''list of unic idx row'''
@@ -769,7 +770,7 @@ class Ilist(IlistStructure, IlistInterface):
     def secondaryname(self):
         ''' list of secondary name'''
         return [self.lindex[idx].name for idx in self.secondary]
-    
+
     @property
     def setidx(self):
         '''list of codec for each idx'''

@@ -68,9 +68,11 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(NamedValue.from_obj('{"er":0}').json(), '{"er": 0}')
         self.assertEqual(NamedValue(21).json(), '21')
         self.assertEqual(NamedValue(2.1).json(), '2.1')
-        self.assertEqual(ESValue.from_obj({'result': [0, 1]}, 'NamedValue'), NamedValue([0,1]))
-        self.assertEqual(ESValue.from_obj({'res': [0, 1]}, 'NamedValue'), NamedValue([0,1], 'res'))
-        
+        self.assertEqual(ESValue.from_obj(
+            {'result': [0, 1]}, 'NamedValue'), NamedValue([0, 1]))
+        self.assertEqual(ESValue.from_obj(
+            {'res': [0, 1]}, 'NamedValue'), NamedValue([0, 1], 'res'))
+
     def test_locationValue(self):
         self.opt = ES.mOption.copy()
         self.assertEqual(LocationValue(lyon).json(), json.dumps(lyon))
@@ -211,8 +213,9 @@ class TestObsUnitaire(unittest.TestCase):
 
     def test_cast(self):
         data = [[ESValue.from_obj({'pos': [1.2, 3.4]}, 'LocationValue'), [1.2, 3.4], {'pos': [1.2, 3.4]}],
-                [ESValue.from_obj({'datvalue': 'date1'}), ES.nullDate, 'date1'],
-                 #datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), 'date1'],
+                [ESValue.from_obj({'datvalue': 'date1'}),
+                 ES.nullDate, 'date1'],
+                # datetime.datetime(1, 1, 1, 0, 0, tzinfo=datetime.timezone.utc), 'date1'],
                 [{'pos': [1.2, 3.4]}, {'pos': [1.2, 3.4]}, {'pos': [1.2, 3.4]}],
                 [[1.2, 3.4], [1.2, 3.4], [1.2, 3.4]],
                 [{'tes': 3, 'tr': 1}, {'tes': 3, 'tr': 1}, {'tes': 3, 'tr': 1}]]

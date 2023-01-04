@@ -58,12 +58,13 @@ def mix_mix(n): return [[mix_v(n), mix_v(n), mix_nv(n)]
 
 
 def param_val(typeval, project='dataref', date='2022-10-20'):
-    return {'date': date, 'project': project, 'type': typeval, 
+    return {'date': date, 'project': project, 'type': typeval,
             'context': {'version': 'v0', 'origin': 'data.py'}}
 
 
 def dalle(coor=[-1, 45], l=1, nb=5):
     return [polygon([coor[0] + x * 2 * l, coor[1] + y * l], l*0.99995) for x in range(nb) for y in range(nb)]
+
 
 # %% villes
 lyon = ['lyon',             [4.83, 45.76], '69']
@@ -143,93 +144,100 @@ loc = 'location'
 prp = 'property'
 res = 'result'
 
+
 def ob_signal(jour=1, mois=1, lieu=0, nuis=0, intens=0, project='reference'):
     return Obs.obj({'data':
                     [['nuisance', [nuisance[nuis % 4]]],
-                    [dat, [datetime.datetime(2022, 1 + mois % 12, 1 + jour % 28)]],
-                    [loc, [ville_nom[lieu % 10]]],
-                    ['intensite', [intensite[intens % 5]], -1],
-                    ['jour', [jour % 28], 1],
-                    ['mois', [mois % 12]],
-                    ['structure', ['signal']]],
+                     [dat, [datetime.datetime(
+                         2022, 1 + mois % 12, 1 + jour % 28)]],
+                     [loc, [ville_nom[lieu % 10]]],
+                     ['intensite', [intensite[intens % 5]], -1],
+                     ['jour', [jour % 28], 1],
+                     ['mois', [mois % 12]],
+                     ['structure', ['signal']]],
                     'name': 'signalement - ' + str(jour+mois*10),
                     'param': param_val('2-dim3', project=project)}
                    ).setcanonorder()
+
 
 def ob_mixte_2(dl=7, prop=4, project='mixte'):
     dl = (dl - 1) % 10 + 1
     prop = (prop - 1) % 7 + 1
     return Obs.obj({'data':
                     [[dat,          date_mix[:dl]],
-                    [loc,           ville_mix[:dl], 0],
-                    [prp,           env_mix[:prop]],
-                    [res,           mix_mix(dl * prop), -1],
-                    ['mois',        date_mois[:dl], 0],
-                    ['ville',       ville_nom[:dl], 0],
-                    ['structure',   ['mixte']]],
+                     [loc,           ville_mix[:dl], 0],
+                     [prp,           env_mix[:prop]],
+                     [res,           mix_mix(dl * prop), -1],
+                     ['mois',        date_mois[:dl], 0],
+                     ['ville',       ville_nom[:dl], 0],
+                     ['structure',   ['mixte']]],
                     'name': 'test1', 'param': param_val('dim2', project=project)}
-                    ).setcanonorder()
+                   ).setcanonorder()
 
 
 def ob_mesure(res=None, jour=1, mois=1, lieu=0, prop=0, project='reference'):
     return Obs.obj({'data':
                     [[prp, [env_v[prop % 7]]],
-                    [dat, [datetime.datetime(2022, 1 + mois % 12, 1 + jour % 28)]],
-                    [loc, [ville_nv[lieu % 10]]],
-                    ['result', [res]],
-                    ['ville', [ville_nom[lieu % 10]]],
-                    ['jour', [1 + jour % 28]],
-                    ['mois', [1 + mois % 12]],
-                    ['structure', ['mesure']]],
+                     [dat, [datetime.datetime(
+                         2022, 1 + mois % 12, 1 + jour % 28)]],
+                     [loc, [ville_nv[lieu % 10]]],
+                     ['result', [res]],
+                     ['ville', [ville_nom[lieu % 10]]],
+                     ['jour', [1 + jour % 28]],
+                     ['mois', [1 + mois % 12]],
+                     ['structure', ['mesure']]],
                    'name': 'mesure - ' + str(jour + mois * 10),
-                   'param': param_val('1-dim3', project=project)}
+                    'param': param_val('1-dim3', project=project)}
                    ).setcanonorder()
 
 
 def ob_fixe(dj=0, nh=24, project='reference'):
     return Obs.obj({'data':
                     [[prp, env_v[0:3]],
-                    [dat, [date_inst(dj=dj % 10, h=i % 24)[0] for i in range(nh)]],
-                    [loc, [ville_nv[1]]],
-                    [res, [10+.1*i for i in range(nh)] + [20+.1*i for i in range(nh)] +
+                     [dat, [date_inst(dj=dj % 10, h=i % 24)[0]
+                            for i in range(nh)]],
+                     [loc, [ville_nv[1]]],
+                     [res, [10+.1*i for i in range(nh)] + [20+.1*i for i in range(nh)] +
                         [30+.1*i for i in range(nh)], -1],
-                    ['heure', list(range(nh)), 1],
-                    ['mois', [date_mois[0]]],
-                    ['station', ['stat-' + ville_nom[1]], 2],
-                    ['structure', ['fixe']]],
+                     ['heure', list(range(nh)), 1],
+                     ['mois', [date_mois[0]]],
+                     ['station', ['stat-' + ville_nom[1]], 2],
+                     ['structure', ['fixe']]],
                    'name': 'mesures horaires station fixe 3 polluants - ' + str(dj),
-                   'param': param_val('3-dim2', project=project)}
+                    'param': param_val('3-dim2', project=project)}
                    ).setcanonorder().sort()
 
 
 def ob_mob_1(d=0, nval=10, project='reference'):
     return Obs.obj({'data':
                     [[prp, [env_v[0]]],
-                    [dat, [date_inst(dj=i % 10, h=12)[d % 10] for i in range(nval)]],
-                    [loc, ville_mix, 1],
-                    ['ville', ville_nom, 2],
-                    [res, [11+.1*i for i in range(nval)], -1],
-                    ['jour', list(range(1, nval+1)), 1],
-                    ['mois', [date_mois[0]]],
-                    ['structure', ['mobile']]],
+                     [dat, [date_inst(dj=i % 10, h=12)[d % 10]
+                            for i in range(nval)]],
+                     [loc, ville_mix, 1],
+                     ['ville', ville_nom, 2],
+                     [res, [11+.1*i for i in range(nval)], -1],
+                     ['jour', list(range(1, nval+1)), 1],
+                     ['mois', [date_mois[0]]],
+                     ['structure', ['mobile']]],
                    'name': 'mesures mobiles, 1 polluant - ' + str(d),
-                   'param': param_val('4-dim1', project=project)}
+                    'param': param_val('4-dim1', project=project)}
                    ).setcanonorder().sort()
 
 
 def ob_mobile(d=0, nval=10, project='reference'):
     return Obs.obj({'data':
                     [[prp, env_v[0:2]],
-                    [dat, [date_inst(dj=i % 10, h=12)[d % 10] for i in range(nval)]],
-                    [loc, ville_mix, 1],
-                    ['ville', ville_nom, 2],
-                    [res, [11+.1*i for i in range(nval)] +
+                     [dat, [date_inst(dj=i % 10, h=12)[d % 10]
+                            for i in range(nval)]],
+                     [loc, ville_mix, 1],
+                     ['ville', ville_nom, 2],
+                     [res, [11+.1*i for i in range(nval)] +
                      [21+.1*i for i in range(nval)], -1],
-                    ['jour', list(range(1, nval+1)), 1],
-                    ['mois', [date_mois[0]]],
-                    ['structure', ['mobile']]],
+                     ['jour', list(range(1, nval+1)), 1],
+                     ['mois', [date_mois[0]]],
+                     ['structure', ['mobile']]],
                    'name': 'mesures mobiles, 2 polluants - ' + str(d),
-                   'param': param_val('5-dim2', project=project)}
+                    'param': param_val('5-dim2', project=project)}
                    ).setcanonorder().sort()
 
 
@@ -237,88 +245,94 @@ def ob_multi(dj=0, nh=10, nloc=5, project='reference'):
     nloc = (nloc - 1) % 10 + 1
     return Obs.obj({'data':
                     [[prp, env_v[0:2]],
-                    [dat, [date_inst(dj=dj % 10, h=i % 24)[0] for i in range(nh)]],
-                    [loc, ville_nv[:nloc]],
-                    ['station', ['stat-' + ville for ville in ville_nom[:nloc]], 2],
-                    [res, [10+.1*i for i in range(nh * nloc)] +
+                     [dat, [date_inst(dj=dj % 10, h=i % 24)[0]
+                            for i in range(nh)]],
+                     [loc, ville_nv[:nloc]],
+                     ['station', ['stat-' + ville for ville in ville_nom[:nloc]], 2],
+                     [res, [10+.1*i for i in range(nh * nloc)] +
                      [20+.1*i for i in range(nh * nloc)], -1],
-                    ['heure', list(range(nh)), 1],
-                    ['mois', [date_mois[0]]],
-                    ['structure', ['multi']]],
+                     ['heure', list(range(nh)), 1],
+                     ['mois', [date_mois[0]]],
+                     ['structure', ['multi']]],
                    'name': 'mesures horaires multi-stations, 2 polluants - ' + str(dj),
-                   'param': param_val('6-dim3', project=project)}
+                    'param': param_val('6-dim3', project=project)}
                    ).setcanonorder().sort()
+
 
 def ob_dalle(dj=0, lg=1, nbd=3, project='reference'):  # lg * nbd < 10
     return Obs.obj({'data':
                     [[prp, env_v[0:1]],
-                    [dat, [date_inst(dj=dj % 10, h=0)[0]]],
-                    [loc, dalle(l=lg, nb=nbd)],
-                    [res, [10+.1*i for i in range(nbd * nbd)], -1],
-                    ['structure', ['multi']]],
+                     [dat, [date_inst(dj=dj % 10, h=0)[0]]],
+                     [loc, dalle(l=lg, nb=nbd)],
+                     [res, [10+.1*i for i in range(nbd * nbd)], -1],
+                     ['structure', ['multi']]],
                    'name': 'mesures sur dalle - ' + str(dj),
-                   'param': param_val('7-dim1', project=project)}
+                    'param': param_val('7-dim1', project=project)}
                    ).setcanonorder().sort()
+
 
 def ob_multi_dalle(dj=0, nh=10, lg=1, nbd=3, project='reference'):  # lg * nbd < 10
     return Obs.obj({'data':
                     [[prp, env_v[0:2]],
-                    [dat, [date_inst(dj=dj, h=i % 24)[0] for i in range(nh)]],
-                    [loc, dalle(l=lg, nb=nbd)],
-                    [res, [10+.1*i for i in range(nh * nbd * nbd)] +
+                     [dat, [date_inst(dj=dj, h=i % 24)[0] for i in range(nh)]],
+                     [loc, dalle(l=lg, nb=nbd)],
+                     [res, [10+.1*i for i in range(nh * nbd * nbd)] +
                      [20+.1*i for i in range(nh * nbd * nbd)], -1],
-                    ['heure', list(range(nh)), 1],
-                    ['mois', [date_mois[0]]],
-                    ['structure', ['multidalle']]],
+                     ['heure', list(range(nh)), 1],
+                     ['mois', [date_mois[0]]],
+                     ['structure', ['multidalle']]],
                    'name': 'mesures horaires sur dalle, 2 polluants - ' + str(dj),
-                   'param': param_val('8-dim3', project=project)}
+                    'param': param_val('8-dim3', project=project)}
                    ).setcanonorder().sort()
 
 # %% Exemples :
+
 
 def exemples():
     # mesure mixte :
     pprint(ob_mixte_2().json())
     print(ob_mixte_2(3, 3).view(lenres=30, width=20))
-    
+
     # mesure unitaire :
     pprint(ob_mesure().json())
     print(ob_mesure(2).view(lenres=30, width=20))
-    
+
     # mesures horaires station fixe, 3 polluants :
     pprint(ob_fixe().json())
     print(ob_fixe(2).view(lenres=30, width=20))
-    
+
     # mesures mobile, 1 polluants :
     pprint(ob_mob_1().json())
     print(ob_mob_1(1).view(width=20))
     m = ob_mob_1(1).choropleth()
     m.save('choro.html')
-    
+
     # mesures mobile, 2 polluants :
     pprint(ob_mobile().json())
     print(ob_mobile(1).view(width=20))
-    
+
     # mesure horaires multi-stations, 2 polluants :
     pprint(ob_multi().json())
     print(ob_multi(2).view(lenres=30, width=20))
-    
+
     # mesures sur dalle, 1 polluant
     pprint(ob_dalle(nbd=5, lg=0.5).json())
     print(ob_dalle(nbd=5, lg=0.5).view(width=22))
     #ob_dalle(nbd=10, lg=0.5).choropleth(line=False, name='mesure sur dalle')
-    
+
     # mesure horaires dalle, 2 polluants :
     #pprint(ob_multi_dalle(dj=2, ndat=10, nbd=3, lg=0.5).json())
     print(ob_multi_dalle(dj=2, nh=10, nbd=3, lg=0.5).view(lenres=30, width=20))
-    
+
     # signalement :
     pprint(ob_signal().json())
     print(ob_signal(2).view(lenres=30, width=20))
 
-#exemples()
-    
+# exemples()
+
 # jeu de tests - diversité des données
+
+
 def obs_mixte():
     liste_obs_mixte = []
     for i in range(20):
@@ -326,20 +340,27 @@ def obs_mixte():
     return liste_obs_mixte
 
 # jeu de tests - données représentatives
+
+
 def obs_tests():
     liste_obs_tests = []
     for i in range(10):
         liste_obs_tests += [ob_mesure(res=i, jour=i, mois=1, lieu=0, prop=0)]
-        liste_obs_tests += [ob_mesure(res=10+i, jour=i, mois=1, lieu=i+1, prop=1)]
-        liste_obs_tests += [ob_mesure(res=100+i, jour=i, mois=1, lieu=i+1, prop=i)]
+        liste_obs_tests += [ob_mesure(res=10+i,
+                                      jour=i, mois=1, lieu=i+1, prop=1)]
+        liste_obs_tests += [ob_mesure(res=100+i,
+                                      jour=i, mois=1, lieu=i+1, prop=i)]
     for i in range(10):
-        liste_obs_tests += [ob_signal(jour=i, mois=1, lieu=i, nuis=i, intens=i)]
+        liste_obs_tests += [ob_signal(jour=i,
+                                      mois=1, lieu=i, nuis=i, intens=i)]
     liste_obs_tests += [ob_fixe(dj=2, nh=24), ob_fixe(dj=3, nh=24)]
     liste_obs_tests += [ob_mob_1(d=0, nval=10), ob_mob_1(d=1, nval=10)]
     liste_obs_tests += [ob_mobile(d=1, nval=10), ob_mobile(d=2, nval=10)]
-    liste_obs_tests += [ob_multi(dj=3, nh=24, nloc=10), ob_multi(dj=4, nh=24, nloc=10)]
-    liste_obs_tests += [ob_dalle(dj=4, nbd=10, lg=0.3), ob_dalle(dj=4, nbd=10, lg=0.5)]
-    liste_obs_tests += [ob_multi_dalle(dj=5, nh=5, nbd=10, lg=0.3), 
+    liste_obs_tests += [ob_multi(dj=3, nh=24, nloc=10),
+                        ob_multi(dj=4, nh=24, nloc=10)]
+    liste_obs_tests += [ob_dalle(dj=4, nbd=10, lg=0.3),
+                        ob_dalle(dj=4, nbd=10, lg=0.5)]
+    liste_obs_tests += [ob_multi_dalle(dj=5, nh=5, nbd=10, lg=0.3),
                         ob_multi_dalle(dj=6, nh=5, nbd=10, lg=0.4)]
     return liste_obs_tests
 
@@ -349,15 +370,15 @@ if False:
     mixte = obs_mixte()
     tests = obs_tests()
     print('nb observations : ', len(mixte), len(tests))
-    
-    print('nb records : ', sum([len(obs) for obs in mixte]), 
+
+    print('nb records : ', sum([len(obs) for obs in mixte]),
           sum([len(obs) for obs in tests]))
 
 if False:
     from test_mongo import clientMongo
     client = clientMongo()
     collec = client['test_search']['jeu_data_py']
-    
+
     for obs in mixte:
         print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
     for obs in tests:

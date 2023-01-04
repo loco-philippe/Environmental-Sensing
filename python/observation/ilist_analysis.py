@@ -19,12 +19,12 @@ from util import util
 class Analysis:
     '''This class analyses relationships included in a tabular object 
     (Pandas DataFrame, Ilist, Observation, list of list).
-    
+
     The Analysis class includes the following functions:
     - identification and qualification of the relationships between Iindex,
     - generation of the global properties of the structure
     - data actualization based on structure updates
-    
+
     *Attributes* :
 
     - **iobj** : Ilist or Observation associated to the Analysis object
@@ -55,48 +55,49 @@ class Analysis:
 
         - **iobj** : object - tabular object (Pandas DataFrame, Ilist, Observation, 
         list of list)
-        
+
         Note: The Analysis data can be update only if tabular object is Ilist or 
         Observation.
         '''
-        if iobj.__class__.__name__ in ('Ilist', 'Observation'): 
+        if iobj.__class__.__name__ in ('Ilist', 'Observation'):
             self.iobj = iobj
-        else: 
+        else:
             from ilist import Ilist
             self.iobj = Ilist.obj(iobj)
-        self.hashi      = None
-        self.matrix     = None
-        self.infos      = None
-        self.primary    = None
-        self.secondary  = None
-        self.lvarname   = None
-        self.partition  = []
-    
+        self.hashi = None
+        self.matrix = None
+        self.infos = None
+        self.primary = None
+        self.secondary = None
+        self.lvarname = None
+        self.partition = []
+
     def actualize(self, partition=None):
         ''' update all data with new values of iobj
-        
+
          *Parameters*
 
         - **partition** : list of int (default None) - partition to be used '''
-        #t0=time()
         self.matrix = self._setmatrix()
         self._setinfos()
         self._setparent()
         self._setpartition()
         self._setinfospartition(partition)
         infosidx = [idx for idx in self.infos if idx['cat'] != 'variable']
-        self.primary = [infosidx.index(idx) for idx in infosidx if idx['cat'] == 'primary']
+        self.primary = [infosidx.index(idx)
+                        for idx in infosidx if idx['cat'] == 'primary']
         self.hashi = self.iobj._hashi()
-        self.lvarname = [idx['name'] for idx in self.infos if idx['cat'] == 'variable']
-        coupledvar = [idx['name'] for idx in self.infos if idx['cat'] == 'coupled' 
-                    and self.infos[idx['parent']]['cat'] == 'variable']
+        self.lvarname = [idx['name']
+                         for idx in self.infos if idx['cat'] == 'variable']
+        coupledvar = [idx['name'] for idx in self.infos if idx['cat'] == 'coupled'
+                      and self.infos[idx['parent']]['cat'] == 'variable']
         self.lvarname += coupledvar
-        self.secondary = [idx['num'] for idx in self.infos if idx['cat'] == 'secondary']
-        coupledsec = [idx['num'] for idx in self.infos if idx['cat'] == 'coupled' 
-                    and self.infos[idx['parent']]['cat'] in ('primary', 'secondary')]
+        self.secondary = [idx['num']
+                          for idx in self.infos if idx['cat'] == 'secondary']
+        coupledsec = [idx['num'] for idx in self.infos if idx['cat'] == 'coupled'
+                      and self.infos[idx['parent']]['cat'] in ('primary', 'secondary')]
         self.secondary += coupledsec
-        #print('update ', time()-t0, self.primary, str(self.hashi))
-    
+
     def getinfos(self, keys=None):
         '''return attribute infos
 
@@ -113,10 +114,10 @@ class Analysis:
         if not keys or keys == 'all':
             return self.infos
         return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
-    
+
     def getmatrix(self, name=None):
         '''return attribute matrix or only one value of the matrix defined by two names
-        
+
          *Parameters*
 
         - **name** : list or tuple (default None) - list of two fields names        
@@ -132,7 +133,7 @@ class Analysis:
             if len(name) > 1 and name[1] in self.iobj.indexname:
                 return self.matrix[ind0][self.iobj.indexname.index(name[1])]
         return None
-    
+
     def getvarname(self):
         '''return variable Iindex name'''
         if self.hashi != self.iobj._hashi():
@@ -159,7 +160,7 @@ class Analysis:
 
     def tree(self, mode='derived', width=5, lname=20, string=True):
         '''return a string with a tree of derived Iindex.
-                
+
          *Parameters*
 
         - **lname** : integer (default 20) - length of the names        
@@ -191,11 +192,11 @@ class Analysis:
             tre = tre.replace('---', ' - ')
             tre = tre.replace('  ', ' ')
             tre = tre.replace('*', ' ')
-            for c in ["'", "\"", "{", "[", "]", "}", ","]: 
-                tre = tre.replace (c, "")
+            for c in ["'", "\"", "{", "[", "]", "}", ","]:
+                tre = tre.replace(c, "")
             return tre
         return tr
-    
+
     # %% internal methods
     def _setmatrix(self):
         '''set and return matrix attributes (coupling infos between each idx)'''
@@ -203,7 +204,8 @@ class Analysis:
         mat = [[None for i in range(lenindex)] for i in range(lenindex)]
         for i in range(lenindex):
             for j in range(i, lenindex):
-                mat[i][j] = self.iobj.lindex[i].couplinginfos(self.iobj.lindex[j])
+                mat[i][j] = self.iobj.lindex[i].couplinginfos(
+                    self.iobj.lindex[j])
             for j in range(i):
                 mat[i][j] = copy(mat[j][i])
                 if mat[i][j]['typecoupl'] == 'derived':
@@ -214,8 +216,8 @@ class Analysis:
                     mat[i][j]['typecoupl'] = 'link'
                 elif mat[i][j]['typecoupl'] == 'link':
                     mat[i][j]['typecoupl'] = 'linked'
-        return mat    
-    
+        return mat
+
     def _setinfos(self):
         '''set and return attribute 'infos'. 
         Infos is an array with infos of each index :
@@ -226,7 +228,7 @@ class Analysis:
         self.infos = [{} for i in range(lenindex)]
         for i in range(lenindex):
             self.infos[i]['num'] = i
-            self.infos[i]['name'] = self.iobj.lname[i]           
+            self.infos[i]['name'] = self.iobj.lname[i]
             self.infos[i]['cat'] = 'null'
             self.infos[i]['parent'] = -1
             self.infos[i]['distparent'] = -1
@@ -243,15 +245,15 @@ class Analysis:
                 self.infos[i]['pparent'] = -1
                 self.infos[i]['cat'] = 'unique'
                 self.infos[i]['diffdistparent'] = leniobj - 1
-                self.infos[i]['linkrate'] = 0               
+                self.infos[i]['linkrate'] = 0
         for i in range(lenindex):
             for j in range(i+1, lenindex):
                 if self.matrix[i][j]['typecoupl'] == 'coupled' and \
-                  self.infos[j]['parent'] == -1:
+                        self.infos[j]['parent'] == -1:
                     self.infos[j]['parent'] = i
                     self.infos[j]['distparent'] = i
                     self.infos[j]['diffdistparent'] = 0
-                    self.infos[j]['linkrate'] = 0               
+                    self.infos[j]['linkrate'] = 0
                     self.infos[j]['cat'] = 'coupled'
                     self.infos[i]['child'].append(j)
         return
@@ -268,20 +270,20 @@ class Analysis:
             for i in partition:
                 infosp[i]['cat'] = 'primary'
                 infosp[i]['pparent'] = i
-        for i in range(lenindex): 
+        for i in range(lenindex):
             if infosp[i]['cat'] == 'null':
                 util.pparent2(i, infosp)
                 if infosp[i]['pparent'] == -1 and partition:
                     infosp[i]['cat'] = 'variable'
                 else:
                     infosp[i]['cat'] = 'secondary'
-        for i in range(lenindex): 
+        for i in range(lenindex):
             if infosp[i]['cat'] == 'coupled':
                 infosp[i]['pparent'] = infosp[infosp[i]['parent']]['pparent']
-            
+
     def _setparent(self):
         '''set parent (Iindex with minimal diff) for each Iindex'''
-        # parent : min(diff)
+        # parent : min(diff) -> child
         # distparent : min(distrate) -> diffdistparent, linkrate
         # minparent : min(distance) -> rate, distance
         lenindex = self.iobj.lenindex
@@ -290,36 +292,36 @@ class Analysis:
             mindiff = leniobj
             distratemin = 1
             distancemin = leniobj * leniobj
-            distparent =  None
-            minparent =  None
+            distparent = None
+            minparent = None
             parent = None
             infoi = self.infos[i]
             for j in range(lenindex):
                 matij = self.matrix[i][j]
                 if not infoi['cat'] in ['unique', 'coupled']:
-                    if i != j and self.infos[j]['parent'] != i and \
-                      matij['typecoupl'] in ('coupled', 'derived') and \
-                      matij['diff'] < mindiff:
+                    if i != j and not i in self._listparent(j, 'parent') and \
+                            matij['typecoupl'] in ('coupled', 'derived') and \
+                            matij['diff'] < mindiff:
                         mindiff = matij['diff']
                         parent = j
                     elif i != j and matij['typecoupl'] == 'crossed' and \
-                      self.infos[j]['cat'] != 'coupled':
+                            self.infos[j]['cat'] != 'coupled':
                         infoi['crossed'].append(j)
-                    if i != j and self.infos[j]['distparent'] != i and \
-                      matij['typecoupl'] in ('coupled', 'derived', 'linked', 'crossed') and \
-                      matij['distrate'] < distratemin:
+                    if i != j and not i in self._listparent(j, 'distparent') and \
+                        matij['typecoupl'] in ('coupled', 'derived', 'linked', 'crossed') and \
+                       matij['distrate'] < distratemin:
                         distratemin = matij['distrate']
                         distparent = j
-                if i != j and self.infos[j]['minparent'] != i and \
-                  matij['distance'] < distancemin and \
-                  infoi['lencodec'] <= self.infos[j]['lencodec'] and \
-                    self.infos[j]['cat'] != 'coupled':
+                if i != j and not i in self._listparent(j, 'minparent') and \
+                    matij['distance'] < distancemin and \
+                    infoi['lencodec'] <= self.infos[j]['lencodec'] and \
+                        self.infos[j]['cat'] != 'coupled':
                     distancemin = matij['distance']
                     minparent = j
             if not infoi['cat'] in ['unique', 'coupled']:
                 if not parent is None:
                     infoi['parent'] = parent
-                    self.infos[parent]['child'].append(i)      
+                    self.infos[parent]['child'].append(i)
                 if not distparent is None:
                     infoi['distparent'] = distparent
                     infoi['diffdistparent'] = self.matrix[i][distparent]['diff']
@@ -329,8 +331,17 @@ class Analysis:
                 infoi['distance'] = self.matrix[i][minparent]['distance']
                 infoi['rate'] = self.matrix[i][minparent]['rate']
             else:
-                infoi['distance'] = leniobj - infoi['lencodec']            
-        return    
+                infoi['distance'] = leniobj - infoi['lencodec']
+        return
+
+    def _listparent(self, idx, typeparent):
+        parent = idx
+        listparent = []
+        while not parent is None and parent >= 0:
+            parent = self.infos[parent][typeparent]
+            if not parent is None and parent >= 0:
+                listparent.append(parent)
+        return listparent
 
     def _dic_noeud(self, n, child, lname, mode):
         '''generate a dict with nodes data defined by 'child' '''
@@ -339,43 +350,44 @@ class Analysis:
         else:
             adding = ''
             if mode == 'distance':
-                adding = str(self.infos[n]['distance']) + ' - ' 
+                adding = str(self.infos[n]['distance']) + ' - '
             elif mode == 'diff':
-                adding = str(format(self.infos[n]['linkrate'],'.2e')) + ' - '
+                adding = str(format(self.infos[n]['linkrate'], '.2e')) + ' - '
             adding += str(self.infos[n]['lencodec'])
             name = self.infos[n]['name'] + ' (' + adding + ')'
-            lis = [name.replace(' ', '*').replace("'",'*')]
+            lis = [name.replace(' ', '*').replace("'", '*')]
         if child[n+1]:
             for ch in child[n+1]:
                 if ch != n:
                     lis.append(self._dic_noeud(ch, child, lname, mode))
-        return {str(n).ljust(2,'*'): lis}
-    
+        return {str(n).ljust(2, '*'): lis}
+
     def _setpartition(self):
         '''set partition (list of Iindex partitions)'''
-        brother = {idx['num']:idx['crossed'] for idx in self.infos if idx['crossed']}
+        brother = {idx['num']: idx['crossed']
+                   for idx in self.infos if idx['crossed']}
         self.partition = []
         chemin = []
         for cros in brother:
             chemin = []
             self._addchemin(chemin, cros, 1, brother)
-        #print('partition : ', self.partition)
-        childroot = [idx['num'] for idx in self.infos 
-                     if idx['parent'] == -1 and idx['typecodec'] == 'complete']
-        if childroot: self.partition.append(childroot)
+        childroot = [idx['num'] for idx in self.infos if idx['parent'] == -1
+                     and idx['typecodec'] in ('complete', 'full')]
+        if childroot:
+            self.partition.append(childroot)
         return None
-    
+
     def _addchemin(self, chemin, node, lchemin, brother):
-        '''extend 'chemin' with new nodes and add it to 'partition' ''' 
+        '''extend 'chemin' with new nodes and add it to 'partition' '''
         if lchemin == len(self.iobj) and node == chemin[0] and \
-          max(Counter(zip(*[self.iobj.lindex[idx].keys for idx in chemin])).values()) == 1:
+                max(Counter(zip(*[self.iobj.lindex[idx].keys for idx in chemin])).values()) == 1:
             part = sorted(chemin)
             if not part in self.partition:
                 if not self.partition or len(part) > len(self.partition[0]):
                     self.partition.insert(0, part)
                 else:
                     self.partition.append(part)
-        if node in chemin[1:]: 
+        if node in chemin[1:]:
             return
         lnode = self.infos[node]['lencodec']
         if lchemin * lnode <= len(self.iobj):
@@ -383,6 +395,7 @@ class Analysis:
             for broth in brother[node]:
                 self._addchemin(newchemin, broth, lchemin * lnode, brother)
 
+
 class AnalysisError(Exception):
     ''' Analysis Exception'''
-    # pass        
+    # pass
