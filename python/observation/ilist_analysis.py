@@ -126,12 +126,12 @@ class Analysis:
             self.actualize()
         if not name or not isinstance(name, list):
             return self.matrix
-        if name[0] in self.iobj.indexname:
-            ind0 = self.iobj.indexname.index(name[0])
+        if name[0] in self.iobj.lname:
+            ind0 = self.iobj.lname.index(name[0])
             if len(name) == 1:
                 return self.matrix[ind0]
-            if len(name) > 1 and name[1] in self.iobj.indexname:
-                return self.matrix[ind0][self.iobj.indexname.index(name[1])]
+            if len(name) > 1 and name[1] in self.iobj.lname:
+                return self.matrix[ind0][self.iobj.lname.index(name[1])]
         return None
 
     def getvarname(self):
