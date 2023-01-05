@@ -39,6 +39,8 @@ import math
 import json
 import csv
 import cbor2
+import pandas
+import datetime
 
 from esconstante import ES
 from iindex import Iindex
@@ -408,9 +410,16 @@ class Ilist(IlistStructure, IlistInterface):
         '''
         lindex = []
         if listidx.__class__.__name__ == 'DataFrame':
-            lindex = [Iindex(list(idx.cat.categories), name, list(idx.cat.codes),
+            lindex = []
+            for name, idx in listidx.astype('category').items():
+                lis = list(idx.cat.categories)
+                if lis and isinstance(lis[0], pandas._libs.tslibs.timestamps.Timestamp):
+                    lis = [ts.to_pydatetime().astimezone(datetime.timezone.utc) for ts in lis]
+                lindex.append(Iindex(lis, name, list(idx.cat.codes),
+                                    lendefault=len(listidx), castobj=False))
+            '''lindex = [Iindex(list(idx.cat.categories), name, list(idx.cat.codes),
                              lendefault=len(listidx), castobj=False)
-                      for name, idx in listidx.astype('category').items()]
+                      for name, idx in listidx.astype('category').items()]'''
             return cls(lindex, reindex=reindex)
 
         if isinstance(listidx, dict):

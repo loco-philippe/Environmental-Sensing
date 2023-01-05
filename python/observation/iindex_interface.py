@@ -450,7 +450,8 @@ class IindexInterface:
         dic['value'] = [{'record': ds[i].tolist(),
                          'codec': util.json(cod, encoded=False, typevalue=None,
                                             simpleval=simpleval, modecodec=modecodec,
-                                            untyped=option['untyped'], geojson=option['geojson'])}
+                                            untyped=option['untyped'], datetime=False,
+                                            geojson=option['geojson'])}
                         for i, cod in enumerate(self.codec)]
         return {self.name: dic}
 

@@ -497,7 +497,7 @@ class ESValue:
         return val
 
     @staticmethod
-    def uncastsimple(val):
+    def uncastsimple(val, datetime=True):
         ''' convert val in hashable val'''
         typeval = val.__class__.__name__
         if typeval == 'tuple':
@@ -505,7 +505,7 @@ class ESValue:
         # if typeval == 'tuple': return list(val)
         if typeval == 'str' and len(val) > 0 and val[0] == '{':
             return json.loads(val)
-        if typeval == 'datetime':
+        if datetime and typeval == 'datetime':
             return val.isoformat()
         return val
 

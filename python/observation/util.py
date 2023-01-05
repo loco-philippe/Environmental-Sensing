@@ -254,8 +254,11 @@ class util:
 
     @staticmethod
     def json(val, **option):
-        val = ESValue.uncastsimple(val)
-        if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes)):
+        datecast = True
+        if 'datetime' in option:
+            datecast = option['datetime']
+        val = ESValue.uncastsimple(val, datecast)
+        if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes, datetime.datetime)):
             return val
         if option['simpleval']:
             return val.json(**option)
