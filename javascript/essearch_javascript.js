@@ -373,7 +373,7 @@ export class ESSearch {
       const python = pythonBridge();
       python.ex`from observation import Observation`;
       python.ex`from observation.essearch import ESSearch`;
-      let result_json = await python`ESSearch([Observation.from_obj(item) for item in ${result}], sources=${sources}).execute(single = ${single}).to_obj(encoded = True, modecodec=${modecodec})`
+      let result_json = await python`ESSearch([Observation.from_obj(item) for item in ${result}], sources=${sources}).execute(single = ${single}).to_obj(encoded = True, modecodec=${modecodec}, geojson=True)`
       python.end();
       return JSON.parse(result_json);
     }

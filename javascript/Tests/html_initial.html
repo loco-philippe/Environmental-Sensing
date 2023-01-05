@@ -4,17 +4,33 @@
         <meta charset="UTF-8">
         <link rel="icon" href="https://loco-philippe.github.io/ES/logo_loco.png"> <!-- pas très lisible -->
         <title>Outil de recherche Essearch basé sur MongoDB</title>
-        <script src="https://unpkg.com/react@17/umd/react.development.js"></script> <!-- inutile actuellement -->
-        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script> <!-- inutile actuellement -->
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script> <!-- inutilisé actuellement -->
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script> <!-- inutilisé actuellement -->
         <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
         <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6"></script>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            #container, #map {
+                height: 400px;
+                width: 600px;
+                max-width: 100%;
+                max-height: 100%;
+            }
+        </style>
         <script type="text/javascript">
             var uri = '', database_name = '', collection_name = '', req_count = -1, column_names, added_fields = [0],
-                responseText, result_data, formatted_data, formatted_data_promise, plot_count = 0;
+                responseText, result_data, column_names_out, formatted_data, formatted_data_promise, geojson_data, plot_count = 0,
+                map;
+// PROBLEME : Données perdues lorsque l'onglet se décharge.
 
-            function set_uri (value) {uri = value; Validation_Mongo();}
-            function set_database_name (value) {database_name = value; Validation_Mongo();}
-            function set_collection_name (value) {collection_name = value; Validation_Mongo();}
+            function setUri (value) {uri = value; validationMongo();}
+            function setDatabaseName (value) {database_name = value; validationMongo();}
+            function setCollectionName (value) {collection_name = value; validationMongo();}
 
             function setMongoValidity (validity) {
                 if (validity === 'Valide') {
@@ -105,7 +121,7 @@
                 delete added_fields[i];
             }
 
-            function Validation_Mongo () {
+            function validationMongo () {
                 // Effectue la requête POST envoyant uri, database_name et collection_name
                 req_count += 1;
                 var req_id = req_count;
@@ -183,9 +199,9 @@
                     xhr.onreadystatechange = () => { if (xhr.readyState === xhr.DONE && xhr.status === 200) {
                         responseText = xhr.responseText; // Used only for json export
                         resp = JSON.parse(xhr.responseText);
+                        result_data = resp["data"];
                         document.getElementById("request-result").style.color = "green";
                         document.getElementById("request-result").innerHTML = "Requête effectuée ✓";
-                        result_data = resp["data"];
                         formatted_data_promise = dataFormatting ();
                         updateRenderingParameters (document.getElementById("rendering-select").value);
                         document.getElementById("export_div").style.display = 'block';
@@ -216,11 +232,11 @@
                     export_data += "\r\n";
                     await formatted_data.forEach(function(line) {
                         first_key = true;
-                        for (var item_key in line) { // PROBLEMES AVEC L'ORDRE POURRAIENT SURVENIR
+                        for (var item_key in line) { // PROBLEMES AVEC L'ORDRE POURRAIENT SURVENIR (mais ce n'est pas le cas)
                             var item;
                             if (line[item_key] instanceof Date) {
-                                item = line[item_key].toLocaleDateString('fr-FR', {timeZone: 'UTC', month: 'long', 
-                                                        day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'});
+                                item = line[item_key].toString(); //LocaleDateString('fr-FR', {timeZone: 'UTC', month: 'long', 
+                                                        //day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'});
                             } else if (typeof line[item_key] === 'object') {
                                 item = JSON.stringify(line[item_key]);
                             } else {
@@ -254,41 +270,71 @@
                     fieldOptions ([document.getElementById("x_field-select")]);
                 } else if (graph_type === 'curve') {
                     document.getElementById("rendering_parameters").innerHTML = 'Axe des x : <select name="x_field" \
-                    id="x_field-select" oninput="render ()"></select> Axe des y : <select name="y_field" id="y_field-select" oninput="render ()"></select> <button \
-                    id="add_render_field" onclick="addRenderField ()">+</button>';
+                    id="x_field-select" oninput="render ()"></select> Axe des y : <select name="y_field" id="y_field-select" \
+                    oninput="render ()"></select> <button id="add_render_field" onclick="addRenderField ()">+</button>';
                     fieldOptions ([document.getElementById("x_field-select"), document.getElementById("y_field-select")]);
                 } else if (graph_type === 'map') {
-                    document.getElementById("rendering_parameters").innerHTML = '<i>à venir</i>';
+                    document.getElementById("rendering_parameters").innerHTML = 'Données géographiques : <select name="geo_field" \
+                    id="geo_field-select" oninput="render ()"></select> Données à représenter : <select name="z_field" id="z_field-select" \
+                    oninput="render ()"></select> <button id="add_render_field" onclick="addRenderField ()">+</button> \
+                    Type de carte : <select name="map_type" id="map_type-select" oninput="render ()">\
+                    <option value="choropleth">choroplèthe</option><option value="else">autre</option></select>';
+                    fieldOptions ([document.getElementById("geo_field-select"), document.getElementById("z_field-select")], 'map');
                 }
                 render ();
             }
 
-            function fieldOptions (fields) {
-                for (var column_name in result_data) {
+            function fieldOptions (fields, type) {
+            // à adapter une fois que dataFormatting aura été adapté pour indiquer les types de données.
+                if (type === 'map') {
+                    var geo = fields.shift();
+                    for (var geo_name in geojson_data) {
+                        geo.add(new Option(geo_name, geo_name));
+                    }
                     for (var field_key in fields) {
-                        fields[field_key].add(new Option(column_name, column_name));
+                        for (var i in column_names_out) {
+                            fields[field_key].add(new Option(column_names_out[i], column_names_out[i]));
+                        }
+                    }
+                } else {
+                    for (var i in column_names_out) {
+                        for (var field_key in fields) {
+                            fields[field_key].add(new Option(column_names_out[i], column_names_out[i]));
+                        }
                     }
                 }
             }
 
             function addRenderField () {
                 // Tel quel, champs ajoutés disparaissent si changement de format d'affichage puis retour
+                // Laisser comme ça tant qu'il n'y a pas la possibilité de retirer un champ
                 plot_count += 1;
                 if (plot_count >= column_names.length) {return;} // Créer une autre variable globale pour le retour
                 var new_field_select = document.createElement("select");
                 new_field_select.name = "additional_field";
                 new_field_select.id = "field-select_" + plot_count;
                 new_field_select.oninput = "render ()";
-                for (var column_name in result_data) {
-                    new_field_select.add(new Option(column_name, column_name));
+                for (var i in column_names_out) {
+                    new_field_select.add(new Option(column_names_out[i], column_names_out[i]));
                 }
                 document.getElementById("rendering_parameters")
                         .insertBefore(new_field_select, document.getElementById("add_render_field"));
             }
 
             async function dataFormatting () {
-                // Que faire dans le cas où heavy = true ? Données non utilisables en l'état.
-                formatted_data = [];
+                /*
+                Il faudrait pouvoir trier les données par type de données à cette étape pour n'afficher que les choses pertinentes ensuite :                               
+                - nombres ;
+                - chaines de caractères ;
+                - arrays ;
+                - dates ;
+                - objet GeoJSON ;
+                - objet général dont on ne peut pas faire grand chose.
+                -> traiter le cas de données imbriquées dans des niveaux d'objet autant que possible.
+
+                Si étape longue, laisser le choix de l'effectuer ou non.
+                */
+                formatted_data = [], column_names_out = [];
                 for (var column_name in result_data) {
                     for (var value in result_data[column_name]['value']) {
                         if (Array.isArray(result_data[column_name]['value'][value]["record"])) {
@@ -296,61 +342,226 @@
                                 if (formatted_data[result_data[column_name]['value'][value]["record"][record_key]] === undefined) {
                                     formatted_data[result_data[column_name]['value'][value]["record"][record_key]] = {};
                                 }
-                                if (result_data[column_name]['type'] === "DatationValue") {
+                                if (result_data[column_name]['type'] === "DatationValue" && result_data[column_name]['value'][value]["codec"]) { // Condition à améliorer... Datation Value est attribué automatiquement au valeurs de la colonne datation, qu'elles y soient par erreur ou pas, et peut également désigner des intervalles et des TimeSlot
                                     formatted_data[result_data[column_name]['value'][value]["record"][record_key]][column_name] = new Date(result_data[column_name]['value'][value]["codec"]);
+                                    if (!column_names_out.includes(column_name)) {column_names_out.push(column_name);}
+                                } else if (typeof result_data[column_name]['value'][value]["codec"] === 'object' && !Array.isArray(result_data[column_name]['value'][value]["codec"])) {
+                                    for (var data_key in result_data[column_name]['value'][value]["codec"]) {
+                                        if (column_name === 'property' && data_key === 'prp') {
+                                            formatted_data[result_data[column_name]['value'][value]["record"][record_key]]['property'] = result_data['property']['value'][value]["codec"]['prp'];
+                                        } else {
+        // PROBLEME : CAS OU LA DONNÉE EST UN DICTIONNAIRE TOUJOURS DETAILLÉ MEME QUAND PAS PERTINENT (pas forcément si grave).
+                                            formatted_data[result_data[column_name]['value'][value]["record"][record_key]][column_name + "." + data_key] = result_data[column_name]['value'][value]["codec"][data_key];
+                                            if (!column_names_out.includes(column_name + "." + data_key)) {
+                                                column_names_out.push(column_name + "." + data_key);
+                                            }
+                                        }
+                                    }
                                 } else {
                                     formatted_data[result_data[column_name]['value'][value]["record"][record_key]][column_name] = result_data[column_name]['value'][value]["codec"];
+                                    if (!column_names_out.includes(column_name)) {column_names_out.push(column_name);}
                                 }
                             }
                         } else {
                             if (formatted_data[result_data[column_name]['value'][value]["record"]] === undefined) {
                                 formatted_data[result_data[column_name]['value'][value]["record"]] = {};
                             }
-                            if (result_data[column_name]['type'] === "DatationValue") {
+                            if (result_data[column_name]['type'] === "DatationValue" && result_data[column_name]['value'][value]["codec"]) {
                                 formatted_data[result_data[column_name]['value'][value]["record"]][column_name] = new Date(result_data[column_name]['value'][value]["codec"]);
+                                if (!column_names_out.includes(column_name)) {column_names_out.push(column_name);}
+                            } else if (typeof result_data[column_name]['value'][value]["codec"] === 'object' && !Array.isArray(result_data[column_name]['value'][value]["codec"])) {
+                                for (var data_key in result_data[column_name]['value'][value]["codec"]) {
+                                    if (column_name === 'property' && data_key === 'prp') {
+                                        formatted_data[result_data[column_name]['value'][value]["record"]]['property'] = result_data['property']['value'][value]["codec"]['prp'];
+                                    } else {
+        // IDEM
+                                        formatted_data[result_data[column_name]['value'][value]["record"]][column_name + "." + data_key] = result_data[column_name]['value'][value]["codec"][data_key];
+                                        if (!column_names_out.includes(column_name + "." + data_key)) {
+                                            column_names_out.push(column_name + "." + data_key);
+                                        }
+                                    }
+                                }
                             } else {
                                 formatted_data[result_data[column_name]['value'][value]["record"]][column_name] = result_data[column_name]['value'][value]["codec"];
+                                if (!column_names_out.includes(column_name)) {column_names_out.push(column_name);}
                             }
+                        }
+                    }
+                }
+                geojson_data = {}; // list with all columns containing geoJSON data
+                for (var column_name in result_data) {
+                    if (result_data[column_name]['type'] === 'LocationValue') { // condition à améliorer
+                        geojson_data[column_name] = {"type": "FeatureCollection", "features": []};
+                        for (var line_key in formatted_data) {
+                            geojson_data[column_name]['features'].push({
+                                        "type": "Feature",
+                                        "geometry": {'type': formatted_data[line_key][column_name + "." + 'type'],
+                                                    'coordinates': formatted_data[line_key][column_name + "." + 'coordinates']},
+                                        "properties": formatted_data[line_key]}) // contient des choses superflues, mais est-ce un problème ?
                         }
                     }
                 }
             }
 
-            function render () {
+            async function render () {
+                graph_type = document.getElementById("rendering-select").value;
+                try {map.off(); map.remove();} catch {}
+                document.getElementById('graphic').style.display = 'none';
+                document.getElementById('map').style.display = 'none';
+                formatted_data_promise.then((resolve, reject) => {
+                    var plot, x, marks;
+                    if (graph_type === 'bar-chart') {
                 // Ajouter l'échelle appropriée aux dates
                 // De manière générale, trouver une solution pour la lisibilité
-                graph_type = document.getElementById("rendering-select").value;
-                document.getElementById('graphic').innerHTML = '';
-                formatted_data_promise.then((resolve, reject) => {
-                    var plot;
-                    if (graph_type === 'bar-chart') {
+        /* Quand trop de valeurs différentes :
+        - Si données numériques / dates, faire un Plot.rectY au lieu d'un Plot.barY ;
+        - sinon, mettre un message d'avertissement et trouver autre chose. (quand même afficher l'histogramme pour le moment)
+        */
                         console.log("Affichage d'un histogramme");
                         console.log(formatted_data);
-                        console.log(Plot.binX({y: "count"}, {x: document.getElementById("x_field-select").value}));
-                        plot = Plot.plot({
-                                    y: {
-                                        label: "↑ Fréquence",
-                                        grid: true
-                                    },
-                                    marks: [
-// COMPRENDRE CE QUI POSE PROBLEME AVEC L'AFFICHAGE DE DONNEES AU FORMAT CHAINE DE CARACTERES
-                                        Plot.barY(formatted_data, Plot.binX({y: "count"}, {x: document.getElementById("x_field-select").value})),
-                                        Plot.ruleY([0])
-                                    ]
-                                    })
+                        if (result_data[document.getElementById("x_field-select").value] && result_data[document.getElementById("x_field-select").value]['type'] === 'DatationValue') {
+                            document.getElementById('graphic').style.display = 'block';
+         // condition perfectible -> Il faudrait que le booléen soit créé au moment de la définition de formatted_data
+         // + gérer les autres formats TimeSlot / date approximative en texte brut (exemple : « matin »)
+                            x = {type: "utc"};
+                            marks = [
+                                        Plot.rectY(formatted_data, Plot.binX({y: "count"}, {x: document.getElementById("x_field-select").value}))
+                                        // Calculer le binX lors du formattage des données ? simple puisque juste lire la taille de la liste des record
+                                        // et économie de temps de traitement puisque évite de le recalculer dès qu'on revient dessus.
+                                    ];
+                        } else if (formatted_data[0][document.getElementById("x_field-select").value] && typeof formatted_data[0][document.getElementById("x_field-select").value] === 'number') {
+         // pas consistent de ne regarder que le 1er élément -> PROBLEMES !!!!
+                            marks = [
+                                        Plot.barY(formatted_data, Plot.binX({y: "count"}, {x: document.getElementById("x_field-select").value}))
+                                    ];
+                        } else {
+                            marks = [
+                                        Plot.barY(formatted_data, Plot.groupX({y: "count"}, 
+                                        {x: document.getElementById("x_field-select").value, sort: {x: "y", reverse: true}}))
+                                    ];
+                        }
+                        plot = Plot.plot({x: x, y: {label: "↑ Fréquence", grid: true}, marks: marks});
+                        document.getElementById('graphic').appendChild(plot);
                     } else if (graph_type === 'curve') {
                         // Ajouter le cas de l'affichage en fonction de dates.
                         console.log("Affichage d'une courbe");
                         console.log(formatted_data);
+                        document.getElementById('graphic').style.display = 'block';
                         plot = Plot.dot(formatted_data, {x: document.getElementById("x_field-select").value, 
                                                                     y: document.getElementById("y_field-select").value}).plot();
+                        document.getElementById('graphic').appendChild(plot);
                     } else if (graph_type === 'map') {
                         console.log("Affichage d'une carte");
-                        console.log(formatted_data);
-                        plot = createElement(i);
-                        plot.innerHTML = '<i>à venir</i>';
+                        console.log(geojson_data);
+                        document.getElementById('map').style.display = 'block'; //peut-être nécessaire d'utiliser une fonction de leaflet ici pour ne pas mettre le bazar ?
+                        map = L.map('map').setView([50, 0], 13); // recalculé automatiquement plus loin, est-ce vraiment important ?
+                        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                            maxZoom: 18
+                        }).addTo(map);
+                        if (document.getElementById('map_type-select').value === 'choropleth') {
+                            // On pourrait le faire automatiquement dès lors que les données sont numériques, mais empêcherait la gestion des données « sales ».
+                                        
+                            function quantiles (data, n) {
+                                /*
+                                Returns breakpoints between n quantiles of data.
+                                ex: data = [3, 2, 4, 1], n = 3
+                                returns: [1, 3]
+                                */
+                                data.sort(function (a, b) {return a - b;})
+                                var breakpoints = [];
+                                for (var i = 1; i < n; i++) {
+                                    breakpoints.push(data[Math.round((data.length) * i / n - 1)]);
+                                }
+                                return breakpoints;
+                            }
+
+                            function getColor(value, breaks) {
+                                // Très largement perfectible
+                                return value > breaks[6]    ? '#800026' :
+                                        value > breaks[5]   ? '#BD0026' :
+                                        value > breaks[4]   ? '#E31A1C' :
+                                        value > breaks[3]   ? '#FC4E2A' :
+                                        value > breaks[2]   ? '#FD8D3C' :
+                                        value > breaks[1]   ? '#FEB24C' :
+                                        value > breaks[0]   ? '#FED976' :
+                                                        '#FFEDA0';
+                            }
+
+                            function style(feature) {
+                                return {
+                                    fillColor: getColor(feature.properties[document.getElementById("z_field-select").value], breaks([14, 16, 17, 14, 13, 21, 15, 15, 17, 19, 15, 14], 8)),
+                                    weight: 2,
+                                    opacity: 1,
+                                    color: 'white',
+                                    dashArray: '3',
+                                    fillOpacity: 0.7
+                                };
+                            }
+
+                            function highlightFeature(e) {
+                                var layer = e.target;
+
+                                layer.setStyle({
+                                    weight: 5,
+                                    color: '#666',
+                                    dashArray: '',
+                                    fillOpacity: 0.7
+                                });
+
+                                layer.bringToFront();
+                            }
+
+                            var broken = breaks([14, 16, 17, 14, 13, 21, 15, 15, 17, 19, 15, 14], 8); // C'est pour tester !!!!!!!!!
+                            
+                            var geojsonLayer = L.geoJson(geojson_data[document.getElementById("geo_field-select").value], {
+                                style,
+                                onEachFeature
+                            }).addTo(map);
+                            map.fitBounds(geojsonLayer.getBounds());
+                            
+                            var legend = L.control({position: 'bottomright'});
+
+                            function resetHighlight(e) {
+                                geojson.resetStyle(e.target);
+                            }
+
+                            function zoomToFeature(e) {
+                                map.fitBounds(e.target.getBounds());
+                            }
+
+                            function onEachFeature(feature, layer) {
+                                layer.on({
+                                    mouseover: highlightFeature,
+                                    mouseout: resetHighlight,
+                                    click: zoomToFeature
+                                });
+                            }
+
+                            legend.onAdd = function (map) {
+
+                                var div = L.DomUtil.create('div', 'info legend');
+                                var grades = [0, 10, 20, 50, 100, 200, 500, 1000];
+                                var labels = [];
+                                var from, to;
+
+                                for (var i = 0; i < grades.length; i++) {
+                                    from = grades[i];
+                                    to = grades[i + 1];
+
+                                    labels.push(`<i style="background:${getColor(from + 1, broken)}"></i> ${from}${to ? `&ndash;${to}` : '+'}`);
+                                }
+
+                                div.innerHTML = labels.join('<br>');
+                                return div;
+                            };
+
+                            legend.addTo(map);
+                        } else {
+                            var geojsonLayer = L.geoJSON(geojson_data[document.getElementById("geo_field-select").value]).addTo(map);
+                            map.fitBounds(geojsonLayer.getBounds());
+                        }
                     }
-                    document.getElementById('graphic').appendChild(plot);
                 });
             }
         </script>
@@ -360,10 +571,10 @@
         <h2>Paramètres de la base de données</h2>
         <!-- Considérer l'utilisation de Cookies pour retrouver les valeurs précédentes -->
         <div id="db_selection">
-            URI complète : <input type="text" id="URI_mongo-input" oninput="set_uri (this.value)">
+            URI complète : <input type="text" id="URI_mongo-input" oninput="setUri (this.value)">
             <!-- si possible, ajouter un point d'interrogation expliquant au survol ce qu'est une URI Mongo et comment la créer -->
-            Nom de la base : <input type="text" id="base_name-input" oninput="set_database_name (this.value)">
-            Nom de la collection : <input type="text" id="collection_name-input" oninput="set_collection_name (this.value)">
+            Nom de la base : <input type="text" id="base_name-input" oninput="setDatabaseName (this.value)">
+            Nom de la collection : <input type="text" id="collection_name-input" oninput="setCollectionName (this.value)">
         </div>
         <div id="mongo_validity"></div>
         <div id="coll_stats"></div>
@@ -408,7 +619,8 @@
         </div>
         <div class='container'>
             <div class='title'></div>
-            <figure id='graphic'></figure>
+            <div id='graphic'></div>
+            <div id='map'></div>
         </div>
     </body>
 </html>

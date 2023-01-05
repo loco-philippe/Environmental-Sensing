@@ -199,14 +199,14 @@ def insert_from_doc(collection, document , info=True):
 def insert_one_to_mongo(collection, obj, info=True):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
     if not isinstance(obj, Observation): obj = Observation.from_obj(obj)
-    dico2 = obj.json(json_info=info, modecodec='dict')
+    dico2 = obj.json(json_info=info, modecodec='dict', geojson=True)
     collection.insert_one(dico2)
 
 def insert_many_to_mongo(collection, objList, info=True):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
     for i in range(len(objList)):
         if not isinstance(objList[i], Observation): objList[i] = Observation.from_obj(objList[i])
-        objList[i] = objList[i].json(json_info=info, modecodec='dict')
+        objList[i] = objList[i].json(json_info=info, modecodec='dict', geojson=True)
     collection.insert_many(objList)
 
 def empty_request(collection):
@@ -268,7 +268,7 @@ class ESSearch:
     def __init__(self,
                     input = None,
                     parameters = None,
-                    heavy = True,
+                    heavy = False,
                     sources = None, 
                     **kwargs
                     ):
