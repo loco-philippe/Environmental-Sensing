@@ -77,6 +77,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     - `Ilist.extidx`
     - `Ilist.extidxext`
+    - `Ilist.groups`
     - `Ilist.idxname`
     - `Ilist.idxlen`
     - `Ilist.iidx`
@@ -668,6 +669,11 @@ class Ilist(IlistStructure, IlistInterface):
     def extidxext(self):
         '''idx val (see data model)'''
         return [idx.val for idx in self.lidx]
+
+    @property
+    def groups(self):
+        ''' list with crossed Iindex groups'''
+        return self.analysis.getgroups()
 
     @property
     def idxname(self):

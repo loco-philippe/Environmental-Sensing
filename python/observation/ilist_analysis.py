@@ -71,6 +71,7 @@ class Analysis:
         self.secondary = None
         self.lvarname = None
         self.partition = []
+        self.groups = []
 
     def actualize(self, partition=None):
         ''' update all data with new values of iobj
@@ -157,6 +158,12 @@ class Analysis:
         if self.hashi != self.iobj._hashi():
             self.actualize()
         return self.partition
+
+    def getgroups(self):
+        '''return attribute groups'''
+        if self.hashi != self.iobj._hashi():
+            self.actualize()
+        return self.groups
 
     def tree(self, mode='derived', width=5, lname=20, string=True):
         '''return a string with a tree of derived Iindex.
@@ -284,8 +291,8 @@ class Analysis:
     def _setparent(self):
         '''set parent (Iindex with minimal diff) for each Iindex'''
         # parent : min(diff) -> child
-        # distparent : min(distrate) -> diffdistparent, linkrate
-        # minparent : min(distance) -> rate, distance
+        # distparent : min(distrate) -> diffdistparent, linkrate(rateA)
+        # minparent : min(distance) -> rate(rateB), distance
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         for i in range(lenindex):
@@ -361,6 +368,17 @@ class Analysis:
                 if ch != n:
                     lis.append(self._dic_noeud(ch, child, lname, mode))
         return {str(n).ljust(2, '*'): lis}
+
+    def _setgroups(self):
+        '''set groups (list of crossed Iindex groups)'''
+        self.groups = []
+        listcrossed = []
+        for info in self.infos:
+            if info['crossed'] and not info['name'] in listcrossed:
+                listname = [self.infos[cros]['name'] for cros in info['crossed']] + info['name']
+                self.groups.append(listname)
+                listcrossed += listname
+        return None
 
     def _setpartition(self):
         '''set partition (list of Iindex partitions)'''
