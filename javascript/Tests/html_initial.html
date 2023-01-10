@@ -10,6 +10,8 @@
         <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6"></script>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+        <script src="https://colorbrewer2.org/export/colorbrewer.js"></script>
+        <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
         <style>
             html, body {
                 height: 100%;
@@ -20,6 +22,29 @@
                 width: 600px;
                 max-width: 100%;
                 max-height: 100%;
+            }
+            .info {
+                padding: 6px 8px;
+                font: 14px/16px Arial, Helvetica, sans-serif;
+                background: white;
+                background: rgba(255,255,255,0.8);
+                box-shadow: 0 0 15px rgba(0,0,0,0.2);
+                border-radius: 5px;
+            }
+            .info h4 {
+                margin: 0 0 5px;
+                color: #777;
+            }
+            .legend {
+                line-height: 18px;
+                color: #555;
+            }
+            .legend i {
+                width: 18px;
+                height: 18px;
+                float: left;
+                margin-right: 8px;
+                opacity: 0.7;
             }
         </style>
         <script type="text/javascript">
@@ -157,7 +182,13 @@
             }
 
             function showProject () {
-                document.getElementById("project-select").style.display = 'block';
+                if (document.getElementById("project-select").style.display === 'block') {
+                    document.getElementById("project-select").style.display = 'none';
+                    document.getElementById("show_project").innerHTML = 'Sélectionner les champs à renvoyer';
+                } else {
+                    document.getElementById("project-select").style.display = 'block';
+                    document.getElementById("show_project").innerHTML = 'Fermer la sélection des champs à renvoyer';
+                }
             }
 
             function execute () {
@@ -277,11 +308,39 @@
                     document.getElementById("rendering_parameters").innerHTML = 'Données géographiques : <select name="geo_field" \
                     id="geo_field-select" oninput="render ()"></select> Données à représenter : <select name="z_field" id="z_field-select" \
                     oninput="render ()"></select> <button id="add_render_field" onclick="addRenderField ()">+</button> \
-                    Type de carte : <select name="map_type" id="map_type-select" oninput="render ()">\
-                    <option value="choropleth">choroplèthe</option><option value="else">autre</option></select>';
+                    Type de carte : <select name="map_type" id="map_type-select" oninput="render (); choroplethOptions ()">\
+                    <option value="choropleth">choroplèthe</option><option value="heatmap">Carte thermique</option>\
+                    <option value="else">autre</option></select>';
                     fieldOptions ([document.getElementById("geo_field-select"), document.getElementById("z_field-select")], 'map');
+                    choroplethOptions ();
                 }
                 render ();
+            }
+
+            function choroplethOptions () {
+                if (document.getElementById('map_type-select').value === 'choropleth') {
+                    var div = document.createElement('div');
+                    div.id = 'choropleth_parameters'
+                    div.innerHTML = 'Intervalles : <select name="interval_type" id="interval_type-select" oninput="render ()">\
+                    <option value="linear_scale">Échelle linéaire</option><option value="logarithmic_scale">Échelle logarithmique</option>\
+                    <option value="quantiles">Quantiles</option></select>\
+                    Palette de couleurs : <select name="colors" id="colors-select" oninput="render (); colorsValue ()">\
+                    <option value="YlOrRd">YlOrRd</option><option value="Blues">Blues</option><option value="BrBG">BrBG</option>\
+                    <option value="RdYlBu">RdYlBu</option><option value="Greys">Greys</option></select>\
+                    Nombre d\'intervalles : <select name="interval_number" id="interval_number-select" oninput="render ()"></select>'
+                    document.getElementById('rendering_parameters').appendChild(div);
+                    colorsValue ();
+                } else {
+                    document.getElementById('rendering_parameters').removeChild(document.getElementById('choropleth_parameters'));
+                    // serait-il mieux de faire passer de visible à invisible plutôt que l'enlever totalement ?
+                }
+            }
+
+            function colorsValue () {
+                document.getElementById("interval_number-select").innerHTML = '';
+                for (var k in colorbrewer[document.getElementById("colors-select").value]) {
+                    document.getElementById("interval_number-select").add(new Option(k, k));
+                }
             }
 
             function fieldOptions (fields, type) {
@@ -405,7 +464,11 @@
 
             async function render () {
                 graph_type = document.getElementById("rendering-select").value;
-                try {map.off(); map.remove();} catch {}
+                try {map.off(); map.remove()} catch {}
+                var container = L.DomUtil.get('map'); // potentiellement, container === map et cette étape est inutile.
+                if (container != null) {
+                    container._leaflet_id = null;
+                }
                 document.getElementById('graphic').style.display = 'none';
                 document.getElementById('map').style.display = 'none';
                 formatted_data_promise.then((resolve, reject) => {
@@ -419,8 +482,9 @@
         */
                         console.log("Affichage d'un histogramme");
                         console.log(formatted_data);
+                        document.getElementById('graphic').innerHTML = '';
+                        document.getElementById('graphic').style.display = 'block';
                         if (result_data[document.getElementById("x_field-select").value] && result_data[document.getElementById("x_field-select").value]['type'] === 'DatationValue') {
-                            document.getElementById('graphic').style.display = 'block';
          // condition perfectible -> Il faudrait que le booléen soit créé au moment de la définition de formatted_data
          // + gérer les autres formats TimeSlot / date approximative en texte brut (exemple : « matin »)
                             x = {type: "utc"};
@@ -446,51 +510,91 @@
                         // Ajouter le cas de l'affichage en fonction de dates.
                         console.log("Affichage d'une courbe");
                         console.log(formatted_data);
+                        document.getElementById('graphic').innerHTML = '';
                         document.getElementById('graphic').style.display = 'block';
                         plot = Plot.dot(formatted_data, {x: document.getElementById("x_field-select").value, 
                                                                     y: document.getElementById("y_field-select").value}).plot();
                         document.getElementById('graphic').appendChild(plot);
                     } else if (graph_type === 'map') {
+    /* En l'état, ne permet évidemment pas de deviner le contour d'une ville à partir de son nom, ou de déterminer des contours opportuns 
+    en prenant en entrée une liste de positions.
+    ou faire des moyennes quand de multiples données indiquent la même position géographique.
+    */
                         console.log("Affichage d'une carte");
                         console.log(geojson_data);
                         document.getElementById('map').style.display = 'block'; //peut-être nécessaire d'utiliser une fonction de leaflet ici pour ne pas mettre le bazar ?
-                        map = L.map('map').setView([50, 0], 13); // recalculé automatiquement plus loin, est-ce vraiment important ?
+                        map = L.map('map').setView([0, 0], 13); // recalculé automatiquement plus loin, est-ce vraiment important ?
                         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                             maxZoom: 18
                         }).addTo(map);
                         if (document.getElementById('map_type-select').value === 'choropleth') {
                             // On pourrait le faire automatiquement dès lors que les données sont numériques, mais empêcherait la gestion des données « sales ».
-                                        
-                            function quantiles (data, n) {
-                                /*
-                                Returns breakpoints between n quantiles of data.
-                                ex: data = [3, 2, 4, 1], n = 3
-                                returns: [1, 3]
-                                */
-                                data.sort(function (a, b) {return a - b;})
-                                var breakpoints = [];
+
+                            var data = formatted_data.map(function(line) {return line[document.getElementById("z_field-select").value]});
+        // si des calculs sont nécessaires pour obtenir data, les faire d'une manière qui ne les perde pas après sortie de la fonction render.
+                            data.sort(function (a, b) {return a - b;})
+                            var n = document.getElementById("interval_number-select").value, breakpoints = [];
+                            if (document.getElementById("interval_type-select").value === 'linear_scale') {
+                                for (var i = 1; i < n; i++) {
+                                    breakpoints.push(data[0] + (data[data.length - 1] - data[0])* i / n);
+                                }
+                            } else if (document.getElementById("interval_type-select").value === 'logarithmic_scale') {
+                                if (data[0] == 0) {
+                                    if (data[data.length - 1] == 0) {
+                                        for (var i = 1; i < n; i++) {
+                                            breakpoints.push(0);
+                                        }
+                                    } else {
+                                        for (var i = 1; i < n; i++) {
+                                            breakpoints.push(Math.exp(Math.log(data[data.length - 1]) * i / n));
+                                        }
+                                    }
+                                } else if (data[0] > 0) {
+                                    for (var i = 1; i < n; i++) {
+                                        breakpoints.push(Math.exp(Math.log(data[0]) + (Math.log(data[data.length - 1]) - Math.log(data[0]))* i / n));
+                                    }
+                                } else if (data[data.length - 1] == 0) {
+                                    for (var i = 1; i < n; i++) {
+                                        breakpoints.push(-Math.exp(Math.log(-data[0]) * i / n));
+                                    }
+                                } else if (data[data.length - 1] < 0) {
+                                    for (var i = 1; i < n; i++) {
+                                        breakpoints.push(-Math.exp(Math.log(-data[0]) + (Math.log(-data[data.length - 1]) - Math.log(-data[0]))* i / n));
+                                    }
+                                } else {
+                                    // cas le plus complexe : valeurs positives et négatives => échelle logarithmique vers le haut et le bas
+                                    // -100, -10, 1, 0, 1, 10, 100, 1000
+                                }
+                            } else {
                                 for (var i = 1; i < n; i++) {
                                     breakpoints.push(data[Math.round((data.length) * i / n - 1)]);
                                 }
-                                return breakpoints;
+                            } 
+
+                            var colors = document.getElementById("colors-select").value, palette;
+                            try {
+                                palette = colorbrewer[colors][breakpoints.length + 1];
+                            } catch {
+                                if (breakpoints.length < Math.min(...Object.keys(colorbrewer[colors]))) {
+                                    palette = colorbrewer[colors][Math.min(...Object.keys(colorbrewer[colors]))];
+                                } else if (breakpoints.length >= Math.max(...Object.keys(colorbrewer[colors]))) {
+                                    palette = colorbrewer[colors][Math.max(...Object.keys(colorbrewer[colors]))];
+                                }
+                            }
+                            
+                            function getColor(value, colors) {
+                                for (var i in breakpoints) {
+                                    if (value <= breakpoints[i]) {
+                                        return palette[i];
+                                    }
+                                }
+                                return palette[palette.length - 1];
                             }
 
-                            function getColor(value, breaks) {
-                                // Très largement perfectible
-                                return value > breaks[6]    ? '#800026' :
-                                        value > breaks[5]   ? '#BD0026' :
-                                        value > breaks[4]   ? '#E31A1C' :
-                                        value > breaks[3]   ? '#FC4E2A' :
-                                        value > breaks[2]   ? '#FD8D3C' :
-                                        value > breaks[1]   ? '#FEB24C' :
-                                        value > breaks[0]   ? '#FED976' :
-                                                        '#FFEDA0';
-                            }
-
-                            function style(feature) {
+                            function style(feature, colors) {
                                 return {
-                                    fillColor: getColor(feature.properties[document.getElementById("z_field-select").value], breaks([14, 16, 17, 14, 13, 21, 15, 15, 17, 19, 15, 14], 8)),
+                                    fillColor: getColor(feature.properties[document.getElementById("z_field-select").value], colors),
                                     weight: 2,
                                     opacity: 1,
                                     color: 'white',
@@ -511,8 +615,6 @@
 
                                 layer.bringToFront();
                             }
-
-                            var broken = breaks([14, 16, 17, 14, 13, 21, 15, 15, 17, 19, 15, 14], 8); // C'est pour tester !!!!!!!!!
                             
                             var geojsonLayer = L.geoJson(geojson_data[document.getElementById("geo_field-select").value], {
                                 style,
@@ -523,7 +625,7 @@
                             var legend = L.control({position: 'bottomright'});
 
                             function resetHighlight(e) {
-                                geojson.resetStyle(e.target);
+                                geojsonLayer.resetStyle(e.target);
                             }
 
                             function zoomToFeature(e) {
@@ -541,15 +643,18 @@
                             legend.onAdd = function (map) {
 
                                 var div = L.DomUtil.create('div', 'info legend');
-                                var grades = [0, 10, 20, 50, 100, 200, 500, 1000];
                                 var labels = [];
                                 var from, to;
 
-                                for (var i = 0; i < grades.length; i++) {
-                                    from = grades[i];
-                                    to = grades[i + 1];
+                                for (var i = -1; i < breakpoints.length; i++) {
+                                    from = breakpoints[i];
+                                    to = breakpoints[i + 1];
+                                    if (document.getElementById("interval_type-select").value !== 'quantiles') {
+                                        try {from = from.toPrecision(3);} catch {}
+                                        try {to = to.toPrecision(3);} catch {}
+                                    }
 
-                                    labels.push(`<i style="background:${getColor(from + 1, broken)}"></i> ${from}${to ? `&ndash;${to}` : '+'}`);
+                                    labels.push(`<i style="background:${getColor(to)}"></i> ${from ? `${from}` : ''}${to ? `&ndash;${to}` : '+'}`);
                                 }
 
                                 div.innerHTML = labels.join('<br>');
@@ -557,6 +662,15 @@
                             };
 
                             legend.addTo(map);
+                        } else if (document.getElementById('map_type-select').value === 'heatmap') {
+                            var points = [], geo = geojson_data[document.getElementById('geo_field-select').value];
+                            for (var key in geo['features']) {
+                                try { // Inversion possible de lattitude et longitude ci-dessous
+                                    points.push([geo['features'][key]['geometry']['coordinates'][1], geo['features'][key]['geometry']['coordinates'][0],
+                                    geo['features'][key]['properties'][document.getElementById('z_field-select').value]])
+                                } catch {}
+                            }
+                            L.heatLayer(points).addTo(map);
                         } else {
                             var geojsonLayer = L.geoJSON(geojson_data[document.getElementById("geo_field-select").value]).addTo(map);
                             map.fitBounds(geojsonLayer.getBounds());

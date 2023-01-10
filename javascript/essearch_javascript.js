@@ -427,7 +427,7 @@ export class ESSearch {
               if (k < j) {
                 dico['data'][column_key]['value'][i]['record'][k] = dico['data'][column_key]['value'][i]['record'][j];
               }
-              k += 1;
+              k ++;
             }
           }
           dico['data'][column_key]['value'][i]['record'].splice(k, dico['data'][column_key]['value'][i]['record'].length - k)
