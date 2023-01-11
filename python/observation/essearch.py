@@ -458,7 +458,7 @@ class ESSearch:
                 if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
                     path = "data.datation.value.codec"
                 else:
-                    path = "data." + name + ".value.codec" # there is no default case when name == "name": path is set to "data.name.value.cod" and not to "name"
+                    path = "data." + name #+ ".value.codec" # there is no default case when name == "name": path is set to "data.name.value.cod" and not to "name"
             else: path = "data"
 
         if operand:
@@ -527,7 +527,7 @@ class ESSearch:
             elif isinstance(unwind, tuple): # format : (<path>, <unwind quantity>)
                 for _ in range(unwind[1]): self._unwind.append(unwind[0])
             else: raise TypeError("unwind must be a tuple, a str or an int.")
-        elif name and operand and "data." + name + ".value" not in self._unwind: self._unwind.append("data." + name + ".value")
+        #elif name and operand and "data." + name + ".value" not in self._unwind: self._unwind.append("data." + name + ".value")
 
         if self.heavy and operand is not None and path[:4] == "data":
             if path not in self._heavystages: self._heavystages.add(path) # peut-être mieux de laisser l'utilisateur choisir manuellement
@@ -637,7 +637,7 @@ class ESSearch:
         self._geonear = {}
         self._match = []
         if self.heavy == True: self._project = {"_data" : 0}
-        else: self._project = {} #{"_id" : 0, "_data" : 0, "information" : 0}
+        else: self._project = {}
         for el in self.hide: self._project |= {el : 0}
         
         for i in range(len(self.parameters)): # rewriting conditions in MongoDB format
@@ -653,7 +653,7 @@ class ESSearch:
                         self._match[j] = self._match[i]
                         j += 1
                 if j == 0: # when there is no $or
-                    if self._match[0]: match = {self._match[0]}
+                    if self._match[0]: match = self._match[0]
                 else: # when there is a $or
                     match = {"$or": self._match[:j]}
             return 'find', match
@@ -661,7 +661,7 @@ class ESSearch:
             if self._unwind:                                                    # Mongo $unwind stage
                 for unwind in self._unwind:
                     request.append({"$unwind" : "$" + unwind})
-            if self._heavystages:                                               # additional Mongo $set stage # à tester
+            if self._heavystages:                                               # additional Mongo $set stage
                 heavy = {}
                 for path in self._heavystages:
                     heavy |= {"_"+path:{"$cond":{"if":{"$eq":[{"$type":"$"+path},"object"]},"then":{"$objectToArray":"$"+path},"else": {"v":"$"+path}}}}
@@ -681,9 +681,10 @@ class ESSearch:
             if self._unwind:
                 dico = {}
                 for unwind in self._unwind:
-                    dico |= {unwind: ["$" + unwind]} # A FAIRE CORRECTEMENT ! (tel quel, ajoute toujours un seul array de chaque type...)
+                    if not unwind in dico: dico[unwind] = ["$" + unwind]
+                    else: dico[unwind] = [dico[unwind]]
                 request.append({"$set" : dico})
-            if self._project: request.append({"$project" : self._project})      # Mongo stage $project
+            if self._project: request.append({"$project" : self._project})      # Mongo $project stage
             return 'aggregation', request
 
     @property
@@ -757,6 +758,7 @@ class ESSearch:
                 else:
                     request_type, request_content = self._fullSearchMongo()
                     if request_type == 'find':
+                        for el in self.hide: self._project |= {el : 0}
                         cursor = data.find(request_content, self._project)
                     else:
                         cursor = data.aggregate(request_content)
@@ -772,7 +774,7 @@ class ESSearch:
                             if obs_out:
                                 result.append(self._filtered_observation(obs_out))
                     else:
-                        for item in cursor:
+                        for item in cursor[:3]:
                             try: obs_out = self._mongo_out_to_obs(item)
                             except:
                                 dic = {'idxdic': item['data']}
@@ -844,10 +846,6 @@ class ESSearch:
         # self.parameters = [[cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
         # dico = {"data": [["datation", [date1, date2, date3], [0,1,0,2,2,1]], ["location", [loc1, loc2, loc3], [0,1,2,0]]]}
         if len(obs) == 0: return obs
-        
-        if not(isinstance(obs, Observation)):
-            try: Observation(obs)   # pas parfait puisque Observation.from_obj(obs) ne sera pas fait implicitement.
-            except: raise TypeError("Could not convert argument to an Observation.")
 
         for i in range(len(self.parameters)):
             if self.parameters[i] != []:
@@ -993,7 +991,6 @@ class ESSearch:
 # parce que la conversion en observation est faite au sein d'execute et donc que les données entrées par le champ data ne sont pas converties
 # à voir pour modifier fusion / l'intégrer comme méthode de Ilist/Observation / modifier execute.
 # -> dans tous les cas, fait sens d'insérer fusion comme méthode d'Observation.
-        print(obsList)
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:
