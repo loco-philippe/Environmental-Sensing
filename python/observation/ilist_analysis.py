@@ -82,6 +82,7 @@ class Analysis:
         self.matrix = self._setmatrix()
         self._setinfos()
         self._setparent()
+        self._setgroups()
         self._setpartition()
         self._setinfospartition(partition)
         infosidx = [idx for idx in self.infos if idx['cat'] != 'variable']
@@ -372,12 +373,21 @@ class Analysis:
     def _setgroups(self):
         '''set groups (list of crossed Iindex groups)'''
         self.groups = []
-        listcrossed = []
-        for info in self.infos:
-            if info['crossed'] and not info['name'] in listcrossed:
-                listname = [self.infos[cros]['name'] for cros in info['crossed']] + info['name']
-                self.groups.append(listname)
-                listcrossed += listname
+        crossed = {info['num'] for info in self.infos if info['crossed']}
+        remove = set()
+        for num in crossed:
+            for num2 in crossed:
+                if num != num2 and self.infos[num]['parent'] in crossed:
+                    remove.add(num)
+        crossed -= remove     
+        setcrossed = set()
+        for num in crossed:
+            info = self.infos[num]
+            if not info['name'] in setcrossed:
+                setname = {self.infos[cros]['name'] for cros in info['crossed']
+                           if cros in crossed} | {info['name']}
+                self.groups.append(setname)
+                setcrossed |= setname
         return None
 
     def _setpartition(self):
