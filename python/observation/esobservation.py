@@ -540,8 +540,16 @@ class Observation(Ilist):
 # %% internal
 
     def _info(self, **kwargs):
-        ''' Create json dict with info datas'''
-        option = ES.mOption | kwargs
+        ''' Create json dict with info datas
+        
+        *Parameters*
+
+        - **json_info** : boolean (default False) - if True, add main information 
+        about Observation and Iindex
+        - **json_info_detail** : boolean (default False) - if True, add complemantary 
+        information about Iindex
+        '''
+        option = {"json_info": False, "json_info_detail": False} | kwargs
         dcobs = {}
         dcindex = {}
         if not option['json_info']:
@@ -560,13 +568,7 @@ class Observation(Ilist):
             dcidx[ES.lencodec] = len(idx.codec)
             dcidx[ES.box] = Observation._info_box(idx, **option)
             if option['json_info_detail']:
-                dcidx[ES.typecoupl] = infos[ind][ES.typecoupl]
-                dcidx[ES.cat] = infos[ind][ES.cat]
-                dcidx[ES.pname] = infos[ind][ES.pname]
-                dcidx[ES.typecodec] = idx.infos[ES.typecodec]
-                dcidx[ES.linkrate] = infos[ind][ES.linkrate]
-                dcidx[ES.disttomin] = idx.infos[ES.disttomin]
-                dcidx[ES.disttomax] = idx.infos[ES.disttomax]
+                dcidx |= infos[ind]
             dcindex[idx.name] = dcidx
         return {ES.information: {ES.observation: dcobs, ES.index: dcindex}}
 

@@ -83,8 +83,8 @@ class Es:
             "json_loc_name": False,  # affiche name ou instant/slot
             "json_param": False,  # ok
             "geojson": False,  # ok
-            "json_info": False,  # si True, ok pour tous les info_
-            "json_info_detail": False,
+            #"json_info": False,  # si True, ok pour tous les info_
+            #"json_info_detail": False,
             # "json_info_type"      : False,
             # "json_info_nval"      : False,
             # "json_info_box"       : False,
@@ -383,8 +383,10 @@ class Es:
         self.lencodec = "lencodec"
         self.box = "box"
         self.cat = "cat"
-        self.typecoupl = "typecoupl"
+        #self.typecoupl = "typecoupl"
         self.pname = "pname"
+        self.parent = "parent"
+        self.root = "root"
         self.typecodec = "typecodec"
         self.linkrate = "linkrate"
         self.disttomin = "disttomin"
