@@ -8,8 +8,8 @@ The project was born from the following observations:
 - there is no standard format used by the sensors (apart from the Environmental Sensing Service Bluetooth) to transmit the information (binary and textual),
 - there is no data exchange format presenting at the same time a temporal, 
 spatial and physical component (apart from file formats),
-- the main standards used to exchange data are CSV file or JSON object. These two
- standards are not suitable and not optimized for complex data,
+- the main standard used to exchange data is CSV file. This
+ standard is not suitable and not optimized for complex data,
 - we spend a lot of energy converting this type of data to make it usable.
 
 ## The Environmental Sensing project (ES project)
@@ -29,7 +29,7 @@ in différents languages (python, C++)
 
 It allows to :
     
-- accelerate standards convergence
+- accelerate standards convergence (ie Bluetooth for air pollutants)
 - Facilitate the use and sharing of environmental data
 - Standardize both data acquisition equipment (sensors) and processing applications,
 - Implement a software architecture replacing all coding / decoding operations 
@@ -50,7 +50,9 @@ all situations (platform)
 
 ## Documentation
 
-
+- Tabular data study 
+    - [Tabular data management](./documentation/FR_tabular_structure.ipynb)
+    - [What future for the CSV format](./documentation/FR_format_csv.ipynb) ?
 - Project presentation
     - overview of [tabular structures (french)](./documentation/FR_tabular_structure.ipynb)
     - [interoperability](./documentation/interoperability.pdf) of environmental data
