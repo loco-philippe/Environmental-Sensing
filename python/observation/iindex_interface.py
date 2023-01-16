@@ -123,7 +123,16 @@ class IindexInterface:
 
         *Returns* 
 
-        - **tuple** : name, typevaluedec, codec, parent, keys, isfullindex, isparent, isvar'''
+        - **tuple** : name, dtype, codec, parent, keys, isfullindex, isparent, isvar
+            name (None or string): name of the Iindex
+            dtype (None or string): type of data
+            codec (list): lilst of Iindex codec values
+            parent (int): Iindex parent or ES.nullparent
+            keys (None or list): Iindex keys
+            isfullindex (boolean): True if Iindex is full (len(keys) = len(self))
+            isparent(boolean): True if parent is >= 0
+            isvar(boolean): not used
+            '''
         if bs is None:
             return (None, None, [], ES.nullparent, None, False, False, False)
         if isinstance(bs, bytes):
