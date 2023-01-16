@@ -75,8 +75,7 @@ class Test_Ilist(unittest.TestCase):
                          [True, False, True, False, True, False]],
                         ['namvalue', 'datationvalue', 'locationvalue', 'propertyvalue'])
         self.assertTrue(il1 == il2)
-        self.assertTrue(il1 == Ilist(
-            il1.lindex, lvarname=il1.lvarname) == copy(il1))
+        self.assertTrue(il1 == Ilist(il1.lindex) == copy(il1))
 
     def test_creation_mode(self):
         il1 = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2],

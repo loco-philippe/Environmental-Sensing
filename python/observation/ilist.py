@@ -38,9 +38,9 @@ from copy import copy
 import math
 import json
 import csv
+import datetime
 import cbor2
 import pandas
-import datetime
 
 from esconstante import ES
 from iindex import Iindex
@@ -174,7 +174,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.voxel`
     '''
 
-    def __init__(self, listidx=None, lvarname=None, reindex=True):
+    def __init__(self, listidx=None, reindex=True):
         '''
         Ilist constructor.
 
@@ -249,7 +249,8 @@ class Ilist(IlistStructure, IlistInterface):
                 idxname[ind] = 'i'+str(ind)
         lidx = [list(IindexInterface.decodeobj(
             idx, typevalue, context=False)) for idx in val]
-        lindex = [Iindex(idx[2], name, list(range(length)), idx[1], lendefault=length, reindex=reindex)
+        lindex = [Iindex(idx[2], name, list(range(length)), idx[1],
+                         lendefault=length, reindex=reindex)
                   for idx, name in zip(lidx, idxname)]
         return cls(lindex, reindex=False)
 
@@ -349,13 +350,12 @@ class Ilist(IlistStructure, IlistInterface):
             raise IlistError("the type of parameter is not available")
         return cls._init_obj(lis, reindex=reindex, context=context)
 
-    def merge(self, name=None, fillvalue=math.nan, reindex=False, simplename=False):
+    def merge(self, fillvalue=math.nan, reindex=False, simplename=False):
         '''
         Merge method replaces Ilist objects included into its constituents.
 
         *Parameters*
 
-        - **name** : str (default None) - name of the new Ilist object
         - **fillvalue** : object (default nan) - value used for the additional data
         - **reindex** : boolean (default False) - if True, set default codec after transformation
         - **simplename** : boolean (default False) - if True, new Iindex name are
@@ -415,12 +415,10 @@ class Ilist(IlistStructure, IlistInterface):
             for name, idx in listidx.astype('category').items():
                 lis = list(idx.cat.categories)
                 if lis and isinstance(lis[0], pandas._libs.tslibs.timestamps.Timestamp):
-                    lis = [ts.to_pydatetime().astimezone(datetime.timezone.utc) for ts in lis]
+                    lis = [ts.to_pydatetime().astimezone(datetime.timezone.utc)
+                           for ts in lis]
                 lindex.append(Iindex(lis, name, list(idx.cat.codes),
-                                    lendefault=len(listidx), castobj=False))
-            '''lindex = [Iindex(list(idx.cat.categories), name, list(idx.cat.codes),
-                             lendefault=len(listidx), castobj=False)
-                      for name, idx in listidx.astype('category').items()]'''
+                                     lendefault=len(listidx), castobj=False))
             return cls(lindex, reindex=reindex)
 
         if isinstance(listidx, dict):
@@ -445,58 +443,69 @@ class Ilist(IlistStructure, IlistInterface):
             tuple(zip(*lidx))
 
         leng = [len(cod) for cod in codec]
-        fullmode = not max(isfullkeys) and max(
-            leng) == min(leng)  # mode full : tous False
+        # mode full : tous False
+        fullmode = not max(isfullkeys) and max(leng) == min(leng)
         # mode default : tous True (idem all(isfullkeys))
         defmode = min(isfullkeys)
 
         # not max(isparent) : tous isparent = False
-        # if not max(isparent) and ((fullmode and max(leng) == min(leng)) or defmode): # mode full ou mode default
         if not max(isparent) and (fullmode or defmode):  # mode full ou mode default
             lindex = [Iindex(idx[2], idx[0], idx[4], idx[1],
                              reindex=reindex) for idx in lidx]
             return cls(lindex, reindex=reindex)
 
-        crossed = []
-        # crossed : pas d'index (isfullindex false), pas de parent(isparent false)
-        if fullmode:  # au moins un fullkeys ou une longueur différente
-            length = max(leng)
-        else:  # au moins un fullkeys ou une longueur différente
-            if max(isfullkeys):
-                length = len(keys[isfullkeys.index(True)])
-                crossed = [i for i, (isfullk, ispar, lengt) in
-                           enumerate(zip(isfullkeys, isparent, leng))
-                           if not ispar and not isfullk and 1 < lengt < length]
-            else:  # max(leng) != min(leng)
-                # sinon pas de fullindex => matrice et dérivés
-                crossed = [i for i, (isfullk, ispar, lengt) in
-                           enumerate(zip(isfullkeys, isparent, leng))
-                           if not ispar and not isfullk and 1 < lengt]
-                lencrossed = [leng[ind] for ind in crossed]
-                if max(lencrossed) == min(lencrossed):
-                    length = lencrossed[0]
-                    crossed = []
-                else:
-                    length = math.prod([leng[i] for i in crossed])
-                    if length / max(lencrossed) == max(lencrossed):
-                        length = max(lencrossed)
-                        crossed = [i for i, (isfullk, ispar, lengt) in
-                                   enumerate(zip(isfullkeys, isparent, leng))
-                                   if not ispar and not isfullk and 1 < lengt < length]
+        length, crossed = Ilist._init_len_cros(
+            fullmode, leng, isfullkeys, keys, isparent)
         keyscross = util.canonorder([leng[i] for i in crossed])
+        # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
         for ind in range(len(crossed)):
             lidx[crossed[ind]][4] = keyscross[ind]  # keys
-
         for ind in range(len(lidx)):
             Ilist._init_keys(ind, lidx, length)
-        # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
         lindex = [Iindex(idx[2], idx[0], idx[4], idx[1],
                          reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=False)
 
     @staticmethod
+    def _init_len_cros(fullmode, leng, isfullkeys, keys, isparent):
+        ''' initialization of length and crossed data'''
+        # crossed : pas d'index (isfullindex false), pas de parent(isparent false)
+        crossed = []
+        if fullmode:  # au moins un fullkeys ou une longueur différente
+            length = max(leng)
+            return length, crossed
+
+        # au moins un fullkeys ou une longueur différente
+        if max(isfullkeys):
+            length = len(keys[isfullkeys.index(True)])
+            crossed = [i for i, (isfullk, ispar, lengt) in
+                       enumerate(zip(isfullkeys, isparent, leng))
+                       if not ispar and not isfullk and 1 < lengt < length]
+            return length, crossed
+
+        # max(leng) != min(leng) pas de fullindex => matrice et dérivés
+        crossed = [i for i, (isfullk, ispar, lengt) in
+                   enumerate(zip(isfullkeys, isparent, leng))
+                   if not ispar and not isfullk and 1 < lengt]
+        lencrossed = [leng[ind] for ind in crossed]
+
+        if max(lencrossed) == min(lencrossed):
+            length = lencrossed[0]
+            crossed = []
+            return length, crossed
+
+        length = math.prod([leng[i] for i in crossed])
+        if length / max(lencrossed) == max(lencrossed):
+            length = max(lencrossed)
+            crossed = [i for i, (isfullk, ispar, lengt) in
+                       enumerate(zip(isfullkeys, isparent, leng))
+                       if not ispar and not isfullk and 1 < lengt < length]
+        return length, crossed
+
+    @staticmethod
     def _init_keys(ind, lidx, leng):
         ''' initialization of keys data'''
+        # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
         if lidx[ind][4] and (lidx[ind][3] is None or lidx[ind][3] < 0):
             return
         if lidx[ind][4] and len(lidx[ind][4]) == leng:
@@ -511,14 +520,13 @@ class Ilist(IlistStructure, IlistInterface):
             return
         if not lidx[lidx[ind][3]][4] or len(lidx[lidx[ind][3]][4]) != leng:
             Ilist._init_keys(lidx[ind][3], lidx, leng)
-        if not lidx[ind][4]:
-            if len(lidx[ind][2]) == len(lidx[lidx[ind][3]][2]):    # coupled format
-                lidx[ind][4] = lidx[lidx[ind][3]][4]
-                return
-            # derived format without keys
-            lencodp = len(lidx[lidx[ind][3]][2])  # len codec parent
-            lidx[ind][4] = [(i*len(lidx[ind][2])) //
-                            lencodp for i in range(lencodp)]
+        if not lidx[ind][4] and len(lidx[ind][2]) == len(lidx[lidx[ind][3]][2]):
+            # coupled format
+            lidx[ind][4] = lidx[lidx[ind][3]][4]
+            return
+        if not lidx[ind][4]:  # derived format without keys
+            lenp = len(lidx[lidx[ind][3]][2])  # len codec parent
+            lidx[ind][4] = [(i*len(lidx[ind][2])) // lenp for i in range(lenp)]
             return
         # derived keys
         lidx[ind][4] = Iindex.keysfromderkeys(
