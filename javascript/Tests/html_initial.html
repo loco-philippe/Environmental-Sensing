@@ -48,7 +48,7 @@
             }
         </style>
         <script type="text/javascript">
-            var uri = '', database_name = '', collection_name = '', req_count = -1, column_names, added_fields = [0],
+            var uri = '', database_name = '', collection_name = '', req_count = -1, column_names = [], added_fields = [0],
                 responseText, result_data, column_names_out, formatted_data, formatted_data_promise, geojson_data, plot_count = 0,
                 map;
 // PROBLEME : Données perdues lorsque l'onglet se décharge.
@@ -90,9 +90,10 @@
                     name_selectors[i].disabled = false;
                     exactPathVisibility (i);
                 }
-                var project_selector = document.getElementById("project-select"); // Comprendre pourquoi ne se met pas à jour après changement de base de données
+                var project_selector = document.getElementById("project-select");
                 project_selector.innerHTML = '';
                 column_names.forEach(option => {
+        // Indiquer explicitement « La collection sélectionnée ne contient aucun champ. » quand c'est le cas (pas évident en l'état)
                     var checkbox = document.createElement("div");
                     checkbox.innerHTML = "<input type=\"checkbox\" id=\"" + option + "\" value=\"" + option + "\" checked> \
                                     <label for=\"" + option + "\">" + option + "</label>"
@@ -128,16 +129,19 @@
                     "\"> Valeur de comparaison : <input type=\"text\" class=\"operand-input\" id=\"operand-input_" +
                     added_fields.length + "\"> <button id=\"add_field_" + added_fields.length + 
                     "\" onclick=\"addField (" + added_fields.length + ")\">Ajouter un champ à cette condition</button> \
-                    <button id=\"remove_condition_" +  added_fields.length + "\" onclick=\"removeCondition (" +  
+                    <button id=\"remove_condition_" + added_fields.length + "\" onclick=\"removeCondition (" + 
                     added_fields.length + ")\">Enlever cette condition</button></div><div class=\"exact-path-input-div\" \
-                    id=\"exact-path-input-div_" + added_fields.length + "\"  style=\"display: none;\">Chemin exact : <input type=\"text\" \
+                    id=\"exact-path-input-div_" + added_fields.length + "\" style=\"display: none;\">Chemin exact : <input type=\"text\" \
                     class=\"exact-path-input\" id=\"exact-path-input_" + added_fields.length + "\"></div>";
                 parent.appendChild(div);
                 var sel = document.getElementById("name-select_" + added_fields.length);
                 column_names.forEach(option => sel.add(new Option(option, option)));
-                sel.add(new Option("Entrer un chemin exact.", "exact-path"))
-                document.querySelectorAll("option[value='exact-path']")[added_fields.length].style.fontStyle = 'italic';
-                exactPathVisibility (added_fields.length);
+                if (document.getElementById("mongo_validity").innerHTML === "Valide") { // Voir si on trouve une meilleure condition.
+                    sel.add(new Option("Entrer un chemin exact.", "exact-path"));
+                    var exact_path_fields = document.querySelectorAll("option[value='exact-path']");
+                    for (var i = 0; i < exact_path_fields.length; i++) {exact_path_fields[i].style.fontStyle = 'italic';}
+                    exactPathVisibility (added_fields.length);
+                }
                 added_fields[added_fields.length] = 0;
             }
 
@@ -147,7 +151,7 @@
             }
 
             function validationMongo () {
-                // Effectue la requête POST envoyant uri, database_name et collection_name
+                // Makes the POST request sending uri, database_name et collection_name
                 req_count += 1;
                 var req_id = req_count;
                 if (document.getElementById("mongo_validity").innerHTML === "Valide") {document.getElementById("coll_stats").innerHTML = "...";}
@@ -201,7 +205,7 @@
                     xhr.setRequestHeader("Content-Type", "application/json");
                     var condArray = [], param;
                     for (var i in added_fields) {
-                        var div = document.getElementById("cond_" + i); // est-ce bien le plus optimisé ?
+                        var div = document.getElementById("cond_" + i);
                         condArray.push({});
                         param = div.querySelector('#name-select_' + i).value;
                         if (param && param !== '' && param !== "exact-path") {
@@ -234,6 +238,8 @@
                         document.getElementById("request-result").style.color = "green";
                         document.getElementById("request-result").innerHTML = "Requête effectuée ✓";
                         formatted_data_promise = dataFormatting ();
+                        console.log(formatted_data_promise); /**/
+                        console.log("Le progrès n'attend pas."); /**/
                         updateRenderingParameters (document.getElementById("rendering-select").value);
                         document.getElementById("export_div").style.display = 'block';
                     }}
@@ -266,8 +272,7 @@
                         for (var item_key in line) { // PROBLEMES AVEC L'ORDRE POURRAIENT SURVENIR (mais ce n'est pas le cas)
                             var item;
                             if (line[item_key] instanceof Date) {
-                                item = line[item_key].toString(); //LocaleDateString('fr-FR', {timeZone: 'UTC', month: 'long', 
-                                                        //day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'});
+                                item = line[item_key].toString();
                             } else if (typeof line[item_key] === 'object') {
                                 item = JSON.stringify(line[item_key]);
                             } else {
@@ -332,7 +337,6 @@
                     colorsValue ();
                 } else {
                     document.getElementById('rendering_parameters').removeChild(document.getElementById('choropleth_parameters'));
-                    // serait-il mieux de faire passer de visible à invisible plutôt que l'enlever totalement ?
                 }
             }
 
@@ -460,6 +464,7 @@
                         }
                     }
                 }
+                console.log("formatage fini"); /**/
             }
 
             async function render () {
@@ -471,7 +476,11 @@
                 }
                 document.getElementById('graphic').style.display = 'none';
                 document.getElementById('map').style.display = 'none';
+                console.log(formatted_data_promise); /**/
+                await formatted_data_promise; /**/
+                console.log(formatted_data_promise); /**/
                 formatted_data_promise.then((resolve, reject) => {
+                console.log(formatted_data_promise); /**/
                     var plot, x, marks;
                     if (graph_type === 'bar-chart') {
                 // Ajouter l'échelle appropriée aux dates
@@ -523,7 +532,7 @@
                         console.log("Affichage d'une carte");
                         console.log(geojson_data);
                         document.getElementById('map').style.display = 'block'; //peut-être nécessaire d'utiliser une fonction de leaflet ici pour ne pas mettre le bazar ?
-                        map = L.map('map').setView([0, 0], 13); // recalculé automatiquement plus loin, est-ce vraiment important ?
+                        map = L.map('map');
                         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                             maxZoom: 18
@@ -563,8 +572,23 @@
                                         breakpoints.push(-Math.exp(Math.log(-data[0]) + (Math.log(-data[data.length - 1]) - Math.log(-data[0]))* i / n));
                                     }
                                 } else {
-                                    // cas le plus complexe : valeurs positives et négatives => échelle logarithmique vers le haut et le bas
-                                    // -100, -10, 1, 0, 1, 10, 100, 1000
+                                    var n_neg, n_pos;
+                                    if (n % 2 === 1) {
+                                        n_neg = (n - 1) / 2; n_pos = (n - 1) / 2;
+                                    } else {
+                                        if (Math.log(data[data.length - 1]) - Math.log(-data[0]) >= 0) {
+                                            n_neg = n / 2 - 1; n_pos = n / 2;
+                                        } else {
+                                            n_neg = n / 2; n_pos = n / 2 - 1;
+                                        }
+                                    }
+                                    for (var i = 1; i < n0; i++) {
+                                        breakpoints.push(-Math.exp(Math.log(-data[0]) * i / n0));
+                                    }
+                                    breakpoints.push(0);
+                                    for (var i = 1; i < n0; i++) {
+                                        breakpoints.push(Math.exp(Math.log(data[data.length - 1]) * i / n));
+                                    }
                                 }
                             } else {
                                 for (var i = 1; i < n; i++) {
@@ -670,7 +694,7 @@
                                     geo['features'][key]['properties'][document.getElementById('z_field-select').value]])
                                 } catch {}
                             }
-                            L.heatLayer(points).addTo(map);
+                            L.heatLayer(points).addTo(map); // Déterminer les options de heatLayer adaptées au jeu de données plutôt que de laisser les valeurs par défaut.
                         } else {
                             var geojsonLayer = L.geoJSON(geojson_data[document.getElementById("geo_field-select").value]).addTo(map);
                             map.fitBounds(geojsonLayer.getBounds());

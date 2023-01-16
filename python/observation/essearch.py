@@ -196,6 +196,34 @@ def insert_from_doc(collection, document , info=True):
             try: insert_one_to_mongo(collection, line, info)
             except: pass
 
+def insert_to_mongo(collection, obj, info=True):
+    '''Takes an observation or a list of observations and inserts them into a MongoDB collection, with info by default.'''
+    # Faire une fonction pour permettre l'ajout direct de fichiers csv.
+    inserted_list = []
+    if isinstance(obj, list):
+        pile = obj
+    elif isinstance(obj, Observation):
+        pile = [obj]
+    else:
+        pile = [Observation.from_obj(obj)]
+    for obs in pile:
+        if obs.id: obs_hash = obs.id
+        else: obs_hash = hash(obs)
+        metadata = {'type': "observationMetadata", 'id': obs_hash}
+        if obs.name : metadata['name']  = obs.name
+        if obs.param: metadata['param'] = obs.param
+        metadata['information'] = Observation._info(True)#, True)
+        inserted_list.append(metadata)
+        if len(obs.lname) == 1:
+            for line in obs:
+                inserted_list.append({obs.lname[0]: util.json(line, encoded=False, typevalue=None, simpleval=False, geojson=True),
+                                        '_hash': obs_hash})
+        elif len(obs.lname) > 1:
+            for line in obs:
+                inserted_list.append({obs.lname[i]: util.json(line[i], encoded=False, typevalue=None, simpleval=False, geojson=True) 
+                                                                for i in range(len(line))} | {'_hash': obs_hash})
+    if inserted_list != []: collection.insert_many(inserted_list)
+
 def insert_one_to_mongo(collection, obj, info=True):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
     if not isinstance(obj, Observation): obj = Observation.from_obj(obj)
@@ -458,7 +486,7 @@ class ESSearch:
                 if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
                     path = "data.datation.value.codec"
                 else:
-                    path = "data." + name #+ ".value.codec" # there is no default case when name == "name": path is set to "data.name.value.cod" and not to "name"
+                    path = name #"data." + name + ".value.codec" # there is no default case when name == "name": path is set to "data.name.value.cod" and not to "name"
             else: path = "data"
 
         if operand:
@@ -529,12 +557,11 @@ class ESSearch:
             else: raise TypeError("unwind must be a tuple, a str or an int.")
         #elif name and operand and "data." + name + ".value" not in self._unwind: self._unwind.append("data." + name + ".value")
 
-        if self.heavy and operand is not None and path[:4] == "data":
+        if self.heavy and operand is not None:
             if path not in self._heavystages: self._heavystages.add(path) # peut-être mieux de laisser l'utilisateur choisir manuellement
             path = "_" + path + ".v"
 
         if operand is None: # no operand => we only test if there is something located at path or at path given by name
-            if name: path = "data." + name
             comparator = "$exists"
             operand = 1
         else:
@@ -630,16 +657,13 @@ class ESSearch:
         Takes self.parameters and returns a MongoDB Aggregation query.
         """
         request = []
-        self._match = {}
+        self._match = []
         self._unwind = []
         self._heavystages = set() # two additional set stages when format is too unknown
         self._set = {}
         self._geonear = {}
         self._match = []
-        if self.heavy == True: self._project = {"_data" : 0}
-        else: self._project = {}
-        for el in self.hide: self._project |= {el : 0}
-        
+
         for i in range(len(self.parameters)): # rewriting conditions in MongoDB format
             self._match.append({})
             for cond in self.parameters[i]:
@@ -678,7 +702,7 @@ class ESSearch:
                     if self._match[0]: request.append({"$match" : self._match[0]})
                 else: # when there is a $or
                     request.append({"$match" : {"$or": self._match[:j]}})
-            if self._unwind:
+            if self._unwind:                                                    # Second Mongo $set stage when unwind not empty
                 dico = {}
                 for unwind in self._unwind:
                     if not unwind in dico: dico[unwind] = ["$" + unwind]
@@ -692,6 +716,9 @@ class ESSearch:
         '''
         Getter returning the content of the aggregation query to be executed with ESSearch.execute().
         '''
+        if self.heavy: self._project = {"_data" : 0}
+        else: self._project = {}
+        for el in self.hide: self._project |= {el : 0}
         request_type, request_content = self._fullSearchMongo()
         if request_type == 'find':
             return 'collection.find(' + str(request_content) + ', ' + str(self._project) + ')'
@@ -704,6 +731,9 @@ class ESSearch:
         Getter returning the cursors of the aggregation query result on all collections and cursors contained in self.input
         or on the argument input if given.
         '''
+        if self.heavy: self._project = {"_data" : 0}
+        else: self._project = {}
+        for el in self.hide: self._project |= {el : 0}
         request_type, request_content = self._fullSearchMongo()
         if input: 
             if request_type == 'find':
@@ -722,35 +752,45 @@ class ESSearch:
         else:
             return cursor_list
 
-    def execute(self, filtered = False, namefused = False, single = False, fillvalue = None):
+    def execute(self, returnmode = None, filtered = False, fillvalue = None):
         '''
         Executes the request and returns its result, either in one or many Observations.
 
         *Parameter*
 
         - **fitered** :  bool (default False) - Parameter to force filtering on Mongo out.
-        - **namefused** :  bool (default False) - Put to True to merge observations whose names are the same together.
-        - **single** :  bool (default False) - Put to True in order to return a single observation instead of a list of observations.
+        - **returnmode** : str (default None) - Parameter giving the format of the output:
+            - None: output is returned as it is in the database;
+            - 'observation': Each element is returned as an observation, but original observations aren't recreated;
+            - 'hashfused': observations whose hashes are the same are merged together; 
+            - 'single': return a single observation merging all observations together.
         - **fillvalue** :  (default None) - Value to use to fill gaps when observations are fused together.
         '''
         result = []
+        if self.heavy: self._project = {"_id" : 0, "_data" : 0}
+        else: self._project = {"_id" : 0}
+        for el in self.hide: self._project |= {el : 0}
+        if returnmode != 'observation' and returnmode != 'hashfused': self._project |= {'_hash': 0}
+        
         if self.parameters == [[]]:
             for data in self.input:
                 if isinstance(data, Observation):
                     result.append(data)
                 else:
-                    self._project = {}
-                    for el in self.hide: self._project |= {el : 0}
-                    cursor = data.find({}, self._project)
+                    cursor = data.find({'type': {'$not': {'$eq': 'observationMetadata'}}}, self._project)
                     for item in cursor:
-                        try: result.append(Observation.from_obj(item))
-                        except:
-                            dic = {'idxdic': item['data']}
-                            if 'name'   in item: dic['name']    = item['name']
-                            if 'id'     in item: dic['id']      = item['id']
-                            if 'param'  in item: dic['param']   = item['param']
-                            result.append(Observation.dic(**dic)) # à voir selon le format choisi pour l'insertion
-                                                            # (avec juste les éléments de la ligne ou avec data, name, id, param indiqués.)
+                        if returnmode == 'observation' or returnmode == 'hashfused':
+                            dic = {'idxdic': item}
+                            try:
+                                metadata = data.find_one({'type': 'observationMetadata', 'id': item['_hash']})
+                                if 'name'   in metadata: dic['name']    = metadata['name']
+                                if 'id'     in metadata: dic['id']      = str(metadata['id'])
+                                if 'param'  in metadata: dic['param']   = metadata['param']
+                                del item['_hash']
+                                result.append(Observation.dic(**dic))
+                            except: raise KeyError('Unable to retreive data. Try executing with returnmode = None. If you used parameter inverted, you should add more conditions in order not to return the whole collection.')
+                        else:
+                            result.append(Observation.dic(item))
         else:
             for data in self.input:
                 if isinstance(data, Observation):
@@ -758,39 +798,48 @@ class ESSearch:
                 else:
                     request_type, request_content = self._fullSearchMongo()
                     if request_type == 'find':
-                        for el in self.hide: self._project |= {el : 0}
                         cursor = data.find(request_content, self._project)
                     else:
                         cursor = data.aggregate(request_content)
                     if filtered:
                         for item in cursor:
-                            try: obs_out = self._mongo_out_to_obs(item)
-                            except:
-                                dic = {'idxdic': item['data']}
-                                if 'name'   in item: dic['name']    = item['name']
-                                if 'id'     in item: dic['id']      = item['id']
-                                if 'param'  in item: dic['param']   = item['param']
-                                obs_out = Observation.dic(**dic) # idem à voir
+                            if returnmode == 'observation' or returnmode == 'hashfused':
+                                dic = {'idxdic': item}
+                                try:
+                                    metadata = data.find_one({'type': 'observationMetadata', 'id': item['_hash']})
+                                    if 'name'   in metadata: dic['name']    = metadata['name']
+                                    if 'id'     in metadata: dic['id']      = str(metadata['id'])
+                                    if 'param'  in metadata: dic['param']   = metadata['param']
+                                    del item['_hash']
+                                    obs_out = Observation.dic(**dic)
+                                except: raise KeyError('Unable to retreive data. Try executing with returnmode = None. If you used parameter inverted, you should add more conditions in order not to return the whole collection.')
+                            else:
+                                obs_out = Observation.dic(item)
                             if obs_out:
                                 result.append(self._filtered_observation(obs_out))
                     else:
-                        for item in cursor[:3]:
-                            try: obs_out = self._mongo_out_to_obs(item)
-                            except:
-                                dic = {'idxdic': item['data']}
-                                if 'name'   in item: dic['name']    = item['name']
-                                if 'id'     in item: dic['id']      = item['id']
-                                if 'param'  in item: dic['param']   = item['param']
-                                obs_out = Observation.dic(**dic) # idem à voir
+                        for item in cursor:
+                            if returnmode == 'observation' or returnmode == 'hashfused':
+                                dic = {'idxdic': item}
+                                try: 
+                                    metadata = data.find_one({'type': 'observationMetadata', 'id': item['_hash']})
+                                    if 'name'   in metadata: dic['name']    = metadata['name']
+                                    if 'id'     in metadata: dic['id']      = str(metadata['id'])
+                                    if 'param'  in metadata: dic['param']   = metadata['param']
+                                    del item['_hash']
+                                    obs_out = Observation.dic(**dic)
+                                except: raise KeyError('Unable to retreive data. Try executing with returnmode = None. If you used parameter inverted, you should add more conditions in order not to return the whole collection.')
+                            else:
+                                obs_out = Observation.dic(item)
                             if obs_out:
                                 result.append(obs_out)
-        if single:
-            return self._fusion(result, fillvalue = fillvalue)
-        elif namefused: return self._fusion(result, namefused, fillvalue)
+        if returnmode == 'single': return self._fusion(result, fillvalue = fillvalue)
+        elif returnmode == 'hashfused': return self._fusion(result, True, fillvalue)
         else: return result
 
     def _mongo_out_to_obs(self, dico):
         '''
+        // Obsolete //
         Takes a dictionnary output by the Mongo request and filters it to return an Observation which contains only valid measures.
         '''
         valid_records = set()
@@ -982,7 +1031,7 @@ class ESSearch:
         else:
             return False
 
-    def _fusion(self, obsList, namefused = False, fillvalue = None, name = None):
+    def _fusion(self, obsList, hashfused = False, fillvalue = None, name = None):
         '''
         Takes a list of observations and returns one observation merging them together in one single observation
         or a list of observations where all observations sharing the same name are fused together.
@@ -994,7 +1043,7 @@ class ESSearch:
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:
-            if not namefused:
+            if not hashfused:
                 lidx = []
                 new_lname = set()
                 for obs in obsList:
@@ -1048,7 +1097,7 @@ class ESSearch:
                     new_obsList[i] = self._fusion(new_obsList[i], False, fillvalue, new_obsList[i][0].name)
                 return new_obsList
         else:
-            if not namefused:
+            if not hashfused:
                 if self.sources:
                     sources = self.sources
                 else:
