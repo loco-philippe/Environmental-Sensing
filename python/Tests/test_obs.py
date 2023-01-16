@@ -444,23 +444,20 @@ class TestObservation(unittest.TestCase):
     '''Unit tests for `ES.observation.Obs` '''
 
     def test_obs_creation_copy(self):
-        listob = [Observation(), Observation(id='truc', listidx=Ilist.obj([1, 2, 3])),
+        listob = [Observation(), Observation(listidx=Ilist.obj([1, 2, 3])),
                   Observation.from_obj({'data': [1, 2, 3]}),
-                  Observation.obj({'data': [1, 2, 3], 'id':'truc'}),
-                  Observation.obj({'data': [1, 2, 3], 'id':'truc',
-                                   'param':{'date': '21-12'}}),
+                  Observation.obj({'data': [1, 2, 3]}),
+                  Observation.obj({'data': [1, 2, 3], 'param':{'date': '21-12'}}),
                   Observation.std([11, 12], 'dat1', ['loc1', 'loc2'],
                                   'prp1', name='truc'),  # !!!
                   Observation.std(result=[10, 20], datation='dat1',
                                   location=['loc1', 'loc2'], property=[None], name='truc'),
-                  #Observation.dic(dict((dat1, loc1, prop3, _res(3))), name='truc'),
                   Observation(
                       Ilist.obj([list(dat1), list(loc1), list(prop3), list(_res(3))]), name='truc'),
                   Observation.obj({'data': [list(loc3), list(dat3)+[0], list(prop2),
                                             ['result', [{'file': 'truc', 'path': 'ertert'}, 1, 2, 3,
                                                         4, ['truc', 'rt']]]]})]
         for ob in listob:
-            # print(ob)
             self.assertEqual(Observation.obj(ob.to_obj()), ob)
             self.assertEqual(copy.copy(ob), ob)
 

@@ -36,7 +36,6 @@ import cbor2
 from copy import copy
 
 from ilist import Ilist
-from iindex import Iindex
 from util import util
 from iindex_interface import IindexEncoder, CborDecoder
 from esconstante import ES
@@ -52,7 +51,6 @@ class Observation(Ilist):
     *Additional attributes (for @property see methods)* :
 
     - **name** : textual description
-    - **id** : textual identity 
     - **param** : namedValue dictionnary (external data)
 
     The methods defined in this class (included inherited) are :
@@ -68,6 +66,7 @@ class Observation(Ilist):
     *dynamic value (getters @property)*
 
     - `Observation.bounds`
+    - `Observation.id`
     - `Observation.jsonFeature`
     - `Observation.setLocation`
     - `Observation.setDatation`
@@ -162,14 +161,13 @@ class Observation(Ilist):
     """
 
 # %% constructor
-    def __init__(self, listidx=None, name=None, id=None, param=None, reindex=True):
+    def __init__(self, listidx=None, name=None, param=None, reindex=True):
         '''Observation constructor
 
         *Parameters*
 
         - **listidx**  : object (default None) - list of Iindex data or Ilist or Observation
         - **name**     : string (default None) - Obs name
-        - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
 
         if isinstance(listidx, Observation):
@@ -179,14 +177,12 @@ class Observation(Ilist):
             else:
                 self.param = param
             self.name = listidx.name
-            self.id = listidx.id
             self.analysis = Analysis(self)
             return
         if isinstance(listidx, Ilist):
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.param = param
             self.name = name
-            self.id = id
             self.analysis = Analysis(self)
             return
         if not listidx:
@@ -194,11 +190,10 @@ class Observation(Ilist):
         else:
             Ilist.__init__(self, listidx=listidx, reindex=reindex)
         self.name = name
-        self.id = id
         self.param = param
 
     @classmethod
-    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, id=None, param=None):
+    def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, param=None):
         '''
         Observation constructor (external dictionnary).
 
@@ -208,14 +203,13 @@ class Observation(Ilist):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable
         - **name**     : string (default None) - Observation name
-        - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
         listidx = Ilist.dic(idxdic, typevalue=typevalue)
-        return cls(listidx=listidx, name=name, id=id, param=param)
+        return cls(listidx=listidx, name=name, param=param)
 
     @classmethod
     def std(cls, result=None, datation=None, location=None, property=None,
-            name=None, id=None, param=None, typevalue=ES.def_clsName):
+            name=None, param=None, typevalue=ES.def_clsName):
         '''
         Generate an Observation Object with standard indexes
 
@@ -226,7 +220,6 @@ class Observation(Ilist):
         - **property** : compatible Iindex (default None) - index for PropertyValue
         - **result  ** : compatible Iindex (default None) - index for Variable(NamedValue)
         - **name**     : string (default None) - Observation name
-        - **id**       : string (default None) - Identification string
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
         idxdic = {}
         length = 0
@@ -244,7 +237,7 @@ class Observation(Ilist):
         for item in idxdic.items():
             if len(item[1]) == 1:
                 idxdic[item[0]] = item[1] * length
-        return cls.dic(idxdic=idxdic, typevalue=typevalue, name=name, id=id, param=param)
+        return cls.dic(idxdic=idxdic, typevalue=typevalue, name=name, param=param)
 
     @classmethod
     def from_obj(cls, bs=None, reindex=True, context=True):
@@ -266,12 +259,6 @@ class Observation(Ilist):
             dic = bs
         else:
             raise ObsError("the type of parameter is not available")
-        if ES.id in dic:
-            id = dic[ES.id]
-        else:
-            id = None
-        if id and not isinstance(id, str):
-            raise ObsError('id is not a str')
         if ES.param in dic:
             param = dic[ES.param]
         else:
@@ -291,7 +278,7 @@ class Observation(Ilist):
         if data and not isinstance(data, (list, dict)):
             raise ObsError('data is not a list and not a dict')
         return cls(listidx=Ilist.obj(data, reindex=reindex, context=context),
-                   name=name, id=id, param=param)
+                   name=name, param=param)
 
 # %% special
     def __copy__(self):
@@ -299,26 +286,20 @@ class Observation(Ilist):
         return Observation(self)
 
     def __str__(self):
-        '''return string format for var and lidx'''
+        '''return string format'''
+        stro = ''
         if self.name:
             stro = ES.name + ': ' + self.name + '\n'
-        else:
-            stro = ''
-        if self.id:
-            stro += ES.id + ': ' + self.id + '\n'
         stri = Ilist.__str__(self)
         if not stri == '':
             stro += ES.data + ':\n' + stri
-        for idx in self.lidx:
-            stri += str(idx)
         if self.param:
             stro += ES.param + ':\n    ' + json.dumps(self.param) + '\n'
         return stro
 
     def __hash__(self):
         '''return sum of all hash(Iindex)'''
-        return hash(json.dumps(self.param)) + hash(self.id) + hash(self.name) + \
-            Ilist.__hash__(self)
+        return hash(json.dumps(self.param)) + hash(self.name) + Ilist.__hash__(self)
 
 # %% properties
     @property
@@ -349,9 +330,13 @@ class Observation(Ilist):
             return collec.__geo_interface__
 
     @property
+    def id(self):
+        '''**integer (@property)** : hash value (unique)'''
+        return hash(self)
+
+    @property
     def jsonFeature(self):
-        '''
-        **string (@property)** : "FeatureCollection" with Location geometry'''
+        '''**string (@property)** : "FeatureCollection" with Location geometry'''
         if self.setLocation:
             geo = self.__geo_interface__
             if geo['type'][:5] == 'Multi':
@@ -409,8 +394,7 @@ class Observation(Ilist):
 
         *Returns*
 
-        - **int** : last index in the `Observation`
-        '''
+        - **int** : last index in the `Observation`'''
         record = [fillvalue] * len(self.lname)
         if ES.dat_classES in self.lname:
             record[self.lname.index(ES.dat_classES)
@@ -486,8 +470,6 @@ class Observation(Ilist):
                   'geojson': False, 'fullvar': True} | kwargs
         option2 = option | {'encoded': False, 'encode_format': 'json'}
         dic = {ES.type: ES.obs_classES}
-        if self.id:
-            dic[ES.obs_id] = self.id
         if self.name:
             dic[ES.obs_name] = self.name
         if self.param:
@@ -555,6 +537,7 @@ class Observation(Ilist):
         if not option['json_info']:
             return dcobs
         dcobs[ES.name] = self.name
+        dcobs[ES.id] = self.id
         dcobs[ES.length] = len(self)
         dcobs[ES.lenindex] = self.lenindex
         dcobs[ES.complete] = self.complete
