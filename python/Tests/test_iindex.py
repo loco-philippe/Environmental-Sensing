@@ -173,19 +173,19 @@ class Test_iindex(unittest.TestCase):
     def test_coupling_infos(self):
         ia = Iindex.ext()
         ib = Iindex.ext([25, 25, 12, 12, 25])
-        self.assertEqual(ia.couplinginfos(ib), 
+        self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 0, 'distrate': 0, 'distance': 0, 'rate': 0,
                           'disttomin': 0, 'disttomax': 0, 'distmin': 0, 'distmax': 0,
                           'diff': 0, 'typecoupl': 'null'})
         ia = Iindex.ext(['anne', 'paul', 'anne', 'lea', 'anne'])
-        self.assertEqual(ia.couplinginfos(ib), 
+        self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 4, 'distrate': 0.3333333333333333, 'distance': 2,
                           'disttomin': 1, 'disttomax': 2, 'distmin': 3, 'distmax': 6,
                           'rate': 0.5, 'diff': 1, 'typecoupl': 'link'})
         self.assertTrue(ia.islinked(ib))
         ia = Iindex.ext(['anne', 'lea', 'anne', 'lea', 'anne'])
-        self.assertEqual(ia.couplinginfos(ib), 
-                         {'dist': 4, 'distrate': 1.0, 'distance': 2, 'rate': 1.0, 
+        self.assertEqual(ia.couplinginfos(ib),
+                         {'dist': 4, 'distrate': 1.0, 'distance': 2, 'rate': 1.0,
                           'disttomin': 2, 'disttomax': 0, 'distmin': 2, 'distmax': 4,
                           'diff': 0, 'typecoupl': 'crossed'})
         self.assertTrue(ia.iscrossed(ib))
@@ -200,7 +200,7 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual(idx.vlist(func=Ilist.to_obj, extern=False, encoded=False)[0][0],
                          ['er'])
         idx = Iindex.dic({'datation': [{'date1': '2021-02-04T11:05:00+00:00'},
-                                        '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
+                                       '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
         self.assertTrue(idx.vlist(func=ESValue.vName, extern=False, default='ici') ==
                         ['date1', 'ici', 'ici'] == idx.vName(default='ici'))
 
@@ -334,7 +334,7 @@ class Test_iindex(unittest.TestCase):
                 idx.tostdcodec().to_obj(**option))  # full format
             self.assertEqual(idx.values, idx2.values)
             idx2 = Iindex.obj(idx.to_obj(keys=fils.derkeys(parent), parent=1, **option),
-                               extkeys=parent.keys)  # default format
+                              extkeys=parent.keys)  # default format
             self.assertEqual(idx.values, idx2.values)
 
     def test_castobj(self):  # !!!
@@ -379,12 +379,13 @@ class Test_iindex(unittest.TestCase):
                    Iindex.obj(['location', [LocationValue.from_obj(loc3[1][0]),
                                             LocationValue.from_obj(loc3[1][1]),
                                             LocationValue.from_obj(loc3[1][2])], 0]),
-                   Iindex.obj(['property', [PropertyValue(prop2[1][0]), 
+                   Iindex.obj(['property', [PropertyValue(prop2[1][0]),
                                             PropertyValue(prop2[1][1])]]),
                    Iindex(codec=['s', 'n', 's', 'd', 's', 'd'],
                           keys=[0, 4, 2, 1, 5, 3, 3]),
                    Iindex.ext(['er', 2, 'er', [1, 2]]),
-                   Iindex(codec=['er', 2, [1, 2]], name='test', keys=[0, 1, 2, 1]),
+                   Iindex(codec=['er', 2, [1, 2]],
+                          name='test', keys=[0, 1, 2, 1]),
                    Iindex.ext(['er', 2, [1, 2], 2], 'test'),
                    Iindex.dic({'test': ['er', 2, [1, 2], 2]}),
                    Iindex.dic({'test': ['er', 2, [1, 2], 2]}, fullcodec=True),
@@ -393,16 +394,17 @@ class Test_iindex(unittest.TestCase):
         format = ['json', 'cbor']
         modecodec = ['full', 'default', 'dict']
         test = list(product(encoded, format, modecodec))
-        for i,idx in enumerate(listobj):
+        for i, idx in enumerate(listobj):
             for ts in test:
-                option = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
+                option = {
+                    'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
                 #print(i, option)
                 if ts[2] == 'dict':
                     idx2 = Iindex.obj(idx.to_dict_obj(**option))
                 else:
                     idx2 = Iindex.obj(idx.to_obj(**option))
                 self.assertEqual(idx, idx2)
-        
+
     def test_iadd(self):
         idx = Iindex.ext(['er', 2, [1, 2]])
         idx2 = idx + idx
@@ -420,6 +422,23 @@ class Test_iindex(unittest.TestCase):
             self.assertTrue(Iindex.iskeysobj(isT))
         for isF in isfalse:
             self.assertFalse(Iindex.iskeysobj(isF))
+
+    def test_jsontype(self):
+        self.assertEqual(Iindex.decodetype(
+            Iindex.decodeobj([1, 2, 3, 4]), 4), 'root coupled')
+        self.assertEqual(Iindex.decodetype(
+            Iindex.decodeobj([1, 2, 3, 4]), 3), 'primary')
+        self.assertEqual(Iindex.decodetype(Iindex.decodeobj([1])), 'unique')
+        self.assertEqual(Iindex.decodetype(Iindex.decodeobj(
+            [[1, 2, 3], [0, 1, 2, 0]]), 4), 'root derived')
+        self.assertEqual(Iindex.decodetype(Iindex.decodeobj(
+            [[1, 2, 3], [1]]), 4), 'periodic derived')
+        self.assertEqual(Iindex.decodetype(
+            Iindex.decodeobj([[1, 2, 3], 1]), 4), 'periodic derived')
+        self.assertEqual(Iindex.decodetype(
+            Iindex.decodeobj([[1, 2, 3, 4], 1]), 4), 'coupled')
+        self.assertEqual(Iindex.decodetype(Iindex.decodeobj(
+            [[1, 2, 3], [1, [0, 1, 2]]]), 4), 'derived')
 
 
 if __name__ == '__main__':

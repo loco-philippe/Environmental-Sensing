@@ -76,7 +76,7 @@ class IindexStructure:
         self._keys.append(key)
         return key
 
-    def coupling(self, idx, derived=True):
+    def coupling(self, idx, derived=True, duplicate=True):
         '''
         Transform indexes in coupled or derived indexes (codec extension).
         If derived option is True, self._codec is extended and idx codec not,
@@ -87,19 +87,22 @@ class IindexStructure:
         - **idx** : single Iindex or list of Iindex to be coupled or derived.
         - **derived** : boolean (default : True) - if True result is derived,
         if False coupled
+        - **duplicate** : boolean (default: True) - if True, return duplicate records
 
-        *Returns* : tuple with duplicate records (errors)'''
+        *Returns* : tuple with duplicate records (errors) if 'duplicate', None else'''
         if not isinstance(idx, list):
             index = [idx]
         else:
             index = idx
         idxzip = self.__class__.ext(list(zip(*([self._keys] + [ix._keys for ix in index]))),
-                                     typevalue=None)
+                                    typevalue=None)
         self.tocoupled(idxzip)
         if not derived:
             for ind in index:
                 ind.tocoupled(idxzip)
-        return self.getduplicates()
+        if duplicate:
+            return self.getduplicates()
+        return
 
     def couplinginfos(self, other, default=False):
         '''return a dict with the coupling info between other (distance, rate,
@@ -131,14 +134,14 @@ class IindexStructure:
             else:
                 typec = 'derive'
             return {'dist': xmin, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': xmin, 'distmax': xmax, 'diff': diff, 
+                    'distmin': xmin, 'distmax': xmax, 'diff': diff,
                     'typecoupl': typec, 'distance': diff, 'rate': rate}
         xso = len(util.tocodec([tuple((v1, v2))
                   for v1, v2 in zip(self._keys, other._keys)]))
         dic = {'dist': xso, 'distrate': (xso - xmin) / (xmax - xmin),
                'disttomin': xso - xmin,  'disttomax': xmax - xso,
-               'distmin': xmin, 'distmax': xmax, 'diff': diff, 
-               'distance': xso - xmin + diff, 
+               'distmin': xmin, 'distmax': xmax, 'diff': diff,
+               'distance': xso - xmin + diff,
                'rate': (xso - xmin + diff) / (xmax - xmin + diff)}
         if dic['distrate'] == 0 and dic['diff'] == 0:
             dic['typecoupl'] = 'coupled'
@@ -233,7 +236,7 @@ class IindexStructure:
     def iskeysfromderkeys(self, other):
         '''return True if self._keys is relative from other._keys'''
         leng = len(other._codec)
-        if leng % len(self._codec) != 0 :
+        if leng % len(self._codec) != 0:
             return False
         keys = [(i*len(self._codec))//leng for i in range(leng)]
         return self.__class__.keysfromderkeys(other._keys, keys) == self._keys
@@ -423,11 +426,11 @@ class IindexStructure:
     def set_keys(self, keys):
         ''' _keys setters '''
         self._keys = keys
-        
+
     def set_codec(self, codec):
         ''' _codec setters '''
         self._codec = codec
-        
+
     def setkeys(self, keys, inplace=True):
         '''apply new keys (replace codec with extended codec from parent keys)
 
@@ -597,7 +600,8 @@ class IindexStructure:
 
         - **int** : first key finded (None else)'''
         if extern:
-            value = util.castval(value, util.typename(self.name, ES.def_clsName))
+            value = util.castval(
+                value, util.typename(self.name, ES.def_clsName))
         if value in self._codec:
             return self._codec.index(value)
         return None

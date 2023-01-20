@@ -10,8 +10,6 @@ The `observation.ilist_structure` module contains the `IlistStructure` class
 
 # %% declarations
 from copy import copy
-import csv
-import math
 
 from esconstante import ES
 from iindex import Iindex
@@ -114,14 +112,14 @@ class IlistStructure:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif idx.name in idxname and not merge: # !!! not merge suffit
+        elif idx.name in idxname and not merge:  # !!! not merge suffit
             while idx.name in idxname:
                 idx.name += '(2)'
             if first:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif update: # si merge
+        elif update:  # si merge
             self.lindex[idxname.index(idx.name)].setlistvalue(idx.values)
 
     def append(self, record, unique=False, typevalue=ES.def_clsName):
@@ -154,7 +152,8 @@ class IlistStructure:
 
         *Parameters*
 
-        - **reverse** :  boolean (default False) - delete record with filter's value is reverse
+        - **reverse** :  boolean (default False) - delete record with filter's 
+        value is reverse
         - **filtname** : string (default ES.filter) - Name of the filter Iindex added
         - **delfilter** :  boolean (default True) - If True, delete filter's Iindex
         - **inplace** : boolean (default True) - if True, filter is apply to self,
@@ -195,36 +194,45 @@ class IlistStructure:
         *Returns* : array of array of dict'''
         return self.analysis.getmatrix()
 
-    def coupling(self, derived=True, rate=0.1):
+    def coupling(self, derived=True, param='linkrate', level=0.1):
         '''Transform idx with low rate in coupled or derived indexes (codec extension).
 
         *Parameters*
 
-        - **rate** : integer (default 0.1) - threshold to apply coupling.
-        - **derived** : boolean (default : True).If True, indexes are derived, else coupled.
+        - **param** : string (default 'linkrate') - coupling measurement 
+        ('linkrate', 'diffdistparent', 'rate', 'distance')
+        - **level** : float (default 0.1) - param threshold to apply coupling.
+        - **derived** : boolean (default : True). If True, indexes are derived, 
+        else coupled.
 
-        *Returns* : list - coupling infos for each idx'''
+        *Returns* : None'''
         infos = self.indexinfos()
-        coupl = True
-        while coupl:
-            coupl = False
-            #print('while')
-            for i, inf in enumerate(infos):
-                #if inf['typecoupl'] != 'coupled' and \
-                #    (inf['typecoupl'] not in ('derived', 'unique') or not derived)\
-                #    and inf['linkrate'] < rate:
-                #if (inf['linkrate'] == 0 and inf['diffdistparent'] > 0 and 
-                #    inf['cat'] != 'unique' and inf['distparent'] != -1 and 
-                #    not derived) or (0 < inf['linkrate'] < rate and derived):
-                if inf['cat'] not in ('coupled', 'unique') and inf['distparent'] != -1\
-                and inf['linkrate'] < rate and (not derived or inf['linkrate'] > 0.0):                    
-                    self.lindex[inf['distparent']].coupling(
-                        self.lindex[i], derived=derived)
-                    coupl = True
-                    #print(i, inf['distparent'])
-                    break
-            infos = self.indexinfos()
-        return infos
+        parent = {'linkrate': 'distparent', 'diffdistparent': 'distparent',
+                  'rate': 'minparent', 'distance': 'minparent'}
+        child = [None] * len(infos)
+        for idx in range(len(infos)):
+            iparent = infos[idx][parent[param]]
+            if iparent != -1:
+                if child[iparent] is None:
+                    child[iparent] = []
+                child[iparent].append(idx)
+        for idx in range(len(infos)):
+            self._couplingidx(idx, child, derived, param,
+                              parent[param], level, infos)
+
+    def _couplingidx(self, idx, child, derived, param, parentparam, level, infos):
+        ''' Iindex coupling (included childrens of the Iindex)'''
+        inf = infos[idx]
+        if inf['cat'] in ('coupled', 'unique') or inf[parentparam] == -1\
+                or inf[param] >= level or (derived and inf['cat'] == 'derived'):
+            return
+        if child[idx]:
+            for childidx in child[idx]:
+                self._couplingidx(childidx, child, derived,
+                                  param, parentparam, level, infos)
+        self.lindex[inf[parentparam]].coupling(self.lindex[idx], derived=derived,
+                                               duplicate=False)
+        return
 
     def delrecord(self, record, extern=True):
         '''remove a record.
@@ -232,8 +240,8 @@ class IlistStructure:
         *Parameters*
 
         - **record** :  list - index values to remove to Ilist
-        - **extern** : if True, compare record values to external representation of self.value,
-        else, internal
+        - **extern** : if True, compare record values to external representation 
+        of self.value, else, internal
 
         *Returns* : row deleted'''
         self.reindex()
@@ -258,7 +266,7 @@ class IlistStructure:
         for idxname in indexname:
             if idxname in self.lname:
                 self.lindex.pop(self.lname.index(idxname))
-    
+
     def _fullindex(self, ind, keysadd, indexname, varname, leng, fillvalue, fillextern):
         if not varname:
             varname = []
@@ -268,25 +276,27 @@ class IlistStructure:
             return
         inf = self.indexinfos()
         if inf[ind]['cat'] == 'unique':
-            idx.set_keys(idx.keys + [0] * lenadd)  
+            idx.set_keys(idx.keys + [0] * lenadd)
         elif self.lname[ind] in indexname:
             idx.set_keys(idx.keys + keysadd[indexname.index(self.lname[ind])])
         elif inf[ind]['parent'] == -1 or self.lname[ind] in varname:
             fillval = fillvalue
             if fillextern:
-                fillval = util.castval(fillvalue, util.typename(self.lname[ind], ES.def_clsName))
+                fillval = util.castval(fillvalue, util.typename(self.lname[ind],
+                                                                ES.def_clsName))
             idx.set_keys(idx.keys + [len(idx.codec)] * len(keysadd[0]))
             idx.set_codec(idx.codec + [fillval])
         else:
             parent = inf[ind]['parent']
             if len(self.lindex[parent]) != leng:
-                self._fullindex(parent, keysadd, indexname, varname, leng, fillvalue, fillextern)
-            if inf[ind]['cat'] == 'coupled' :
+                self._fullindex(parent, keysadd, indexname, varname, leng,
+                                fillvalue, fillextern)
+            if inf[ind]['cat'] == 'coupled':
                 idx.tocoupled(self.lindex[parent], coupling=True)
             else:
                 idx.tocoupled(self.lindex[parent], coupling=False)
-        
-    def full(self, reindex=False, idxname=None, varname=None, fillvalue='-', 
+
+    def full(self, reindex=False, idxname=None, varname=None, fillvalue='-',
              fillextern=True, inplace=True, complete=True):
         '''tranform a list of indexes in crossed indexes (value extension).
 
@@ -294,11 +304,14 @@ class IlistStructure:
 
         - **idxname** : list of string - name of indexes to transform
         - **varname** : string - name of indexes to use
-        - **reindex** : boolean (default False) - if True, set default codec before transformation
+        - **reindex** : boolean (default False) - if True, set default codec 
+        before transformation
         - **fillvalue** : object value used for var extension
-        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted 
+        to typevalue
         - **inplace** : boolean (default True) - if True, filter is apply to self,
-        - **complete** : boolean (default True) - if True, Iindex are ordered in canonical order
+        - **complete** : boolean (default True) - if True, Iindex are ordered 
+        in canonical order
 
         *Returns* : self or new Ilist'''
         if inplace:
@@ -314,13 +327,15 @@ class IlistStructure:
             return ilis
         lenadd = len(keysadd[0])
         for ind in range(ilis.lenindex):
-            ilis._fullindex(ind, keysadd, idxname, varname, len(ilis) + lenadd, fillvalue, fillextern)
+            ilis._fullindex(ind, keysadd, idxname, varname, len(ilis) + lenadd,
+                            fillvalue, fillextern)
         if complete:
             ilis.setcanonorder()
         return ilis
 
     def getduplicates(self, indexname=None, resindex=None, indexview=None):
-        '''check duplicate cod in a list of indexes. Result is add in a new index or returned.
+        '''check duplicate cod in a list of indexes. Result is add in a new 
+        index or returned.
 
         *Parameters*
 
@@ -357,8 +372,8 @@ class IlistStructure:
         *Parameters*
 
         - **record** : list - value for each Iindex
-        - **extern** : if True, compare record values to external representation of self.value,
-        else, internal
+        - **extern** : if True, compare record values to external representation
+        of self.value, else, internal
 
         *Returns boolean* : True if found'''
         if extern:
@@ -377,15 +392,17 @@ class IlistStructure:
 
         *Parameters*
 
-        - **keys** : string, list or tuple (default None) - list of attributes to returned.
+        - **keys** : string, list or tuple (default None) - list of attributes 
+        to returned.
         if 'all' or None, all attributes are returned.
         if 'struct', only structural attributes are returned.
-        
+
         *Returns* : dict'''
         return self.analysis.getinfos(keys)
 
     def indicator(self, fullsize=None, size=None):
-        '''generate size indicators: ol (object lightness), ul (unicity level), gain (sizegain)
+        '''generate size indicators: ol (object lightness), ul (unicity level), 
+        gain (sizegain)
 
         *Parameters*
 
@@ -398,11 +415,8 @@ class IlistStructure:
             fullsize = len(self.to_obj(encoded=True, modecodec='full'))
         if not size:
             size = len(self.to_obj(encoded=True))
-        #lenidx = self.lenidx
-        #nval = len(self) * (lenidx + 1)
         nval = len(self) * (self.lenindex + 1)
         sval = fullsize / nval
-        #ncod = sum(self.idxlen) + lenidx
         ncod = sum(self.indexlen) + self.lenindex
         if nval != ncod:
             scod = (size - ncod * sval) / (nval - ncod)
@@ -460,9 +474,8 @@ class IlistStructure:
             return None
         if row:
             return locrow
-        #return self.lvar[0][tuple(locrow)]
         return [self.record(locr, extern=extern) for locr in locrow]
- 
+
     def mix(self, other, fillvalue=None):
         '''add other Iindex not included in self and add other's values'''
         sname = set(self.lname)
@@ -505,10 +518,7 @@ class IlistStructure:
         otherc = copy(other)
         for idx in otherc.lindex:
             self.addindex(idx, first=first, merge=merge, update=update)
-        #if not self.lvarname:
-        #    self.lvarname = other.lvarname
         return self
-
 
     def record(self, row, indexname=None, extern=True):
         '''return the record at the row
@@ -516,7 +526,8 @@ class IlistStructure:
         *Parameters*
 
         - **row** : int - row of the record
-        - **extern** : boolean (default True) - if True, return val record else value record
+        - **extern** : boolean (default True) - if True, return val record else
+        value record
         - **indexname** : list of str (default None) - list of fields to return
         *Returns*
 
@@ -527,7 +538,7 @@ class IlistStructure:
             record = [idx.valrow(row) for idx in self.lindex]
         else:
             record = [idx.values[row] for idx in self.lindex]
-        return [record[self.lname.index(name)] for name in indexname] 
+        return [record[self.lname.index(name)] for name in indexname]
 
     def recidx(self, row, extern=True):
         '''return the list of idx val or values at the row
@@ -555,7 +566,6 @@ class IlistStructure:
         *Returns*
 
         - **list** : val or value for var'''
-        # if extern: return [idx.val[row] for idx in self.lidx]
         if extern:
             return [idx.valrow(row) for idx in self.lvar]
         return [idx.values[row] for idx in self.lvar]
@@ -588,16 +598,14 @@ class IlistStructure:
         Set the canonical keys order : ordered keys in the first columns.
 
         *Parameters*
-        - **reindex** : boolean (default False) - if True, set default codec after transformation
+        - **reindex** : boolean (default False) - if True, set default codec after
+        transformation
 
         *Return* : self'''
-        order   = self.primaryname
-        order   += self.secondaryname
-        order   += self.lvarname
-        order   += self.lunicname
-        '''order   = [self.lidxrow[idx] for idx in self.primary]
-        order  += [idx for idx in self.lidxrow if not idx in order]
-        order  += self.lvarrow'''
+        order = self.primaryname
+        order += self.secondaryname
+        order += self.lvarname
+        order += self.lunicname
         self.swapindex(order)
         self.sort(reindex=reindex)
         self.analysis.actualize()
@@ -630,16 +638,6 @@ class IlistStructure:
         for i in range(min(self.lenindex, len(listname))):
             self.lindex[i].name = listname[i]
         self.analysis.actualize()
-    """def setvar(self, var=None):
-        '''Define a var index by the name or the index row'''
-        if var is None:
-            self.lvarname = []
-        elif isinstance(var, int) and self.lenindex > var >= 0:
-            self.lvarname = [self.lname[var]]
-        elif isinstance(var, str) and var in self.lname:
-            self.lvarname = [var]
-        else:
-            raise IlistError('var is not consistent with Ilist')"""
 
     def sort(self, order=None, reverse=False, func=str, reindex=True):
         '''Sort data following the index order and apply the ascending or descending
@@ -659,7 +657,8 @@ class IlistStructure:
         orderfull = order + list(set(range(self.lenindex)) - set(order))
         if reindex:
             for i in order:
-                self.lindex[i].reindex(codec=sorted(self.lindex[i].codec, key=func))
+                self.lindex[i].reindex(codec=sorted(
+                    self.lindex[i].codec, key=func))
         newidx = util.transpose(sorted(util.transpose(
             [self.lindex[orderfull[i]].keys for i in range(self.lenindex)]),
             reverse=reverse))
@@ -678,7 +677,6 @@ class IlistStructure:
         *Returns* : self '''
         if self.lenindex != len(order):
             raise IlistError('length of order and Ilist different')
-        #self.lindex = [self.lindex[order[i]] for i in range(len(order))]
         if not order or isinstance(order[0], int):
             self.lindex = [self.lindex[ind] for ind in order]
         elif isinstance(order[0], str):
@@ -705,7 +703,7 @@ class IlistStructure:
 
     def tree(self, mode='derived', width=5, lname=20, string=True):
         '''return a string with a tree of derived Iindex.
-                
+
          *Parameters*
 
         - **lname** : integer (default 20) - length of the names        
@@ -744,4 +742,3 @@ class IlistStructure:
 
         - **list of int** : record key for each index'''
         return [idx.valtokey(val, extern=extern) for idx, val in zip(self.lindex, rec)]
-

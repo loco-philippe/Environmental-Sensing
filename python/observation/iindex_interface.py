@@ -63,7 +63,7 @@ class IindexEncoder(json.JSONEncoder):
 
 class IindexInterface:
     '''this class includes Iindex methods :
-        
+
     - `IindexInterface.json`
     - `IindexInterface.to_obj`
     - `IindexInterface.to_dict_obj`
@@ -73,6 +73,43 @@ class IindexInterface:
     - `IindexInterface.vName`
     - `IindexInterface.vSimple`
     '''
+
+    @staticmethod
+    def decodetype(decobj, lenparent=None):
+        '''Return the Iindex type of a decoded json value
+
+        *Parameters*
+
+        - **decobj** : tuple with decoding data (see decodeobj method)
+        - **lenparent** : integer(default None) - parent length to compare to decoded codec length
+
+        *Returns* 
+
+        - **string** : name of the Iindex type'''
+        codec, parent, keys = decobj[2:5]
+
+        if parent < 0 and not keys:
+            if len(codec) == 1:
+                return 'unique'
+            if lenparent and len(codec) == lenparent:
+                return 'root coupled'
+            if not lenparent:
+                raise IindexError(
+                    "lenparent is necessary to define the format")
+            return 'primary'
+        if parent >= 0 and not keys:
+            if lenparent and len(codec) == lenparent:
+                return 'coupled'
+            if not lenparent:
+                raise IindexError(
+                    "lenparent is necessary to define the format")
+            return 'periodic derived'
+        if len(keys) == lenparent and len(codec) < lenparent and parent < 0:
+            return 'root derived'
+        if len(keys) < lenparent and parent >= 0 and len(codec) < lenparent:
+            return 'derived'
+        raise IindexError("data are inconsistenty to define the format")
+        return
 
     @staticmethod
     def decodeobj(bs=None, classname=None, context=True):
@@ -85,8 +122,17 @@ class IindexInterface:
         - **context** : boolean (default True) - if False, only codec and keys are included
 
         *Returns* 
-        
-        - **tuple** : name, typevaluedec, codec, parent, keys, isfullindex, isparent, isvar'''
+
+        - **tuple** : name, dtype, codec, parent, keys, isfullindex, isparent, isvar
+            name (None or string): name of the Iindex
+            dtype (None or string): type of data
+            codec (list): lilst of Iindex codec values
+            parent (int): Iindex parent or ES.nullparent
+            keys (None or list): Iindex keys
+            isfullindex (boolean): True if Iindex is full (len(keys) = len(self))
+            isparent(boolean): True if parent is >= 0
+            isvar(boolean): not used
+            '''
         if bs is None:
             return (None, None, [], ES.nullparent, None, False, False, False)
         if isinstance(bs, bytes):
@@ -98,10 +144,9 @@ class IindexInterface:
         else:
             lis = [bs]
         if not isinstance(lis, list):
-            #raise IindexError("the parameter has to be a list")
             lis = [lis]
 
-        if not lis:
+        if not lis:  # format empty
             return (None, None, [], ES.nullparent, None, False, False, False)
         if context and (not isinstance(lis[0], (str, dict, list)) or len(lis) > 3):
             return (None, None, IindexInterface.decodecodec(lis, classname),
@@ -117,13 +162,14 @@ class IindexInterface:
         if len(lis) == 2 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
                 and context:
             return (*IindexInterface.decodecontext(lis[0]),
-                    IindexInterface.decodecodec(lis[1], classname), ES.nullparent, 
+                    IindexInterface.decodecodec(
+                        lis[1], classname), ES.nullparent,
                     None, False, False, False)
         if len(lis) == 2 and isinstance(lis[0], (tuple, list)) \
                 and IindexInterface.iskeysobj(lis[1]):
             return (None, None, IindexInterface.decodecodec(lis[0], classname),
                     *IindexInterface.decodekeys(lis[1]))
-        return (None, None, IindexInterface.decodecodec(lis, classname), ES.nullparent, 
+        return (None, None, IindexInterface.decodecodec(lis, classname), ES.nullparent,
                 None, False, False, False)
 
     @staticmethod
@@ -170,7 +216,7 @@ class IindexInterface:
 
     @staticmethod
     def encodeobj(codeclist, keyslist=None, name=None, simpleval=False,
-                  codecval=False, typevalue=None, parent=ES.nullparent, 
+                  codecval=False, typevalue=None, parent=ES.nullparent,
                   listunic=False, modecodec='optimize', **kwargs):
         '''
         Return a formatted object with values, keys and codec.
@@ -299,10 +345,10 @@ class IindexInterface:
         *Returns* : Pandas Series, Pandas DataFrame, Numpy Array'''
         if len(self) == 0:
             raise IindexError("Ilist is empty")
-        if npdtype: 
+        if npdtype:
             npdtype = np.dtype(npdtype)
         else:
-            npdtype ='object'
+            npdtype = 'object'
         if func is None:
             func = identity
         if func == 'index':
@@ -311,30 +357,29 @@ class IindexInterface:
             values = util.funclist(self.values, func, **kwargs)
         else:
             values = util.funclist(self._codec, func, **kwargs)
-        npdtype1 = npdtype 
-        #if isinstance(values[0], (str, datetime.datetime)):
+        npdtype1 = npdtype
         if isinstance(values[0], (datetime.datetime)):
             npdtype1 = np.datetime64
-        #else:
+        # else:
         #    npdtype=None
-        pdindex=None 
+        pdindex = None
         if index:
             pdindex = self._keys
         try:
             if numpy:
                 return np.array(values, dtype=npdtype1)
             if series:
-                return pd.Series(values, dtype=npdtype1, 
+                return pd.Series(values, dtype=npdtype1,
                                  index=pdindex, name=self.name)
-            return pd.DataFrame(pd.Series(values, dtype=npdtype1, 
+            return pd.DataFrame(pd.Series(values, dtype=npdtype1,
                                           index=pdindex, name=self.name))
         except:
             if numpy:
                 return np.array(values, dtype=npdtype)
             if series:
-                return pd.Series(values, dtype=npdtype, 
+                return pd.Series(values, dtype=npdtype,
                                  index=pdindex, name=self.name)
-            return pd.DataFrame(pd.Series(values, dtype=npdtype, 
+            return pd.DataFrame(pd.Series(values, dtype=npdtype,
                                           index=pdindex, name=self.name))
 
     def to_numpy(self, func=None, codec=False, npdtype=None, **kwargs):
@@ -352,7 +397,7 @@ class IindexInterface:
         return self.to_pandas(func=func, codec=codec, npdtype=npdtype, numpy=True, **kwargs)
 
     def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
-               codecval=False, parent=ES.nullparent, name=True, listunic=False, 
+               codecval=False, parent=ES.nullparent, name=True, listunic=False,
                **kwargs):
         '''Return a formatted object (string, bytes or dict) for the Iindex
 
@@ -389,7 +434,7 @@ class IindexInterface:
             keyslist = None
         elif modecodec == 'default':
             codeclist = self._codec
-            keyslist = self._keys            
+            keyslist = self._keys
         else:
             codeclist = self._codec
             if keys and isinstance(keys, list):
@@ -401,29 +446,24 @@ class IindexInterface:
         else:
             dtype = None
         return IindexInterface.encodeobj(codeclist, keyslist, idxname, simpleval,
-                                         codecval, dtype, parent, listunic, 
+                                         codecval, dtype, parent, listunic,
                                          modecodec, **kwargs)
 
     def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
         option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
                   'codif': {}, 'geojson': False} | kwargs
         dic = {}
-        if self.typevalue: 
+        if self.typevalue:
             dic['type'] = self.typevalue
-        #from time import time
-        #t0 = time()
-        #zkeys = list(zip(range(len(self.keys)), self.keys))
         ds = pd.Series(range(len(self.keys)), index=self.keys, dtype='int64')
-        #print('zkeys ', time()-t0)
-        #dic['value'] = [{'record':[z[0] for z in zkeys if z[1] == i],
-        dic['value'] = [{'record':ds[i].tolist(),
-                         'codec': util.json(cod, encoded=False, typevalue=None, 
-                                  simpleval=simpleval, modecodec=modecodec, 
-                                  untyped=option['untyped'], geojson=option['geojson'])}
-                         for i, cod in enumerate(self.codec)]
-        #print('value ', time()-t0)
+        dic['value'] = [{'record': ds[i].tolist(),
+                         'codec': util.json(cod, encoded=False, typevalue=None,
+                                            simpleval=simpleval, modecodec=modecodec,
+                                            untyped=option['untyped'], datetime=False,
+                                            geojson=option['geojson'])}
+                        for i, cod in enumerate(self.codec)]
         return {self.name: dic}
-    
+
     def vlist(self, func, *args, extern=True, **kwargs):
         '''
         Apply a function to values and return the result.

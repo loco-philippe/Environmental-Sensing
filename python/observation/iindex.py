@@ -267,7 +267,7 @@ class Iindex(IindexStructure, IindexInterface):
         if not isinstance(bsd, dict):
             raise IindexError('data is not a dict')
         name = list(bsd.keys())[0]
-        bsdv = list(bsd.values())[0]    
+        bsdv = list(bsd.values())[0]
         if not 'value' in bsdv:
             raise IindexError('value is not present')
         value = bsdv['value']
@@ -278,20 +278,19 @@ class Iindex(IindexStructure, IindexInterface):
         if 'var' in bsdv and isinstance(bsdv['var'], bool):
             var = bsdv['var']
         codec = [util.castval(val['codec'], typevalue) for val in value]
-        pairs=[]
+        pairs = []
         for i, rec in enumerate(value):
             record = rec['record']
             if not isinstance(record, list):
                 record = [record]
             for j in record:
-                pairs.append((j,i))
+                pairs.append((j, i))
         if not pairs:
             return (var, cls())
         keys = list(list(zip(*sorted(pairs)))[1])
 
-        idx= cls(name=name, codec=codec, keys=keys, typevalue=None)
+        idx = cls(name=name, codec=codec, keys=keys, typevalue=None)
         return (var, idx)
-
 
     @classmethod
     def merging(cls, listidx, name=None):
@@ -329,6 +328,7 @@ class Iindex(IindexStructure, IindexInterface):
 
 
 # %% special
+
 
     def __repr__(self):
         '''return classname and number of value'''
@@ -369,19 +369,16 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __hash__(self):
         '''return hash(codec) + hash(keys)'''
-        #return util.hash(self._codec) + util.hash(self._keys)
         return hash(tuple(self.values))
 
     def _hashe(self):
         '''return hash(values)'''
-        #return util.hash(self._codec) + util.hash(self._keys)
         return hash(tuple(self.values))
 
     def _hashi(self):
         '''return hash(codec) + hash(keys)'''
         return hash(tuple(self._codec)) + hash(tuple(self._keys))
-        #return hash(tuple(self.values))
-    
+
     def __add__(self, other):
         ''' Add other's values to self's values in a new Iindex'''
         newiindex = self.__copy__()
@@ -452,11 +449,8 @@ class Iindex(IindexStructure, IindexInterface):
                 typecodec = 'default'
             else:
                 typecodec = 'mixed'
-        #disttomin = xlen - mini
-        #disttomax = maxi - xlen
-        return {'lencodec': xlen, 'mincodec': mini, 'maxcodec': maxi, 
+        return {'lencodec': xlen, 'mincodec': mini, 'maxcodec': maxi,
                 'typecodec': typecodec, 'ratecodec': rate}
-        #, 'disttomin': disttomin, 'disttomax': disttomax}
 
     @property
     def keys(self):
