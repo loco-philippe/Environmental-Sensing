@@ -196,17 +196,44 @@ def insert_from_doc(collection, document , info=True):
             try: insert_one_to_mongo(collection, line, info)
             except: pass
 
+def insert_to_mongo(collection, obj, info=False):
+    '''Takes an observation or a list of observations and inserts them into a MongoDB collection, with info by default.'''
+    # Faire une fonction pour permettre l'ajout direct de fichiers csv.
+    inserted_list = []
+    if isinstance(obj, list):
+        pile = obj
+    elif isinstance(obj, Observation):
+        pile = [obj]
+    else:
+        pile = [Observation.from_obj(obj)]
+    for obs in pile:
+        if obs.id: obs_hash = obs.id
+        else: obs_hash = hash(obs)
+        metadata = {'id': obs_hash}
+        if obs.name : metadata['name']  = obs.name
+        if obs.param: metadata['param'] = obs.param
+        if info: metadata['information'] = Observation._info(True, True)
+        if len(obs.lname) == 1:
+            for line in obs:
+                inserted_list.append({obs.lname[0]: util.json(line, encoded=False, typevalue=None, simpleval=False, geojson=True),
+                                        '_metadata': metadata})
+        elif len(obs.lname) > 1:
+            for line in obs:
+                inserted_list.append({obs.lname[i]: util.json(line[i], encoded=False, typevalue=None, simpleval=False, geojson=True) 
+                                                                for i in range(len(line))} | {'_metadata': metadata})
+    if inserted_list != []: collection.insert_many(inserted_list)
+
 def insert_one_to_mongo(collection, obj, info=True):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
     if not isinstance(obj, Observation): obj = Observation.from_obj(obj)
-    dico2 = obj.json(json_info=info, modecodec='dict')
+    dico2 = obj.json(json_info=info, modecodec='dict', geojson=True)
     collection.insert_one(dico2)
 
 def insert_many_to_mongo(collection, objList, info=True):
     '''Takes an object and inserts it into a MongoDB collection, with info by default.'''
     for i in range(len(objList)):
         if not isinstance(objList[i], Observation): objList[i] = Observation.from_obj(objList[i])
-        objList[i] = objList[i].json(json_info=info, modecodec='dict')
+        objList[i] = objList[i].json(json_info=info, modecodec='dict', geojson=True)
     collection.insert_many(objList)
 
 def empty_request(collection):
@@ -236,7 +263,8 @@ class ESSearch:
         - pymongo.command_cursor.CommandCursor
         - Observation (can be defined from a str or a dict)
     - **parameters** : list of list of conditions for queries, to be interpreted as : parameters = [[cond_1 AND cond_2 AND cond_3] OR [cond_4 AND cond_5 AND cond_6]] where conds are criteria for queries
-    - **heavy** : boolean indicating whether the request should be simplified or not
+    - **hide** : list of paths to hide from the output
+    - **heavy** : boolean indicating whether the request should search for nested values or not. Does not work with geoJSON.
     - **sources** : attribute used to indicate the sources of the data in param
 
     The methods defined in this class are (documentations in methods definitions):
@@ -245,6 +273,7 @@ class ESSearch:
 
     - `ESSearch.addInput`
     - `ESSearch.removeInputs`
+    - `ESSearch.setHide`
     - `ESSearch.setHeavy`
     - `ESSearch.clear`
     
@@ -268,7 +297,8 @@ class ESSearch:
     def __init__(self,
                     input = None,
                     parameters = None,
-                    heavy = True,
+                    hide = [],
+                    heavy = False,
                     sources = None, 
                     **kwargs
                     ):
@@ -277,7 +307,7 @@ class ESSearch:
 
         *Arguments*
 
-        - **input** : input on which the query is done. Must be one of or a list of these (can be nested): 
+        - **input** : input on which the query is done. Must be one of or a list of these (can be nested):
             - pymongo.collection.Collection
             - pymongo.cursor.Cursor
             - pymongo.command_cursor.CommandCursor
@@ -289,27 +319,33 @@ class ESSearch:
             {'name' : 'datation', 'operand' : datetime.datetime(2022, 9, 19, 1), 'comparator' : '>='},
             {'name' : 'property', 'operand' : 'PM2'}
         ]
+        - **hide** : list (default []) - List of strings where strings correspond to paths to remove from the output
         - **heavy** :  bool (default False) - Must be True when values are defined directly and inside dictionnaries simultaneously.
         - **sources** : (default None) - Optionnal parameter indicating the sources of the data in case when a query is executed with parameter single = True.
         - **kwargs** :  other parameters are used as arguments for ESSearch.addCondition method.
         '''
         self.parameters = [[]]                                          # self.parameters
+        if isinstance(hide, list): self.hide = hide                     # self.hide
+        else: raise TypeError("hide must be a list.")
+
         if isinstance(heavy, bool): self.heavy = heavy                  # self.heavy
         else: raise TypeError("heavy must be a bool.")
         self.sources = sources                                          # self.sources
 
-        self.input = []                                                 # self.input
+        self.input = [[], []]                                           # self.input : [[Mongo Objects], [Observations]]
         if isinstance(input, list): pile = input
         else: pile = [input]
         while not len(pile) == 0:
             obj = pile.pop()
             if isinstance(obj, list):
                 pile += obj
-            elif isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
-                self.input.append(obj)
+            elif isinstance(obj, (Collection, Cursor, CommandCursor)):
+                self.input[0].append(obj)
+            elif isinstance(obj,  Observation):
+                self.input[1].append(obj)
             elif isinstance(obj, (str, dict)):
                 try:
-                    self.input.append(Observation.from_obj(obj))
+                    self.input[1].append(Observation.from_obj(obj))
                 except:
                     raise ValueError("Cannot convert " + str(obj) + " to an Observation ")
             elif obj is not None:
@@ -342,35 +378,46 @@ class ESSearch:
         """
         Adds one or many inputs on which the query is to be executed given by argument input
         """
-        added_input = []
+        added_input = [[], []]
         if isinstance(input, list): pile = input
         else: pile = [input]
         while not len(pile) == 0:
             obj = pile.pop()
             if isinstance(obj, list):
                 pile += obj
-            elif isinstance(obj, (Collection, Cursor, CommandCursor, Observation)):
-                added_input.append(obj)
+            elif isinstance(obj, (Collection, Cursor, CommandCursor)):
+                added_input[0].append(obj)
+            elif isinstance(obj,  Observation):
+                added_input[1].append(obj)
             elif isinstance(obj, (str, dict)):
                 try:
-                    added_input.append(Observation.from_obj(obj))
+                    added_input[1].append(Observation.from_obj(obj))
                 except:
                     raise ValueError("Cannot convert " + str(obj) + " to an Observation ")
             elif obj is not None:
                 raise TypeError("Unsupported type for input " + str(obj))
-        self.input += added_input
+        self.input[0] += added_input[0]
+        self.input[1] += added_input[1]
 
     def removeInputs(self):
         """
         Removes all inputs from self.
         """
-        self.input = []
+        self.input = [[], []]
 
+    def setHide(self, hide):
+        '''
+        Sets self.hide to a value given by argument hide.
+        '''
+        if isinstance(hide, list): self.hide = hide
+        else: raise TypeError("hide must be a list.")
+        
     def setHeavy(self, heavy):
         '''
         Sets self.heavy to a value given by argument heavy.
         '''
-        self.heavy = heavy
+        if isinstance(heavy, list): self.heavy = heavy
+        else: raise TypeError("heavy must be a bool.")
 
     def setSources(self, sources):
         '''
@@ -391,26 +438,23 @@ class ESSearch:
                 else: self.addCondition(parameter)
         else: raise TypeError("parameters must be either a dict or a list of dict.")
             
-    def addCondition(self, name = None, operand = None, comparator = None, path = None, or_position = -1, **kwargs):
+    def addCondition(self, path = None, operand = None, comparator = None, or_position = -1, **kwargs):
         '''
         Takes parameters and inserts corresponding query condition in self.parameters.
 
         *Parameters*
 
-        - **name** :  str (default None) - name of an IIndex, which corresponds to an Ilist column name.
+        - **path** :  str (default None) - name of an IIndex, which corresponds to an Ilist column name, or name of a metadata element.
                     (ex: 'datation', 'location', 'property')
-                    This parameter is used to give a default value to parameters path and unwind.
 
         - **operand** :  - (default None) - Object used for the comparison.
                     (ex: if we search for observations made in Paris, operand is 'Paris')
 
         - **comparator**:  str (default None) - str giving the comparator to use. (ex: '>=', 'in')
-
-        - **path** :  str (default None) - to use to define a precise MongoDB path. When name is given, default path is data.*name*.value.codec
         
         - **or_position** :  int (default -1) - position in self.parameters in which the condition is to be inserted.
 
-        - **formatstring** :  str (default None) - str to use to automatically change str to datetime before applying condition. 
+        - **formatstring** :  str (default None) - str to use to automatically change str to datetime before applying condition.
                     Does not update the data base. If value is set to 'default', format is assumed to be Isoformat.
         
         - **inverted** :  bool (default None) - to add a "not" in the condition.
@@ -423,13 +467,12 @@ class ESSearch:
         no comparator => default comparator associated with operand type in dico_alias_mongo is used (mainly equality)
         no operand => only the existence of something located at path is tested
         '''
-        if name is not None and not isinstance(name, str): raise TypeError("name must be a str.")
+        if path is not None and not isinstance(path, str): raise TypeError("name must be a str.")
         if comparator is not None and not isinstance(comparator, str): raise TypeError("comparator must be a str.")
-        if path is not None and not isinstance(path, str): raise TypeError("path must be a str.")
         if or_position is not None and not isinstance(or_position, int): raise TypeError("or_position must be an int.")
 
-        if name is None and operand is None and comparator is None and path is None:
-            raise ValueError("ESSearch.addCondition() requires at least one of these parameters : name, operand or path.")
+        if path is None and operand is None and comparator is None:
+            raise ValueError("ESSearch.addCondition() requires at least one of these parameters : path, operand.")
 
         for item in kwargs:
             if item not in {'formatstring', 'inverted', 'unwind', 'regex_options', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
@@ -439,12 +482,10 @@ class ESSearch:
             operand = operand.replace(tzinfo=datetime.timezone.utc)
 
         if path is None: # default values for path when not defined
-            if name:
-                if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
-                    path = "data.datation.value.codec"
-                else:
-                    path = "data." + name + ".value.codec" # there is no default case when name == "name": path is set to "data.name.value.cod" and not to "name"
-            else: path = "data"
+            if comparator: # à voir pour la syntaxe la plus appropriée.
+                if comparator in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
+                    path = "datation"
+            else: path = "data" # voir si quelque chose comme "$$ROOT" n'est pas plus pertinent ici. (pas de path devrait correspondre au cas d'éléments du genre : {type: 'observation', data: ['cheval']} qui sont acceptés par le format.)
 
         if operand:
             try: comparator = dico_alias_mongo[type(operand)][comparator]
@@ -452,7 +493,7 @@ class ESSearch:
         elif comparator:
             raise ValueError("operand must be defined when comparator is used.")
 
-        condition = {"comparator" : comparator, "operand" : operand, "path" : path, "name" : name} | kwargs
+        condition = {"comparator" : comparator, "operand" : operand, "path" : path} | kwargs
 
         if or_position >= len(self.parameters):
             self.parameters.append([condition])
@@ -499,13 +540,12 @@ class ESSearch:
         '''
         self = ESSearch()
 
-    def _cond(self, or_pos, operand, comparator, path, inverted = False, name = None, formatstring = None, unwind = None, regex_options = None, **kwargs):
+    def _cond(self, or_pos, operand, comparator, path, inverted = False, formatstring = None, unwind = None, regex_options = None, **kwargs):
         '''
         Takes parameters and adds corresponding MongoDB expression to self._match.
         self._unwind and self._set are updated when necessary.
         '''
-        match = '2'
-        if unwind: # unwind is applied by default when name is used and controlled precisely with parameter unwind
+        if unwind:
             if isinstance(unwind, str):
                 self._unwind.append(unwind)
             elif isinstance(unwind, int):
@@ -513,15 +553,12 @@ class ESSearch:
             elif isinstance(unwind, tuple): # format : (<path>, <unwind quantity>)
                 for _ in range(unwind[1]): self._unwind.append(unwind[0])
             else: raise TypeError("unwind must be a tuple, a str or an int.")
-        elif name and operand and "data." + name + ".value" not in self._unwind: self._unwind.append("data." + name + ".value")
-        elif path[:5] != "data.": match = '1'
 
-        if self.heavy and operand is not None and path[:4] == "data":
+        if self.heavy and operand is not None:
             if path not in self._heavystages: self._heavystages.add(path) # peut-être mieux de laisser l'utilisateur choisir manuellement
             path = "_" + path + ".v"
 
-        if operand is None: # no operand => we only test if there is something located at path or at path given by name
-            if name: path = "data." + name
+        if operand is None: # no operand => we only test if there is something located at path
             comparator = "$exists"
             operand = 1
         else:
@@ -534,18 +571,18 @@ class ESSearch:
                     operand = {"type" : operand.geom_type, "coordinates" : list(operand.exterior.coords)}
                 else: raise ValueError("Comparator not allowed.")
 
-        if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
-            self._set |= {name[1:]: {name : path}} #à tester
-            path = name[1:]
-            self._project |= {name[1:]:0}
+        ##if name in {"$year", "$month", "$dayOfMonth", "$hour", "$minute", "$second", "$millisecond", "$dayOfYear", "$dayOfWeek"}:
+        ##    self._set |= {name[1:]: {name : path}} #à tester
+        ##    path = name[1:]
+        ##    self._project |= {name[1:]:0}
 
         if isinstance(operand, TimeSlot): #equals->within, contains->intersects, within, disjoint, intersects
             if comparator == "within":
-                self._cond(or_pos, operand[0].start, "$gte", path, False, name)
-                self._cond(or_pos, operand[-1].end, "$lte", path, False, name)
+                self._cond(or_pos, operand[0].start, "$gte", path, False)
+                self._cond(or_pos, operand[-1].end, "$lte", path, False)
             elif comparator == "intersects":
-                self._cond(or_pos, operand[0].start, "$lte", path, False, name)
-                self._cond(or_pos, operand[-1].end, "$gte", path, False, name)
+                self._cond(or_pos, operand[0].start, "$lte", path, False) # pourquoi False et pas inverted ici ??
+                self._cond(or_pos, operand[-1].end, "$gte", path, False)
             return
 
         if formatstring:
@@ -596,195 +633,225 @@ class ESSearch:
             cond_0 = {comparator : operand}
         
         if inverted:
-            if path in self._match[match][or_pos]:
-                if "$nor" in self._match[match][or_pos][path]:
-                    self._match[match][or_pos][path]["$nor"].append(cond_0)
-                elif "not" in self._match[match][or_pos][path]:
-                    self._match[match][or_pos][path]["$nor"] = [self._match[match][or_pos][path]["$not"], cond_0]
-                    del self._match[match][or_pos][path]["$not"]
+            if path in self._match[or_pos]:
+                if "$nor" in self._match[or_pos][path]:
+                    self._match[or_pos][path]["$nor"].append(cond_0)
+                elif "not" in self._match[or_pos][path]:
+                    self._match[or_pos][path]["$nor"] = [self._match[or_pos][path]["$not"], cond_0]
+                    del self._match[or_pos][path]["$not"]
                 else:
-                    self._match[match][or_pos][path]["$not"] = cond_0
+                    self._match[or_pos][path]["$not"] = cond_0
             else:
-                self._match[match][or_pos][path] = {"$not" : cond_0}
+                self._match[or_pos][path] = {"$not" : cond_0}
         else:
-            if path not in self._match[match][or_pos]:
-                self._match[match][or_pos][path] = cond_0
+            if path not in self._match[or_pos]:
+                self._match[or_pos][path] = cond_0
             else:
-                self._match[match][or_pos][path] |= cond_0
+                self._match[or_pos][path] |= cond_0
 
     def _fullSearchMongo(self):
         """
         Takes self.parameters and returns a MongoDB Aggregation query.
         """
         request = []
-        self._match = {}
-        self._match['1'] = [] #[{"type" : "observation"}] # first match stage benefits from the use of MongoDB indexes, second does not.
+        self._match = []
         self._unwind = []
         self._heavystages = set() # two additional set stages when format is too unknown
         self._set = {}
         self._geonear = {}
-        self._match['2'] = [] # second match stage contains conditions which require to be after unwind and/or set stages.
-        self._project = {"_data" : 0} #{"_id" : 0, "_data" : 0, "information" : 0}
-        
+        self._match = []
+        self._project = {"_id" : 0}
+        for el in self.hide: self._project |= {el : 0}
+
         for i in range(len(self.parameters)): # rewriting conditions in MongoDB format
-            self._match['1'].append({})
-            self._match['2'].append({})
+            self._match.append({})
             for cond in self.parameters[i]:
                 self._cond(or_pos = i, **cond)
 
-        if self._match['1']:                                                # Mongo $match stage (first one)
-            j = 0
-            for i in range(len(self._match['1'])):
-                if self._match['1'][i] and j != i:
-                    self._match['1'][j] = self._match['1'][i]
-                    j += 1
-            if j == 0: # when there is no $or
-                if self._match['1'][0]: request.append({"$match" : self._match['1'][0]})
-            else: # when there is a $or
-                request.append({"$match" : {"$or": self._match['1'][:j]}})
-        if self._unwind:                                                    # Mongo $unwind stage
-            for unwind in self._unwind:
-                request.append({"$unwind" : "$" + unwind})
-        if self._heavystages:                                               # additional Mongo $set stage # à tester
-            heavy = {}
-            for path in self._heavystages:
-                heavy |= {"_"+path:{"$cond":{"if":{"$eq":[{"$type":"$"+path},"object"]},"then":{"$objectToArray":"$"+path},"else": {"v":"$"+path}}}}
-            request.append({"$set" : heavy})
-        if self._set: request.append({"$set" : self._set})                  # Mongo $set stage
-        if self._geonear: request.append({"$geoNear" : self._geonear})      # Mongo $geoNear stage
-        if self._match['2']:                                                # Mongo $match stage (second one)
-            j = 0
-            for i in range(len(self._match['2'])):
-                if self._match['2'][i] and j != i:
-                    self._match['2'][j] = self._match['2'][i]
-                    j += 1
-            if j == 0: # when there is no $or
-                if self._match['2'][0]: request.append({"$match" : self._match['2'][0]})
-            else: # when there is a $or
-                request.append({"$match" : {"$or": self._match['2'][:j]}})
-        if self._unwind:
-            dico = {}
-            for unwind in self._unwind:
-                dico |= {unwind: ["$" + unwind]} # A FAIRE CORRECTEMENT ! (tel quel, ajoute toujours un seul array de chaque type...)
-            request.append({"$set" : dico})
-        if self._project: request.append({"$project" : self._project})      # Mongo stage $project
-        return request
+        if not self._unwind and not self.heavy and not self._set and not self._geonear:
+            if self._match:
+                j = 0
+                for i in range(len(self._match)):
+                    if self._match[i] and j != i: # removing empty elements in place
+                        self._match[j] = self._match[i]
+                        j += 1
+                if j == 0: # when there is no $or
+                    if self._match[0]: match = self._match[0]
+                else: # when there is a $or
+                    match = {"$or": self._match[:j]}
+            return 'find', match
+        else:
+            if self._unwind:                                                    # Mongo $unwind stage
+                for unwind in self._unwind:
+                    request.append({"$unwind" : "$" + unwind})
+            if self._heavystages:                                               # additional Mongo $set stage
+                heavy = {}
+                for path in self._heavystages:
+                    heavy |= {"_"+path:{"$cond":{"if":{"$eq":[{"$type":"$"+path},"object"]},"then":{"$objectToArray":"$"+path},"else": {"v":"$"+path}}}}
+                    self._project |= {'_' + path: 0}
+                request.append({"$set" : heavy})
+            if self._set: request.append({"$set" : self._set})                  # Mongo $set stage
+            if self._geonear: request.append({"$geoNear" : self._geonear})      # Mongo $geoNear stage
+            if self._match:                                                     # Mongo $match stage
+                j = 0
+                for i in range(len(self._match)):
+                    if self._match[i] and j != i:
+                        self._match[j] = self._match[i]
+                        j += 1
+                if j == 0: # when there is no $or
+                    if self._match[0]: request.append({"$match" : self._match[0]})
+                else: # when there is a $or
+                    request.append({"$match" : {"$or": self._match[:j]}})
+            if self._unwind:                                                    # Second Mongo $set stage when unwind not empty
+                dico = {}
+                for unwind in self._unwind:
+                    if not unwind in dico: dico[unwind] = ["$" + unwind]
+                    else: dico[unwind] = [dico[unwind]]
+                request.append({"$set" : dico})
+            if self._project: request.append({"$project" : self._project})      # Mongo $project stage
+            return 'aggregation', request
 
     @property
     def request(self):
         '''
         Getter returning the content of the aggregation query to be executed with ESSearch.execute().
         '''
-        return self._fullSearchMongo()
+        if self.heavy: self._project = {"_data" : 0}
+        else: self._project = {}
+        for el in self.hide: self._project |= {el : 0}
+        request_type, request_content = self._fullSearchMongo()
+        if request_type == 'find':
+            return 'collection.find(' + str(request_content) + ', ' + str(self._project) + ')'
+        else:
+            return 'collection.aggregate(' + str(request_content) + ')'
 
     @property
     def cursor(self, input):
         '''
-        Getter returning the coursors of the aggregation query result on all collections and cursors contained in self.input
+        Getter returning the cursors of the aggregation query result on all collections and cursors contained in self.input
         or on the argument input if given.
         '''
-        if input: return input.aggregate(self._fullSearchMongo())
+        self._project = {}
+        for el in self.hide: self._project |= {el : 0}
+        request_type, request_content = self._fullSearchMongo()
+        if input: 
+            if request_type == 'find':
+                return input.find(request_content, self._project)
+            else:
+                return input.aggregate(request_content)
         cursor_list = []
         for item in self.input:
             if isinstance(item, (Collection, Cursor, CommandCursor)):
-                cursor_list.append(item.aggregate(self._fullSearchMongo()))
+                if request_type == 'find':
+                    cursor_list.append(item.find(request_content, self._project))
+                else:
+                    cursor_list.append(item.aggregate(request_content))
         if len(cursor_list) == 1:
             return cursor_list[0]
         else:
             return cursor_list
 
-    def execute(self, filtered = False, namefused = False, single = False, fillvalue = None):
+    def execute(self, returnmode = 'observation', fillvalue = None, name = None, param = None):
         '''
         Executes the request and returns its result, either in one or many Observations.
 
         *Parameter*
 
-        - **fitered** :  bool (default False) - parameter to force filtering on Mongo out.
-        - **namefused** :  bool (default False) - Put to True to merge observations whose names are the same together.
-        - **single** :  bool (default True) - Must be put to False in order to return a list of Observation instead of a single Observation.
-        - **fillvalue** :  (default None) - Value to use to fill gaps when observations are fused together.
+        - **returnmode** : str (default None) - Parameter giving the format of the output:
+            - 'unchanged' : output is returned as it is in the database, some operations like operations sepcific to TimeSlot object are not performed;
+            - 'observation': Each element is returned as an observation, but original observations aren't recreated;
+            - 'idfused': observations whose ids are the same are merged together; 
+            - 'single': return a single observation merging all observations together.
+        - **fillvalue** :  (default None) - Value to use to fill gaps when observations are merged together.
+        - **name** : str (default None) - name of the output observation when returnmode is 'single'.
+        - **param** : dict (default None) - param of the output observation when returnmode is 'single'.
         '''
+        if returnmode not in {'unchanged', 'observation', 'idfused', 'single'}: raise ValueError("returnmode must have one of these values: 'unchanged', 'observation', 'idfused', 'single'.")
+        if returnmode == 'single':
+            if name  is not None and not isinstance(name, str)  : raise TypeError("name should be a string.")
+            if param is not None and not isinstance(param, dict): raise TypeError("param should be a dictionnary.")
+        self._filtered = False # variable "globale" passée à True au sein de cond si nécessaire. (point de définition correct car propre à chaque requête)
+        # nécessaire = cas dans dico_alias_python.
+        
+        ## Construction of a result list where data are in the format given by returnmode
+        
         result = []
-        if self.parameters == [[]]: # à voir, car ne prend pas en compte un potentiel self.project ou similaire déclaré 
-                                    # autrement qu'au sein d'une condition. (ce qui, après tout, ne fait pas vraiment sens)
-            for data in self.input:
-                if isinstance(data, Observation):
-                    result.append(data)
-                else:
-                    for item in data.find(): result.append(Observation.from_obj(item))
-        else:
-            for data in self.input:
-                if isinstance(data, Observation):
-                    result.append(self._filtered_observation(item))
-                else:
-                    if filtered:
-                        for item in data.aggregate(self._fullSearchMongo()): 
-                            obs_out = self._mongo_out_to_obs(item)
-                            if obs_out:
-                                result.append(self._filtered_observation(obs_out))
-                    else:
-                        for item in data.aggregate(self._fullSearchMongo()):
-                            obs_out = self._mongo_out_to_obs(item)
-                            if obs_out:
-                                result.append(obs_out)
-        if single:
-            return self._fusion(result, fillvalue=fillvalue)
-        elif namefused: return self._fusion(result, namefused, fillvalue)
-        else: return result
-
-    def _mongo_out_to_obs(self, dico):
-        '''
-        Takes a dictionnary output by the Mongo request and filters it to return an Observation which contains only valid measures.
-        '''
-        valid_records = set()
-        first_column = True
-        for column_key in dico['data']:
-            if first_column:
-                for i in range(len(dico['data'][column_key]['value'])):
-                    if isinstance(dico['data'][column_key]['value'][i]['record'], int):
-                        valid_records.add(dico['data'][column_key]['value'][i]['record'])
-                    elif isinstance(dico['data'][column_key]['value'][i]['record'], list):
-                        for k in dico['data'][column_key]['value'][i]['record']:
-                            valid_records.add(k)
-                first_column = False
+        for data in self.input[0]:
+            request_type, request_content = self._fullSearchMongo()
+            if request_type == 'find':
+                cursor = data.find(request_content, self._project)
             else:
-                next_valid_records = set()
-                for i in range(len(dico['data'][column_key]['value'])):
-                    if isinstance(dico['data'][column_key]['value'][i]['record'], int) and \
-                            dico['data'][column_key]['value'][i]['record'] in valid_records:
-                        next_valid_records.add(dico['data'][column_key]['value'][i]['record'])
-                    elif isinstance(dico['data'][column_key]['value'][i]['record'], list):
-                        for k in dico['data'][column_key]['value'][i]['record']:
-                            if k in valid_records:
-                                next_valid_records.add(k)
-                valid_records = next_valid_records
-            if len(valid_records) == 0: return None
-        for column_key in dico['data']:
-            for i in range(len(dico['data'][column_key]['value'])-1, -1, -1):
-                if isinstance(dico['data'][column_key]['value'][i]['record'], int) and \
-                        dico['data'][column_key]['value'][i]['record'] not in valid_records:
-                    del dico['data'][column_key]['value'][i] # optimisation : reconstruire la liste au fur et à mesure plutôt que déplacer à chaque del
-                elif isinstance(dico['data'][column_key]['value'][i]['record'], list):
-                    for j in range(len(dico['data'][column_key]['value'][i]['record'])-1, -1, -1):
-                        if dico['data'][column_key]['value'][i]['record'][j] not in valid_records:
-                            del dico['data'][column_key]['value'][i]['record'][j]
-                    if len(dico['data'][column_key]['value'][i]['record']) == 0:
-                        del dico['data'][column_key]['value'][i]
-                    elif len(dico['data'][column_key]['value'][i]['record']) == 1:
-                        dico['data'][column_key]['value'][i]['record'] = dico['data'][column_key]['value'][i]['record'][0]
-        return Observation.from_obj(dico)
+                cursor = data.aggregate(request_content)
+            if returnmode == 'observation':
+                for item in cursor:
+                    dic = {}
+                    if 'name'   in item['_metadata']: dic['name']    = item['_metadata']['name']
+                    if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
+                    if 'param'  in item['_metadata']: dic['param']   = item['_metadata']['param']
+                    del item['_metadata']
+                    for key in item: item[key] = [item[key]]
+                    dic |= {'idxdic': item}
+                    obs_out = Observation.dic(**dic)
+                    if obs_out:
+                        if self._filtered: result.append(self._filtered_observation(obs_out))
+                        else: result.append(obs_out)
+            elif returnmode == 'single':
+                for item in cursor:
+                    del item['_metadata']
+                    result.append(item)
+            else:
+                for item in cursor:
+                    if item:
+                        result.append(item)
+        if returnmode == 'single': result = [Observation.dic(self._fusion(result, fillvalue = fillvalue))]
+        elif returnmode == 'idfused':
+            hashs_dic = {}
+            for item in result:
+                id = str(item['_metadata']['id'])
+                if id in hashs_dic:
+                    del item['_metadata'] # Two items with the same id should have the same metadata.
+                    hashs_dic[id]['idxdic'].append(item)
+                else:
+                    dic = {}
+                    if 'name'   in item['_metadata']: dic['name']    = item['_metadata']['name']
+                    if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
+                    if 'param'  in item['_metadata']: dic['param']   = item['_metadata']['param']
+                    del item['_metadata']
+                    dic |= {'idxdic': [item]}
+                    hashs_dic[id] = dic
+            result = []
+            for id in hashs_dic:
+                hashs_dic[id]['idxdic'] = self._fusion(hashs_dic[id]['idxdic'], fillvalue)
+                obs_out = Observation.dic(**hashs_dic[id])
+                if obs_out:
+                    if self._filtered: result.append(self._filtered_observation(obs_out))
+                    else: result.append(obs_out)
+        for data in self.input[1]: # data which are not taken from a Mongo database and already are observations are treated here.
+            result.append(self._filtered_observation(data))
+        if len(result) > 1:
+            if returnmode == 'single':
+                result = self._fusion_obs(result, fillvalue, name)
+                if param: result.param = param
+            elif returnmode == 'idfused':
+                hashs_dic = {} # format: {id: [observations]}
+                for item in result:
+                    if item.id in hashs_dic:
+                        hashs_dic[item.id].append(item)
+                    else:
+                        hashs_dic[item.id] = [item]
+                result = []
+                for id in hashs_dic:
+                    result.append(self._fusion_obs(hashs_dic[id], fillvalue, hashs_dic[id][0].name, id))
+        return result
 
-    def _filtered_observation(self, obs):
+    def _filtered_observation(self, obs): # Vérifier que cette fonction n'est pas moins efficace que de tout déplier / filtrer / tout replier
+        # Si Observation d'entrée a name, id, param, cela doit être conservé en sortie.
         '''
         Takes an Observation and returns a filtered Observation with self.parameters as a filter.
         '''
         # self.parameters = [[cond1 AND cond 2 AND cond 3] OR [cond4 AND cond5 AND cond6]]
         # dico = {"data": [["datation", [date1, date2, date3], [0,1,0,2,2,1]], ["location", [loc1, loc2, loc3], [0,1,2,0]]]}
-        if len(obs) == 0: return obs
-        
-        if not(isinstance(obs, Observation)):
-            try: Observation(obs)   # pas parfait puisque Observation.from_obj(obs) ne sera pas fait implicitement.
-            except: raise TypeError("Could not convert argument to an Observation.")
+        if len(obs) == 0 or self.parameters == [[]]: return obs
 
         for i in range(len(self.parameters)):
             if self.parameters[i] != []:
@@ -816,17 +883,17 @@ class ESSearch:
         Allows to only test conditions on relevant elements. ex: 'cat' > 3 does not make sense.
         '''
         # parameter = [cond1 AND cond 2 AND cond 3]
+        # Tester si fonctionne toujours correctement après la suppression de name.
         new_conds = []
         relevant =  False
         for i in range(len(obs.lindex)):
             new_conds.append([])
             for cond in parameter:
-                if ("name" not in cond and ("path" not in cond or ("path" in cond and cond["path"] == "data." + obs.lindex[i].name) ) \
-                        or ("name" in cond and cond["name"] == obs.lindex[i].name)) \
+                if ("path" not in cond or ("path" in cond and cond["path"] == obs.lindex[i].name)) \
                         and ("operand" not in cond or ("operand" in cond and self._compatibletypes(obs.lindex[i].cod[0], cond))):
                     new_conds[i].append(cond)
                     relevant = True
-                elif "name" not in cond and "path" in cond and cond["path"][:11] == "information" : #Les vérifications sur les path commençant par information ne se font que dans MongoDB
+                elif "path" in cond and cond["path"][:11] == "information" : # checks on paths beginning by information only concern MongoDB
                     relevant = True
         return new_conds, relevant
 
@@ -846,7 +913,7 @@ class ESSearch:
         Takes an item and returns a Boolean.
         Subfonction executed by _condcheck for each condition in parameter.
         '''
-        #cond = {"comparator" : comparator, "operand" : operand, "path" : path, "name" : name} and sometimes can contain "inverted" or "formatstring"
+        #cond = {"comparator" : comparator, "operand" : operand, "path" : path} and sometimes can contain "inverted" or "formatstring"
         if cond is None: return True
         if cond["comparator"] is None and cond["operand"] is None: return True
 
@@ -885,9 +952,9 @@ class ESSearch:
                     item = shapely.geometry.Polygon([item])
             return dico_alias_mongo['geometry'][cond["comparator"]](item, cond["operand"])
             
-        elif cond["name"] == "property": # assuming that property contains dicts and that the query targets one of its values
+        elif cond["path"] == "property": # assuming that property contains dicts and that the query targets one of its values
             for val in item.values():
-                if self._condcheck_0(val, cond | {"name" : None}):
+                if self._condcheck_0(val, cond | {"path" : None}):
                     return True
             return False
 
@@ -921,96 +988,96 @@ class ESSearch:
         else:
             return False
 
-    def _fusion(self, obsList, namefused = False, fillvalue = None, name = None):
+    def _fusion(self, objList, fillvalue = None):
+        '''
+        Takes a list of dict, each in the form {'col1' : <value1>, 'col2' : <value2>,...} and equivalent to a csv line and outputs
+        an argument for Observation.dic() created by combining it all and filling gaps with fillvalue.
+        '''
+        arg = {}
+        for i in range(len(objList)):
+            for column_name in arg:
+                if column_name not in objList[i]:
+                    arg[column_name].append(fillvalue)
+            for column_name in objList[i]:
+                if column_name not in arg:
+                    arg[column_name] = [fillvalue] * i + [objList[i][column_name]]
+                else:
+                    arg[column_name].append(objList[i][column_name])
+        return arg
+
+    def _fusion_obs(self, obsList, fillvalue = None, name = None, id = None):
         '''
         Takes a list of observations and returns one observation merging them together in one single observation
         or a list of observations where all observations sharing the same name are fused together.
         '''
-# NE FONCTIONNE PAS S'IL NE S'AGIT PAS D'UNE LISTE D'OBSERVATIONS
-# parce que la conversion en observation est faite au sein d'execute et donc que les données entrées par le champ data ne sont pas converties
-# à voir pour modifier fusion / l'intégrer comme méthode de Ilist/Observation / modifier execute.
-# -> dans tous les cas, fait sens d'insérer fusion comme méthode d'Observation.
-        print(obsList)
+# à voir pour modifier fusion / l'intégrer comme méthode de Ilist/Observation
+# -> fait sens d'insérer fusion comme méthode d'Observation.
         if len(obsList) == 1:
             return obsList[0]
         elif len(obsList) > 1:
-            if not namefused:
-                lidx = []
-                new_lname = set()
-                for obs in obsList:
-                    new_lname |= set(obs.lname)
-                new_lname = list(new_lname)
-                
-                for i in range(len(new_lname)): # for each column of the new Observation
-                    values = []
-                    for obs in obsList: # for each Observation in the list
-                        if new_lname[i] in obs.lname: values += obs.lindex[obs.lname.index(new_lname[i])].values # values of the column are added to the new column
-                        else: values += [fillvalue] * len(obs) # when there is no value, filled with fillvalue
-                    codec = util.tocodec(values)
-                    lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
+            lidx = []
+            new_lname = set()
+            for obs in obsList:
+                new_lname |= set(obs.lname)
+            new_lname = list(new_lname)
+            
+            for i in range(len(new_lname)): # for each column of the new Observation
+                values = []
+                for obs in obsList: # for each Observation in the list
+                    if new_lname[i] in obs.lname: values += obs.lindex[obs.lname.index(new_lname[i])].values # values of the column are added to the new column
+                    else: values += [fillvalue] * len(obs) # when there is no value, filled with fillvalue
+                codec = util.tocodec(values)
+                lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
 
-                if name is None: name = "ESSearch query result on " + str(datetime.datetime.now())
-                if self.sources:
-                    sources = self.sources
-                else:
-                    sources = []
-                    for item in self.input:
-                        if isinstance(item, Observation):
-                            if item.name is not None:
-                                sources.append('Observation: ' + item.name)
-                            else:
-                                sources.append('data')
-                        elif isinstance(item, Collection):
-                            sources.append('MongoDB collection: ' + item.name + ' from database: ' + item.database.name)
-                        elif isinstance(item, Cursor):
-                            sources.append('Pymongo cursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
-                                            ' from database: ' + item.collection.database.name)
-                        elif isinstance(item, CommandCursor):
-                            sources.append('Pymongo commandcursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
-                                            ' from database: ' + item.collection.database.name)
-                        else: # should not happen
+            if name is None: name = "ESSearch query result on " + str(datetime.datetime.now())
+            if self.sources:
+                sources = self.sources
+            else:
+                sources = []
+                for item in self.input:
+                    if isinstance(item, Observation):
+                        if item.name is not None:
+                            sources.append('Observation: ' + item.name)
+                        else:
                             sources.append('data')
-                param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
-                        'context': {'origin': 'ESSearch query', 'sources ': sources, 
-                        'ESSearch_parameters': str(self.parameters)}}
-                new_obs = Observation(lidx, name, param=param)
-                return new_obs
-            else:                   # à tester
-                new_obsList = []
-                dict_names = {}
-                for item in obsList:
-                    if item.name in dict_names:
-                        new_obsList[dict_names[item.name]].append(item)
-                    else:
-                        new_obsList.append([item])
-                        dict_names[item.name] = len(new_obsList) - 1
-                for i in range(len(new_obsList)):
-                    new_obsList[i] = self._fusion(new_obsList[i], False, fillvalue, new_obsList[i][0].name)
-                return new_obsList
+                    elif isinstance(item, Collection):
+                        sources.append('MongoDB collection: ' + item.name + ' from database: ' + item.database.name)
+                    elif isinstance(item, Cursor):
+                        sources.append('Pymongo cursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    elif isinstance(item, CommandCursor):
+                        sources.append('Pymongo commandcursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    else: # should not happen
+                        sources.append('data')
+            param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                    'context': {'origin': 'ESSearch query', 'sources ': sources, 
+                    'ESSearch_parameters': str(self.parameters)}}
+            new_obs = Observation(lidx, name, id, param)
+            if id is None: new_obs.id = str(hash(new_obs))
+            return new_obs
         else:
-            if not namefused:
-                if self.sources:
-                    sources = self.sources
-                else:
-                    sources = []
-                    for item in self.input:
-                        if isinstance(item, Observation):
-                            if item.name is not None:
-                                sources.append('Observation: ' + item.name)
-                            else:
-                                sources.append('data')
-                        elif isinstance(item, Collection):
-                            sources.append('MongoDB collection: ' + item.name + ' from database: ' + item.database.name)
-                        elif isinstance(item, Cursor):
-                            sources.append('Pymongo cursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
-                                            ' from database: ' + item.collection.database.name)
-                        elif isinstance(item, CommandCursor):
-                            sources.append('Pymongo commandcursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
-                                            ' from database: ' + item.collection.database.name)
-                        else: # should not happen
+            if self.sources:
+                sources = self.sources
+            else:
+                sources = []
+                for item in self.input:
+                    if isinstance(item, Observation):
+                        if item.name is not None:
+                            sources.append('Observation: ' + item.name)
+                        else:
                             sources.append('data')
-                param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
-                        'context': {'origin': 'ESSearch query', 'sources ': sources, 
-                        'ESSearch_parameters': str(self.parameters)}}               
-                return Observation(param=param)
-            else: return []
+                    elif isinstance(item, Collection):
+                        sources.append('MongoDB collection: ' + item.name + ' from database: ' + item.database.name)
+                    elif isinstance(item, Cursor):
+                        sources.append('Pymongo cursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    elif isinstance(item, CommandCursor):
+                        sources.append('Pymongo commandcursor: ' + item.cursor_id + ' from collection ' + item.collection.name + 
+                                        ' from database: ' + item.collection.database.name)
+                    else: # should not happen
+                        sources.append('data')
+            param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
+                    'context': {'origin': 'ESSearch query', 'sources ': sources, 
+                    'ESSearch_parameters': str(self.parameters)}}
+            return Observation(name=name, id=id, param=param)
