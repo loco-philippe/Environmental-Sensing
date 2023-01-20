@@ -5,6 +5,13 @@ import { emptyRequest, ESSearch} from "../essearch_javascript.js";
 
 const app = express();
 app.use(express.json());
+app.use((req, res, next) => {
+  req.on('abort', () => {
+    res.status(0).send({error: "Request was cancelled by the client"})
+    throw new Error("Request Aborted");
+  });
+  next();
+})
 
 app.get('/', (req, res) => {
   res.writeHead(200, {'Content-Type': 'text/html'});
@@ -22,7 +29,8 @@ app.post('/', async function (req, res) {
   */
   let client, database, collection;
   console.log(req.body);
-  if (req.body.request_type === 'mongo-validation' || req.body.request_type === 'mongo-validation-namelist') {
+  try {
+    if (req.body.request_type === 'mongo-validation' || req.body.request_type === 'mongo-validation-namelist') {
     try {
       client = new MongoClient(req.body.uri);
       database = client.db(req.body.database_name);
@@ -36,31 +44,35 @@ app.post('/', async function (req, res) {
         res.writeHead(200, {'Content-Type': 'text/html'});
         res.end('mongo_data is valid');
       }
-    } catch {
-      res.writeHead(200, {'Content-Type': 'text/html'});
-      res.end('mongo_data is invalid');
+      } catch {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end('mongo_data is invalid');
+      }
+    } else if (req.body.request_type === 'execute') {
+      let client, database, collection;
+      try {
+        client = new MongoClient(req.body.uri);
+        database = client.db(req.body.database_name);
+        collection = database.collection(req.body.collection_name);
+      } catch {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.end('mongo_data is invalid');
+      }
+      let srch = new ESSearch({input:collection, parameters:req.body.parameters});
+      console.log(JSON.stringify(srch.request));
+      let result = await srch.execute({});
+      console.log(result);
+      //for (const obs of result) {console.log(obs);}
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify(result));
+    } else {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    let html = jsdom.serialize();
+    res.end(html);
     }
-  } else if (req.body.request_type === 'execute') {
-    let client, database, collection;
-    try {
-      client = new MongoClient(req.body.uri);
-      database = client.db(req.body.database_name);
-      collection = database.collection(req.body.collection_name);
-    } catch {
-      res.writeHead(200, {'Content-Type': 'text/html'});
-      res.end('mongo_data is invalid');
-    }
-    let srch = new ESSearch({input:collection, parameters:req.body.parameters});
-    console.log(JSON.stringify(srch.request));
-    let result = await srch.execute({});
-    console.log(result);
-    //for (const obs of result) {console.log(obs);}
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    res.end(JSON.stringify(result));
-  } else {
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  let html = jsdom.serialize();
-  res.end(html);
+  } catch (err) {
+    console.log(err);
+    res.status(499).send({error: "An error occured"});
   }
 });
 

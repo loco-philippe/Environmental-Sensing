@@ -242,6 +242,9 @@
                         console.log("Le progrès n'attend pas."); /**/
                         updateRenderingParameters (document.getElementById("rendering-select").value);
                         document.getElementById("export_div").style.display = 'block';
+                        } else if (xhr.status !== 200) {
+                        document.getElementById("request-result").innerHTML = "Erreur";
+                        document.getElementById("request-result").style.color = "red";                        
                     }}
                 } else {
                     document.getElementById("request-result").innerHTML = "La collection est invalide. Impossible d'exécuter la requête."
@@ -372,7 +375,7 @@
                 // Tel quel, champs ajoutés disparaissent si changement de format d'affichage puis retour
                 // Laisser comme ça tant qu'il n'y a pas la possibilité de retirer un champ
                 plot_count += 1;
-                if (plot_count >= column_names.length) {return;} // Créer une autre variable globale pour le retour
+                if (plot_count >= column_names.length) {return;} // Créer une autre variable globale pour le retour (car il y a moins de colonnes en sortie qu'en entrée.)
                 var new_field_select = document.createElement("select");
                 new_field_select.name = "additional_field";
                 new_field_select.id = "field-select_" + plot_count;

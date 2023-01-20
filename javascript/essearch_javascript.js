@@ -269,12 +269,12 @@ export class ESSearch {
 
   _fullSearchMongo() {
     let request = [];
-    this._match = [{type: {$not: {'$eq': 'observationMetadata'}}}];
+    this._match = [{}];
     this._unwind = [];
     this._heavystages = [];
     this._set = {};
     this._geonear = {};
-    this._project = {_id: 0, _hash: 0};
+    this._project = {_id: 0, _data:0};
         
     for (let i = 0; i < this.parameters.length; i++) {
       this._match.concat([{}]);
@@ -330,16 +330,26 @@ export class ESSearch {
     return request;
   }
 
-  async execute({with_python = true, returnmode = 'single', modecodec = 'dict'}) {
+  async execute({with_python = true, returnmode = 'single', modecodec = 'dict', filtered = false, fillvalue = null}) {
     /*
     modecodec : 'dict' or 'optimize'
     */
     let cursor, result = [];
     for (const mongo_source of this.input) {
       cursor = mongo_source.aggregate(this._fullSearchMongo());
-      for await (const item of cursor) {
+      for await (let item of cursor) {
         //console.log(JSON.stringify(item));
-        result.push(JSON.stringify(item));
+        if ('id' in item && 'type' in item && item['type'] == 'observationMetadata') {
+          for await (let el of mongo_source.find({'_hash': item['id']}, {'_id': 0})) {
+            let dic = {'idxdic': el};
+            if ('name'  in item) {dic['name']  = item['name'];}
+            if ('id'    in item) {dic['id']    = String(item['id']);}
+            if ('param' in item) {dic['param'] = item['param'];}
+            delete dic['idxdic']['_id'];
+            delete dic['idxdic']['_hash'];
+            result.push(JSON.stringify(dic));
+          }
+        }
       }
     }
     console.log(result); // à retirer
@@ -360,7 +370,7 @@ export class ESSearch {
       python.ex`import json`;
       python.ex`from observation import Observation`;
       python.ex`from observation.essearch import ESSearch`;
-      let result_json = await python`ESSearch([Observation.dic(json.loads(item)) for item in ${result}], sources=${sources}).execute(returnmode = ${returnmode}).to_obj(encoded = True, modecodec=${modecodec}, geojson=True)`
+      let result_json = await python`ESSearch([Observation.dic(**json.loads(item)) for item in ${result}], sources=${sources}).execute(returnmode = ${returnmode}, filtered = ${filtered}, fillvalue = ${fillvalue}).to_obj(encoded = True, modecodec=${modecodec}, geojson=True)`
       python.end();
       return JSON.parse(result_json);
     }
