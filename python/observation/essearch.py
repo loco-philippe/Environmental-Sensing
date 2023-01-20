@@ -264,7 +264,7 @@ class ESSearch:
         - Observation (can be defined from a str or a dict)
     - **parameters** : list of list of conditions for queries, to be interpreted as : parameters = [[cond_1 AND cond_2 AND cond_3] OR [cond_4 AND cond_5 AND cond_6]] where conds are criteria for queries
     - **hide** : list of paths to hide from the output
-    - **heavy** : boolean indicating whether the request should be simplified or not
+    - **heavy** : boolean indicating whether the request should search for nested values or not. Does not work with geoJSON.
     - **sources** : attribute used to indicate the sources of the data in param
 
     The methods defined in this class are (documentations in methods definitions):
