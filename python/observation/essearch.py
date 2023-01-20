@@ -307,7 +307,7 @@ class ESSearch:
 
         *Arguments*
 
-        - **input** : input on which the query is done. Must be one of or a list of these (can be nested): 
+        - **input** : input on which the query is done. Must be one of or a list of these (can be nested):
             - pymongo.collection.Collection
             - pymongo.cursor.Cursor
             - pymongo.command_cursor.CommandCursor
@@ -454,7 +454,7 @@ class ESSearch:
         
         - **or_position** :  int (default -1) - position in self.parameters in which the condition is to be inserted.
 
-        - **formatstring** :  str (default None) - str to use to automatically change str to datetime before applying condition. 
+        - **formatstring** :  str (default None) - str to use to automatically change str to datetime before applying condition.
                     Does not update the data base. If value is set to 'default', format is assumed to be Isoformat.
         
         - **inverted** :  bool (default None) - to add a "not" in the condition.
@@ -731,8 +731,7 @@ class ESSearch:
         Getter returning the cursors of the aggregation query result on all collections and cursors contained in self.input
         or on the argument input if given.
         '''
-        if self.heavy: self._project = {"_data" : 0}
-        else: self._project = {}
+        self._project = {}
         for el in self.hide: self._project |= {el : 0}
         request_type, request_content = self._fullSearchMongo()
         if input: 
@@ -790,6 +789,7 @@ class ESSearch:
                     if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
                     if 'param'  in item['_metadata']: dic['param']   = item['_metadata']['param']
                     del item['_metadata']
+                    for key in item: item[key] = [item[key]]
                     dic |= {'idxdic': item}
                     obs_out = Observation.dic(**dic)
                     if obs_out:
@@ -825,7 +825,7 @@ class ESSearch:
                 obs_out = Observation.dic(**hashs_dic[hash])
                 if obs_out:
                     if self._filtered: result.append(self._filtered_observation(obs_out))
-                    else: result.append(obs_out)        
+                    else: result.append(obs_out)
         for data in self.input[1]: # data which are not taken from a Mongo database and already are observations are treated here.
             result.append(self._filtered_observation(data))
         if len(result) > 1:
@@ -1078,5 +1078,5 @@ class ESSearch:
                         sources.append('data')
             param = {'date': str(datetime.datetime.now()), 'project': 'essearch', 'type': 'dim3', 
                     'context': {'origin': 'ESSearch query', 'sources ': sources, 
-                    'ESSearch_parameters': str(self.parameters)}}               
+                    'ESSearch_parameters': str(self.parameters)}}
             return Observation(name=name, id=id, param=param)
