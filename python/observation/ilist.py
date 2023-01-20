@@ -443,7 +443,7 @@ class Ilist(IlistStructure, IlistInterface):
             tuple(zip(*lidx))
 
         leng = [len(cod) for cod in codec]
-        # mode full : tous False
+        # mode full : tous False et même longueur
         fullmode = not max(isfullkeys) and max(leng) == min(leng)
         # mode default : tous True (idem all(isfullkeys))
         defmode = min(isfullkeys)
