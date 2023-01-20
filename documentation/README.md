@@ -9,3 +9,5 @@
 - data structure
     - [observation](./Observation.pdf) presentation,
     - presentation of the concepts and principles of [indexed lists principles](./Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
+
+The Jupyter Notebooks are available on [nbviewer](http://nbviewer.org/github/loco-philippe/Environmental-Sensing/tree/main/documentation/)
