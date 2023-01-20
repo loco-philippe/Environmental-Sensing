@@ -660,8 +660,7 @@ class ESSearch:
         self._set = {}
         self._geonear = {}
         self._match = []
-        if self.heavy: self._project = {"_id" : 0, "_data" : 0}
-        else: self._project = {"_id" : 0}
+        self._project = {"_id" : 0}
         for el in self.hide: self._project |= {el : 0}
 
         for i in range(len(self.parameters)): # rewriting conditions in MongoDB format
@@ -689,6 +688,7 @@ class ESSearch:
                 heavy = {}
                 for path in self._heavystages:
                     heavy |= {"_"+path:{"$cond":{"if":{"$eq":[{"$type":"$"+path},"object"]},"then":{"$objectToArray":"$"+path},"else": {"v":"$"+path}}}}
+                    self._project |= {'_' + path: 0}
                 request.append({"$set" : heavy})
             if self._set: request.append({"$set" : self._set})                  # Mongo $set stage
             if self._geonear: request.append({"$geoNear" : self._geonear})      # Mongo $geoNear stage
@@ -767,9 +767,9 @@ class ESSearch:
         - **name** : str (default None) - name of the output observation when returnmode is 'single'.
         - **param** : dict (default None) - param of the output observation when returnmode is 'single'.
         '''
+        if returnmode not in {'unchanged', 'observation', 'idfused', 'single'}: raise ValueError("returnmode must have one of these values: 'unchanged', 'observation', 'idfused', 'single'.")
         if returnmode == 'single':
             if name  is not None and not isinstance(name, str)  : raise TypeError("name should be a string.")
-            if id    is not None and not isinstance(id, str)    : raise TypeError("id should be a string.")
             if param is not None and not isinstance(param, dict): raise TypeError("param should be a dictionnary.")
         self._filtered = False # variable "globale" passée à True au sein de cond si nécessaire. (point de définition correct car propre à chaque requête)
         # nécessaire = cas dans dico_alias_python.
@@ -807,7 +807,7 @@ class ESSearch:
         elif returnmode == 'idfused':
             hashs_dic = {}
             for item in result:
-                hash = item.pop('_hash')
+                hash = str(item['_metadata']['id'])
                 if hash in hashs_dic:
                     del item['_metadata'] # Two items with the same hash should have the same metadata.
                     hashs_dic[hash]['idxdic'].append(item)
@@ -816,14 +816,16 @@ class ESSearch:
                     if 'name'   in item['_metadata']: dic['name']    = item['_metadata']['name']
                     if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
                     if 'param'  in item['_metadata']: dic['param']   = item['_metadata']['param']
+                    del item['_metadata']
                     dic |= {'idxdic': [item]}
-                    hashs_dic[hash] = [dic]
+                    hashs_dic[hash] = dic
+            result = []
             for hash in hashs_dic:
                 hashs_dic[hash]['idxdic'] = self._fusion(hashs_dic[hash]['idxdic'], fillvalue)
                 obs_out = Observation.dic(**hashs_dic[hash])
                 if obs_out:
                     if self._filtered: result.append(self._filtered_observation(obs_out))
-                    else: result.append(obs_out)
+                    else: result.append(obs_out)        
         for data in self.input[1]: # data which are not taken from a Mongo database and already are observations are treated here.
             result.append(self._filtered_observation(data))
         if len(result) > 1:
