@@ -377,9 +377,12 @@ if False:
 if False:
     from test_mongo import clientMongo
     client = clientMongo()
-    collec = client['test_search']['jeu_data_py']
+    collec = client['test_search']['jeu_data_py2']
 
     for obs in mixte:
-        print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
+        #print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
+        print(len(collec.insert_many(obs.to_obj(modecodec='ndjson')).inserted_ids))
     for obs in tests:
-        print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
+        #print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
+        print(len(collec.insert_many(obs.to_obj(modecodec='ndjson')).inserted_ids))
+

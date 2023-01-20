@@ -15,7 +15,6 @@ import requests as rq
 from pymongo import MongoClient
 from pprint import pprint
 from observation.essearch import ESSearch
-from data import obs_mixte, obs_tests
 
 # Requires the PyMongo package# https://api.mongodb.com/python/current
 # pathClient = 'mongodb+srv://ESobsUser:observation@esobs.gwpay.mongodb.net/test'
@@ -65,6 +64,9 @@ def envoi_mongo_python(data):
 
 
 client = clientMongo()
+
+from data import obs_mixte, obs_tests
+
 ob_mixte = obs_mixte()
 ob_tests = obs_tests()
 
@@ -84,7 +86,7 @@ len_ob = [len(ob) for ob in ob_liste]
 
 
 class Test_jeu_data_py(unittest.TestCase):
-    collec = client['test_search']['jeu_data_py']
+    collec = client['test_search']['jeu_data_py2']
 
     def test_param_name(self):
         srch = ESSearch(Test_jeu_data_py.collec)

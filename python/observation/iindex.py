@@ -354,6 +354,7 @@ class Iindex(IindexStructure, IindexInterface):
         ''' return value item (value conversion)'''
         if isinstance(ind, tuple):
             return [copy(self.values[i]) for i in ind]
+        #return self.values[ind]
         return copy(self.values[ind])
 
     def __setitem__(self, ind, value):
