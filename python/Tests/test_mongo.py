@@ -87,8 +87,8 @@ class Test_jeu_data_py(unittest.TestCase):
     collec = client['test_search']['jeu_data_py']
 
     def test_param_name(self):
-        srch = ESSearch(collection=Test_jeu_data_py.collec)
-        for typ, nam, leno, lis in zip(type0, name0, len_ob, ob_liste):
+        srch = ESSearch(Test_jeu_data_py.collec)
+        for typ, nam, leno, lis in zip(type0, name0, len_ob, ob_liste): 
             srch.addCondition(path='param.type', operand=typ, comparator='==')
             result = srch.execute()
             self.assertTrue(len(result) == leno and result == lis)
@@ -101,11 +101,10 @@ class Test_jeu_data_py(unittest.TestCase):
         self.assertTrue(result == ob_tests[40:48] + ob_tests[50:52])
 
     def test_datation(self):
-        srch = ESSearch(collection=Test_jeu_data_py.collec)
-        srch.addCondition('datation', comparator='>=',
-                          operand=datetime(2022, 1, 2, 0, 0))
-        srch.addCondition('datation', comparator='<=',
-                          operand=datetime(2022, 1, 4, 0, 0))
+        srch = ESSearch(Test_jeu_data_py.collec)
+        srch.addCondition('datation', comparator='>=', operand=datetime(2022, 1, 2, 0, 0))
+        srch.addCondition('datation', comparator='<=', operand=datetime(2022, 1, 4, 0, 0))
+
         srch.addCondition(path='name', comparator='regex', operand='mobile')
         result = srch.execute()
         self.assertTrue(len(result) == 2)
