@@ -807,10 +807,10 @@ class ESSearch:
         elif returnmode == 'idfused':
             hashs_dic = {}
             for item in result:
-                hash = str(item['_metadata']['id'])
-                if hash in hashs_dic:
-                    del item['_metadata'] # Two items with the same hash should have the same metadata.
-                    hashs_dic[hash]['idxdic'].append(item)
+                id = str(item['_metadata']['id'])
+                if id in hashs_dic:
+                    del item['_metadata'] # Two items with the same id should have the same metadata.
+                    hashs_dic[id]['idxdic'].append(item)
                 else:
                     dic = {}
                     if 'name'   in item['_metadata']: dic['name']    = item['_metadata']['name']
@@ -818,11 +818,11 @@ class ESSearch:
                     if 'param'  in item['_metadata']: dic['param']   = item['_metadata']['param']
                     del item['_metadata']
                     dic |= {'idxdic': [item]}
-                    hashs_dic[hash] = dic
+                    hashs_dic[id] = dic
             result = []
-            for hash in hashs_dic:
-                hashs_dic[hash]['idxdic'] = self._fusion(hashs_dic[hash]['idxdic'], fillvalue)
-                obs_out = Observation.dic(**hashs_dic[hash])
+            for id in hashs_dic:
+                hashs_dic[id]['idxdic'] = self._fusion(hashs_dic[id]['idxdic'], fillvalue)
+                obs_out = Observation.dic(**hashs_dic[id])
                 if obs_out:
                     if self._filtered: result.append(self._filtered_observation(obs_out))
                     else: result.append(obs_out)
@@ -830,18 +830,18 @@ class ESSearch:
             result.append(self._filtered_observation(data))
         if len(result) > 1:
             if returnmode == 'single':
-                result = self._fusion_obs(result, fillvalue, name, str(hash(result)))
+                result = self._fusion_obs(result, fillvalue, name)
                 if param: result.param = param
             elif returnmode == 'idfused':
-                hashs_dic = {} # format: {hash: [observations]}
+                hashs_dic = {} # format: {id: [observations]}
                 for item in result:
                     if item.id in hashs_dic:
                         hashs_dic[item.id].append(item)
                     else:
                         hashs_dic[item.id] = [item]
                 result = []
-                for hash in hashs_dic:
-                    result.append(self._fusion_obs(hashs_dic[hash], fillvalue, hashs_dic[hash][0].name, hash))
+                for id in hashs_dic:
+                    result.append(self._fusion_obs(hashs_dic[id], fillvalue, hashs_dic[id][0].name, id))
         return result
 
     def _filtered_observation(self, obs): # Vérifier que cette fonction n'est pas moins efficace que de tout déplier / filtrer / tout replier
@@ -1054,6 +1054,7 @@ class ESSearch:
                     'context': {'origin': 'ESSearch query', 'sources ': sources, 
                     'ESSearch_parameters': str(self.parameters)}}
             new_obs = Observation(lidx, name, id, param)
+            if id is None: new_obs.id = str(hash(new_obs))
             return new_obs
         else:
             if self.sources:

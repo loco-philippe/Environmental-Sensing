@@ -9,11 +9,11 @@ export async function emptyRequest(input) {
   -> Permettrait aussi d'indiquer pour chaque colonne son contenu exact.
   Ensuite seulement, tout regarder. (Ou directement, en fonction d'un paramètre booléen de emptyRequest valant False par défaut.)*/
   /* Returns Collection count and existing column names */
-  let count = 0, cursor = input.find({type: {$not: {'$eq': 'observationMetadata'}}}), column_names = [];
+  let count = 0, cursor = input.find(), column_names = [];
   for await (const doc of cursor) {
     count += 1;
     for (const column_name in doc) {
-      if (!(column_names.includes(column_name)) && column_name !== '_id' && column_name !== '_hash') {
+      if (!(column_names.includes(column_name))) {
         column_names.push(column_name);
       }
     }
@@ -274,7 +274,7 @@ export class ESSearch {
     this._heavystages = [];
     this._set = {};
     this._geonear = {};
-    this._project = {_id: 0, _data:0};
+    this._project = {_id: 0};
         
     for (let i = 0; i < this.parameters.length; i++) {
       this._match.concat([{}]);
@@ -296,6 +296,7 @@ export class ESSearch {
         } else {
           heavy["_" + path] = {"$cond":{"if":{"$eq":[{"$type":"$" + path},"object"]},"then":{"$objectToArray":"$" + path},"else": {"v":"$" + path}}};
         }
+        Object.assign(this._project["_" + path], 0);
       }
       request.push({"$set" : heavy});
     }
@@ -330,7 +331,7 @@ export class ESSearch {
     return request;
   }
 
-  async execute({with_python = true, returnmode = 'single', modecodec = 'dict', filtered = false, fillvalue = null}) {
+  async execute({with_python = true, returnmode = 'single', modecodec = 'dict', fillvalue = null}) {
     /*
     modecodec : 'dict' or 'optimize'
     */
@@ -339,17 +340,15 @@ export class ESSearch {
       cursor = mongo_source.aggregate(this._fullSearchMongo());
       for await (let item of cursor) {
         //console.log(JSON.stringify(item));
-        if ('id' in item && 'type' in item && item['type'] == 'observationMetadata') {
-          for await (let el of mongo_source.find({'_hash': item['id']}, {'_id': 0})) {
-            let dic = {'idxdic': el};
-            if ('name'  in item) {dic['name']  = item['name'];}
-            if ('id'    in item) {dic['id']    = String(item['id']);}
-            if ('param' in item) {dic['param'] = item['param'];}
-            delete dic['idxdic']['_id'];
-            delete dic['idxdic']['_hash'];
-            result.push(JSON.stringify(dic));
-          }
+        let dic = {'idxdic': item};
+        if ('name'  in item) {dic['name']  = item['name'];}
+        if ('id'    in item) {dic['id']    = String(item['id']);}
+        if ('param' in item) {dic['param'] = item['param'];}
+        delete dic['idxdic']['_metadata'];
+        for (const key in dic['idxdic']) {
+          dic['idxdic'][key] = [dic['idxdic'][key]]
         }
+        result.push(JSON.stringify(dic));
       }
     }
     console.log(result); // à retirer
@@ -370,7 +369,7 @@ export class ESSearch {
       python.ex`import json`;
       python.ex`from observation import Observation`;
       python.ex`from observation.essearch import ESSearch`;
-      let result_json = await python`ESSearch([Observation.dic(**json.loads(item)) for item in ${result}], sources=${sources}).execute(returnmode = ${returnmode}, filtered = ${filtered}, fillvalue = ${fillvalue}).to_obj(encoded = True, modecodec=${modecodec}, geojson=True)`
+      let result_json = await python`ESSearch([Observation.dic(**json.loads(item)) for item in ${result}], sources=${sources}).execute(returnmode = ${returnmode}, fillvalue = ${fillvalue}).to_obj(encoded = True, modecodec=${modecodec}, geojson=True)`
       python.end();
       return JSON.parse(result_json);
     }
