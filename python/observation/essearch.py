@@ -786,7 +786,7 @@ class ESSearch:
                 for item in cursor:
                     dic = {}
                     if 'name'   in item['_metadata']: dic['name']    = item['_metadata']['name']
-                    if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
+                    #if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
                     if 'param'  in item['_metadata']: dic['param']   = item['_metadata']['param']
                     del item['_metadata']
                     for key in item: item[key] = [item[key]]
@@ -814,7 +814,7 @@ class ESSearch:
                 else:
                     dic = {}
                     if 'name'   in item['_metadata']: dic['name']    = item['_metadata']['name']
-                    if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
+                    #if 'id'     in item['_metadata']: dic['id']      = str(item['_metadata']['id'])
                     if 'param'  in item['_metadata']: dic['param']   = item['_metadata']['param']
                     del item['_metadata']
                     dic |= {'idxdic': [item]}

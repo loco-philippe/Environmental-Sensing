@@ -86,20 +86,21 @@ len_ob = [len(ob) for ob in ob_liste]
 
 
 class Test_jeu_data_py(unittest.TestCase):
-    collec = client['test_search']['jeu_data_py2']
+    collec = client['test_search']['jeu_data_py3']
 
     def test_param_name(self):
         srch = ESSearch(Test_jeu_data_py.collec)
         for typ, nam, leno, lis in zip(type0, name0, len_ob, ob_liste): 
-            srch.addCondition(path='param.type', operand=typ, comparator='==')
-            result = srch.execute()
+            srch.addCondition(path='_metadata.param.type', operand=typ, comparator='==')
+            result = srch.execute('idfused')
+            #print(len(result))
             self.assertTrue(len(result) == leno and result == lis)
             srch.clearConditions()
-        srch.addCondition(path='name', comparator='regex', operand='mesures')
-        result = srch.execute()
+        srch.addCondition(path='_metadata.name', comparator='regex', operand='mesures')
+        result = srch.execute('idfused')
         self.assertTrue(result == ob_tests[40:52])
-        srch.addCondition(path='name', comparator='regex', operand='polluant')
-        result = srch.execute()
+        srch.addCondition(path='_metadata.name', comparator='regex', operand='polluant')
+        result = srch.execute('idfused')
         self.assertTrue(result == ob_tests[40:48] + ob_tests[50:52])
 
     def test_datation(self):
@@ -107,16 +108,12 @@ class Test_jeu_data_py(unittest.TestCase):
         srch.addCondition('datation', comparator='>=', operand=datetime(2022, 1, 2, 0, 0))
         srch.addCondition('datation', comparator='<=', operand=datetime(2022, 1, 4, 0, 0))
 
-        srch.addCondition(path='name', comparator='regex', operand='mobile')
-        result = srch.execute()
-        self.assertTrue(len(result) == 2)
-        result[0].swapindex(ob_tests[42].lname)
+        srch.addCondition(path='_metadata.name', comparator='regex', operand='mobile')
+        result = srch.execute('idfused')
+        self.assertTrue(len(result) == 1)
         self.assertTrue(ob_tests[42].loc(result[0][0], row=True) == [1])
-        result[1].swapindex(ob_tests[42].lname)
-        self.assertTrue(ob_tests[42].loc(result[1][0], row=True) == [2])
-        result[0].add(result[1], name=True)
+        self.assertTrue(ob_tests[42].loc(result[0][1], row=True) == [2])
         self.assertTrue(result[0].idxlen == [2, 2, 2, 2, 2, 1, 1, 1])
-
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

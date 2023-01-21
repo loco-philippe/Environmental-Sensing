@@ -366,23 +366,30 @@ def obs_tests():
 
 
 # %% principal
-if False:
-    mixte = obs_mixte()
-    tests = obs_tests()
-    print('nb observations : ', len(mixte), len(tests))
-
-    print('nb records : ', sum([len(obs) for obs in mixte]),
-          sum([len(obs) for obs in tests]))
-
-if False:
-    from test_mongo import clientMongo
-    client = clientMongo()
-    collec = client['test_search']['jeu_data_py2']
-
-    for obs in mixte:
-        #print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
-        print(len(collec.insert_many(obs.to_obj(modecodec='ndjson')).inserted_ids))
-    for obs in tests:
-        #print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
-        print(len(collec.insert_many(obs.to_obj(modecodec='ndjson')).inserted_ids))
+if __name__ == '__main__':
+    if True:
+        mixte = obs_mixte()
+        tests = obs_tests()
+        print('nb observations : ', len(mixte), len(tests))
+    
+        print('nb records : ', sum([len(obs) for obs in mixte]),
+              sum([len(obs) for obs in tests]))
+    
+    if True :
+        from test_mongo import clientMongo
+        from essearch import insert_to_mongo
+        client = clientMongo()
+        collec = client['test_search']['jeu_data_py3']
+        
+        insert_to_mongo(collec, mixte)
+        print('mixte ok')
+        insert_to_mongo(collec, tests)
+        print('tests ok')
+    
+        '''for obs in mixte:
+            #print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
+            print(len(collec.insert_many(obs.to_obj(modecodec='ndjson')).inserted_ids))
+        for obs in tests:
+            #print(collec.insert_one(obs.to_obj(modecodec='dict')).inserted_id)
+            print(len(collec.insert_many(obs.to_obj(modecodec='ndjson')).inserted_ids))'''
 
