@@ -72,11 +72,15 @@ class TestSearch(unittest.TestCase):
         print("Requête effectuée :", research.request, '\n')
         result = research.execute('idfused')
         #print(result)
-        for el in result:el.id=None
+        for el in result:
+            try: el.id=None
+            except: pass
         for el in result:print(el)
         print("durée d'exécution de test_property : ", time.time() - t)
         self.assertIsNotNone(result)
-        for el in result:el.id=None
+        for el in result:
+            try: el.id=None
+            except: pass
         self.assertIn(all_obs['test_property_valid'], result)
         self.assertIn(all_obs['test_property_valid_2'], result)
         self.assertIn(Observation.from_obj({'name':'test_property_half_valid', 'data':[['property', ['PM25', 'PM25', 'PM25']]]}), result)
@@ -92,7 +96,9 @@ class TestSearch(unittest.TestCase):
         #print(result)
         print("durée d'exécution de test_datation : ", time.time() - t)
         self.assertIsNotNone(result)
-        for el in result:el.id=None
+        try: 
+            for el in result:el.id=None
+        except: pass
         self.assertIn(all_obs['test_datation_valid'], result)
         self.assertIn(all_obs['test_datation_valid_2'], result)
         self.assertNotIn(all_obs['test_datation_not_valid'], result)
@@ -110,7 +116,9 @@ class TestSearch(unittest.TestCase):
         for el in result:print(el)
         print("durée d'exécution de test_datation_1 : ", time.time() - t)
         self.assertIsNotNone(result)
-        for el in result:el.id=None
+        try: 
+            for el in result:el.id=None
+        except: pass
         self.assertIn(all_obs['test_datation_1_valid'], result)
         self.assertIn(all_obs['test_datation_1_valid_2'], result)
         self.assertNotIn(all_obs['test_datation_1_not_valid'], result)
@@ -146,7 +154,9 @@ class TestSearch(unittest.TestCase):
         for el in result:print(el)
         print("durée d'exécution de test_location : ", time.time() - t)
         self.assertIsNotNone(result)
-        for el in result:el.id=None
+        for el in result:
+            try: el.id=None
+            except: pass
         self.assertIn(all_obs['test_location_valid'], result)
         self.assertIn(all_obs['test_location_valid_2'], result)
         self.assertIn(all_obs['test_location_valid_3'], result)

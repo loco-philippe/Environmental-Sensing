@@ -13,7 +13,7 @@ export async function emptyRequest(input) {
   for await (const doc of cursor) {
     count += 1;
     for (const column_name in doc) {
-      if (!(column_names.includes(column_name))) {
+      if (!column_names.includes(column_name) && column_name !== '_id' && column_name !== '_metadata') {
         column_names.push(column_name);
       }
     }

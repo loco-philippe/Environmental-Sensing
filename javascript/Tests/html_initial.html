@@ -51,7 +51,7 @@
             var uri = '', database_name = '', collection_name = '', req_count = -1, column_names = [], added_fields = [0],
                 responseText, result_data, column_names_out, formatted_data, formatted_data_promise, geojson_data, plot_count = 0,
                 map;
-// PROBLEME : Données perdues lorsque l'onglet se décharge.
+// PROBLEME : Données perdues lorsque l'onglet se décharge. => utilisation de sessionStorage.
 
             function setUri (value) {uri = value; validationMongo();}
             function setDatabaseName (value) {database_name = value; validationMongo();}
@@ -237,7 +237,7 @@
                         result_data = resp["data"];
                         document.getElementById("request-result").style.color = "green";
                         document.getElementById("request-result").innerHTML = "Requête effectuée ✓";
-                        formatted_data_promise = dataFormatting ();
+                        formatted_data_promise = dataFormatting (); // La promesse semble être toujours résolue avant l'étape suivante. La conserver dans un élément à part ne semble donc pas avoir d'intérêt.
                         console.log(formatted_data_promise); /**/
                         console.log("Le progrès n'attend pas."); /**/
                         updateRenderingParameters (document.getElementById("rendering-select").value);
@@ -316,16 +316,18 @@
                     document.getElementById("rendering_parameters").innerHTML = 'Données géographiques : <select name="geo_field" \
                     id="geo_field-select" oninput="render ()"></select> Données à représenter : <select name="z_field" id="z_field-select" \
                     oninput="render ()"></select> <button id="add_render_field" onclick="addRenderField ()">+</button> \
-                    Type de carte : <select name="map_type" id="map_type-select" oninput="render (); choroplethOptions ()">\
-                    <option value="choropleth">choroplèthe</option><option value="heatmap">Carte thermique</option>\
-                    <option value="else">autre</option></select>';
+                    Type de carte : <select name="map_type" id="map_type-select" oninput="render (); mapOptions ()">\
+                    <option value="choropleth">Carte choroplèthe</option><option value="heatmap">Carte thermique</option>\
+                    <option value="else">Autre</option></select>';
                     fieldOptions ([document.getElementById("geo_field-select"), document.getElementById("z_field-select")], 'map');
-                    choroplethOptions ();
+                    mapOptions ();
                 }
                 render ();
             }
 
-            function choroplethOptions () {
+            function mapOptions () {
+                try {document.getElementById('rendering_parameters').removeChild(document.getElementById('choropleth_parameters'));} catch {}
+                try {document.getElementById('rendering_parameters').removeChild(document.getElementById('heatmap_parameters'));} catch {}
                 if (document.getElementById('map_type-select').value === 'choropleth') {
                     var div = document.createElement('div');
                     div.id = 'choropleth_parameters'
@@ -338,8 +340,12 @@
                     Nombre d\'intervalles : <select name="interval_number" id="interval_number-select" oninput="render ()"></select>'
                     document.getElementById('rendering_parameters').appendChild(div);
                     colorsValue ();
-                } else {
-                    document.getElementById('rendering_parameters').removeChild(document.getElementById('choropleth_parameters'));
+                } else if (document.getElementById('map_type-select').value === 'heatmap') {
+                    var div = document.createElement('div');
+                    div.id = 'heatmap_parameters'
+                    div.innerHTML = 'Radius : <input type="range" min="0" max="100" value="25" id="radiusInput" oninput="updateHeatmap ()">\
+                    <div style="color:red;">Attention ! Modifier la valeur du radius trop vite peut actuellement faire planter le navigateur !</div>'
+                    document.getElementById('rendering_parameters').appendChild(div);
                 }
             }
 
@@ -473,7 +479,7 @@
             async function render () {
                 graph_type = document.getElementById("rendering-select").value;
                 try {map.off(); map.remove()} catch {}
-                var container = L.DomUtil.get('map'); // potentiellement, container === map et cette étape est inutile.
+                var container = L.DomUtil.get('map');
                 if (container != null) {
                     container._leaflet_id = null;
                 }
@@ -535,7 +541,7 @@
                         console.log("Affichage d'une carte");
                         console.log(geojson_data);
                         document.getElementById('map').style.display = 'block'; //peut-être nécessaire d'utiliser une fonction de leaflet ici pour ne pas mettre le bazar ?
-                        map = L.map('map');
+                        map = L.map('map', {preferCanvas: true});
                         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                             maxZoom: 18
@@ -597,7 +603,7 @@
                                 for (var i = 1; i < n; i++) {
                                     breakpoints.push(data[Math.round((data.length) * i / n - 1)]);
                                 }
-                            } 
+                            }
 
                             var colors = document.getElementById("colors-select").value, palette;
                             try {
@@ -629,7 +635,7 @@
                                     fillOpacity: 0.7
                                 };
                             }
-
+                            
                             function highlightFeature(e) {
                                 var layer = e.target;
 
@@ -677,8 +683,30 @@
                                     from = breakpoints[i];
                                     to = breakpoints[i + 1];
                                     if (document.getElementById("interval_type-select").value !== 'quantiles') {
-                                        try {from = from.toPrecision(3);} catch {}
-                                        try {to = to.toPrecision(3);} catch {}
+                                        try {
+                                            from = from.toPrecision(3);
+                                            if (from.length === 4 && from.slice(3) === '0') {
+                                                if (from.slice(2, 3) === '0') {
+                                                    from = from.slice(0, 1);
+                                                } else if (from.slice(2, 3) === '.') {
+                                                    from = from.slice(0, 2);
+                                                } else {
+                                                    from = from.slice(0, 3);
+                                                }
+                                            }
+                                        } catch {}
+                                        try {
+                                            to = to.toPrecision(3);
+                                            if (to.length === 4 && to.slice(3) === '0') {
+                                                if (to.slice(2, 3) === '0') {
+                                                    to = to.slice(0, 1);
+                                                } else if (to.slice(2, 3) === '.') {
+                                                    to = to.slice(0, 2);
+                                                } else {
+                                                    to = to.slice(0, 3);
+                                                }
+                                            }
+                                        } catch {}
                                     }
 
                                     labels.push(`<i style="background:${getColor(to)}"></i> ${from ? `${from}` : ''}${to ? `&ndash;${to}` : '+'}`);
@@ -690,20 +718,36 @@
 
                             legend.addTo(map);
                         } else if (document.getElementById('map_type-select').value === 'heatmap') {
-                            var points = [], geo = geojson_data[document.getElementById('geo_field-select').value];
+                            var geo = geojson_data[document.getElementById('geo_field-select').value];
+                            points = [];
                             for (var key in geo['features']) {
                                 try { // Inversion possible de lattitude et longitude ci-dessous
                                     points.push([geo['features'][key]['geometry']['coordinates'][1], geo['features'][key]['geometry']['coordinates'][0],
                                     geo['features'][key]['properties'][document.getElementById('z_field-select').value]])
                                 } catch {}
                             }
-                            L.heatLayer(points).addTo(map); // Déterminer les options de heatLayer adaptées au jeu de données plutôt que de laisser les valeurs par défaut.
+                            map.setView([0, 0], 10);
+                            var heat = L.heatLayer(points, {radius: document.getElementById("radiusInput").value, maxZoom: map.getZoom()}).addTo(map);
+                            heat._leaflet_id = "heatLayer";
                         } else {
                             var geojsonLayer = L.geoJSON(geojson_data[document.getElementById("geo_field-select").value]).addTo(map);
                             map.fitBounds(geojsonLayer.getBounds());
                         }
                     }
                 });
+            }
+
+            var points;
+
+            function updateHeatmap () {
+                map.eachLayer(function(layer) { // ne fonctionne pas et la couche reste.
+                    console.log(layer);
+                    if (layer._leaflet_id === "heatLayer") {
+                        map.removeLayer(layer);
+                    }
+                });
+                var heat = L.heatLayer(points, {radius: document.getElementById("radiusInput").value, maxZoom: map.getZoom()}).addTo(map);
+                heat.options.id = "heatLayer";
             }
         </script>
     </head>
@@ -726,7 +770,8 @@
         <div>
             Colonne : <select name="column_name" class="name-select" id="name-select_0" oninput="exactPathVisibility (0)"></select>
             Opérateur : <input type="text" class="operator-input" id="operator-input_0">
-            <!-- à voir si une liste des opérateurs associés à la colonne choisie peut être déterminée avec les infos
+            <!-- à voir si une liste des opérateurs associés à la colonne choisie peut être déterminée avec les infos 
+                -> Non, car les informations ne renseignent pas à ce sujet.
                 (liste n'empêchant pas la saisie manuelle) -->
             Valeur de comparaison : <input type="text" class="operand-input" id="operand-input_0">
             <button id="add_field_0" onclick="addField (0)">Ajouter un champ à cette condition</button>
