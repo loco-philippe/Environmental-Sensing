@@ -455,7 +455,7 @@ class IlistInterface:
                 elif idx.iskeysfromderkeys(self.lindex[inf['parent']]):
                     lis.append(idx.to_obj(parent=inf['parent'],
                                           name=iname, **option2))
-                else:
+                else: # periodic derived
                     keys = idx.derkeys(self.lindex[inf['parent']])
                     lis.append(idx.to_obj(keys=keys, parent=inf['parent'],
                                           name=iname, **option2))
