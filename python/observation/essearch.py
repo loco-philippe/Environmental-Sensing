@@ -7,14 +7,14 @@ All you need in order to be able to use this module is to be able to connect to 
 
 2. **Fill the database with your data:**
 Construct an observation or a list of observations containing your data using dedicated functions from `observation.Observation`. 
-You can then use either `insert_one_to_mongo(collection, observation)` or `insert_many_to_mongo(collection, observation_list)` to insert it in the database.
+You can then use `insert_mongo(collection, observation)` to insert it in the database.
 
 3. **Write a request using observation.ESSearch:**
 An `ESSearch` instance must be created with either a MongoDB Collection (passed as argument **collection**) or a list of observations (passed as argument **data**).
 Criteria for the query are then added one by one using `ESSearch.addCondition` or `ESSearch.orCondition`, or all together with `ESSearch.addConditions` or passed as argument **parameters** of ESSearch.
 
 A condition is composed of:
-- a **name** of a column or an exact **path** giving which element is concerned by the condition (name is a shortcut allowing not to enter a full path);
+- a **path** giving which element is concerned by the condition;
 - an **operand** which is the item of the comparison (if omitted, the existence of the path is tested);
 - a **comparator** which can be applied on the operand, for example '>=' or 'within' (defaults to equality in most cases);
 - optional parameters detailed in `ESSearch.addCondition` documentation, like **inverted** to add a *not*.
@@ -210,7 +210,7 @@ def insert_to_mongo(collection, obj, info=False): # Mieux avec panda ?
         if obs.name : metadata['name']  = obs.name
         if obs.param: metadata['param'] = obs.param
         if info: metadata['information'] = Observation._info(True, True)
-        if len(obs.lname) == 1:
+        if len(obs.lname) == 1: # a special case is needed because lists with one element are replaced by the element itself so iteration doesn't work
             for line in obs:
                 inserted_list.append({obs.lname[0]: util.json(line, encoded=False, typevalue=None, simpleval=False, geojson=True),
                                         '_metadata': metadata})
@@ -223,7 +223,7 @@ def insert_to_mongo(collection, obj, info=False): # Mieux avec panda ?
 def empty_request(collection):
     """
     Empty request to get an idea of what the database contains.
-    Currently returns the count of elements in the collection and the names of each column.
+    Currently returns the count of elements in the collection and the name of each column.
     """
     count = 0
     column_names = []
@@ -233,7 +233,7 @@ def empty_request(collection):
         for column_name in doc:
             if column_name not in column_names:
                 column_names.append(column_name)
-    return count, column_names
+    return {'count': count, 'column_names': column_names}
 
 class ESSearch:
     """
@@ -430,13 +430,13 @@ class ESSearch:
                 else: self.addCondition(parameter)
         else: raise TypeError("parameters must be either a dict or a list of dict.")
             
-    def addCondition(self, path = None, operand = None, comparator = None, or_position = -1, **kwargs):
+    def addCondition(self, path, operand = None, comparator = None, or_position = -1, **kwargs):
         '''
         Takes parameters and inserts corresponding query condition in self.parameters.
 
         *Parameters*
 
-        - **path** :  str (default None) - name of an IIndex, which corresponds to an Ilist column name, or name of a metadata element.
+        - **path** :  str (required argument) - name of an IIndex, which corresponds to an Ilist column name, or name of a metadata element.
                     (ex: 'datation', 'location', 'property')
 
         - **operand** :  - (default None) - Object used for the comparison.
@@ -462,12 +462,9 @@ class ESSearch:
 
         ## 1. Check if arguments given are valid.
 
-        if path is not None and not isinstance(path, str): raise TypeError("name must be a str.")
+        if not isinstance(path, str): raise TypeError("name must be a str.")
         if comparator is not None and not isinstance(comparator, str): raise TypeError("comparator must be a str.")
         if or_position is not None and not isinstance(or_position, int): raise TypeError("or_position must be an int.")
-
-        if path is None and operand is None and comparator is None:
-            raise ValueError("ESSearch.addCondition() requires at least one of these parameters : path, operand.")
 
         for item in kwargs: # checking if parameters in kwarg do exist
             if item not in {'formatstring', 'inverted', 'unwind', 'regex_options', 'distanceField', 'distanceMultiplier', 'includeLocs', 'key', 'maxDistance', 'minDistance', 'near', 'query', 'spherical'}:
@@ -475,9 +472,6 @@ class ESSearch:
 
         if isinstance(operand, datetime.datetime) and (operand.tzinfo is None or operand.tzinfo.utcoffset(operand) is None):
             operand = operand.replace(tzinfo=datetime.timezone.utc)
-
-        if path is None: # default value for path when not defined
-            path = "data"
 
         if operand: # checking if comparator can be applied on the operand
             try: comparator = dico_alias_mongo[type(operand)][comparator]
@@ -622,7 +616,7 @@ class ESSearch:
             self._geonear = self._geonear | kwargs
             if 'distanceField' not in self._geonear: raise ValueError("distanceField missing in MongoDB stage $geoNear.")
             return
-        elif isinstance(operand, list):
+        elif isinstance(operand, list): # lists are interpreted as geometries. An additional filtering is necessary for geometry-specific functions
             self._filtered = True
             return
         
@@ -855,20 +849,20 @@ class ESSearch:
             for id in hashs_dic: # an Observation is added to result for each id
                 obs_out = Observation.dic(**hashs_dic[id])
                 if obs_out:
-                    if self._filtered: result.append(self._filtered_observation(obs_out))
+                    if self._filtered: result.append(self._filtered_observation(obs_out)) # finalement, semble plus pertinent de faire ce filtrage directemt sur la sortie Mongo, car même si un à un les tests de condition sont faits à de nombreuses reprises, au global ce ne sont jamais les mêmes combinaisons de test
                     else: result.append(obs_out)
         # At this point, result is a list of observations.
 
         ## ESSearch.execute() 3: Other inputs (pure observations) are treated purely in python with the self._filtered_observation() method
 
         for data in self.input[1]: # data which are not taken from a Mongo database and already are observations are treated here.
-            result.append(self._filtered_observation(data))
+            result.append(self._filtered_observation(data, False))
 
         ## ESSearch.execute() 4: Operations for cases 'idfused' and 'single' are performed again with the added observations
 
-        if len(result) > 1:
+        if len(result) >= 1:
             if returnmode == 'single':
-                result = self._fusion(result, fillvalue, name)
+                result = self._fusion(result, fillvalue)
                 if name is None: name = "ESSearch query result on " + str(datetime.datetime.now()) # default value for name
                 if param is None: # default value for param
                     if self.sources is not None:
@@ -896,7 +890,7 @@ class ESSearch:
                             'ESSearch_parameters': str(self.parameters)}}
                 result.param = param
 
-            elif returnmode == 'idfused':
+            elif returnmode == 'idfused' and len(result) != 1:
                 hashs_dic = {} # This dictionnary is in the format {id: [observations]}
                 for item in result:
                     if item.id in hashs_dic:
@@ -914,9 +908,7 @@ class ESSearch:
 
         return result
 
-    def _filtered_observation(self, obs): # Vérifier que cette fonction n'est pas moins efficace que de tout déplier / filtrer / tout replier
-        # (en fait c'est déjà ce qu'on fait :) )
-        # Si Observation d'entrée a name, id, param, cela doit être conservé en sortie.
+    def _filtered_observation(self, obs, is_from_mongo = True): # Vérifier que cette fonction n'est pas moins efficace que de tout déplier / filtrer / tout replier
         # Regarder si on ne peut pas faire la même chose en mieux avec des fonctions de numpy ou panda.
         '''
         Takes an Observation and returns a filtered Observation with self.parameters as a filter.
@@ -925,52 +917,58 @@ class ESSearch:
         # dico = {"data": [["datation", [date1, date2, date3], [0,1,0,2,2,1]], ["location", [loc1, loc2, loc3], [0,1,2,0,1,1]]]} # dico n'est plus utilisé
         if len(obs) == 0 or self.parameters == [[]]: return obs
 
+        ## ESSearch._filtered_observation() 0: This function is done with an iteration over self.parameters 
+
+        final_filter = [False] * obs.lencomplete
         for i in range(len(self.parameters)): # for each group of conditions separated by a or
             if self.parameters[i] != []:
-                # 1. Determine on which indexes it is relevant to apply a condition
-                conds = []
-                next_relevant =  False
-                full_filter = [True] * obs.lencomplete
-                for i in range(len(obs.lindex)): # remove conditions on _metadata and indicate if filtering is relevant in the sense that comparisons can be performed (we cannot test the superiority of an str over another)
-                    conds.append([])
-## CETTE ÉTAPE PEUT ÊTRE TOTALEMENT SUPPRIMÉE SI L'ON PEUT CHERCHER UNE COLONNE PAR SON NOM
-                    for cond in self.parameters[i]:
-                        if ("path" not in cond or ("path" in cond and cond["path"] == obs.lindex[i].name)) \
-                                and ("operand" not in cond or ("operand" in cond and self._compatibletypes(obs.lindex[i].cod[0], cond))): # if cond can be applied on column i (tested on the first element... which is a problem in case it is None, for example)
-                            conds[i].append(cond)
-                            next_relevant = True
-                        elif "path" in cond and cond["path"][:9] == "_metadata" : # checks on paths beginning by _metadata only concern MongoDB
-    # PROBLEME : devrait quand même traiter les requêtes sur name, sur id et sur param. -> mais cela se fait très vite puisqu'il n'y a pas besoin d'itérer sur toute l'observation
-                            next_relevant = True
 
-                # 2. Condition is applied on all elements of the Observation to create a boolean filter
-                for j in range(obs.lenidx):
+        ## ESSearch._filtered_observation() 1: Checking if no column is missing and if conditions on metadata are verified
+
+                conds = {} # conds is a dict which associates columns to the condition which concern them (inside of [cond1 AND cond 2 AND cond 3] : only AND)
+                relevant = True # no column given by cond["path"] is missing from obs
+                for cond in self.parameters[i]:
+                    next_relevant = False
+                    for j in range(len(obs.lindex)):
+                        if cond["path"] == obs.lindex[j].name:
+                            if j in conds: conds[j].append(cond)
+                            else: conds[j] = [cond]
+                            next_relevant = True
+                        elif cond["path"][:9] == "_metadata": # metadata are id, name and param
+                            if not is_from_mongo: # This step is considered to be done already for data taken out of Mongo
+                                if cond["path"][10:] == 'name' : next_relevant = next_relevant and self._condcheck(obs.name, cond)
+                                if cond["path"][10:] == 'id'   : next_relevant = next_relevant and self._condcheck(obs.id, cond)
+                                if cond["path"][10:] == 'param': next_relevant = next_relevant and self._condcheck(obs.param, cond)
+                            else:
+                                next_relevant = True
+                    relevant = relevant and next_relevant
+                if not relevant: continue # if a column on which a condition is applied is missing, the set of conditions given by the element of self.parameters is considered not verified.
+
+        ## ESSearch._filtered_observation() 2: Condition is applied on all elements of the Observation to create a boolean filter
+
+                full_filter = [True] * obs.lencomplete
+                for j in range(obs.lenidx): # iteration over the columns
                     filter = []
                     for item in obs.lindex[j].cod:
                         boolean = True
                         for cond in conds[j]:
-                            boolean = boolean and self._condcheck(item, cond)
+                            try: boolean = boolean and self._condcheck(item, cond)
+                            except: pass #boolean = False # pose problème pour les regex et autres opérations non implémentées...
                         filter.append(boolean) # condition is rewritten as a boolean filter for the incoming data
                     next_full_filter = util.tovalues(obs.lindex[j].keys, filter) # filter changed from filter on optimize codec to filter on full codec. (filter on optimize codec was the just how we calculated it, this isn't an actual method of the module)
                     full_filter = [full_filter[k] and next_full_filter[k] for k in range(len(full_filter))] # full filter is updated each time
 
-                # 3. or_position is taken into account
-                if i == 0:
-                    final_filter = full_filter
-                    relevant = next_relevant
-                else:
-                    final_filter = [full_filter[j] or final_filter[j] for j in range(len(full_filter))]
-                    relevant = relevant and next_relevant
+        ## ESSearch._filtered_observation() 3: or_position is taken into account
 
-        # 4. Application of the final filter on the incoming Observation
-        if relevant:
-            obs.setfilter(final_filter)
-            obs.applyfilter()
-            return obs
-        else:
-            return Observation()
+                final_filter = [final_filter[j] or full_filter[j] for j in range(len(full_filter))]
 
-    def _condcheck(self, item, cond = None):
+        ## ESSearch._filtered_observation() 4: Application of the final filter on the incoming Observation
+
+        obs.setfilter(final_filter)
+        obs.applyfilter()
+        return obs
+
+    def _condcheck(self, item, cond = None): # ajouter la gestion des regex
         '''
         Takes an item and returns a Boolean if it verifies criteria given by parameter.
         '''
@@ -1032,31 +1030,6 @@ class ESSearch:
         except:
             #raise ValueError("Comparator not supported.")
             return True
-
-    def _compatibletypes(self, item, cond):
-        '''
-        Takes an item and a condition and returns True if the condition can be applied on the item.
-        ex: 3 > 1 makes sense (returns True), but 'cat' > 1 does not (returns False).
-        (In this example, item = 3 or 'cat', cond = {'operand': 1, 'comparator': '>'})
-        '''
-        if type(item) == type(cond["operand"]): return True
-        elif cond["comparator"] == "$in":
-            if isinstance(cond["operand"], list) and len(cond["operand"]) > 0:
-                return self._compatibletypes(item, cond | {"operand" : cond["operand"][0], "comparator" : None})
-            elif len(cond["operand"]) == 0: return True
-            else: return False
-        elif "formatstring" in cond:
-            if isinstance(item, str):
-                return type(cond["operand"]) in {str, datetime.datetime, TimeSlot}
-            elif isinstance(cond["operand"], str):
-                return type(item) in {datetime.datetime, TimeSlot}
-        elif isinstance(item, dict): # case of nested values
-            for val in item.values():
-                if self._compatibletypes(val, cond):
-                    return True
-            return False
-        else:
-            return False
 
     def _fusion(self, obsList, fillvalue = None): # Idéalement, utiliser une méthode fusion de Observation.
         '''
