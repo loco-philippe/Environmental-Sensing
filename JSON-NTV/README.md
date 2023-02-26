@@ -4,15 +4,20 @@
 Today, the semantic level of shared data remains low. It is very often limited to the type of data defined in the exchange formats (strings for CSV formats; 
 numbers, strings, arrays and objects for JSON formats).
 
-The proposed consists of adding a type and a name to the data exchanged (see also the [presentation document](https://github.com/loco-philippe/Environmental-Sensing/blob/main/JSON-NTV/JSON-NTV-standard.pdf)).
+JSON-NTV (JSON with Named and Typed Values) proposes to increase the semantic level of the JSON entities by adding two OPTIONAL pieces of information to a JSON entity :
+- name: interpretation of the value in human language or detailed information or link to external information,
+- type: interpretation of the value in a data standard or in a data catalog or in a software language.
 
+The rules and framework are described in the [specification document](https://github.com/loco-philippe/Environmental-Sensing/blob/main/JSON-NTV/JSON-NTV-standard.pdf).
+    
+    
 With this evolution any data, whatever its semantic level, can be identified, shared and interpreted in a consistent way.
 The implementation of a type with a nested structure facilitates its appropriation.
 Finally, compatibility with existing JSON structures allows progressive deployment.
 
 # 1 - NTV structure
 
-The constructed entities (called NTV for *named typed value*) are therefore a triplet with one mandatory element (the value in JSON format) and two optional elements (name, type).
+The NTV entity is therefore a triplet with one mandatory element (the value in JSON format) and two optional elements (name, type).
 >
 > *For example, the location of Paris can be represented by:*
 > - *a name: "Paris",*
