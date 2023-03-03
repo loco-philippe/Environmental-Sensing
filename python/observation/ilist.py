@@ -524,11 +524,10 @@ class Ilist(IlistStructure, IlistInterface):
             # coupled format
             lidx[ind][4] = lidx[lidx[ind][3]][4]
             return
+        # derived keys
         if not lidx[ind][4]:  # derived format without keys
             lenp = len(lidx[lidx[ind][3]][2])  # len codec parent
             lidx[ind][4] = [(i*len(lidx[ind][2])) // lenp for i in range(lenp)]
-            return
-        # derived keys
         lidx[ind][4] = Iindex.keysfromderkeys(
             lidx[lidx[ind][3]][4], lidx[ind][4])
         return

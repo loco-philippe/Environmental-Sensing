@@ -744,6 +744,7 @@ class ESSearch:
         else:
             return cursor_list
 
+
     def execute(self, returnmode = 'observation', fillvalue = None, name = None, param = None):
         '''
         Executes the request and returns its result, either in one or many Observations.

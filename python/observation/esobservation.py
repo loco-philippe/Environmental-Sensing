@@ -460,7 +460,8 @@ class Observation(Ilist):
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
         if 'default' each index has keys, if 'optimize' keys are optimized,
-        if 'dict' dict format is used, if 'nokeys' keys are absent
+        if 'dict' dict format is used, if 'nokeys' keys are absent, if 'ndjson' 
+        a list of ndjson elements is created
         - **name** : boolean (default False) - if False, default index name are not included
         - **fullvar** : boolean (default True) - if True and modecodec='optimize,
         variable index is with a full codec
@@ -475,6 +476,13 @@ class Observation(Ilist):
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
                   'json_param': False, 'json_info': False, 'json_info_detail': False,
                   'geojson': False, 'fullvar': True} | kwargs
+        if option['modecodec'] == 'ndjson':
+            lisobs = {ES.id: self.id}
+            if self.param:
+                lisobs[ES.param] = self.param
+            if self.name:
+                lisobs[ES.name] = self.name
+            return [lisobs] + Ilist.to_obj(self, modecodec='ndjson', id=self.id)
         option2 = option | {'encoded': False, 'encode_format': 'json'}
         dic = {ES.type: ES.obs_classES}
 

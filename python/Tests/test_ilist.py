@@ -388,7 +388,13 @@ class Test_Ilist(unittest.TestCase):
                    'encode_format': ts[1], 'modecodec': ts[2]}
             # print(opt)
             self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)  # '''
-
+        il = Ilist.obj([['produit', ['po', 'po', 'or', 'or', 'pi', 'pi', 'ba', 'ba']], 
+                        ['aliment', ['fr', 'fr', 'fr', 'fr', 'le', 'le', 'fr', 'fr']],
+                        ['contenant', ['sa', 'ca', 'sa', 'ca', 'sa', 'ca', 'sa', 'ca']],
+                        ['prix', [1, 9, 2, 18, 1.5, 13, 0.5, 4]],
+                        ['dispo', [1,1,0,0,0,0,1,1]]])
+        self.assertEqual(Ilist.from_obj(il.to_obj()), il)
+        
     def test_to_obj_variable(self):
         il = Ilist.ext([[0, 1, 2, 3, 4, 5],
                         ['j', 'j', 'f', 'f', 'a', 'a'],

@@ -253,17 +253,26 @@ class IlistStructure:
             del idx[row]
         return row
 
-    def delindex(self, indexname):
+    def delindex(self, delname=None, savename=None):
         '''remove an Iindex or a list of Iindex.
 
         *Parameters*
 
-        - **indexname** : string or list of string - name of index to remove
+        - **delname** : string or list of string - name of index to remove
+        - **savename** : string or list of string - name of index to keep
 
         *Returns* : none '''
-        if isinstance(indexname, str):
-            indexname = [indexname]
-        for idxname in indexname:
+        if not delname and not savename :
+            return
+        if isinstance(delname, str):
+            delname = [delname]
+        if isinstance(savename, str):
+            savename = [savename]
+        if delname and savename:
+            delname = [name for name in delname if not name in savename]
+        if not delname:
+            delname = [name for name in self.lname if not name in savename]
+        for idxname in delname:
             if idxname in self.lname:
                 self.lindex.pop(self.lname.index(idxname))
 

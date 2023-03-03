@@ -213,11 +213,12 @@ class IlistInterface:
         - **fullvar** : boolean (default True) - if True and modecodec='optimize, 
         variable index is with a full codec
         - **geojson** : boolean (default False) - geojson for LocationValue if True
+        - **id** : integer (default None) - Observation.id if Ilist is attached to an Observation
 
         *Returns* : string, bytes or dict'''
         option = {'modecodec': 'optimize', 'encoded': False,
                   'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'geojson': False, 'fullvar': True} | kwargs
+                  'geojson': False, 'fullvar': True, 'id': None} | kwargs
         option2 = {'encoded': False, 'encode_format': 'json',
                    'codif': option['codif'], 'geojson': option['geojson'],
                    'modecodec': option['modecodec'], 'fullvar': option['fullvar']}
@@ -228,6 +229,17 @@ class IlistInterface:
                 if name in self.lvarname:
                     dicval['var'] = True
                 lis[name] = dicval
+        elif option['modecodec'] == 'ndjson':
+            if not option['id']:
+                raise IlistError("an  id is necessary for 'ndjson'")                
+            lis = []
+            for rec in self:
+                lis.append({ES.id: option[ES.id]} | 
+                           {name: util.json(val, encoded=False, typevalue=None,
+                                           simpleval=False, modecodec='ndjson',
+                                           untyped=False, datetime=False,
+                                           geojson=False) 
+                            for name, val in zip(self.lname, rec)})              
         else:
             indexname = [option['name'] or name != 'i' + str(i)
                          for i, name in enumerate(self.lname)]
@@ -443,7 +455,7 @@ class IlistInterface:
                 elif idx.iskeysfromderkeys(self.lindex[inf['parent']]):
                     lis.append(idx.to_obj(parent=inf['parent'],
                                           name=iname, **option2))
-                else:
+                else: # periodic derived
                     keys = idx.derkeys(self.lindex[inf['parent']])
                     lis.append(idx.to_obj(keys=keys, parent=inf['parent'],
                                           name=iname, **option2))
