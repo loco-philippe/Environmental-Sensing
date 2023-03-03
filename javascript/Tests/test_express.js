@@ -31,19 +31,19 @@ app.post('/', async function (req, res) {
   console.log(req.body);
   try {
     if (req.body.request_type === 'mongo-validation' || req.body.request_type === 'mongo-validation-namelist') {
-    try {
-      client = new MongoClient(req.body.uri);
-      database = client.db(req.body.database_name);
-      collection = database.collection(req.body.collection_name);
-      if (req.body.request_type === 'mongo-validation-namelist') {
-        res.writeHead(200, {'Content-Type': 'application/json'});
-        let empty = JSON.stringify(await emptyRequest(collection));
-        console.log(empty);
-        res.end(empty);
-      } else {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end('mongo_data is valid');
-      }
+      try {
+        client = new MongoClient(req.body.uri);
+        database = client.db(req.body.database_name);
+        collection = database.collection(req.body.collection_name);
+        if (req.body.request_type === 'mongo-validation-namelist') {
+          res.writeHead(200, {'Content-Type': 'application/json'});
+          let empty = JSON.stringify(await emptyRequest(collection));
+          console.log(empty);
+          res.end(empty);
+        } else {
+          res.writeHead(200, {'Content-Type': 'text/html'});
+          res.end('mongo_data is valid');
+        }
       } catch {
         res.writeHead(200, {'Content-Type': 'text/html'});
         res.end('mongo_data is invalid');
@@ -66,9 +66,9 @@ app.post('/', async function (req, res) {
       res.writeHead(200, {'Content-Type': 'application/json'});
       res.end(JSON.stringify(result));
     } else {
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    let html = jsdom.serialize();
-    res.end(html);
+      res.writeHead(200, {'Content-Type': 'text/html'});
+      let html = jsdom.serialize();
+      res.end(html);
     }
   } catch (err) {
     console.log(err);
