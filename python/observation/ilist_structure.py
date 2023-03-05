@@ -350,7 +350,9 @@ class IlistStructure:
 
         - **indexname** : list of string (default none) - name of indexes to check 
         (if None, all Iindex)
-        - **resindex** : string (default None) - Add a new index with check result
+        - **resindex** : string (default None) - Add a new index named resindex 
+        with check result (False if duplicate)
+        - **indexview** : list of str (default None) - list of fields to return
 
         *Returns* : list of int - list of rows with duplicate cod '''
         if not indexname:

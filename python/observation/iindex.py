@@ -54,6 +54,7 @@ class Iindex(IindexStructure, IindexInterface):
 
     *constructor (@classmethod)*
 
+    - `Iindex.bol`
     - `Iindex.dic`
     - `Iindex.ext`
     - `Iindex.obj`
@@ -167,6 +168,23 @@ class Iindex(IindexStructure, IindexInterface):
         if reindex:
             self.reindex()
 
+    @classmethod
+    def bol(cls, leng, notdef=None, name=None, default=True):
+        '''
+        Iindex constructor (boolean value).
+
+        *Parameters*
+
+        - **leng** : integer - length of the Iindex
+        - **notdef** : list (default None) - list of records without default value
+        - **default** : boolean (default True) - default value
+        - **name** : string (default None) - name of Iindex'''
+        values = [default] * leng
+        if notdef:
+            for item in notdef:
+                values[item] = not default        
+        return cls.ext(name=name, values=values)
+        
     @classmethod
     def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
