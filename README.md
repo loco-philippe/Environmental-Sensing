@@ -53,12 +53,14 @@ all situations (platform)
 - Tabular data study 
     - [Tabular data management](./documentation/FR_tabular_structure.ipynb)
     - [What future for the CSV format](./documentation/FR_format_csv.ipynb) ?
+    - [Etalab Talk](./documentation/etalabtalk_26_01_23.pdf)
 - Project presentation
     - overview of [tabular structures (french)](./documentation/FR_tabular_structure.ipynb)
     - [interoperability](./documentation/interoperability.pdf) of environmental data
     - general presentation of the Environmental Sensing project [document(french)](./documentation/ES-presentation.pdf) and [slides(french)](./documentation/presentation_projet.pdf)
 - Data exchange format (three documents)
     - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
+- [JSON-NTV format](https://github.com/loco-philippe/NTV#readme) (NTV repository)
 - Data structure
     - [observation](./documentation/Observation.pdf) presentation,
     - presentation of the concepts and principles of [indexed lists principles](./documentation/Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
