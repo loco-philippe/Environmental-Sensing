@@ -59,6 +59,7 @@ all situations (platform)
     - general presentation of the Environmental Sensing project [document(french)](./documentation/ES-presentation.pdf) and [slides(french)](./documentation/presentation_projet.pdf)
 - Data exchange format (three documents)
     - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
+- [JSON-NTV format](https://github.com/loco-philippe/NTV#readme) (NTV repository)
 - Data structure
     - [observation](./documentation/Observation.pdf) presentation,
     - presentation of the concepts and principles of [indexed lists principles](./documentation/Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
