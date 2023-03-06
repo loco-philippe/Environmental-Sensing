@@ -13,6 +13,6 @@
     - [what future for the csv format (french)](./FR_format_csv.ipynb) ?
     - [structure of tabular data](./FR_tabular_structure.ipynb)
     - [Etalab Talk](etalabtalk_26_01_23.pdf)
-- [JSON-NTV format](https://github.com/loco-philippe/NTV#readme)
+- [JSON-NTV format](https://github.com/loco-philippe/NTV#readme) (NTV repository)
   
 The Jupyter Notebooks are available on [nbviewer](http://nbviewer.org/github/loco-philippe/Environmental-Sensing/tree/main/documentation/)
