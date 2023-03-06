@@ -53,6 +53,7 @@ all situations (platform)
 - Tabular data study 
     - [Tabular data management](./documentation/FR_tabular_structure.ipynb)
     - [What future for the CSV format](./documentation/FR_format_csv.ipynb) ?
+    - [Etalab Talk](./documentation/etalabtalk_26_01_23.pdf)
 - Project presentation
     - overview of [tabular structures (french)](./documentation/FR_tabular_structure.ipynb)
     - [interoperability](./documentation/interoperability.pdf) of environmental data
