@@ -76,7 +76,7 @@ class IindexStructure:
         self._keys.append(key)
         return key
 
-    def coupling(self, idx, derived=True, duplicate=True):
+    def coupling(self, idx, derived=True, duplicate=True, reindex=False):
         '''
         Transform indexes in coupled or derived indexes (codec extension).
         If derived option is True, self._codec is extended and idx codec not,
@@ -87,7 +87,10 @@ class IindexStructure:
         - **idx** : single Iindex or list of Iindex to be coupled or derived.
         - **derived** : boolean (default : True) - if True result is derived,
         if False coupled
-        - **duplicate** : boolean (default: True) - if True, return duplicate records
+        - **duplicate** : boolean (default: True) - if True, return duplicate records 
+        (only for self index)
+        - **reindex** : boolean (default : False). If True self.index is reindexed 
+        with default codec. But if not derived, idx indexes MUST to be reindexed.
 
         *Returns* : tuple with duplicate records (errors) if 'duplicate', None else'''
         if not isinstance(idx, list):
@@ -101,7 +104,9 @@ class IindexStructure:
             for ind in index:
                 ind.tocoupled(idxzip)
         if duplicate:
-            return self.getduplicates()
+            return self.getduplicates(reindex)
+        if reindex:
+            self.reindex()
         return
 
     def couplinginfos(self, other, default=False):
@@ -203,8 +208,14 @@ class IindexStructure:
             idx._keys += keys
         return tuple(range(leninit, len(idx1)))
 
-    def getduplicates(self):
-        ''' return tuple of items with duplicate codec'''
+    def getduplicates(self, reindex=False):
+        ''' calculate items with duplicate codec
+
+        *Parameters*
+
+        - **reindex** : boolean (default : False). If True index is reindexed with default codec
+        
+        *Returns* : tuple of items with duplicate codec'''
         count = Counter(self._codec)
         defcodec = list(count - Counter(list(count)))
         dkeys = defaultdict(list)
@@ -217,6 +228,8 @@ class IindexStructure:
         for item in defcodec:
             for codecitem in dcodec[item]:
                 duplicates += dkeys[codecitem]
+        if reindex:
+            self.reindex()
         return tuple(duplicates)
 
     def iscrossed(self, other):
