@@ -29,5 +29,6 @@ setup(
     keywords="observation, indexed list, development, environmental data",
     packages=find_packages(include=['observation', 'observation.*']),
     python_requires=">=3.7, <4",
-    install_requires=['numpy', 'shapely', 'cbor2', 'xarray', 'pandas']
+    install_requires=['numpy', 'shapely', 'cbor2', 'xarray', 'pandas', 'folium',
+                      'bson', 'xarray']
 )
