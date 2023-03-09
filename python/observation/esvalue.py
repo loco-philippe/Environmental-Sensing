@@ -296,7 +296,7 @@ class LocationValue(ESValue):              # !!! début LocationValue
         if isinstance(self.value, shapely.geometry.polygon.Polygon):
             coords = [list(self.value.exterior.coords)]
         elif isinstance(self.value, shapely.geometry.point.Point):
-            coords = list(self.value.coords)[0]
+            coords = list(self.value.coords[0])
         elif isinstance(self.value, shapely.geometry.linestring.LineString):
             coords = list(self.value.coords)
         else:
