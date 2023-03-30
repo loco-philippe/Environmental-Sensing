@@ -112,7 +112,8 @@ dico_alias_mongo = { # dictionnary of the different names accepted for each comp
         
         "in":"$in", "$in":"$in" # only in case where a list is not a geometry
     },
-    bson.objectid.ObjectId : {
+    #bson.objectid.ObjectId : {
+    bson.ObjectId : {
         None:"$eq",
         "eq":"$eq", "=":"$eq", "==":"$eq", "$eq":"$eq",
         "in":"$in", "$in":"$in"
