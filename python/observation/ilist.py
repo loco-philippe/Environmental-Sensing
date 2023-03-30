@@ -338,6 +338,8 @@ class Ilist(IlistStructure, IlistInterface):
         - **bsd** : bytes, string, DataFrame or list data to convert
         - **reindex** : boolean (default True) - if True, default codec for each Iindex
         - **context** : boolean (default True) - if False, only codec and keys are included'''
+        if isinstance(bsd, cls):
+            return bsd
         if bsd is None:
             bsd = []
         if isinstance(bsd, bytes):

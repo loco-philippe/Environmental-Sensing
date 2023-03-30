@@ -38,7 +38,8 @@ class Analysis:
     The methods defined in this class are :
 
     - `Analysis.actualize`
-    - `Analysis.getinfos`
+    - `Analysis.actualize`
+    - `Analysis.check_relationship`
     - `Analysis.getmatrix`
     - `Analysis.getvarname`
     - `Analysis.getsecondary`
@@ -100,6 +101,40 @@ class Analysis:
                       and self.infos[idx['parent']]['cat'] in ('primary', 'secondary')]
         self.secondary += coupledsec
 
+    def check_relationship(self, relations):
+        '''get the list of inconsistent records for each relationship defined in relations
+
+         *Parameters*
+
+        - **relations** : list of dict - list of fields with relationship property
+        
+        *Returns* : dict with for each relationship: key = pair of name, 
+        and value = list of inconsistent records'''
+        if not isinstance(relations, (list, dict)):
+            raise AnalysisError("relations is not correct")
+        if isinstance(relations, dict):
+            relations = [relations]
+        dic_res = {}
+        for field in relations:
+            if not 'relationship' in field or not 'name' in field:
+                continue
+            if not 'parent' in field['relationship'] or not 'link' in field['relationship']:
+                raise AnalysisError("relationship is not correct")
+            rel = field['relationship']['link']
+            f_parent = self.iobj.nindex(field['relationship']['parent'])
+            f_field = self.iobj.nindex(field['name'])
+            name_rel = field['name'] + ' - ' + field['relationship']['parent']
+            if f_parent is None or f_field is None:
+                raise AnalysisError("field's name are  not present in data")
+            match rel:
+                case 'derived':
+                    dic_res[name_rel] = f_parent.coupling(f_field, reindex=True)                
+                case 'coupled':
+                    dic_res[name_rel] = f_parent.coupling(f_field, derived=False, reindex=True)    
+                case _:
+                    raise AnalysisError(rel + "is not a valid relationship")
+        return dic_res          
+    
     def getinfos(self, keys=None):
         '''return attribute infos
 

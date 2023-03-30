@@ -105,7 +105,7 @@ Modules contain the following classes:
 from observation.esobservation import Observation
 from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue
-from observation.ilist import Ilist
+from observation.ilist import Ilist, IlistError
 from observation.iindex import Iindex
 from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
