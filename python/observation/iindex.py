@@ -387,7 +387,7 @@ class Iindex(IindexStructure, IindexInterface):
         self.reindex()
 
     def __hash__(self):
-        '''return hash(codec) + hash(keys)'''
+        '''return hash(values)'''
         return hash(tuple(self.values))
 
     def _hashe(self):

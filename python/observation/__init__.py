@@ -102,14 +102,14 @@ Modules contain the following classes:
 
     - `observation.esconstante`.
 """
-from esobservation import Observation
-from esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
-from esvalue_base import ESValue
-from ilist import Ilist
-from iindex import Iindex
-from essearch import ESSearch
-from esconstante import ES, Es, _classval
-from util import util
-from timeslot import TimeSlot
-from ilist_analysis import Analysis
+from observation.esobservation import Observation
+from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
+from observation.esvalue_base import ESValue
+from observation.ilist import Ilist
+from observation.iindex import Iindex
+from observation.essearch import ESSearch
+from observation.esconstante import ES, Es, _classval
+from observation.util import util
+from observation.timeslot import TimeSlot
+from observation.ilist_analysis import Analysis
 #print('package :', __package__)
