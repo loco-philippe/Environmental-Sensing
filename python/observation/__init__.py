@@ -60,47 +60,43 @@ Documentation is available in other pages :
 
 - The concepts of 'observation', 'indexed list' and 'ES value' are describe in
 [the wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki) and in
-[the presentation](https://github.com/loco-philippe/Environmental-Sensing/tree/main
-/documentation/Ilist_principles.pdf).
+[the presentation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/Ilist_principles.pdf).
 - The non-regression tests are at
 [this page](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Tests)
 - Examples are
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples)
-- data exchange standard for [observation](https://github.com/loco-philippe/
-Environmental-Sensing/tree/main/documentation/ObsJSON-Standard.pdf),
-[indexed list](https://github.com/loco-philippe/Environmental-Sensing/tree/main/
-documentation/IlistJSON-Standard.pdf) and
-[values](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation
-/ESJSON-Standard.pdf)
+- data exchange standard for [observation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ObsJSON-Standard.pdf),
+[indexed list](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf) and
+[values](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ESJSON-Standard.pdf)
 
 Modules contain the following classes:
 
 - Observation :
 
-    - `observation.esobservation`
+    - `python.observation.esobservation`
 
 - ESValue :
 
-    - `observation.esvalue`(`observation.esvalue.DatationValue`,
-    `observation.esvalue.LocationValue`,
-    `observation.esvalue.PropertyValue`, `observation.esvalue.NamedValue`,
-    `observation.esvalue.ExternValue`, `observation.esvalue_base.ESValue`)
+    - `python.observation.esvalue`(`python.observation.esvalue.DatationValue`,
+    `python.observation.esvalue.LocationValue`,
+    `python.observation.esvalue.PropertyValue`, `python.observation.esvalue.NamedValue`,
+    `python.observation.esvalue.ExternValue`, `python.observation.esvalue_base.ESValue`)
 
 - Ilist :
 
-    - `observation.ilist`, `observation.ilist_structure`, `observation.ilist_interface`
+    - `python.observation.ilist`, `python.observation.ilist_structure`, `python.observation.ilist_interface`
 
 - Iindex :
 
-    - `observation.iindex`, `observation.iindex_structure`, `observation.iindex_interface`
+    - `python.observation.iindex`, `python.observation.iindex_structure`, `python.observation.iindex_interface`
 
 - TimeSlot :
 
-    - `observation.timeslot`
+    - `python.observation.timeslot`
 
 - ES :
 
-    - `observation.esconstante`.
+    - `python.observation.esconstante`.
 """
 from observation.esobservation import Observation
 from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue

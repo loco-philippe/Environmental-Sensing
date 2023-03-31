@@ -16,7 +16,7 @@ The `Observation` Object is built around three main bricks :
 ([Shapely](https://shapely.readthedocs.io/en/stable/manual.html)
 for location, TimeSlot for Datation)
 
-The `observation.esobservation` module contains the `Observation` class.
+The `python.observation.esobservation` module contains the `Observation` class.
 
 Documentation is available in other pages :
 
@@ -59,9 +59,9 @@ class Observation(Ilist):
 
     - `Observation.dic`
     - `Observation.std`
-    - `observation.ilist.Ilist.obj`
+    - `python.observation.ilist.Ilist.obj`
     - `Observation.from_obj`
-    - `observation.ilist.Ilist.from_file`
+    - `python.observation.ilist.Ilist.from_file`
 
     *dynamic value (getters @property)*
 
@@ -75,88 +75,88 @@ class Observation(Ilist):
 
     *dynamic value inherited (getters @property)*
 
-    - `observation.ilist.Ilist.extidx`
-    - `observation.ilist.Ilist.extidxext`
-    - `observation.ilist.Ilist.idxname`
-    - `observation.ilist.Ilist.idxlen`
-    - `observation.ilist.Ilist.iidx`
-    - `observation.ilist.Ilist.keys`
-    - `observation.ilist.Ilist.lenindex`
-    - `observation.ilist.Ilist.lenidx`
-    - `observation.ilist.Ilist.lidx`
-    - `observation.ilist.Ilist.lidxrow`
-    - `observation.ilist.Ilist.lvar`
-    - `observation.ilist.Ilist.lvarrow`
-    - `observation.ilist.Ilist.lname`
-    - `observation.ilist.Ilist.lunicname`
-    - `observation.ilist.Ilist.lunicrow`
-    - `observation.ilist.Ilist.setidx`
+    - `python.observation.ilist.Ilist.extidx`
+    - `python.observation.ilist.Ilist.extidxext`
+    - `python.observation.ilist.Ilist.idxname`
+    - `python.observation.ilist.Ilist.idxlen`
+    - `python.observation.ilist.Ilist.iidx`
+    - `python.observation.ilist.Ilist.keys`
+    - `python.observation.ilist.Ilist.lenindex`
+    - `python.observation.ilist.Ilist.lenidx`
+    - `python.observation.ilist.Ilist.lidx`
+    - `python.observation.ilist.Ilist.lidxrow`
+    - `python.observation.ilist.Ilist.lvar`
+    - `python.observation.ilist.Ilist.lvarrow`
+    - `python.observation.ilist.Ilist.lname`
+    - `python.observation.ilist.Ilist.lunicname`
+    - `python.observation.ilist.Ilist.lunicrow`
+    - `python.observation.ilist.Ilist.setidx`
 
     *global value (getters @property)*
 
-    - `observation.ilist.Ilist.complete`
-    - `observation.ilist.Ilist.consistent`
-    - `observation.ilist.Ilist.dimension`
-    - `observation.ilist.Ilist.lencomplete`
-    - `observation.ilist.Ilist.primary`
-    - `observation.ilist.Ilist.zip`
+    - `python.observation.ilist.Ilist.complete`
+    - `python.observation.ilist.Ilist.consistent`
+    - `python.observation.ilist.Ilist.dimension`
+    - `python.observation.ilist.Ilist.lencomplete`
+    - `python.observation.ilist.Ilist.primary`
+    - `python.observation.ilist.Ilist.zip`
 
     *selecting - infos methods*
 
-    - `observation.ilist.Ilist.couplingmatrix`
-    - `observation.ilist.Ilist.idxrecord`
-    - `observation.ilist.Ilist.indexinfos`
-    - `observation.ilist.Ilist.indicator`
-    - `observation.ilist.Ilist.iscanonorder`
-    - `observation.ilist.Ilist.isinrecord`
-    - `observation.ilist.Ilist.keytoval`
-    - `observation.ilist.Ilist.loc`
-    - `observation.ilist.Ilist.nindex`
-    - `observation.ilist.Ilist.record`
-    - `observation.ilist.Ilist.recidx`
-    - `observation.ilist.Ilist.recvar`
-    - `observation.ilist.Ilist.valtokey`
+    - `python.observation.ilist.Ilist.couplingmatrix`
+    - `python.observation.ilist.Ilist.idxrecord`
+    - `python.observation.ilist.Ilist.indexinfos`
+    - `python.observation.ilist.Ilist.indicator`
+    - `python.observation.ilist.Ilist.iscanonorder`
+    - `python.observation.ilist.Ilist.isinrecord`
+    - `python.observation.ilist.Ilist.keytoval`
+    - `python.observation.ilist.Ilist.loc`
+    - `python.observation.ilist.Ilist.nindex`
+    - `python.observation.ilist.Ilist.record`
+    - `python.observation.ilist.Ilist.recidx`
+    - `python.observation.ilist.Ilist.recvar`
+    - `python.observation.ilist.Ilist.valtokey`
 
     *add - update methods*
 
-    - `observation.ilist.Ilist.add`
-    - `observation.ilist.Ilist.addindex`
-    - `observation.ilist.Ilist.append`
+    - `python.observation.ilist.Ilist.add`
+    - `python.observation.ilist.Ilist.addindex`
+    - `python.observation.ilist.Ilist.append`
     - `Observation.appendObs`
-    - `observation.ilist.Ilist.delindex`
-    - `observation.ilist.Ilist.delrecord`
-    - `observation.ilist.Ilist.renameindex`
-    - `observation.ilist.Ilist.setname`
-    - `observation.ilist.Ilist.updateindex`
+    - `python.observation.ilist.Ilist.delindex`
+    - `python.observation.ilist.Ilist.delrecord`
+    - `python.observation.ilist.Ilist.renameindex`
+    - `python.observation.ilist.Ilist.setname`
+    - `python.observation.ilist.Ilist.updateindex`
 
     *structure management - methods*
 
-    - `observation.ilist.Ilist.applyfilter`
-    - `observation.ilist.Ilist.coupling`
-    - `observation.ilist.Ilist.full`
-    - `observation.ilist.Ilist.getduplicates`
-    - `observation.ilist.Ilist.merge`
-    - `observation.ilist.Ilist.reindex`
-    - `observation.ilist.Ilist.reorder`
-    - `observation.ilist.Ilist.setfilter`
-    - `observation.ilist.Ilist.sort`
-    - `observation.ilist.Ilist.swapindex`
-    - `observation.ilist.Ilist.setcanonorder`
-    - `observation.ilist.Ilist.tostdcodec`
+    - `python.observation.ilist.Ilist.applyfilter`
+    - `python.observation.ilist.Ilist.coupling`
+    - `python.observation.ilist.Ilist.full`
+    - `python.observation.ilist.Ilist.getduplicates`
+    - `python.observation.ilist.Ilist.merge`
+    - `python.observation.ilist.Ilist.reindex`
+    - `python.observation.ilist.Ilist.reorder`
+    - `python.observation.ilist.Ilist.setfilter`
+    - `python.observation.ilist.Ilist.sort`
+    - `python.observation.ilist.Ilist.swapindex`
+    - `python.observation.ilist.Ilist.setcanonorder`
+    - `python.observation.ilist.Ilist.tostdcodec`
 
     *exports methods*
 
     - `Observation.choropleth`
-    - `observation.ilist.Ilist.json`
-    - `observation.ilist.Ilist.plot`
-    - `observation.ilist.Ilist.to_csv`
-    - `observation.ilist.Ilist.to_file`
+    - `python.observation.ilist.Ilist.json`
+    - `python.observation.ilist.Ilist.plot`
+    - `python.observation.ilist.Ilist.to_csv`
+    - `python.observation.ilist.Ilist.to_file`
     - `Observation.to_obj`
     - `Observation.to_xarray`
-    - `observation.ilist.Ilist.to_dataframe`
-    - `observation.ilist.Ilist.view`
-    - `observation.ilist.Ilist.vlist`
-    - `observation.ilist.Ilist.voxel`
+    - `python.observation.ilist.Ilist.to_dataframe`
+    - `python.observation.ilist.Ilist.view`
+    - `python.observation.ilist.Ilist.vlist`
+    - `python.observation.ilist.Ilist.voxel`
     """
 
 # %% constructor

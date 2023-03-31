@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `observation.iindex_interface` module contains the `IindexInterface` class
-(`observation.iindex.Iindex` methods).
+The `python.observation.iindex_interface` module contains the `IindexInterface` class
+(`python.observation.iindex.Iindex` methods).
 """
 # %% declarations
 import json

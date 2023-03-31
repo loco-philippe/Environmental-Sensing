@@ -4,7 +4,7 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-The `observation.esvalue_base` is a module dedicated to structured data (such as dates,
+The `python.observation.esvalue_base` is a module dedicated to structured data (such as dates,
 location or measurable properties) and groups common properties and concepts.
 
 ESValue is build around two attributes :
@@ -20,13 +20,13 @@ ESValue is build around two attributes :
 
 <img src="https://loco-philippe.github.io/ES/ESValue_class.png" width="800">
 
-This module groups the classes of the objects used in the `observation.esobservation` module :
+This module groups the classes of the objects used in the `python.observation.esobservation` module :
 
-- `DatationValue`,
-- `LocationValue`,
-- `PropertyValue`,
-- `NamedValue`
-- `ExternValue`
+- `python.observation.esvalue.DatationValue`,
+- `python.observation.esvalue.LocationValue`,
+- `python.observation.esvalue.PropertyValue`,
+- `python.observation.esvalue.NamedValue`
+- `python.observation.esvalue.ExternValue`
 
 and the parent class :
 

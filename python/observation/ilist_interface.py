@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `observation.ilist_interface` module contains the `IlistInterface` class
-(`observation.ilist.Ilist` methods).
+The `python.observation.ilist_interface` module contains the `IlistInterface` class
+(`python.observation.ilist.Ilist` methods).
 """
 
 # %% declarations

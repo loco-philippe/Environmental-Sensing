@@ -6,7 +6,7 @@ You can easily create an account on MongoDB. Once you have a database, follow th
 All you need in order to be able to use this module is to be able to connect to the Collection with pymongo.
 
 2. **Fill the database with your data:**
-Construct an observation or a list of observations containing your data using dedicated functions from `observation.Observation`. 
+Construct an observation or a list of observations containing your data using dedicated functions from `python.observation.Observation`. 
 You can then use `insert_mongo(collection, observation)` to insert it in the database.
 
 3. **Write a request using observation.ESSearch:**

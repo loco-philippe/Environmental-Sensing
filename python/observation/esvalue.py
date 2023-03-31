@@ -4,7 +4,7 @@ Created on Mon Aug  2 14:51:23 2021
 
 @author: philippe@loco-labs.io
 
-The `observation.esvalue` module contains the `observation.esvalue_base.ESValue` subclasses
+The `python.observation.esvalue` module contains the `python.observation.esvalue_base.ESValue` subclasses
 
 ESValue is build around two attributes :
 
@@ -19,7 +19,7 @@ ESValue is build around two attributes :
 
 <img src="https://loco-philippe.github.io/ES/ESValue_class.png" width="800">
 
-This module groups the classes of the objects used in the `observation.esobservation` module :
+This module groups the classes of the objects used in the `python.observation.esobservation` module :
 
 - `DatationValue`,
 - `LocationValue`,
@@ -29,7 +29,7 @@ This module groups the classes of the objects used in the `observation.esobserva
 
 and the parent class :
 
-- `observation.esvalue_base.ESValue`
+- `python.observation.esvalue_base.ESValue`
 
 Documentation is available in other pages :
     

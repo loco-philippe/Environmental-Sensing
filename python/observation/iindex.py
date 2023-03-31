@@ -4,7 +4,7 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `observation.iindex` module contains the `Iindex` class.
+The `python.observation.iindex` module contains the `Iindex` class.
 
 Documentation is available in other pages :
 
