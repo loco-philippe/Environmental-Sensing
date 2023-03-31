@@ -4,7 +4,7 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `observation.ilist_analysis` module contains the `Analysis` class.
+The `python.observation.ilist_analysis` module contains the `Analysis` class.
 
 """
 

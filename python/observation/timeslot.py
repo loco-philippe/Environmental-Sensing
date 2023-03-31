@@ -4,7 +4,7 @@ Created on Sun Jan  2 18:30:14 2022
 
 @author: Philippe@loco-labs.io
 
-The `observation.timeslot` module contains the `TimeSlot` and the `TimeInterval` classes.
+The `python.observation.timeslot` module contains the `TimeSlot` and the `TimeInterval` classes.
 
 # What is the TimeSlot Object ?
 

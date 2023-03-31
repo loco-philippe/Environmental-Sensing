@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `observation.ilist_structure` module contains the `IlistStructure` class
-(`observation.ilist.Ilist` methods).
+The `python.observation.ilist_structure` module contains the `IlistStructure` class
+(`python.observation.ilist.Ilist` methods).
 """
 
 # %% declarations
