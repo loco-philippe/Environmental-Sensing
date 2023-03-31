@@ -4,7 +4,7 @@ The Python package includes
 - classes Observation, Ilist, Iindex, ESValue, TimeSlot
 ## Python connectors
 The Python connectors are defined :
-- in the [documentation](https://loco-philippe.github.io/observation.html)
+- in the [documentation](https://loco-philippe.github.io/python/observation.html)
 - in the [code](./observation/README.md)  files 
 - in the [examples](./Examples/README.md)
 - in the [validation dataset](./Validation/README.md)
