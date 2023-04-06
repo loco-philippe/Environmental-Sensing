@@ -58,11 +58,12 @@ import shapely.geometry
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from pymongo.command_cursor import CommandCursor
-from esobservation import Observation
-from iindex import Iindex
-from util import util
-from timeslot import TimeSlot
 import bson
+
+from observation.esobservation import Observation
+from observation.iindex import Iindex
+from observation.util import util
+from observation.timeslot import TimeSlot
 
 dico_alias_mongo = { # dictionnary of the different names accepted for each comparator and each given type. <key>:<value> -> <accepted name>:<name in MongoDB>
     # any type other than those used as keys is considered non valid

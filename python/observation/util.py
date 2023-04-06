@@ -12,9 +12,9 @@ import re
 import numpy as np
 import math
 
-from timeslot import TimeInterval
-from esconstante import ES, _classval
-from esvalue_base import ESValue
+from observation.timeslot import TimeInterval
+from observation.esconstante import ES, _classval
+from observation.esvalue_base import ESValue
 
 
 def identity(*args, **kwargs):

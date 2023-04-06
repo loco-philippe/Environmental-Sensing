@@ -32,11 +32,11 @@ python/Examples/Iindex) are :
 # %% declarations
 from copy import copy, deepcopy
 
-from esconstante import ES
-from esvalue_base import ESValue
-from iindex_interface import IindexInterface, IindexError
-from iindex_structure import IindexStructure
-from util import util
+from observation.esconstante import ES
+from observation.esvalue_base import ESValue
+from observation.iindex_interface import IindexInterface, IindexError
+from observation.iindex_structure import IindexStructure
+from observation.util import util
 
 
 class Iindex(IindexStructure, IindexInterface):

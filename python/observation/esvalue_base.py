@@ -53,8 +53,8 @@ from json import JSONDecodeError
 import cbor2
 from copy import copy
 
-from esconstante import ES, _classval
-from timeslot import TimeInterval
+from observation.esconstante import ES, _classval
+from observation.timeslot import TimeInterval
 
 ListESValue = ['LocationValue', 'DatationValue',
                'PropertyValue', 'NamedValue', 'ExternValue']

@@ -34,7 +34,7 @@ def _classval():
 
 
 def _classESval():
-    from esobservation import LocationValue, DatationValue, PropertyValue, \
+    from observation.esobservation import LocationValue, DatationValue, PropertyValue, \
         NamedValue, ExternValue
     return {ES.obs_clsName: ExternValue,
             ES.dat_clsName: DatationValue,

@@ -35,13 +35,13 @@ from copy import copy
 import folium
 import cbor2
 
-from ilist import Ilist
-from util import util
-from iindex_interface import IindexEncoder, CborDecoder
-from esconstante import ES
-from esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
-from esvalue_base import ESValue, ESValueEncoder
-from ilist_analysis import Analysis
+from observation.ilist import Ilist
+from observation.util import util
+from observation.iindex_interface import IindexEncoder, CborDecoder
+from observation.esconstante import ES
+from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
+from observation.esvalue_base import ESValue, ESValueEncoder
+from observation.ilist_analysis import Analysis
 
 
 class Observation(Ilist):

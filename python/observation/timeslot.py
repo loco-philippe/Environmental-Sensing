@@ -50,7 +50,8 @@ import json
 import numpy
 import pandas
 import bson
-from esconstante import ES  # , _identity
+
+from observation.esconstante import ES  # , _identity
 
 
 class TimeSlotEncoder(json.JSONEncoder):

@@ -19,10 +19,10 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 import cbor2
 
-from esconstante import ES
-from iindex import Iindex
-from iindex_interface import IindexEncoder
-from util import util
+from observation.esconstante import ES
+from observation.iindex import Iindex
+from observation.iindex_interface import IindexEncoder
+from observation.util import util
 
 #import sys
 #print("In module ilist_interface sys.path[0], __package__ ==", sys.path[0], __package__)

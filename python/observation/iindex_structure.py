@@ -9,10 +9,10 @@ The `python.observation.iindex_structure` module contains the `IindexStructure` 
 """
 from collections import defaultdict, Counter
 
-from esvalue_base import ESValue
-from util import util
-from esconstante import ES
-from iindex_interface import IindexError
+from observation.esvalue_base import ESValue
+from observation.util import util
+from observation.esconstante import ES
+from observation.iindex_interface import IindexError
 
 
 class IindexStructure:

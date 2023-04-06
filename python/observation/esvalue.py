@@ -53,9 +53,9 @@ from geopy import distance
 from copy import copy
 from openlocationcode import openlocationcode
 
-from esconstante import ES, _classval
-from esvalue_base import ESValueEncoder, ESValue
-from timeslot import TimeSlot
+from observation.esconstante import ES, _classval
+from observation.esvalue_base import ESValueEncoder, ESValue
+from observation.timeslot import TimeSlot
 
 
 class DatationValue(ESValue):   # !!! début ESValue

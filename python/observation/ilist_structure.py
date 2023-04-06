@@ -11,10 +11,10 @@ The `python.observation.ilist_structure` module contains the `IlistStructure` cl
 # %% declarations
 from copy import copy
 
-from esconstante import ES
-from iindex import Iindex
-from util import util
-from ilist_interface import IlistError
+from observation.esconstante import ES
+from observation.iindex import Iindex
+from observation.util import util
+from observation.ilist_interface import IlistError
 
 
 class IlistStructure:

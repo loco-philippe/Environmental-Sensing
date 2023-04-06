@@ -14,9 +14,9 @@ import numpy as np
 import pandas as pd
 import cbor2
 
-from esconstante import ES
-from esvalue_base import ESValueEncoder, ESValue
-from util import util, identity
+from observation.esconstante import ES
+from observation.esvalue_base import ESValueEncoder, ESValue
+from observation.util import util, identity
 
 
 class CborDecoder(json.JSONDecoder):

@@ -13,7 +13,7 @@ from copy import copy
 import pprint
 from collections import Counter
 
-from util import util
+from observation.util import util
 
 
 class Analysis:
