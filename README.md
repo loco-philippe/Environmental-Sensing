@@ -60,13 +60,8 @@ all situations (platform)
     - general presentation of the Environmental Sensing project [document(french)](./documentation/ES-presentation.pdf) and [slides(french)](./documentation/presentation_projet.pdf)
 - Data exchange format (three documents)
     - Json format for [observation](./documentation/ObsJSON-Standard.pdf), [indexed list](./documentation/IlistJSON-Standard.pdf), [values](./documentation/ESJSON-Standard.pdf) and [examples](./documentation/json_examples.ipynb)
-- [JSON-NTV format](https://github.com/loco-philippe/NTV#readme) (NTV repository)
-- Data structure
-    - [observation](./documentation/Observation.pdf) presentation,
-    - presentation of the concepts and principles of [indexed lists principles](./documentation/Ilist_principles.pdf), also available as [Wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list) (Ilist and Iindex)
-- Connectors documentation
-    - [Python Connectors](./python/README.md)
-    - [C++ Connectors](./C%2B%2B)
+- [JSON-NTV : a semantic format for interoperability](https://github.com/loco-philippe/NTV#readme) (NTV repository)
+- [observation : tools for interoperable tabular data](./python/README.md)
 - Bluetooth standard for Environmental data
     - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
     - [Extension Air pollutants in ESS Bluetooth](https://www.bluetooth.com/specifications/specs/gatt-specification-supplement-6/)
