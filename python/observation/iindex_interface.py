@@ -123,7 +123,7 @@ class IindexInterface:
 
         *Returns* 
 
-        - **tuple** : name, dtype, codec, parent, keys, isfullindex, isparent, isvar
+        - **tuple** : name, dtype, codec, parent, keys, isfullindex, isparent
             name (None or string): name of the Iindex
             dtype (None or string): type of data
             codec (list): lilst of Iindex codec values
@@ -131,10 +131,10 @@ class IindexInterface:
             keys (None or list): Iindex keys
             isfullindex (boolean): True if Iindex is full (len(keys) = len(self))
             isparent(boolean): True if parent is >= 0
-            isvar(boolean): not used
             '''
         if bs is None:
-            return (None, None, [], ES.nullparent, None, False, False, False)
+            #return (None, None, [], ES.nullparent, None, False, False, False)
+            return (None, None, [], ES.nullparent, None, False, False)
         if isinstance(bs, bytes):
             lis = cbor2.loads(bs)
         elif isinstance(bs, str) and bs[0] in ['{', '[', '"']:
@@ -147,13 +147,13 @@ class IindexInterface:
             lis = [lis]
 
         if not lis:  # format empty
-            return (None, None, [], ES.nullparent, None, False, False, False)
+            return (None, None, [], ES.nullparent, None, False, False)
         if context and (not isinstance(lis[0], (str, dict, list)) or len(lis) > 3):
             return (None, None, IindexInterface.decodecodec(lis, classname),
-                    ES.nullparent, None, False, False, False)
+                    ES.nullparent, None, False, False)
         if not context and len(lis) > 2:
             return (None, None, IindexInterface.decodecodec(lis, classname),
-                    ES.nullparent, None, False, False, False)
+                    ES.nullparent, None, False, False)
         if len(lis) == 3 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
                 and isinstance(lis[2], (list, int)) and context:
             return (*IindexInterface.decodecontext(lis[0]),
@@ -163,14 +163,13 @@ class IindexInterface:
                 and context:
             return (*IindexInterface.decodecontext(lis[0]),
                     IindexInterface.decodecodec(
-                        lis[1], classname), ES.nullparent,
-                    None, False, False, False)
+                        lis[1], classname), ES.nullparent, None, False, False)
         if len(lis) == 2 and isinstance(lis[0], (tuple, list)) \
                 and IindexInterface.iskeysobj(lis[1]):
             return (None, None, IindexInterface.decodecodec(lis[0], classname),
                     *IindexInterface.decodekeys(lis[1]))
         return (None, None, IindexInterface.decodecodec(lis, classname), ES.nullparent,
-                None, False, False, False)
+                None, False, False)
 
     @staticmethod
     def decodecodec(codecobj, classname=ES.nam_clsName):
@@ -197,21 +196,21 @@ class IindexInterface:
         if isinstance(keys, int):
             keys = [keys]
         if isinstance(keys, list) and len(keys) == 0:
-            return (ES.notcrossed, keys, False, False, False)
+            return (ES.notcrossed, keys, False, False)
         if isinstance(keys, list) and len(keys) == 1 and isinstance(keys[0], int)\
                 and keys[0] < 0:
-            return (keys[0], None, False, False, True)
+            return (keys[0], None, False, False)
         if isinstance(keys, list) and len(keys) == 1 and isinstance(keys[0], int)\
                 and keys[0] >= 0:
-            return (keys[0], None, False, True, False)
+            return (keys[0], None, False, True)
         if isinstance(keys, list) and len(keys) == 2 and isinstance(keys[0], int)\
                 and isinstance(keys[1], list) and keys[0] < 0:
-            return (keys[0], keys[1], True, False, True)
+            return (keys[0], keys[1], True, False)
         if isinstance(keys, list) and len(keys) == 2 and isinstance(keys[0], int)\
                 and isinstance(keys[1], list) and keys[0] >= 0:
-            return (keys[0], keys[1], False, True, False)
+            return (keys[0], keys[1], False, True)
         if isinstance(keys, list) and len(keys) > 1:
-            return (ES.notcrossed, keys, True, False, False)
+            return (ES.notcrossed, keys, True, False)
         raise IindexError('parent or keys is unconsistent')
 
     @staticmethod

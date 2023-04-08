@@ -425,7 +425,7 @@ class Ilist(IlistStructure, IlistInterface):
         if isinstance(listidx, list) and len(listidx) == 0:
             return cls()
 
-        # decode: name, typevaluedec, codec, parent, keys, isfullkeys, isparent, isvar
+        # decode: name, typevaluedec, codec, parent, keys, isfullkeys, isparent
         lidx = [list(IindexInterface.decodeobj(idx, typevalue, context))
                 for idx in listidx]
         for ind in range(len(lidx)):
@@ -433,7 +433,7 @@ class Ilist(IlistStructure, IlistInterface):
                 lidx[ind][0] = 'i'+str(ind)
             if lidx[ind][1] is None:
                 lidx[ind][1] = util.typename(lidx[ind][0], typevalue)
-        name, typevaluedec, codec, parent, keys, isfullkeys, isparent, isvar =\
+        name, typevaluedec, codec, parent, keys, isfullkeys, isparent =\
             tuple(zip(*lidx))
 
         leng = [len(cod) for cod in codec]
