@@ -122,8 +122,9 @@ Parmi ces 42 000 pdc, 1 600 présentent des écarts par rapport aux règles rete
 - fichier des données validées : [IRVE_itinerance_valide2023-03-03.csv](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_itinerance_valide2023-03-03.csv)
 - fichier des doublons à supprimer : [IRVE_itinerance_doublons2023-03-03.csv](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_itinerance_doublons2023-03-03.csv)
 
-### Document
+### Documents
 - présentation de l'étude : [IRVE_analyse.pdf](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_analyse.pdf)
+- modèle de données : [IRVE_modele.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_modele.ipynb)
 
 ### code source
-- Jupyter Notebook : [IRVE-v3.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE-v3.ipynb)
+- Jupyter Notebook : [IRVE_v3.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_v3.ipynb)
