@@ -10,7 +10,7 @@ Les travaux réalisés sont présentés dans le [document d'analyse](https://git
 
 ## 2 - Données IRVE
 Les données IRVE sont décrites dans le [schéma de données](https://schema.data.gouv.fr/etalab/schema-irve-statique/2.2.0/documentation.html) mis à disposition. Celui-ci décrit chacun des champs qui le compose.      
-Par contre, il ne décrit pas la structure globale des données qui permet de comprendre les relations qui existent entre chaque champs.    
+Par contre, il ne décrit pas la structure globale des données qui permet de comprendre les dépendances entre chaque champs.    
     
 Le modèle de données ci-dessous identifie les principales entités que décrivent les champs et les relations entre celles-ci (station en itinerance uniquement):
 
