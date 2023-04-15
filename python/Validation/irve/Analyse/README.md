@@ -1,10 +1,12 @@
 # Analyse de l'intégrité du jeu de données IRVE
 
-## 1 - Objectif
+## 1 - Introduction
 Le [jeu de données IRVE](https://doc.transport.data.gouv.fr/producteurs/infrastructures-de-recharge-de-vehicules-electriques-irve) est un jeu de données complexe avec un processus de production et de consolidation des données spécifique.     
 Il fait l'objet également de [questions](https://www.data.gouv.fr/fr/datasets/5448d3e0c751df01f85d0572/#/discussions) concernant l'intégrité des données.    
     
 L'étude présentée ici a pour objectif de faciliter la réutilisation des données grace d'une part à une meilleure compréhension de la structure des données et d'autre part à une amélioration du niveau de qualité des données.
+
+Les travaux réalisés sont présentés dans le [document d'analyse](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Validation/irve/Analyse/IRVE_analyse.pdf) ainsi que dans le [Notebook](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE-v3.ipynb) pour la partie logicielle.
 
 ## 2 - Données IRVE
 Les données IRVE sont décrites dans le [schéma de données](https://schema.data.gouv.fr/etalab/schema-irve-statique/2.2.0/documentation.html) mis à disposition. Celui-ci décrit chacun des champs qui le compose.      
@@ -84,7 +86,7 @@ Les relations exprimées dans ce modèle permettent de déduire les règles d'in
 - *un pdc est associé à une et une seule station (représentée par le champ 'id_station_itinerance')*
 - *une station est associée à une et une seule localisation (représentée par le champ 'coordonneesXY')*    
     
-Douze règles ont ainsi été retenues pour valider l'intégrité du jeu de données.
+Douze règles ont ainsi été retenues pour valider l'intégrité du jeu de données (voir [analyse](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Validation/irve/Analyse/IRVE_analyse.pdf)).
 
 ## 3 - Etat des lieux
 L'état des lieux décrit ici correspond au jeu de données du 03/03/2023.    
@@ -111,5 +113,17 @@ La suppression de ces 380 anciens pdc permet alors de réduire le nombre de pdc 
 Après ces deux opérations, le jeu de données "nettoyé" des anciens pdc comporte 42 000 pdc associées à 18 500 stations.     
 Parmi ces 42 000 pdc, 1 600 présentent des écarts par rapport aux règles retenues soit un taux de 3,8 %.
 
+## 5 - Documentation
 
+### Données
+- fichier d'origine (consolidation du 03/03/2023) : [consolidation-etalab-schema-irve-statique-v-2.2.0-20230303.csv](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/consolidation-etalab-schema-irve-statique-v-2.2.0-20230303.csv)
+- fichier d'origine avec deux champs booléens supplémentaires 'lignes_a_corriger' et 'doublons_a_supprimer' : [IRVE_itinerance_complet2023-03-03.csv](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_itinerance_complet2023-03-03.csv)
+- fichier des lignes à corriger avec un champ (booléen) par contrôle (12 champs) : [IRVE_itinerance_residuel2023-03-03.csv](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_itinerance_residuel2023-03-03.csv)
+- fichier des données validées : [IRVE_itinerance_valide2023-03-03.csv](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_itinerance_valide2023-03-03.csv)
+- fichier des doublons à supprimer : [IRVE_itinerance_doublons2023-03-03.csv](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_itinerance_doublons2023-03-03.csv)
 
+### Document
+- présentation de l'étude : [IRVE_analyse.pdf](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_analyse.pdf)
+
+### code source
+- Jupyter Notebook : [IRVE_v3.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_v3.ipynb)
