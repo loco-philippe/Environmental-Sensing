@@ -126,4 +126,4 @@ Parmi ces 42 000 pdc, 1 600 présentent des écarts par rapport aux règles rete
 - présentation de l'étude : [IRVE_analyse.pdf](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_analyse.pdf)
 
 ### code source
-- Jupyter Notebook : [IRVE_v3.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE_v3.ipynb)
+- Jupyter Notebook : [IRVE-v3.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/version-1/python/Validation/irve/Analyse/IRVE-v3.ipynb)
