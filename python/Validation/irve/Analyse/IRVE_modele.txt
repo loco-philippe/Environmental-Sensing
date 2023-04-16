@@ -24,6 +24,7 @@ erDiagram
         string  condition_acces "M"
         string  horaires "M"
         boolean station_deux_roues "M"
+        date    date_maj "M"
         string  id_station_local
         enum    raccordement
         string  num_pdl
@@ -49,7 +50,6 @@ erDiagram
         boolean reservation "M"
         enum    accessibilite_pmr "M"
         string  restriction_gabarit "M"
-        date    date_maj "M"
         string  id_pdc_local
         boolean gratuit
         boolean paiement_cb
