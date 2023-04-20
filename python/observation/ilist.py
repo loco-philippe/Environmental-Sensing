@@ -41,7 +41,7 @@ from observation.util import util
 from observation.ilist_interface import IlistInterface, IlistError
 from observation.ilist_structure import IlistStructure
 from observation.ilist_analysis import Analysis
-
+from json_ntv.ntv import Ntv
 
 class Ilist(IlistStructure, IlistInterface):
     # %% intro
@@ -321,6 +321,26 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.from_obj(bsd, reindex=reindex, context=context)
 
     @classmethod
+    def from_ntv(ntv_value, reindex=False):
+        '''Generate an Ilist Object from a ntv_value
+
+        *Parameters*
+
+        - **ntv_value** : bytes, string, Ntv object to convert
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        ntv = Ntv.obj(ntv_value)
+        leng = max([len(ntvi) for ntvi in ntv.ntv_value])
+        # decode: name, type, codec, parent, keys
+        lidx = [list(Iindex.decodentv(ntvf)) for ntvf in ntv]
+        for ind in range(len(lidx)):
+            if lidx[ind][0] == '':
+                lidx[ind][0] = 'i'+str(ind)
+            _init_ntv_keys(ind, lidx, leng)
+        lindex = [Iindex(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+                     reindex=reindex) for idx in lidx]
+        return Ilist(lindex, reindex=False)
+
+    @classmethod
     def from_obj(cls, bsd=None, reindex=True, context=True):
         '''
         Generate an Ilist Object from a bytes, string or list value
@@ -495,6 +515,34 @@ class Ilist(IlistStructure, IlistInterface):
                        enumerate(zip(isfullkeys, isparent, leng))
                        if not ispar and not isfullk and 1 < lengt < length]
         return length, crossed
+
+    @staticmethod
+    def _init_ntv_keys(ind, lidx, leng):
+        ''' initialization of explicit keys data in lidx object'''
+        # name: 0, type: 1, codec: 2, parent: 3, keys: 4
+        keys = lidx[ind][4]
+        if keys is None and lidx[ind][3] is None:  # full or unique
+            if len(lidx[ind][2]) == 1: # unique
+                lidx[ind][4] = [0] * leng
+            else:    # full
+                lidx[ind][4] = list(range(leng))
+            return
+        if keys and len(keys) > 1 and lidx[ind][3] is None:  #complete
+            return
+        if keys and len(keys) == 1:  #primary
+            coef = keys[0]
+            lidx[ind][4] = [ (ikey % (coef * len(lidx[ind][2]))) // coef for ikey in range(leng)]
+            return  
+        parent = lidx[ind][3]
+        if parent is None:
+            raise IlistError('keys not referenced')          
+        if not lidx[parent][4] or len(lidx[parent][4]) != leng:
+            Ilist._init_ntv_keys(parent, lidx, leng)
+        if not keys and len(lidx[ind][2]) == len(lidx[parent][2]):    # implicit
+            lidx[ind][4] = lidx[parent][4]
+            return
+        lidx[ind][4] = Iindex.keysfromderkeys(lidx[parent][4], keys)  # relative
+        return
 
     @staticmethod
     def _init_keys(ind, lidx, leng):

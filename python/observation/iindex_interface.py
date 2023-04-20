@@ -422,12 +422,14 @@ class IindexInterface:
 
     def to_ntv(self, modecodec='optimize', def_type=None, keys=None, parent=None):
         leng = len(self)
+        name = None if self.name == '$default' else self.name       
         if len(self.codec) == 1:
-            return NtvSingle(self.codec[0], self.name)
+            return NtvSingle(self.codec[0], name)
         if len(self.codec) == leng or modecodec == 'full':
-            return NtvList(self.values, self.name)
+            return NtvList(self.values, name)
         if modecodec == 'default':
-            return NtvList([NtvList(self.codec, ntv_type=def_type), NtvList(self.keys, ntv_type='json')], self.name, ntv_type='json')
+            return NtvList([NtvList(self.codec, ntv_type=def_type), 
+                            NtvList(self.keys, ntv_type='json')], name, ntv_type='json')
         if modecodec == 'optimize':
             ntv_value = [NtvList(self.codec, ntv_type=def_type)]
             if parent:
@@ -436,7 +438,7 @@ class IindexInterface:
                 ntv_value.append(NtvList(keys, ntv_type='json'))    
             else:
                 ntv_value.append(NtvList(self.keys, ntv_type='json'))
-            return NtvList(ntv_value, self.name, ntv_type='json')                
+            return NtvList(ntv_value, name, ntv_type='json')                
 
     def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
                codecval=False, parent=ES.nullparent, name=True, listunic=False,
