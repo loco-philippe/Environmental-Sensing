@@ -107,7 +107,7 @@ from observation.ilist_structure import IlistStructure
 from observation.iindex import Iindex
 from observation.iindex_structure import IindexStructure
 from observation.iindex_interface import CborDecoder, IindexError, IindexEncoder, IindexInterface
-from observation.essearch import ESSearch
+#from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
 from observation.util import util
 from observation.timeslot import TimeSlot

@@ -12,7 +12,7 @@ from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 import datetime
 from itertools import product
-from observation import Observation, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
+from observation import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue, Ilist, Iindex, ES, util
 from test_obs import dat3, loc3, prop2
 
 
@@ -440,6 +440,38 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual(Iindex.decodetype(Iindex.decodeobj(
             [[1, 2, 3], [1, [0, 1, 2]]]), 4), 'derived')
 
+    def test_periodic_coef(self):
+        self.assertEqual(Iindex.encodecoef([0,0,1,1,2,2,3,3]), 2)
+        self.assertEqual(Iindex.encodecoef([0,0,1,1,2,2,4,4]), 0)
+        self.assertEqual(Iindex.encodecoef([0,1,2,3,4,5,6,7]), 1)
+        self.assertEqual(Iindex.encodecoef([0,0,0,0,1,1,1,1]), 4)
+        self.assertEqual(Iindex.encodecoef([1,1,1,1,0,0,0,0]), 0)
+
+    def test_ntv(self):
+        fields = [{'full_dates::datetime': ['1964-01-01', '1985-02-05', '2022-01-21']},
+                  ['1964-01-01', '1985-02-05', '2022-01-21'],
+                  {'full_coord::point':    [[1,2], [3,4], [5,6]]},
+                  {'full_simple': [1,2,3,4]},
+                  {'complete_test': [['a', 'b'], [0, 0, 1, 0]]},
+                  {'complete_test': [['a', 'b'], [0, 0, 1, 0]]},
+                  {"complete_date": [{"::date": ["2000-01-01", "2000-02-01"]}, [0, 0, 1]]},
+                  {'implicit_test': [['a', 'b'], 'parent']},
+                  {'relative_test': [{'::string': ['a', 'b']}, 1, [0, 1, 1]]},
+                  [{'::string': ['a', 'b']}, 1, [0, 1, 1]],
+                  {'primary_test': [['a', 'b'], [2]]},
+                  [['a', 'b'], [2]],
+                  {'unic_test': 'valunic' },
+                  'valunic',
+                  {'primary': [['oui', 'fin 2022'], [1]]},
+                  [['oui', 'fin 2022'], [1]]]
+        for field in fields:
+            #print(decodentv(field, 'json'))
+            idx = Iindex.from_ntv(field)
+            #print(idx, type(idx.values[0]))
+            if idx:
+                for mode in ['full', 'default', 'optimize']:
+                    #print(Iindex.to_ntv(idx, mode))
+                    self.assertEqual(idx, Iindex.from_ntv(Iindex.to_ntv(idx, mode)))
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

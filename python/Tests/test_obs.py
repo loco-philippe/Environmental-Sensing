@@ -14,7 +14,7 @@ import requests as rq
 import datetime
 from itertools import product
 #from datetime import datetime
-from pymongo import MongoClient
+#from pymongo import MongoClient
 from observation import Observation, NamedValue, DatationValue, LocationValue,\
     PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
 
@@ -136,7 +136,7 @@ def _envoi_mongo_url(data):
     return r.status_code
 
 
-def _envoi_mongo_python(data):
+'''def _envoi_mongo_python(data):
     user = 'ESobsUser'
     pwd = 'observation'
     site = 'esobs.gwpay.mongodb.net/test'
@@ -154,7 +154,7 @@ def _envoi_mongo_python(data):
     collec = client[baseMongo][collection]
     return collec.insert_one(data).inserted_id
     # try : return collec.insert_one(data).inserted_id
-    # except : return None
+    # except : return None'''
 
 
 def _indic(res):
