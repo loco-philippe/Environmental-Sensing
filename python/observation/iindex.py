@@ -33,7 +33,6 @@ python/Examples/Iindex) are :
 from copy import copy, deepcopy
 
 from observation.esconstante import ES
-from observation.esvalue_base import ESValue
 from observation.iindex_interface import IindexInterface, IindexError
 from observation.iindex_structure import IindexStructure
 from observation.util import util
@@ -249,6 +248,14 @@ class Iindex(IindexStructure, IindexInterface):
             return copy(codec)
         return cls(codec=codec, name=name, keys=parent._keys, typevalue=typevalue, reindex=reindex)
 
+    @classmethod 
+    def from_ntv(cls, ntv_value):
+        '''Generate an Iindex Object from a Ntv field object'''
+        name, typ, codec, parent, keys = Iindex.decodentv(ntv_value, encode_format='json')
+        if parent or (keys and len(keys) == 1):
+            return None
+        return cls(codec=codec, name=name, keys=keys, typevalue=None, reindex=True)
+
     @classmethod
     def from_obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
         '''Generate an Iindex Object from a bytes, json or dict value and from
@@ -256,7 +263,7 @@ class Iindex(IindexStructure, IindexInterface):
 
         *Parameters*
 
-        - **bs** : bytes, string or dict data to convert
+        - **bsd** : bytes, string or dict data to convert
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **extkeys** : list (default None) of int, string or dict data to convert in keys
         - **context** : boolean (default True) - if False, only codec and keys are included

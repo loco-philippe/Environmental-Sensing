@@ -17,6 +17,7 @@ import cbor2
 from observation.esconstante import ES
 from observation.esvalue_base import ESValueEncoder, ESValue
 from observation.util import util, identity
+from json_ntv.ntv import Ntv, NtvSingle, NtvList
 
 
 class CborDecoder(json.JSONDecoder):
@@ -113,7 +114,7 @@ class IindexInterface:
 
     @staticmethod
     def decodeobj(bs=None, classname=None, context=True):
-        '''Generate an Iindex data from a bytes, json or dict value
+        '''Generate a tuple data from a bytes, json or dict value
 
         *Parameters*
 
@@ -213,6 +214,71 @@ class IindexInterface:
             return (ES.notcrossed, keys, True, False)
         raise IindexError('parent or keys is unconsistent')
 
+    @staticmethod 
+    def decodentv(field, encode_format='json'):
+        '''Generate a tuple data from a Ntv value(bytes, string, json, Ntv object)
+
+        *Parameters*
+
+        - **field** : bytes, string json or Ntv object to convert
+        - **encode_format** : string (default 'json') - format to convert ntv_value
+
+        *Returns* 
+
+        - **tuple** : name, dtype, codec, parent, keys
+            name (None or string): name of the Iindex
+            dtype (None or string): type of data
+            codec (list): list of Iindex codec values
+            parent (int): Iindex parent or ES.nullparent
+            keys (None or list): Iindex keys
+        '''
+        if field is None:
+            return (None, None, [], ES.nullparent, None)
+        if isinstance(field, bytes):
+            lis = cbor2.loads(field)
+        elif isinstance(field, str) and field[0] in ['{', '[', '"']:
+            lis = json.loads(field, object_hook=CborDecoder().codecbor) 
+        else:
+            lis = field
+        ntv = Ntv.obj(lis)
+        type_ntv = ntv.ntv_type.long_name if ntv.ntv_type else None
+        if isinstance(ntv, NtvSingle):
+            return (ntv.ntv_name, type_ntv, [ntv.to_obj(simpleval=True, encode_format=encode_format)], 
+                    None, None)
+        if len(ntv) == 0 or len(ntv) > 3:
+            return (ntv.ntv_name, type_ntv, ntv.to_obj(simpleval=True, encode_format=encode_format), 
+                    None, None)
+        codec_ntv = ntv[0]
+        type_codec_ntv = codec_ntv.ntv_type.long_name if codec_ntv.ntv_type else None
+        if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and isinstance(ntv[1].ntv_value, (int, str)) and \
+          not isinstance(ntv[2], NtvSingle) and isinstance(ntv[2][0].ntv_value, int):
+            return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), 
+                    ntv[1].ntv_value, ntv[2].to_obj())
+        if len(ntv) == 2 and isinstance(ntv[1], NtvSingle) and isinstance(ntv[1].ntv_value, (int, str)):
+            return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), 
+                    ntv[1].ntv_value, None) 
+        if len(ntv) == 2 and not isinstance(ntv[1], NtvSingle) and isinstance(ntv[1][0].ntv_value, int):
+            return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), 
+                    None, ntv[1].to_obj())
+        return (ntv.ntv_name, type_ntv, ntv.to_obj(simpleval=True, encode_format=encode_format), 
+                    None, None)
+
+    @staticmethod 
+    def encodecoef(lis):
+        '''Generate a repetition coefficient for periodic list'''
+        if len(lis) < 2:
+            return 0
+        coef = 0
+        period = max(lis) + 1
+        for i in range(1,len(lis)):
+            coef = i
+            if lis[i-1] != lis[i]:
+                break
+        periodic_lis = [ (ikey % (coef * period)) // coef for ikey in range(len(lis))]
+        if lis == periodic_lis:
+            return coef
+        return 0
+    
     @staticmethod
     def encodeobj(codeclist, keyslist=None, name=None, simpleval=False,
                   codecval=False, typevalue=None, parent=ES.nullparent,
@@ -325,6 +391,104 @@ class IindexInterface:
                            codecval=codecval, simpleval=simpleval, parent=parent,
                            **option)
 
+    def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
+        option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
+                  'codif': {}, 'geojson': False} | kwargs
+        dic = {}
+        if self.typevalue:
+            dic['type'] = self.typevalue
+        ds = pd.Series(range(len(self.keys)), index=self.keys, dtype='int64')
+        dic['value'] = [{'record': ds[i].tolist(),
+                         'codec': util.json(cod, encoded=False, typevalue=None,
+                                            simpleval=simpleval, modecodec=modecodec,
+                                            untyped=option['untyped'], datetime=False,
+                                            geojson=option['geojson'])}
+                        for i, cod in enumerate(self.codec)]
+        return {self.name: dic}
+
+    def to_numpy(self, func=None, codec=False, npdtype=None, **kwargs):
+        '''
+        Transform Iindex in a Numpy array.
+
+        *Parameters*
+
+        - **func** : function (default None) - function to apply for each value of the Iindex.
+        If func is the 'index' string, values are replaced by raw values.
+        - **npdtype** : string (default None) - numpy dtype for the Array ('object' if None)
+        - **kwargs** : parameters to apply to the func function
+
+        *Returns* : Numpy Array'''
+        return self.to_pandas(func=func, codec=codec, npdtype=npdtype, numpy=True, **kwargs)
+
+    def to_ntv(self, modecodec='optimize', def_type=None, keys=None, parent=None):
+        leng = len(self)
+        if len(self.codec) == 1:
+            return NtvSingle(self.codec[0], self.name)
+        if len(self.codec) == leng or modecodec == 'full':
+            return NtvList(self.values, self.name)
+        if modecodec == 'default':
+            return NtvList([NtvList(self.codec, ntv_type=def_type), NtvList(self.keys, ntv_type='json')], self.name, ntv_type='json')
+        if modecodec == 'optimize':
+            ntv_value = [NtvList(self.codec, ntv_type=def_type)]
+            if parent:
+                ntv_value.append(NtvSingle(parent, ntv_type='json'))
+            if keys:
+                ntv_value.append(NtvList(keys, ntv_type='json'))    
+            return NtvList(ntv_value, self.name, ntv_type='json')                
+
+    def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
+               codecval=False, parent=ES.nullparent, name=True, listunic=False,
+               **kwargs):
+        '''Return a formatted object (string, bytes or dict) for the Iindex
+
+        *Parameters*
+
+        - **modecodec** : string (default 'optimize') - json mode
+        - **keys** : list (default None) - list: List of keys to include - None or False:
+        no list - else: Iindex keys
+        - **typevalue** : string (default None) - type to convert values
+        - **name** : boolean (default True) - if False, name is not included
+        - **codecval** : boolean (default False) - if True, only list of codec values is included
+        - **simpleval** : boolean (default False) - if True, only value (without name) is included
+        - **listunic** : boolean (default False) - if False, when len(result)=1
+        return value not list
+        - **parent** : integer (default None) - index number of the parent in indexset
+
+        *Parameters (kwargs)*
+
+        - **encoded** : boolean (default False) - choice for return format
+        (string/bytes if True, dict else)
+        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
+        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
+        - **untyped** : boolean (default False) - include dtype if True
+        - **geojson** : boolean (default False) - geojson for LocationValue if True
+
+        *Returns* : string, bytes or dict'''
+        keyslist = None
+        if not name or self.name == ES.defaultindex:
+            idxname = None
+        else:
+            idxname = self.name
+        if modecodec == 'full':
+            codeclist = self.values
+            keyslist = None
+        elif modecodec == 'default':
+            codeclist = self._codec
+            keyslist = self._keys
+        else:
+            codeclist = self._codec
+            if keys and isinstance(keys, list):
+                keyslist = keys
+            elif keys and not isinstance(keys, list):
+                keyslist = self._keys
+        if typevalue:
+            dtype = ES.valname[typevalue]
+        else:
+            dtype = None
+        return IindexInterface.encodeobj(codeclist, keyslist, idxname, simpleval,
+                                         codecval, dtype, parent, listunic,
+                                         modecodec, **kwargs)
+
     def to_pandas(self, func=None, codec=False, npdtype=None,
                   series=True, index=True, numpy=False, **kwargs):
         '''
@@ -380,88 +544,6 @@ class IindexInterface:
                                  index=pdindex, name=self.name)
             return pd.DataFrame(pd.Series(values, dtype=npdtype,
                                           index=pdindex, name=self.name))
-
-    def to_numpy(self, func=None, codec=False, npdtype=None, **kwargs):
-        '''
-        Transform Iindex in a Numpy array.
-
-        *Parameters*
-
-        - **func** : function (default None) - function to apply for each value of the Iindex.
-        If func is the 'index' string, values are replaced by raw values.
-        - **npdtype** : string (default None) - numpy dtype for the Array ('object' if None)
-        - **kwargs** : parameters to apply to the func function
-
-        *Returns* : Numpy Array'''
-        return self.to_pandas(func=func, codec=codec, npdtype=npdtype, numpy=True, **kwargs)
-
-    def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
-               codecval=False, parent=ES.nullparent, name=True, listunic=False,
-               **kwargs):
-        '''Return a formatted object (string, bytes or dict) for the Iindex
-
-        *Parameters*
-
-        - **modecodec** : string (default 'optimize') - json mode
-        - **keys** : list (default None) - list: List of keys to include - None or False:
-        no list - else: Iindex keys
-        - **typevalue** : string (default None) - type to convert values
-        - **name** : boolean (default True) - if False, name is not included
-        - **codecval** : boolean (default False) - if True, only list of codec values is included
-        - **simpleval** : boolean (default False) - if True, only value (without name) is included
-        - **listunic** : boolean (default False) - if False, when len(result)=1
-        return value not list
-        - **parent** : integer (default None) - index number of the parent in indexset
-
-        *Parameters (kwargs)*
-
-        - **encoded** : boolean (default False) - choice for return format
-        (string/bytes if True, dict else)
-        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
-        - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
-        - **untyped** : boolean (default False) - include dtype if True
-        - **geojson** : boolean (default False) - geojson for LocationValue if True
-
-        *Returns* : string, bytes or dict'''
-        keyslist = None
-        if not name or self.name == ES.defaultindex:
-            idxname = None
-        else:
-            idxname = self.name
-        if modecodec == 'full':
-            codeclist = self.values
-            keyslist = None
-        elif modecodec == 'default':
-            codeclist = self._codec
-            keyslist = self._keys
-        else:
-            codeclist = self._codec
-            if keys and isinstance(keys, list):
-                keyslist = keys
-            elif keys and not isinstance(keys, list):
-                keyslist = self._keys
-        if typevalue:
-            dtype = ES.valname[typevalue]
-        else:
-            dtype = None
-        return IindexInterface.encodeobj(codeclist, keyslist, idxname, simpleval,
-                                         codecval, dtype, parent, listunic,
-                                         modecodec, **kwargs)
-
-    def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
-        option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
-                  'codif': {}, 'geojson': False} | kwargs
-        dic = {}
-        if self.typevalue:
-            dic['type'] = self.typevalue
-        ds = pd.Series(range(len(self.keys)), index=self.keys, dtype='int64')
-        dic['value'] = [{'record': ds[i].tolist(),
-                         'codec': util.json(cod, encoded=False, typevalue=None,
-                                            simpleval=simpleval, modecodec=modecodec,
-                                            untyped=option['untyped'], datetime=False,
-                                            geojson=option['geojson'])}
-                        for i, cod in enumerate(self.codec)]
-        return {self.name: dic}
 
     def vlist(self, func, *args, extern=True, **kwargs):
         '''
