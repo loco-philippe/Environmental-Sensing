@@ -436,7 +436,7 @@ class IindexInterface:
                 ntv_value.append(NtvSingle(parent, ntv_type='json'))
             if keys:
                 ntv_value.append(NtvList(keys, ntv_type='json'))    
-            else:
+            elif not parent:
                 ntv_value.append(NtvList(self.keys, ntv_type='json'))
             return NtvList(ntv_value, name, ntv_type='json')                
 

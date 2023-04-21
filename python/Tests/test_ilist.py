@@ -686,6 +686,35 @@ class Test_Ilist(unittest.TestCase):
             #il2 = Ilist.from_obj(il.to_obj(**option))
             # self.assertEqual(il, il2)   #!!!
 
+    def test_to_ntv(self):
+        tab_data   = ({'value':           [10, 20, 30, 40],
+                      'dates::datetime': ['1964-01-01', '1985-02-05', '2022-01-21', '2022-01-22'],
+                      'value32::int32':  [10, 20, 30, 40],
+                      'coord::point':    [[1,2], [3,4], [5,6], [7,8]],
+                      'names::string':   ['john', 'eric', 'judith', 'max'],
+                      'index':           [1, 2, 3, 4],
+                      'complete_test':   [['a', 'b'], [0, 0, 1, 0]],
+                      'complete_date':   [{"::date": ["2000-01-01", "2000-02-01"]}, [0, 0, 1, 0]],
+                      'implicit_test':   [['a', 'b'], [1]],
+                      'implicit_test2':  [['a', 'b'], [2]],
+                      'unic_test':       'valunic' })
+        '''              [['1964-01-01', '1985-02-05', '2022-01-21', '2022-01-22'], 
+                      [10, 20, 30, 40],
+                      [10, 20, 30, 40],
+                      [[1,2], [3,4], [5,6], [7,8]],
+                      ['john', 'eric', 'judith', 'max'],
+                      [1, 2, 3, 4],
+                      [['a', 'b'], [0, 0, 1, 0]],
+                      [['a', 'b'], [1]],
+                      [['a', 'b'], [2]],
+                      'valunic' ] )'''
+        for tab in tab_data:
+            il = Ilist.from_ntv(tab)
+            for mode in ['full', 'default', 'optimize']:
+                #print(to_ntv_ilist(il, mode))
+                self.assertEqual(il, Ilist.from_ntv(il.to_ntv(il, mode)))
+
+            
     '''for forma in ['json', 'cbor']:
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:

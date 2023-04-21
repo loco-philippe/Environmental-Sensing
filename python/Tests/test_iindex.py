@@ -465,13 +465,12 @@ class Test_iindex(unittest.TestCase):
                   {'primary': [['oui', 'fin 2022'], [1]]},
                   [['oui', 'fin 2022'], [1]]]
         for field in fields:
-            #print(decodentv(field, 'json'))
             idx = Iindex.from_ntv(field)
             #print(idx, type(idx.values[0]))
             if idx:
                 for mode in ['full', 'default', 'optimize']:
                     #print(Iindex.to_ntv(idx, mode))
-                    self.assertEqual(idx, Iindex.from_ntv(Iindex.to_ntv(idx, mode)))
+                    self.assertEqual(idx, Iindex.from_ntv(idx.to_ntv(mode)))
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

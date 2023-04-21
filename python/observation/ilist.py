@@ -335,7 +335,7 @@ class Ilist(IlistStructure, IlistInterface):
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
-            _init_ntv_keys(ind, lidx, leng)
+            Ilist._init_ntv_keys(ind, lidx, leng)
         lindex = [Iindex(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return Ilist(lindex, reindex=False)
