@@ -14,9 +14,11 @@ import csv  # , os
 from datetime import datetime
 from math import nan
 from itertools import product
+import json
 from observation import Observation, NamedValue, DatationValue, LocationValue, \
     PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
 from test_obs import dat3, loc3, prop2, _res
+from ntv import Ntv
 
 #l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
 #il = Ilist.obj(l)
@@ -697,8 +699,8 @@ class Test_Ilist(unittest.TestCase):
                       'complete_date':   [{"::date": ["2000-01-01", "2000-02-01"]}, [0, 0, 1, 0]],
                       'implicit_test':   [['a', 'b'], [1]],
                       'implicit_test2':  [['a', 'b'], [2]],
-                      'unic_test':       'valunic' })
-        '''              [['1964-01-01', '1985-02-05', '2022-01-21', '2022-01-22'], 
+                      'unic_test':       'valunic' },
+                      [['1964-01-01', '1985-02-05', '2022-01-21', '2022-01-22'], 
                       [10, 20, 30, 40],
                       [10, 20, 30, 40],
                       [[1,2], [3,4], [5,6], [7,8]],
@@ -707,12 +709,14 @@ class Test_Ilist(unittest.TestCase):
                       [['a', 'b'], [0, 0, 1, 0]],
                       [['a', 'b'], [1]],
                       [['a', 'b'], [2]],
-                      'valunic' ] )'''
+                      'valunic' ] )
         for tab in tab_data:
-            il = Ilist.from_ntv(tab)
-            for mode in ['full', 'default', 'optimize']:
-                #print(to_ntv_ilist(il, mode))
-                self.assertEqual(il, Ilist.from_ntv(il.to_ntv(il, mode)))
+            lis = [tab, json.dumps(tab), Ntv.obj(tab)]
+            for il in lis:
+                il = Ilist.from_ntv(tab)
+                for mode in ['full', 'default', 'optimize']:
+                    #print(to_ntv_ilist(il, mode))
+                    self.assertEqual(il, Ilist.from_ntv(il.to_ntv(mode)))
 
             
     '''for forma in ['json', 'cbor']:

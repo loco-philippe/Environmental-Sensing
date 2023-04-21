@@ -321,7 +321,7 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.from_obj(bsd, reindex=reindex, context=context)
 
     @classmethod
-    def from_ntv(ntv_value, reindex=False):
+    def from_ntv(cls, ntv_value, reindex=False):
         '''Generate an Ilist Object from a ntv_value
 
         *Parameters*
@@ -338,7 +338,7 @@ class Ilist(IlistStructure, IlistInterface):
             Ilist._init_ntv_keys(ind, lidx, leng)
         lindex = [Iindex(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
-        return Ilist(lindex, reindex=False)
+        return cls(lindex, reindex=False)
 
     @classmethod
     def from_obj(cls, bsd=None, reindex=True, context=True):
