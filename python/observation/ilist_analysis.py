@@ -86,9 +86,6 @@ class Analysis:
         self._setgroups()
         self._setpartition()
         self._setinfospartition(partition)
-        infosidx = [idx for idx in self.infos if idx['cat'] != 'variable']
-        self.primary = [infosidx.index(idx)
-                        for idx in infosidx if idx['cat'] == 'primary']
         self.hashi = self.iobj._hashi()
         self.lvarname = [idx['name']
                          for idx in self.infos if idx['cat'] == 'variable']
@@ -100,6 +97,12 @@ class Analysis:
         coupledsec = [idx['num'] for idx in self.infos if idx['cat'] == 'coupled'
                       and self.infos[idx['parent']]['cat'] in ('primary', 'secondary')]
         self.secondary += coupledsec
+        #infosidx = [idx for idx in self.infos if idx['cat'] != 'variable']
+        infosidx = [idx for idx in self.infos if idx['cat'] != 'variable' and 
+                    not (idx['cat'] == 'coupled' and 
+                         self.infos[idx['parent']]['cat'] == 'variable') ]
+        self.primary = [infosidx.index(idx)
+                        for idx in infosidx if idx['cat'] == 'primary']
 
     def check_relationship(self, relations):
         '''get the list of inconsistent records for each relationship defined in relations
