@@ -61,6 +61,7 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.ext`
     - `Ilist.obj`
     - `Ilist.from_csv`
+    - `Ilist.from_ntv`
     - `Ilist.from_obj`
     - `Ilist.from_file`
     - `Ilist.merge`
@@ -158,9 +159,11 @@ class Ilist(IlistStructure, IlistInterface):
     - `Ilist.plot`
     - `Ilist.to_obj`
     - `Ilist.to_csv`
-    - `Ilist.to_file`
-    - `Ilist.to_xarray`
     - `Ilist.to_dataframe`
+    - `Ilist.to_file`
+    - `Ilist.to_ntv`
+    - `Ilist.to_obj`
+    - `Ilist.to_xarray`
     - `Ilist.view`
     - `Ilist.vlist`
     - `Ilist.voxel`

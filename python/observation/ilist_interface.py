@@ -199,7 +199,7 @@ class IlistInterface:
         return size
 
     def to_ntv(self, modecodec='optimize', def_type='json', option_name=False):
-        '''Return a Ntv tab object .
+        '''Return a Ntv tab value (whithout name) .
 
         *Parameters (kwargs)*
 
@@ -240,7 +240,7 @@ class IlistInterface:
                     else: # periodic derived
                         keys = idx.derkeys(self.lindex[inf['parent']])
                         lis.append(Iindex.to_ntv(idx, keys=keys, parent=inf['parent']))            
-        return NtvList(lis, self.name, ntv_type=def_type)
+        return NtvList(lis, None, ntv_type=def_type)
 
     def to_obj(self, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict).
