@@ -718,7 +718,15 @@ class Test_Ilist(unittest.TestCase):
                     #print(to_ntv_ilist(il, mode))
                     self.assertEqual(il, Ilist.from_ntv(il.to_ntv(mode)))
 
-            
+    def test_matrix(self):
+        ntv = Ntv.obj({'matrix': [{"annee": [[2000, 2010],         [1]]}, 
+                                  {"pays":  [['france', 'italie'], [2]]}, 
+                                  {"age":   [[10, 50, 100],        [4]]}, 
+                                  {"result":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}]})
+        il = Ilist.from_ntv(ntv)
+        self.assertEqual(il.primaryname, ['annee', 'pays', 'age'])
+        self.assertEqual(il.lvarname, ['result'])
+        
     '''for forma in ['json', 'cbor']:
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:
