@@ -510,5 +510,5 @@ class Iindex(IindexStructure, IindexInterface):
     @property
     def val(self):
         '''return values conversion to string '''
-        return [self._codec[key].ntv_value for key in self._keys]
+        return [self._codec[key].to_obj() for key in self._keys]
         #return self.to_obj(modecodec='full', codecval=True, encoded=False)

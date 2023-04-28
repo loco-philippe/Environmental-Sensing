@@ -438,7 +438,7 @@ class IindexInterface:
         leng = len(self)
         name = None if self.name == '$default' or not option_name else self.name       
         if len(self.codec) == 1:
-            return NtvSingle(self.codec[0], name)
+            return NtvSingle(self.codec[0].ntv_value, name, self.codec[0].ntv_type)
         if codecval:
             return NtvList(self.codec, name, ntv_type=def_type)
         if len(self.codec) == leng or modecodec == 'full':

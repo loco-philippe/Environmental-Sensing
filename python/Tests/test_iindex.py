@@ -79,22 +79,26 @@ class Test_iindex(unittest.TestCase):
                    ]
         for val in listval:
             self.assertTrue(Iindex.ntv(val).val[0] == 'value')
-            self.assertTrue(Iindex.ntv(Iindex.ntv(
-                val).to_ntv()) == Iindex.ntv(val))
-        val = {'namvalue': ['value']}
+            self.assertTrue(Iindex.ntv(Iindex.ntv(val).to_ntv()) == Iindex.ntv(val))
+        val = {'namvalue': 'value'}
+        val2 = {'namvalue': ['value']}
         self.assertTrue(Iindex.ntv(val).name == 'namvalue')
+        self.assertTrue(Iindex.ntv(val2).name == 'namvalue')
+        self.assertTrue(Iindex.ntv(val2).val[0] == 'value')
         self.assertTrue(Iindex.ntv(val).val[0] == 'value')
-        self.assertTrue(Iindex.ntv(val).to_ntv() == val)
-        '''val = ['datation', ['name']]
-        self.assertTrue(Iindex.obj(val).name == val[0])
-        self.assertTrue(Iindex.obj(val).values[0].name == 'name')
-        self.assertTrue(Iindex.obj(val).to_obj() == val)'''
+        self.assertTrue(Iindex.ntv(val).to_ntv().to_obj() == val)
+        self.assertTrue(Iindex.ntv(val2).to_ntv().to_obj() == val)
+        val  = {'datation': ['name']}
+        val2 = {'datation': 'name'}
+        self.assertTrue(Iindex.ntv(val).name == 'datation')
+        self.assertTrue(Iindex.ntv(val).val[0] == 'name')
+        self.assertTrue(Iindex.ntv(val).to_ntv().to_obj() == val2)
 
-"""    def test_infos(self):
-        idx = Iindex.ext(['er', 2, [1, 2]])
+    def test_infos(self):
+        idx = Iindex.ntv(['er', 2, [1, 2]])
         self.assertTrue(idx.infos == {'lencodec': 3, 'mincodec': 3, 'maxcodec': 3,
                                       'typecodec': 'complete', 'ratecodec': 0.0})
-        idx2 = Iindex.ext(['er', Ilist(), Ilist()], 'result')
+        idx2 = Iindex.ntv({'result': ['er', Ilist(), Ilist()]} )
         self.assertTrue(idx2.infos == {'lencodec': 2, 'mincodec': 2, 'maxcodec': 3,
                                        'typecodec': 'default', 'ratecodec': 1.0})
         idx2 = Iindex()
@@ -102,49 +106,48 @@ class Test_iindex(unittest.TestCase):
                                        'typecodec': 'null', 'ratecodec': 0.0})
 
     def test_append(self):
-        idx = Iindex.ext(['er', 2, [1, 2]])
+        idx = Iindex.ntv(['er', 2, [1, 2]])
         self.assertTrue(idx.append(8) == 3)
         self.assertTrue(idx.append(8) == 3)
         self.assertTrue(idx.append(8, unique=False) == 4)
 
     def test_loc_keyval(self):
-        idx = Iindex.ext(['er', 2, [1, 2]])
+        idx = Iindex.ntv(['er', 2, [1, 2]])
         self.assertTrue(idx.keytoval(idx.valtokey([1, 2])) == [1, 2])
         self.assertTrue(idx.isvalue([1, 2]))
-        idx = Iindex.obj(
-            ['location', [{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]]])
+        idx = Iindex.ntv( {'location::point': 
+                           [{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]]})
         self.assertTrue(idx.keytoval(
-            idx.valtokey([4.83, 45.76])) == [4.83, 45.76])
-        self.assertTrue(idx.loc([4.83, 45.76]) == [1])
-        idx = Iindex.ext([1, 3, 3, 2, 5, 3, 4])
+            idx.valtokey({':point':[4.83, 45.76]})) == {':point':[4.83, 45.76]})
+        self.assertTrue(idx.loc({':point':[4.83, 45.76]}) == [1])
+        idx = Iindex.ntv([1, 3, 3, 2, 5, 3, 4])
         self.assertTrue(idx.loc(3) == [1, 2, 5])
 
     def test_setvalue_setname(self):
-        idx = Iindex.ext(['er', 2, [1, 2]])
-        idx[1] = 'er'
+        idx = Iindex.ntv(['er', 2, [1, 2]])
+        idx[1] = Ntv.obj('er')
         self.assertTrue(idx.val == ['er', 'er', [1, 2]])
         idx.setcodecvalue('er', 'ez')
         self.assertTrue(idx.val == ['ez', 'ez', [1, 2]])
-        idx[1] = 3
+        idx[1] = Ntv.obj(3)
         self.assertTrue(idx.val == ['ez', 3, [1, 2]])
-        idx.setvalue(0, 'ez', typevalue='DatationValue')
-        if ES.def_clsName:
-            self.assertTrue(idx.val == ['ez', 3, [1, 2]])
-        self.assertTrue(idx.values[0] == DatationValue(name='ez'))
-        idx.setlistvalue([3, (3, 4), 'ee'])
+        idx.setvalue(0, {':date': '2001-02-03'})
+        self.assertTrue(idx.val == [{':date': '2001-02-03'}, 3, [1, 2]])
+        self.assertTrue(idx.values[0] == Ntv.obj({':date': '2001-02-03'}))
+        idx.setlistvalue([3, [3, 4], 'ee'])
         self.assertTrue(idx.val == [3, [3, 4], 'ee'])
         idx.setname('truc')
         self.assertEqual(idx.name, 'truc')
 
     def test_record(self):
-        ia = Iindex.ext(['anne', 'paul', 'lea', 'andre', 'paul', 'lea'])
-        self.assertEqual([ia[i]
+        ia = Iindex.ntv(['anne', 'paul', 'lea', 'andre', 'paul', 'lea'])
+        self.assertEqual([ia[i].to_obj()
                          for i in ia.recordfromvalue('paul')], ['paul', 'paul'])
 
     def test_reset_reorder_sort(self):
-        idx = Iindex.ext(['er', 2, 'er', [1, 2]])
+        idx = Iindex.ntv(['er', 2, 'er', [1, 2]])
         cod = copy(idx.codec)
-        idx.codec.append('ez')
+        idx.codec.append(Ntv.obj('ez'))
         # idx.resetkeys()
         idx.reorder()
         self.assertEqual(cod, idx.codec)
@@ -152,24 +155,24 @@ class Test_iindex(unittest.TestCase):
         idx.reorder(order)
         self.assertEqual(idx.val, [2, [1, 2], 'er', 'er'])
         # idx.sort()
-        self.assertEqual(idx.sort().val, [[1, 2], 2, 'er', 'er'])
+        self.assertEqual(idx.sort().val, ['er', 'er', 2, [1, 2]])
         idxs = idx.sort(inplace=False, reverse=True)
-        self.assertEqual(idxs.val, ['er', 'er', 2, [1, 2]])
-        idx = Iindex.ext([1, 3, 3, 2, 5, 3, 4]).sort(inplace=False)
+        self.assertEqual(idxs.val, [[1, 2], 2, 'er', 'er'])
+        idx = Iindex.ntv([1, 3, 3, 2, 5, 3, 4]).sort(inplace=False)
         self.assertEqual(idx.val, [1, 2, 3, 3, 3, 4, 5])
         self.assertEqual(idx.cod,  [1, 2, 3, 4, 5])
 
     def test_derived_coupled(self):
-        der = Iindex.ext([1, 1, 1, 2])
-        ref = Iindex.ext([1, 1, 3, 4])
+        der = Iindex.ntv([1, 1, 1, 2])
+        ref = Iindex.ntv([1, 1, 3, 4])
         self.assertTrue(der.isderived(ref) and not der.iscoupled(ref))
         der.tocoupled(ref)
         self.assertTrue(not der.isderived(ref) and der.iscoupled(ref))
         # der.resetkeys()
         der.reorder()
         self.assertTrue(der.isderived(ref) and not der.iscoupled(ref))
-        ia = Iindex.ext(['anne', 'paul', 'anne', 'lea', 'anne'])
-        ib = Iindex.ext([25, 25, 12, 12, 25])
+        ia = Iindex.ntv(['anne', 'paul', 'anne', 'lea', 'anne'])
+        ib = Iindex.ntv([25, 25, 12, 12, 25])
         self.assertTrue(not ia.isderived(ib) and not ia.iscoupled(ib))
         self.assertTrue(not ib.isderived(ia) and not ib.iscoupled(ia))
         ia.coupling(ib)
@@ -178,26 +181,26 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(ib.iscoupled(ia))
 
     def test_coupling_infos(self):
-        ia = Iindex.ext()
-        ib = Iindex.ext([25, 25, 12, 12, 25])
+        ia = Iindex()
+        ib = Iindex.ntv([25, 25, 12, 12, 25])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 0, 'distrate': 0, 'distance': 0, 'rate': 0,
                           'disttomin': 0, 'disttomax': 0, 'distmin': 0, 'distmax': 0,
                           'diff': 0, 'typecoupl': 'null'})
-        ia = Iindex.ext(['anne', 'paul', 'anne', 'lea', 'anne'])
+        ia = Iindex.ntv(['anne', 'paul', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 4, 'distrate': 0.3333333333333333, 'distance': 2,
                           'disttomin': 1, 'disttomax': 2, 'distmin': 3, 'distmax': 6,
                           'rate': 0.5, 'diff': 1, 'typecoupl': 'link'})
         self.assertTrue(ia.islinked(ib))
-        ia = Iindex.ext(['anne', 'lea', 'anne', 'lea', 'anne'])
+        ia = Iindex.ntv(['anne', 'lea', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 4, 'distrate': 1.0, 'distance': 2, 'rate': 1.0,
                           'disttomin': 2, 'disttomax': 0, 'distmin': 2, 'distmax': 4,
                           'diff': 0, 'typecoupl': 'crossed'})
         self.assertTrue(ia.iscrossed(ib))
 
-    def test_vlist(self):
+"""    def test_vlist(self):
         testidx = [Iindex(), Iindex.ext(['er', 2, 'er', [1, 2]])]
         residx = [[], ['er', '2', 'er', str([1, 2])]]
         for idx, res in zip(testidx, residx):

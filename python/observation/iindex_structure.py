@@ -13,7 +13,7 @@ from observation.esvalue_base import ESValue
 from observation.util import util
 from observation.esconstante import ES
 from observation.iindex_interface import IindexError
-
+from ntv import Ntv
 
 class IindexStructure:
     '''this class includes Iindex methods :
@@ -328,8 +328,9 @@ class IindexStructure:
         - **list of int** : list of record number finded (None else)'''
 
         if extern:
-            value = util.castval(
-                value, util.typename(self.name, ES.def_clsName))
+            value = Ntv.obj(value)
+            #value = util.castval(
+            #    value, util.typename(self.name, ES.def_clsName))
         if not value in self._codec:
             return None
         listkeys = [cod for cod, val in zip(
@@ -398,18 +399,21 @@ class IindexStructure:
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : int - last codec rank updated (-1 if None)'''
-        typevalue = util.typename(self.name, typevalue)
+        #typevalue = util.typename(self.name, typevalue)
         if extern:
-            newvalue = util.castval(newvalue, typevalue)
-            oldvalue = util.castval(oldvalue, typevalue)
+            newvalue = Ntv.obj(newvalue)
+            oldvalue = Ntv.obj(oldvalue)
+            #newvalue = util.castval(newvalue, typevalue)
+            #oldvalue = util.castval(oldvalue, typevalue)
         rank = -1
         for i in range(len(self._codec)):
             if self._codec[i] == oldvalue:
-                if typevalue in ES.ESclassName and nameonly:
-                    self._codec[i].setName(newvalue.name)
-                elif typevalue in ES.ESclassName and valueonly:
-                    self._codec[i].setValue(newvalue.value)
-                self._codec[i] = newvalue
+                if nameonly:
+                    self._codec[i].setName(newvalue.ntv_name)
+                elif valueonly:
+                    self._codec[i].setValue(newvalue.ntv_value)
+                else:
+                    self._codec[i] = newvalue
                 rank = i
         return rank
 
@@ -486,14 +490,14 @@ class IindexStructure:
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : None'''
-        typevalue = util.typename(self.name, typevalue)
+        #typevalue = util.typename(self.name, typevalue)
         if extern:
-            value = util.castval(value, typevalue)
+            value = Ntv.obj(value)
         values = self.values
-        if typevalue in ES.ESclassName and nameonly:
-            values[ind].setName(values.name)
-        elif typevalue in ES.ESclassName and valueonly:
-            values[ind].setValue(values.value)
+        if nameonly:
+            values[ind].setName(values.ntv_name)
+        elif valueonly:
+            values[ind].setValue(values.ntv_value)
         else:
             values[ind] = value
         self._codec, self._keys = util.resetidx(values)
@@ -510,15 +514,15 @@ class IindexStructure:
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : None'''
-        typevalue = util.typename(self.name, typevalue)
+        #typevalue = util.typename(self.name, typevalue)
         if extern:
-            listvalue = util.castobj(listvalue, typevalue)
+            listvalue = [Ntv.obj(value) for value in listvalue]
         values = self.values
         for i, value_i in enumerate(listvalue):
-            if typevalue in ES.ESclassName and nameonly:
-                values[i].setName(value_i.name)
-            elif typevalue in ES.ESclassName and valueonly:
-                values[i].setValue(value_i.value)
+            if nameonly:
+                values[i].setName(value_i.ntv_name)
+            elif valueonly:
+                values[i].setValue(value_i.ntv_value)
             else:
                 values[i] = value_i
         self._codec, self._keys = util.resetidx(values)
@@ -613,8 +617,9 @@ class IindexStructure:
 
         - **int** : first key finded (None else)'''
         if extern:
-            value = util.castval(
-                value, util.typename(self.name, ES.def_clsName))
+            value = Ntv.obj(value)
+            #value = util.castval(
+            #    value, util.typename(self.name, ES.def_clsName))
         if value in self._codec:
             return self._codec.index(value)
         return None
