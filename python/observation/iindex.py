@@ -361,7 +361,8 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __str__(self):
         '''return json string format'''
-        return '    ' + self.to_obj(encoded=True, modecodec='full', untyped=False) + '\n'
+        return '    ' + str(self.to_ntv()) + '\n'
+        #return '    ' + self.to_obj(encoded=True, modecodec='full', untyped=False) + '\n'
 
     def __eq__(self, other):
         ''' equal if class and values are equal'''
