@@ -237,31 +237,32 @@ class IindexInterface:
         if isinstance(field, bytes):
             lis = cbor2.loads(field)
         elif isinstance(field, str) and field[0] in ['{', '[', '"']:
-            lis = json.loads(field, object_hook=CborDecoder().codecbor) 
+            lis = json.loads(field) 
+            #lis = json.loads(field, object_hook=CborDecoder().codecbor) 
         else:
             lis = field
         ntv = Ntv.obj(lis)
         type_ntv = ntv.ntv_type.long_name if ntv.ntv_type else None
         if isinstance(ntv, NtvSingle):
-            return (ntv.ntv_name, type_ntv, [ntv.to_obj(simpleval=True, encode_format=encode_format)], 
-                    None, None)
+            return (ntv.ntv_name, type_ntv, [Ntv.from_obj(ntv.ntv_value)], None, None)
+            #return (ntv.ntv_name, type_ntv, [ntv.to_obj(simpleval=True, encode_format=encode_format)], None, None)
         if len(ntv) == 0 or len(ntv) > 3:
-            return (ntv.ntv_name, type_ntv, ntv.to_obj(simpleval=True, encode_format=encode_format), 
-                    None, None)
+            return (ntv.ntv_name, type_ntv, ntv.ntv_value, None, None)
+            #return (ntv.ntv_name, type_ntv, ntv.to_obj(simpleval=True, encode_format=encode_format), None, None)
         codec_ntv = ntv[0]
         type_codec_ntv = codec_ntv.ntv_type.long_name if codec_ntv.ntv_type else None
         if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and isinstance(ntv[1].ntv_value, (int, str)) and \
           not isinstance(ntv[2], NtvSingle) and isinstance(ntv[2][0].ntv_value, int):
-            return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), 
-                    ntv[1].ntv_value, ntv[2].to_obj())
+            return (ntv.ntv_name, type_codec_ntv, codec_ntv.ntv_value, ntv[1].ntv_value, ntv[2].to_obj())
+            #return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), ntv[1].ntv_value, ntv[2].to_obj())
         if len(ntv) == 2 and isinstance(ntv[1], NtvSingle) and isinstance(ntv[1].ntv_value, (int, str)):
-            return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), 
-                    ntv[1].ntv_value, None) 
+            return (ntv.ntv_name, type_codec_ntv, codec_ntv.ntv_value, ntv[1].ntv_value, None) 
+            #return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), ntv[1].ntv_value, None) 
         if len(ntv) == 2 and not isinstance(ntv[1], NtvSingle) and isinstance(ntv[1][0].ntv_value, int):
-            return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), 
-                    None, ntv[1].to_obj())
-        return (ntv.ntv_name, type_ntv, ntv.to_obj(simpleval=True, encode_format=encode_format), 
-                    None, None)
+            return (ntv.ntv_name, type_codec_ntv, codec_ntv.ntv_value, None, ntv[1].to_obj())
+            #return (ntv.ntv_name, type_codec_ntv, codec_ntv.to_obj(simpleval=True, encode_format=encode_format), None, ntv[1].to_obj())
+        return (ntv.ntv_name, type_ntv, ntv.ntv_value, None, None)
+        #return (ntv.ntv_name, type_ntv, ntv.to_obj(simpleval=True, encode_format=encode_format), None, None)
 
     @staticmethod 
     def encodecoef(lis):
