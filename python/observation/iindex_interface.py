@@ -215,7 +215,7 @@ class IindexInterface:
         raise IindexError('parent or keys is unconsistent')
 
     @staticmethod 
-    def decodentv(field, encode_format='json'):
+    def decode_ntv(field, encode_format='json'):
         '''Generate a tuple data from a Ntv value(bytes, string, json, Ntv object)
 
         *Parameters*
@@ -246,7 +246,7 @@ class IindexInterface:
         if isinstance(ntv, NtvSingle):
             return (ntv.ntv_name, type_ntv, [Ntv.from_obj(ntv.ntv_value)], None, None)
             #return (ntv.ntv_name, type_ntv, [ntv.to_obj(simpleval=True, encode_format=encode_format)], None, None)
-        if len(ntv) == 0 or len(ntv) > 3:
+        if len(ntv) == 0 or len(ntv) > 3 or isinstance(ntv[0], NtvSingle):
             return (ntv.ntv_name, type_ntv, ntv.ntv_value, None, None)
             #return (ntv.ntv_name, type_ntv, ntv.to_obj(simpleval=True, encode_format=encode_format), None, None)
         codec_ntv = ntv[0]

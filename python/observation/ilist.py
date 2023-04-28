@@ -334,7 +334,7 @@ class Ilist(IlistStructure, IlistInterface):
         ntv = Ntv.obj(ntv_value)
         leng = max([len(ntvi) for ntvi in ntv.ntv_value])
         # decode: name, type, codec, parent, keys
-        lidx = [list(Iindex.decodentv(ntvf)) for ntvf in ntv]
+        lidx = [list(Iindex.decode_ntv(ntvf)) for ntvf in ntv]
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)

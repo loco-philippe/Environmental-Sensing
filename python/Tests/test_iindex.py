@@ -28,8 +28,8 @@ class Test_iindex(unittest.TestCase):
             idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
         self.assertTrue(idx.values == [])
         idx = Iindex(lendefault=3)
-        self.assertTrue(idx.name == ES.defaultindex and idx.cod == [
-                        0] and idx.keys == [0, 0, 0])
+        self.assertTrue(idx.name == ES.defaultindex and 
+                        idx.cod == [0] and idx.keys == [0, 0, 0])
         self.assertTrue(idx.val == [0, 0, 0])
         self.assertTrue(Iindex(1) == Iindex([1]))
         self.assertTrue(Iindex('trux') == Iindex(['trux']))
@@ -44,8 +44,9 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(Iindex(idx) == idx)
         #self.assertTrue(Iindex(idx) == Iindex.ext(idx)
         #                == Iindex.dic(idx) == idx)
-        self.assertTrue(idx.name == 'test' and idx.cod == [
-                        'er', 2, [1, 2]] and idx.keys == [0, 1, 2, 1])
+        self.assertTrue(idx.name == 'test' and 
+                        idx.cod == ['er', 2, [1, 2]] and 
+                        idx.keys == [0, 1, 2, 1])
         self.assertTrue(idx == idx2)
         #self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1, 2], 2]
         #                == idx5.val == idx5.cod and len(idx) == 4)
@@ -67,26 +68,29 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(Iindex(codec=[True], lendefault=3).val == [
                         True, True, True])'''
 
-"""    def test_obj(self):
-        listval = [['name', ['value']], 'value', ['value'], ['value', 'value2'],
-                   ['b', ['value', [[1], [2]], [[3], [4]]]],
-                   ['b', ['value', [[[0.0, 1.0], [1.0, 2.0], [1.0, 1.0], [0.0, 1.0]]],
-                          [[[0.0, 2.0], [2.0, 2.0], [1.0, 1.0], [0.0, 2.0]]]]]
+    def test_obj(self):
+        listval = [{'name': ['value']}, 
+                   'value', 
+                   ['value'], 
+                   ['value', 'value2'],
+                   {'b': ['value', [[1], [2]], [[3], [4]]]},
+                   {'b': ['value', [[[0.0, 1.0], [1.0, 2.0], [1.0, 1.0], [0.0, 1.0]]],
+                          [[[0.0, 2.0], [2.0, 2.0], [1.0, 1.0], [0.0, 2.0]]]]}
                    ]
         for val in listval:
-            self.assertTrue(Iindex.obj(val).values[0] == 'value')
-            self.assertTrue(Iindex.obj(Iindex.obj(
-                val).to_obj()) == Iindex.obj(val))
-        val = ['namvalue', ['value']]
-        self.assertTrue(Iindex.obj(val).name == val[0])
-        self.assertTrue(Iindex.obj(val).values[0].value == 'value')
-        self.assertTrue(Iindex.obj(val).to_obj() == val)
-        val = ['datation', ['name']]
+            self.assertTrue(Iindex.ntv(val).val[0] == 'value')
+            self.assertTrue(Iindex.ntv(Iindex.ntv(
+                val).to_ntv()) == Iindex.ntv(val))
+        val = {'namvalue': ['value']}
+        self.assertTrue(Iindex.ntv(val).name == 'namvalue')
+        self.assertTrue(Iindex.ntv(val).val[0] == 'value')
+        self.assertTrue(Iindex.ntv(val).to_ntv() == val)
+        '''val = ['datation', ['name']]
         self.assertTrue(Iindex.obj(val).name == val[0])
         self.assertTrue(Iindex.obj(val).values[0].name == 'name')
-        self.assertTrue(Iindex.obj(val).to_obj() == val)
+        self.assertTrue(Iindex.obj(val).to_obj() == val)'''
 
-    def test_infos(self):
+"""    def test_infos(self):
         idx = Iindex.ext(['er', 2, [1, 2]])
         self.assertTrue(idx.infos == {'lencodec': 3, 'mincodec': 3, 'maxcodec': 3,
                                       'typecodec': 'complete', 'ratecodec': 0.0})

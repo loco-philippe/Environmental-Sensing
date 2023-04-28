@@ -36,6 +36,8 @@ from observation.esconstante import ES
 from observation.iindex_interface import IindexInterface, IindexError
 from observation.iindex_structure import IindexStructure
 from observation.util import util
+from ntv import Ntv
+
 
 
 class Iindex(IindexStructure, IindexInterface):
@@ -119,7 +121,7 @@ class Iindex(IindexStructure, IindexInterface):
     - `Iindex.vSimple`
     '''
 
-    def __init__(self, codec=None, name=None, keys=None, typevalue=ES.def_clsName,
+    def __init__(self, codec=None, name=None, keys=None, typevalue=None,
                  lendefault=0, reindex=False, castobj=True):
         '''
         Iindex constructor.
@@ -131,7 +133,8 @@ class Iindex(IindexStructure, IindexInterface):
         - **name** : string (default None) - name of index (see data model)
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **lendefault** : integer (default 0) - default len if no keys is defined
-        - **reindex** : boolean (default True) - if True, default codec is apply'''
+        - **reindex** : boolean (default True) - if True, default codec is apply
+        - **castobj** : boolean (default True) - if True, codec is converted to ntv'''
         if isinstance(codec, Iindex):
             self._keys = copy(codec._keys)
             self._codec = deepcopy(codec._codec)
@@ -148,7 +151,7 @@ class Iindex(IindexStructure, IindexInterface):
             leng = len(keys)
         if not name:
             name = ES.defaultindex
-        typevalue = util.typename(name, typevalue)
+        #typevalue = util.typename(name, typevalue)
         if not (keys is None or isinstance(keys, list)):
             raise IindexError("keys not list")
         if keys is None and leng == 0:
@@ -158,7 +161,9 @@ class Iindex(IindexStructure, IindexInterface):
         if not isinstance(codec, list):
             raise IindexError("codec not list")
         if codec == []:
-            codec = util.tocodec(keys)
+            keysset = util.tocodec(keys)
+            codec = [Ntv.obj(key) for key in keysset]
+            #codec = util.tocodec(keys)
         if not typevalue is None or castobj:
             codec = util.castobj(codec, typevalue)
         self._keys = keys
@@ -249,9 +254,14 @@ class Iindex(IindexStructure, IindexInterface):
         return cls(codec=codec, name=name, keys=parent._keys, typevalue=typevalue, reindex=reindex)
 
     @classmethod 
+    def ntv(cls, ntv_value):
+        '''Generate an Iindex Object from a Ntv field object'''
+        return cls.from_ntv(ntv_value)
+    
+    @classmethod 
     def from_ntv(cls, ntv_value):
         '''Generate an Iindex Object from a Ntv field object'''
-        name, typ, codec, parent, keys = Iindex.decodentv(ntv_value, encode_format='json')
+        name, typ, codec, parent, keys = Iindex.decode_ntv(ntv_value, encode_format='json')
         if parent or (keys and len(keys) == 1):
             return None
         return cls(codec=codec, name=name, keys=keys, typevalue=None, reindex=True)
@@ -447,8 +457,11 @@ class Iindex(IindexStructure, IindexInterface):
 # %% property
     @property
     def cod(self):
-        '''return codec conversion to string '''
-        return self.to_obj(modecodec='optimize', codecval=True, encoded=False, listunic=True)
+        '''return codec conversion to ntv '''
+        return [codec.to_obj() for codec in self._codec]
+        #return [codec.ntv_value for codec in self._codec]
+        #return self.to_ntv(codecval=True).ntv_value
+        #return self.to_obj(modecodec='optimize', codecval=True, encoded=False, listunic=True)
 
     @property
     def codec(self):
@@ -497,4 +510,5 @@ class Iindex(IindexStructure, IindexInterface):
     @property
     def val(self):
         '''return values conversion to string '''
-        return self.to_obj(modecodec='full', codecval=True, encoded=False)
+        return [self._codec[key].ntv_value for key in self._keys]
+        #return self.to_obj(modecodec='full', codecval=True, encoded=False)
