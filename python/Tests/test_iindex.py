@@ -21,7 +21,7 @@ class Test_iindex(unittest.TestCase):
 
     def test_init_unitaire(self):
         idx = Iindex()
-        idx2 = Iindex.ext()
+        idx2 = Iindex.ntv()
         idx3 = Iindex.dic()
         self.assertTrue(idx == idx2 == idx3 == Iindex(idx))
         self.assertTrue(
@@ -200,27 +200,27 @@ class Test_iindex(unittest.TestCase):
                           'diff': 0, 'typecoupl': 'crossed'})
         self.assertTrue(ia.iscrossed(ib))
 
-"""    def test_vlist(self):
-        testidx = [Iindex(), Iindex.ext(['er', 2, 'er', [1, 2]])]
+    def test_vlist(self):
+        testidx = [Iindex(), Iindex.ntv(['er', 2, 'er', [1, 2]])]
         residx = [[], ['er', '2', 'er', str([1, 2])]]
         for idx, res in zip(testidx, residx):
             self.assertEqual(idx.vlist(str), res)
-        il = Ilist.dic({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
-        idx = Iindex.ext([il, il])
+        '''il = Ilist.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
+        idx = Iindex.ntv([il, il])
         self.assertEqual(idx.vlist(func=Ilist.to_obj, extern=False, encoded=False)[0][0],
                          ['er'])
-        idx = Iindex.dic({'datation': [{'date1': '2021-02-04T11:05:00+00:00'},
+        idx = Iindex.ntv({'datation::datetime': [{'date1': '2021-02-04T11:05:00+00:00'},
                                        '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
         self.assertTrue(idx.vlist(func=ESValue.vName, extern=False, default='ici') ==
-                        ['date1', 'ici', 'ici'] == idx.vName(default='ici'))
+                        ['date1', 'ici', 'ici'] == idx.vName(default='ici'))'''
 
     def test_numpy(self):
-        idx = Iindex.ext(['er', 2, 'er', [1, 2]])
+        idx = Iindex.ntv(['er', 2, 'er', [1, 2]])
         self.assertEqual(len(idx.to_numpy(func=str)), len(idx))
 
     def test_coupled_extendvalues(self):
-        ia = Iindex.ext(['anne', 'paul', 'lea', 'andre', 'paul', 'lea'])
-        ib = Iindex.ext([25, 25, 12, 12])
+        ia = Iindex.ntv(['anne', 'paul', 'lea', 'andre', 'paul', 'lea'])
+        ib = Iindex.ntv([25, 25, 12, 12])
         self.assertTrue(ib.isderived(ia))
         # ib.extendvalues(ia)
         ib.tocoupled(ia)
@@ -242,27 +242,26 @@ class Test_iindex(unittest.TestCase):
         Iindex.tocrossed([ia,ib, ic])
         self.assertTrue(ib.iscrossed(ia) and ib.iscrossed(ic))'''
 
-    '''def test_tocodec(self):
+    def test_tocodec(self):
         v = [10,10,10,10,30,10,20,20,20]        
         k = [1, 1, 1, 2, 3, 2, 0, 0, 0 ]
-        self.assertEqual(util.tocodec(v, k), util.tocodec(v, k))
-        self.assertEqual(sorted(util.tocodec(v ), 
-                         sorted(util.tocodec(v)))'''
+        self.assertEqual(util.tocodec(v, k), [20, 10, 10, 30])
+        self.assertEqual(sorted(util.tocodec(v)), [10, 20, 30])
 
     def test_to_std(self):
-        idx = Iindex.ext(['d1', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6'])
+        idx = Iindex.ntv(['d1', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6'])
         self.assertEqual(len(idx.tostdcodec().codec), len(idx))
         self.assertEqual(len(idx.tostdcodec(full=False).codec), len(idx.codec))
         self.assertTrue(idx == idx.tostdcodec(full=False) == idx.tostdcodec())
-        idx = Iindex.ext(['d1', 'd1', 'd1', 'd1', 'd1', 'd1', 'd1'])
+        idx = Iindex.ntv(['d1', 'd1', 'd1', 'd1', 'd1', 'd1', 'd1'])
         self.assertEqual(len(idx.tostdcodec().codec), len(idx))
         self.assertEqual(len(idx.tostdcodec(full=False).codec), len(idx.codec))
         self.assertTrue(idx == idx.tostdcodec(full=False) == idx.tostdcodec())
 
     def test_extendcodec(self):
-        papy = Iindex.ext(['d1', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6'])
-        parent = Iindex.ext(['j', 'j', 'f', 'f', 'm', 's', 's'])
-        idx = Iindex.ext(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
+        papy = Iindex.ntv(['d1', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6'])
+        parent = Iindex.ntv(['j', 'j', 'f', 'f', 'm', 's', 's'])
+        idx = Iindex.ntv(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
         parent2 = parent.setkeys(papy.keys, inplace=False)
         idx2 = idx.setkeys(parent.keys, inplace=False)
         self.assertEqual(idx.values, idx2.values)
@@ -288,18 +287,18 @@ class Test_iindex(unittest.TestCase):
             set([il.val[item] for item in il.getduplicates()]), set(['a', 'b', 'c']))
 
     def test_derkeys(self):
-        parent = Iindex.ext(['j', 'j', 'f', 'f', 'm', 's', 's'])
-        fils = Iindex.ext(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
+        parent = Iindex.ntv(['j', 'j', 'f', 'f', 'm', 's', 's'])
+        fils = Iindex.ntv(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
         idx = Iindex(fils.codec, keys=Iindex.keysfromderkeys(
             parent.keys, fils.derkeys(parent)))
         self.assertEqual(idx, fils)
-        grandpere = Iindex.ext(
+        grandpere = Iindex.ntv(
             [0,     0,   2,   3,   4,   4,   6,   7,   8,   9,   9,  11,  12])
-        pere = Iindex.ext(['j', 'j', 'f', 'a', 'm', 'm',
+        pere = Iindex.ntv(['j', 'j', 'f', 'a', 'm', 'm',
                            's', 's', 's', 'n', 'd', 'd', 'd'])
-        fils = Iindex.ext(['t1', 't1', 't1', 't2', 't2',
+        fils = Iindex.ntv(['t1', 't1', 't1', 't2', 't2',
                            't2', 't3', 't3', 't3', 't4', 't4', 't4', 't4'])
-        petitfils = Iindex.ext(
+        petitfils = Iindex.ntv(
             ['s11', 's1', 's1', 's1', 's1', 's11', 's2', 's2', 's2', 's1', 's2', 's2', 's2'])
         fils.coupling(petitfils)
         pere.coupling(fils)
@@ -317,37 +316,38 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual(idx, pere)
 
     def test_json(self):
-        self.assertTrue(Iindex.obj(
-            Iindex(['a']).to_obj()).to_obj() == Iindex(['a']).to_obj() == ['a'])
-        self.assertTrue(Iindex.obj(
-            Iindex([0]).to_obj()).to_obj() == Iindex([0]).to_obj() == [0])
-        self.assertTrue(Iindex.obj(Iindex().to_obj()).to_obj()
-                        == Iindex().to_obj() == [])
-        parent = Iindex.ext(['j', 'j', 'f', 'f', 'm', 's', 's'])
-        fils = Iindex.ext(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
-        js = fils.tostdcodec().to_obj(parent=-1)
-        prt, idx = Iindex.from_obj(js)
+        self.assertTrue(Iindex.ntv(
+            Iindex(['a']).to_ntv()).to_ntv() == Iindex(['a']).to_ntv() == Ntv.obj('a'))
+        self.assertTrue(Iindex.ntv(
+            Iindex([0]).to_ntv()).to_ntv() == Iindex([0]).to_ntv() == Ntv.obj(0))
+        self.assertTrue(Iindex.ntv(Iindex().to_ntv()).to_ntv() == Iindex().to_ntv() == NtvList([]))
+        parent = Iindex.ntv(['j', 'j', 'f', 'f', 'm', 's', 's'])
+        fils = Iindex.ntv(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
+        js = fils.tostdcodec().to_ntv(parent=-1)
+        #prt, idx = Iindex.from_ntv(js)
+        idx = Iindex.from_ntv(js)
         self.assertEqual(idx, fils)
-        self.assertEqual(prt, -1)
-        js = fils.to_obj(keys=fils.derkeys(parent), parent=1)
-        prt, idx = Iindex.from_obj(js, extkeys=parent.keys)
+        #self.assertEqual(prt, -1)
+        js = fils.to_ntv(keys=fils.derkeys(parent), parent=1)
+        #prt, idx = Iindex.from_obj(js, extkeys=parent.keys)
+        idx = Iindex.from_ntv(js, extkeys=parent.keys)
         self.assertEqual(idx, fils)
-        self.assertEqual(prt, 1)
+        #self.assertEqual(prt, 1)
         encoded = [True, False]
         format = ['json', 'cbor']
         test = list(product(encoded, format))
         for ts in test:
             option = {'encoded': ts[0], 'encode_format': ts[1]}
-            idx2 = Iindex.obj(idx.to_obj(keys=True, **option))
+            idx2 = Iindex.ntv(idx.to_ntv().to_obj(**option))
+            #idx2 = Iindex.obj(idx.to_obj(keys=True, **option))
             self.assertEqual(idx.values, idx2.values)
-            idx2 = Iindex.obj(
-                idx.tostdcodec().to_obj(**option))  # full format
+            idx2 = Iindex.ntv(idx.tostdcodec().to_ntv().to_obj(**option))  # full format
             self.assertEqual(idx.values, idx2.values)
-            idx2 = Iindex.obj(idx.to_obj(keys=fils.derkeys(parent), parent=1, **option),
+            idx2 = Iindex.ntv(idx.to_ntv(keys=fils.derkeys(parent), parent=1).to_obj(**option),
                               extkeys=parent.keys)  # default format
             self.assertEqual(idx.values, idx2.values)
 
-    def test_castobj(self):  # !!!
+    """def test_castobj(self):  # !!!
         liste = [['{"namvalue":{"val":21}}',    'ESValue',         NamedValue],
                  [{"val": 21},                     'ESValue',         NamedValue],
                  [{"val": 21},                     None,              str],
@@ -374,49 +374,44 @@ class Test_iindex(unittest.TestCase):
         if not ES.def_clsName:
             self.assertTrue(isinstance(idx.values[0], str))
         else:
-            self.assertTrue(isinstance(idx.values[0], NamedValue))
+            self.assertTrue(isinstance(idx.values[0], NamedValue))"""
 
     def test_to_from_obj(self):
         listobj = [Iindex(),
                    Iindex(1),
-                   Iindex.obj([0]),
-                   Iindex.obj(['a']),
-                   Iindex.dic({'datatio': ['er', 'rt', 'ty', 'ty']}),
-                   Iindex.ext([[1, 2], [2, 3], [3, 4]], fullcodec=True),
-                   Iindex.obj(['datation', [DatationValue.from_obj(dat3[1][0]),
-                                            DatationValue.from_obj(dat3[1][1]),
-                                            DatationValue.from_obj(dat3[1][2])]]),
-                   Iindex.obj(['location', [LocationValue.from_obj(loc3[1][0]),
-                                            LocationValue.from_obj(loc3[1][1]),
-                                            LocationValue.from_obj(loc3[1][2])], 0]),
-                   Iindex.obj(['property', [PropertyValue(prop2[1][0]),
-                                            PropertyValue(prop2[1][1])]]),
+                   Iindex.ntv([0]),
+                   Iindex.ntv(['a']),
+                   Iindex.ntv({'datatio': ['er', 'rt', 'ty', 'ty']}),
+                   Iindex.ntv([[1, 2], [2, 3], [3, 4]]),
                    Iindex(codec=['s', 'n', 's', 'd', 's', 'd'],
                           keys=[0, 4, 2, 1, 5, 3, 3]),
-                   Iindex.ext(['er', 2, 'er', [1, 2]]),
+                   Iindex.ntv(['er', 2, 'er', [1, 2]]),
                    Iindex(codec=['er', 2, [1, 2]],
                           name='test', keys=[0, 1, 2, 1]),
-                   Iindex.ext(['er', 2, [1, 2], 2], 'test'),
-                   Iindex.dic({'test': ['er', 2, [1, 2], 2]}),
-                   Iindex.dic({'test': ['er', 2, [1, 2], 2]}, fullcodec=True),
-                   Iindex.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)]
+                   #Iindex.ntv(['er', 2, [1, 2], 2], 'test'),
+                   Iindex.ntv({'test': ['er', 2, [1, 2], 2]}),
+                   #Iindex.dic({'test': ['er', 2, [1, 2], 2]}, fullcodec=True),
+                   #Iindex.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
+                   ]
         encoded = [True, False]
         format = ['json', 'cbor']
-        modecodec = ['full', 'default', 'dict']
+        #modecodec = ['full', 'default', 'dict']
+        modecodec = ['full', 'default', 'optimize']
         test = list(product(encoded, format, modecodec))
         for i, idx in enumerate(listobj):
             for ts in test:
                 option = {
                     'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
                 #print(i, option)
-                if ts[2] == 'dict':
+                idx2 = Iindex.ntv(idx.to_ntv().to_obj(**option))
+                '''if ts[2] == 'dict':
                     idx2 = Iindex.obj(idx.to_dict_obj(**option))
                 else:
-                    idx2 = Iindex.obj(idx.to_obj(**option))
+                    idx2 = Iindex.obj(idx.to_obj(**option))'''
                 self.assertEqual(idx, idx2)
 
     def test_iadd(self):
-        idx = Iindex.ext(['er', 2, [1, 2]])
+        idx = Iindex.ntv(['er', 2, [1, 2]])
         idx2 = idx + idx
         self.assertEqual(idx2.val, idx.val + idx.val)
         self.assertEqual(len(idx2), 2 * len(idx))
@@ -433,7 +428,7 @@ class Test_iindex(unittest.TestCase):
         for isF in isfalse:
             self.assertFalse(Iindex.iskeysobj(isF))
 
-    def test_jsontype(self):
+    '''def test_jsontype(self):
         self.assertEqual(Iindex.decodetype(
             Iindex.decodeobj([1, 2, 3, 4]), 4), 'root coupled')
         self.assertEqual(Iindex.decodetype(
@@ -448,7 +443,7 @@ class Test_iindex(unittest.TestCase):
         self.assertEqual(Iindex.decodetype(
             Iindex.decodeobj([[1, 2, 3, 4], 1]), 4), 'coupled')
         self.assertEqual(Iindex.decodetype(Iindex.decodeobj(
-            [[1, 2, 3], [1, [0, 1, 2]]]), 4), 'derived')
+            [[1, 2, 3], [1, [0, 1, 2]]]), 4), 'derived')'''
 
     def test_periodic_coef(self):
         self.assertEqual(Iindex.encodecoef([0,0,1,1,2,2,3,3]), 2)
@@ -473,14 +468,15 @@ class Test_iindex(unittest.TestCase):
                   {'unic_test': 'valunic' },
                   'valunic',
                   {'primary': [['oui', 'fin 2022'], [1]]},
-                  [['oui', 'fin 2022'], [1]]]
+                  [['oui', 'fin 2022'], [1]]
+                  ]
         for field in fields:
-            idx = Iindex.from_ntv(field)
+            idx = Iindex.from_ntv(field, reindex=False)
             #print(idx, type(idx.values[0]))
             if idx:
                 for mode in ['full', 'default', 'optimize']:
                     #print(Iindex.to_ntv(idx, mode))
                     self.assertEqual(idx, Iindex.from_ntv(idx.to_ntv(mode)))
-"""
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

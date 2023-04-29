@@ -165,7 +165,8 @@ class Iindex(IindexStructure, IindexInterface):
             codec = [Ntv.obj(key) for key in keysset]
             #codec = util.tocodec(keys)
         if not typevalue is None or castobj:
-            codec = util.castobj(codec, typevalue)
+            #codec = util.castobj(codec, typevalue)
+            codec = [Ntv.obj(key) for key in codec]
         self._keys = keys
         self._codec = codec
         self.name = name
@@ -254,17 +255,27 @@ class Iindex(IindexStructure, IindexInterface):
         return cls(codec=codec, name=name, keys=parent._keys, typevalue=typevalue, reindex=reindex)
 
     @classmethod 
-    def ntv(cls, ntv_value):
+    def ntv(cls, ntv_value=None, extkeys=None, reindex=True):
         '''Generate an Iindex Object from a Ntv field object'''
-        return cls.from_ntv(ntv_value)
+        return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex)
     
     @classmethod 
-    def from_ntv(cls, ntv_value):
+    def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True):
         '''Generate an Iindex Object from a Ntv field object'''
+        if isinstance(ntv_value, Iindex):
+            return copy(ntv_value)
+        if ntv_value is None:
+            return cls()
         name, typ, codec, parent, keys = Iindex.decode_ntv(ntv_value, encode_format='json')
-        if parent or (keys and len(keys) == 1):
+        if (parent and not extkeys) or (keys and len(keys) == 1):
             return None
-        return cls(codec=codec, name=name, keys=keys, typevalue=None, reindex=True)
+        if extkeys and parent:
+            keys = Iindex.keysfromderkeys(extkeys, keys)
+        elif extkeys and not parent:
+            keys = extkeys
+        if keys is None:
+            keys = list(range(len(codec)))
+        return cls(codec=codec, name=name, keys=keys, typevalue=None, reindex=reindex)
 
     @classmethod
     def from_obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
