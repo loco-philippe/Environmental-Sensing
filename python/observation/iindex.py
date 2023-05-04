@@ -266,8 +266,8 @@ class Iindex(IindexStructure, IindexInterface):
             return copy(ntv_value)
         if ntv_value is None:
             return cls()
-        name, typ, codec, parent, keys = Iindex.decode_ntv(ntv_value, encode_format='json')
-        if (parent and not extkeys) or (keys and len(keys) == 1):
+        name, typ, codec, parent, keys, coef, leng = Iindex.decode_ntv(ntv_value, encode_format='json')
+        if (parent and not extkeys) or coef:
             return None
         if extkeys and parent:
             keys = Iindex.keysfromderkeys(extkeys, keys)

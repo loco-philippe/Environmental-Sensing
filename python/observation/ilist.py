@@ -324,6 +324,16 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.from_obj(bsd, reindex=reindex, context=context)
 
     @classmethod
+    def ntv(cls, ntv_value, reindex=False):
+        '''Generate an Ilist Object from a ntv_value
+
+        *Parameters*
+
+        - **ntv_value** : bytes, string, Ntv object to convert
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        return cls.from_ntv(ntv_value, reindex=reindex)
+    
+    @classmethod
     def from_ntv(cls, ntv_value, reindex=False):
         '''Generate an Ilist Object from a ntv_value
 
@@ -332,9 +342,10 @@ class Ilist(IlistStructure, IlistInterface):
         - **ntv_value** : bytes, string, Ntv object to convert
         - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
         ntv = Ntv.obj(ntv_value)
-        leng = max([len(ntvi) for ntvi in ntv.ntv_value])
-        # decode: name, type, codec, parent, keys
+        #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
+        # decode: name, type, codec, parent, keys, coef, leng
         lidx = [list(Iindex.decode_ntv(ntvf)) for ntvf in ntv]
+        leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
@@ -613,11 +624,13 @@ class Ilist(IlistStructure, IlistInterface):
         '''return string format for var and lidx'''
         stri = ''
         if self.lvar:
+            stri += 'variables :\n'
             for idx in self.lvar:
                 stri += str(idx)
-        stri += '\n'
-        for idx in self.lidx:
-            stri += str(idx)
+        if self.lidx:
+            stri += 'index :\n'
+            for idx in self.lidx:
+                stri += str(idx)
         return stri
 
     def __repr__(self):

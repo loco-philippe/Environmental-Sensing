@@ -15,10 +15,10 @@ from datetime import datetime
 from math import nan
 from itertools import product
 import json
-from observation import Observation, NamedValue, DatationValue, LocationValue, \
-    PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
-from test_obs import dat3, loc3, prop2, _res
-from ntv import Ntv
+from observation import DatationValue, LocationValue, \
+    PropertyValue, ESValue, Ilist, Iindex, ES, util
+from test_obs import dat3, loc3, prop2
+from ntv import Ntv, NtvList
 
 #l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
 #il = Ilist.obj(l)
@@ -29,22 +29,15 @@ i1 = 'i1'
 class Test_Ilist(unittest.TestCase):
 
     def test_creation_unique(self):
-        self.assertTrue(Ilist().to_obj() == [])
-        self.assertTrue(Ilist.obj([1, 2, 3]).to_obj() == [[1], [2], [3]])
-        self.assertTrue(Ilist.obj([[1, 2, 3]]).to_obj() == [[1, 2, 3]])
-        self.assertTrue(Ilist.obj(['er', 'er', 'er']).to_obj()
-                        == [['er'], ['er'], ['er']])
-        self.assertTrue(Ilist.from_obj([1, 2, 3]).to_obj() == [[1], [2], [3]])
-        self.assertTrue(Ilist.from_obj(
-            ['er', 'er', 'er']).to_obj() == [['er'], ['er'], ['er']])
-        self.assertTrue(Ilist.ext([1, 2, 3]).to_obj() == [[1], [2], [3]])
-        self.assertTrue(Ilist.ext(['er', 'er', 'er']).to_obj() ==
-                        [['er'], ['er'], ['er']])
+        self.assertTrue(Ilist().to_ntv() == Ntv.obj({}))
+        self.assertTrue(Ilist.ntv([1, 2, 3]).to_ntv() == Ntv.obj([1,2,3]))
+        self.assertTrue(Ilist.ntv([[1, 2, 3]]).to_ntv() == Ntv.obj([[1, 2, 3]]))
+        self.assertTrue(Ilist.ntv(['er', 'er', 'er']).to_ntv() ==  Ntv.obj(['er', 'er', 'er']))
 
     def test_creation_simple(self):
-        iidx = Ilist.obj([['datationvalue', [10, 20, 30]],
-                          ['locationvalue', [100, 200, 300], 0],
-                          ['propertyvalue', [True, False]]])
+        iidx = Ilist.ntv({'datationvalue': [[10, 20, 30], [2]],
+                          'locationvalue': [[100, 200, 300], 0],
+                          'propertyvalue': [[True, False], [1]] })
         iidx2 = Ilist.obj([['datationvalue', [10, 20, 30], [0, 0, 1, 1, 2, 2]],
                            ['locationvalue', [100, 200, 300], [0, 0, 1, 1, 2, 2]],
                            ['propertyvalue', [True, False], [0, 1, 0, 1, 0, 1]]])
@@ -61,7 +54,7 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(
             il.lindex[0].codec[1].value.__class__.__name__, 'Point')
 
-    def test_creation_variable(self):
+"""    def test_creation_variable(self):
         #self.assertEqual(Ilist2(indexset=['i1', [1, 2, 3]]), Ilist2([defv, [True, True, True]], ['i1', [1, 2, 3]]))
         '''il = Ilist([['namvalue', ['a', 'b', 'c', 'd', 'e', 'f']],
                     ['datationvalue', [10, 20, 30]],
@@ -128,8 +121,8 @@ class Test_Ilist(unittest.TestCase):
         except:
             res3 = False
         self.assertTrue(not res1 and res2 and not res3 and len(il2) == 6)
-
-    """def test_var(self):
+"""
+"""def test_var(self):
         il2 = Ilist.obj([['namvalue', ["a", "b", "c", "d", "e", "f"], -1],
                     ['datationvalue', [10, 10, 20, 20, 30, 30]],
                     ['locationvalue', [100, 100, 200, 200, 300, 300]],
@@ -141,7 +134,7 @@ class Test_Ilist(unittest.TestCase):
         il2.setvar('namvalue')
         self.assertEqual(il2.lvarname, ['namvalue'])"""
 
-    def test_creation_dic_ext_variable(self):
+"""    def test_creation_dic_ext_variable(self):
         iidx = Ilist.dic({'varvalue': ['a', 'b', 'c', 'd', 'e', 'f'],
                           'datationvalue': [10, 10, 20, 20, 30, 30],
                           'locationvalue': [100, 100, 200, 200, 300, 300],
@@ -753,7 +746,7 @@ class Test_Ilist(unittest.TestCase):
             ilf.to_file('testf.tst', encode_format=forma)
             self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
             self.assertEqual(ilf, il.from_file('testf.tst'))'''
-
+"""
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

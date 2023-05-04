@@ -23,7 +23,7 @@ from observation.esconstante import ES
 from observation.iindex import Iindex
 from observation.iindex_interface import IindexEncoder
 from observation.util import util
-from json_ntv import NtvList
+from json_ntv import NtvList, NtvSet, Ntv
 
 #import sys
 #print("In module ilist_interface sys.path[0], __package__ ==", sys.path[0], __package__)
@@ -198,7 +198,7 @@ class IlistInterface:
                 file.write(data)
         return size
 
-    def to_ntv(self, modecodec='optimize', def_type='json', option_name=False):
+    def to_ntv(self, modecodec='optimize', def_type='json'):
         '''Return a Ntv tab value (whithout name) .
 
         *Parameters (kwargs)*
@@ -207,7 +207,6 @@ class IlistInterface:
         if 'default' each index has keys, if 'optimize' keys are optimized, 
         if 'dict' dict format is used, if 'nokeys' keys are absent
         - **def_type** : string (default 'json') - default ntv_type for NtvList or NtvSet
-        - **option_name** : boolean (default False) - if False, default index name are not included
         
 
         *Returns* : Ntv object'''
@@ -216,9 +215,7 @@ class IlistInterface:
         else:
             lis = []
             indexinfos = self.indexinfos()
-            indexname = [option_name or name != 'i' + str(i)
-                         for i, name in enumerate(self.lname)]
-            for idx, iname, inf in zip(self.lindex, indexname, indexinfos):
+            for idx, inf in zip(self.lindex, indexinfos):
                 coef = Iindex.encodecoef(idx.keys)
                 if inf['cat'] == 'unique':
                     lis.append(Iindex.to_ntv(idx))
@@ -240,7 +237,7 @@ class IlistInterface:
                     else: # periodic derived
                         keys = idx.derkeys(self.lindex[inf['parent']])
                         lis.append(Iindex.to_ntv(idx, keys=keys, parent=inf['parent']))            
-        return NtvList(lis, None, ntv_type=def_type)
+        return NtvSet(lis, None, ntv_type=def_type)
 
     def to_obj(self, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict).
