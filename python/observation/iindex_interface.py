@@ -434,7 +434,7 @@ class IindexInterface:
         *Returns* : Numpy Array'''
         return self.to_pandas(func=func, codec=codec, npdtype=npdtype, numpy=True, **kwargs)
 
-    def to_ntv(self, modecodec='optimize', codecval=False, def_type=None, keys=None, parent=None, option_name=True):
+    def to_ntv(self, modecodec='optimize', codecval=False, def_type=None, keys=None, parent=None, name=True):
         '''Return a Ntv field value
 
         *Parameters (kwargs)*
@@ -443,22 +443,22 @@ class IindexInterface:
         if 'default' index has keys, if 'optimize' keys are optimized, 
         - **codecval** : boolean (default False) - if True, only list of codec values is included
         - **def_type** : string (default 'json') - default ntv_type for NtvList or NtvSet
-        - **option_name** : boolean (default False) - if False, default index name are not included
+        - **name** : boolean (default False) - if False, default index name are not included
         - **keys** : list (default None) - used only with 'optimize' mode
         - **parent** : int or str (default None) - used only with 'optimize' mode
 
         *Returns* : Ntv object'''
         leng = len(self)
-        name = None if self.name == '$default' or not option_name else self.name       
+        idxname = None if self.name == '$default' or not name else self.name       
         if len(self.codec) == 1:
-            return NtvSingle(self.codec[0].ntv_value, name, self.codec[0].ntv_type)
+            return NtvSingle(self.codec[0].ntv_value, idxname, self.codec[0].ntv_type)
         if codecval:
-            return NtvList(self.codec, name, ntv_type=def_type)
+            return NtvList(self.codec, idxname, ntv_type=def_type)
         if len(self.codec) == leng or modecodec == 'full':
-            return NtvList(self.values, name, ntv_type=def_type)
+            return NtvList(self.values, idxname, ntv_type=def_type)
         if modecodec == 'default':
             return NtvList([NtvList(self.codec, ntv_type=def_type), 
-                            NtvList(self.keys, ntv_type='json')], name, ntv_type='json')
+                            NtvList(self.keys, ntv_type='json')], idxname, ntv_type='json')
         if modecodec == 'optimize':
             ntv_value = [NtvList(self.codec, ntv_type=def_type)]
             if parent:
@@ -467,7 +467,7 @@ class IindexInterface:
                 ntv_value.append(NtvList(keys, ntv_type='json'))    
             elif not parent:
                 ntv_value.append(NtvList(self.keys, ntv_type='json'))
-            return NtvList(ntv_value, name, ntv_type='json')                
+            return NtvList(ntv_value, idxname, ntv_type='json')                
 
     def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
                codecval=False, parent=ES.nullparent, name=True, listunic=False,

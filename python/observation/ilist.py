@@ -533,7 +533,7 @@ class Ilist(IlistStructure, IlistInterface):
     @staticmethod
     def _init_ntv_keys(ind, lidx, leng):
         ''' initialization of explicit keys data in lidx object'''
-        # name: 0, type: 1, codec: 2, parent: 3, keys: 4
+        # name: 0, type: 1, codec: 2, parent: 3, keys: 4, coef: 5, leng: 6
         keys = lidx[ind][4]
         if keys is None and lidx[ind][3] is None:  # full or unique
             if len(lidx[ind][2]) == 1: # unique

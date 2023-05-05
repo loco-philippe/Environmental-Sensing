@@ -23,7 +23,7 @@ from observation.esconstante import ES
 from observation.iindex import Iindex
 from observation.iindex_interface import IindexEncoder
 from observation.util import util
-from json_ntv import NtvList, NtvSet, Ntv
+from json_ntv import NtvList, Ntv
 
 #import sys
 #print("In module ilist_interface sys.path[0], __package__ ==", sys.path[0], __package__)
@@ -198,7 +198,7 @@ class IlistInterface:
                 file.write(data)
         return size
 
-    def to_ntv(self, modecodec='optimize', def_type='json'):
+    def to_ntv(self, modecodec='optimize', def_type='json', name=False):
         '''Return a Ntv tab value (whithout name) .
 
         *Parameters (kwargs)*
@@ -207,37 +207,40 @@ class IlistInterface:
         if 'default' each index has keys, if 'optimize' keys are optimized, 
         if 'dict' dict format is used, if 'nokeys' keys are absent
         - **def_type** : string (default 'json') - default ntv_type for NtvList or NtvSet
+        - **name** : boolean (default False) - if False, default index name are not included
         
 
         *Returns* : Ntv object'''
+        idxname = [name or iname != 'i' + str(i) for i, iname in enumerate(self.lname)]
         if modecodec != 'optimize':
-            lis = [Iindex.to_ntv(index, modecodec=modecodec) for index in self.lindex]
+            lis = [Iindex.to_ntv(index, modecodec=modecodec, name=iname) 
+                   for index, iname in zip(self.lindex, idxname)]
         else:
             lis = []
             indexinfos = self.indexinfos()
-            for idx, inf in zip(self.lindex, indexinfos):
+            for idx, inf, iname in zip(self.lindex, indexinfos, idxname):
                 coef = Iindex.encodecoef(idx.keys)
                 if inf['cat'] == 'unique':
-                    lis.append(Iindex.to_ntv(idx))
+                    lis.append(Iindex.to_ntv(idx, name=iname))
                 elif coef:
-                    lis.append(Iindex.to_ntv(idx, keys=[coef]))
+                    lis.append(Iindex.to_ntv(idx, keys=[coef], name=iname))
                 elif inf['cat'] == 'coupled':
                     idx_coup = idx.setkeys(self.lindex[inf['parent']].keys, inplace=False)
-                    lis.append(Iindex.to_ntv(idx_coup, parent=inf['parent']))
+                    lis.append(Iindex.to_ntv(idx_coup, parent=inf['parent'], name=iname))
                 elif inf['parent'] == -1:  # cat='variable' or 'secondary'
                     if idx.keys == list(range(len(self))):
-                        lis.append(Iindex.to_ntv(idx, modecodec='full'))
+                        lis.append(Iindex.to_ntv(idx, modecodec='full', name=iname))
                     else:
-                        lis.append(Iindex.to_ntv(idx, modecodec='default'))                
+                        lis.append(Iindex.to_ntv(idx, modecodec='default', name=iname))                
                 else:  # derived
                     if len(self.lindex[inf['parent']].codec) == len(self):
-                        lis.append(Iindex.to_ntv(idx, modecodec='default'))                
+                        lis.append(Iindex.to_ntv(idx, modecodec='default', name=iname))             
                     elif idx.iskeysfromderkeys(self.lindex[inf['parent']]):
-                        lis.append(Iindex.to_ntv(idx, parent=inf['parent']))
+                        lis.append(Iindex.to_ntv(idx, parent=inf['parent'], name=iname))
                     else: # periodic derived
                         keys = idx.derkeys(self.lindex[inf['parent']])
-                        lis.append(Iindex.to_ntv(idx, keys=keys, parent=inf['parent']))            
-        return NtvSet(lis, None, ntv_type=def_type)
+                        lis.append(Iindex.to_ntv(idx, keys=keys, parent=inf['parent'], name=iname))            
+        return NtvList(lis, None, ntv_type=def_type)
 
     def to_obj(self, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict).

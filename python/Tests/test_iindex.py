@@ -14,7 +14,7 @@ import datetime
 from itertools import product
 from observation import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue, Ilist, Iindex, ES, util
 from test_obs import dat3, loc3, prop2
-from ntv import Ntv, NtvSingle, NtvSet, NtvList
+from ntv import Ntv, NtvSingle, NtvList
 
 
 class Test_iindex(unittest.TestCase):

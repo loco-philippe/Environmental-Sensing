@@ -29,26 +29,26 @@ i1 = 'i1'
 class Test_Ilist(unittest.TestCase):
 
     def test_creation_unique(self):
-        self.assertTrue(Ilist().to_ntv() == Ntv.obj({}))
-        self.assertTrue(Ilist.ntv([1, 2, 3]).to_ntv() == Ntv.obj([1,2,3]))
-        self.assertTrue(Ilist.ntv([[1, 2, 3]]).to_ntv() == Ntv.obj([[1, 2, 3]]))
-        self.assertTrue(Ilist.ntv(['er', 'er', 'er']).to_ntv() ==  Ntv.obj(['er', 'er', 'er']))
+        self.assertEqual(Ilist().to_ntv(), Ntv.obj({}))
+        self.assertEqual(Ilist.ntv([1, 2, 3]).to_ntv(), Ntv.obj([1,2,3]))
+        self.assertEqual(Ilist.ntv([[1, 2, 3]]).to_ntv(), Ntv.obj([[1, 2, 3]]))
+        self.assertEqual(Ilist.ntv(['er', 'er', 'er']).to_ntv(),  Ntv.obj(['er', 'er', 'er']))
 
     def test_creation_simple(self):
-        iidx = Ilist.ntv({'datationvalue': [[10, 20, 30], [2]],
-                          'locationvalue': [[100, 200, 300], 0],
-                          'propertyvalue': [[True, False], [1]] })
-        iidx2 = Ilist.obj([['datationvalue', [10, 20, 30], [0, 0, 1, 1, 2, 2]],
-                           ['locationvalue', [100, 200, 300], [0, 0, 1, 1, 2, 2]],
-                           ['propertyvalue', [True, False], [0, 1, 0, 1, 0, 1]]])
-        iidx4 = Ilist.obj([['datationvalue', [10, 10, 20, 20, 30, 30]],
-                           ['locationvalue', [100, 100, 200, 200, 300, 300]],
-                           ['propertyvalue', [True, False, True, False, True, False]]])
+        iidx  = Ilist.ntv({'datationvalue': [[10, 20, 30], [2]],
+                           'locationvalue': [[100, 200, 300], 0],
+                           'propertyvalue': [[True, False], [1]] })
+        iidx2 = Ilist.ntv({'datationvalue': [[10, 20, 30], [0, 0, 1, 1, 2, 2]],
+                           'locationvalue': [[100, 200, 300], [0, 0, 1, 1, 2, 2]],
+                           'propertyvalue': [[True, False], [0, 1, 0, 1, 0, 1]]})
+        iidx4 = Ilist.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
+                           'locationvalue': [100, 100, 200, 200, 300, 300],
+                           'propertyvalue': [True, False, True, False, True, False]})
         self.assertTrue(len(iidx) == len(iidx2) == len(iidx4))
-        self.assertTrue(iidx.lidx[2].values ==
-                        iidx2.lidx[2].values == iidx4.lidx[2].values)
-        self.assertEqual(Ilist(Ilist.obj([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])),
-                         Ilist.obj([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
+        self.assertTrue(iidx.lindex[2].values ==
+                        iidx2.lindex[2].values == iidx4.lindex[2].values)
+        self.assertEqual(Ilist(Ilist.ntv([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])),
+                         Ilist.ntv([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
         il = Ilist([Iindex([{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                    name='location')])
         self.assertEqual(
