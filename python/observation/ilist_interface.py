@@ -222,11 +222,11 @@ class IlistInterface:
                 coef = Iindex.encodecoef(idx.keys)
                 if inf['cat'] == 'unique':
                     lis.append(Iindex.to_ntv(idx, name=iname))
-                elif coef:
-                    lis.append(Iindex.to_ntv(idx, keys=[coef], name=iname))
                 elif inf['cat'] == 'coupled':
                     idx_coup = idx.setkeys(self.lindex[inf['parent']].keys, inplace=False)
                     lis.append(Iindex.to_ntv(idx_coup, parent=inf['parent'], name=iname))
+                elif coef:
+                    lis.append(Iindex.to_ntv(idx, keys=[coef], name=iname))
                 elif inf['parent'] == -1:  # cat='variable' or 'secondary'
                     if idx.keys == list(range(len(self))):
                         lis.append(Iindex.to_ntv(idx, modecodec='full', name=iname))

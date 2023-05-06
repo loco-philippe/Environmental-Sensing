@@ -225,18 +225,11 @@ class Ilist(IlistStructure, IlistInterface):
             idxval = []
         if not isinstance(idxval, list):
             return None
-        val = []
-        for idx in idxval:
-            if not isinstance(idx, list):
-                val.append([idx])
-            else:
-                val.append(idx)
+        val = [ [idx] if not isinstance(idx, list) else idx for idx in idxval]
         lenval = [len(idx) for idx in val]
         if lenval and max(lenval) != min(lenval):
             raise IlistError('the length of Iindex are different')
-        length = 0
-        if lenval:
-            length = lenval[0]
+        length = lenval[0] if lenval else 0
         if idxname is None:
             idxname = [None] * len(val)
         for ind, name in enumerate(idxname):
@@ -324,7 +317,7 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.from_obj(bsd, reindex=reindex, context=context)
 
     @classmethod
-    def ntv(cls, ntv_value, reindex=False):
+    def ntv(cls, ntv_value, reindex=True):
         '''Generate an Ilist Object from a ntv_value
 
         *Parameters*
@@ -334,7 +327,7 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.from_ntv(ntv_value, reindex=reindex)
     
     @classmethod
-    def from_ntv(cls, ntv_value, reindex=False):
+    def from_ntv(cls, ntv_value, reindex=True):
         '''Generate an Ilist Object from a ntv_value
 
         *Parameters*
@@ -342,6 +335,8 @@ class Ilist(IlistStructure, IlistInterface):
         - **ntv_value** : bytes, string, Ntv object to convert
         - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
         ntv = Ntv.obj(ntv_value)
+        if len(ntv) == 0:
+            return cls()
         #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
         # decode: name, type, codec, parent, keys, coef, leng
         lidx = [list(Iindex.decode_ntv(ntvf)) for ntvf in ntv]
@@ -352,7 +347,7 @@ class Ilist(IlistStructure, IlistInterface):
             Ilist._init_ntv_keys(ind, lidx, leng)
         lindex = [Iindex(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
-        return cls(lindex, reindex=False)
+        return cls(lindex, reindex=reindex)
 
     @classmethod
     def from_obj(cls, bsd=None, reindex=True, context=True):
@@ -534,25 +529,25 @@ class Ilist(IlistStructure, IlistInterface):
     def _init_ntv_keys(ind, lidx, leng):
         ''' initialization of explicit keys data in lidx object'''
         # name: 0, type: 1, codec: 2, parent: 3, keys: 4, coef: 5, leng: 6
-        keys = lidx[ind][4]
-        if keys is None and lidx[ind][3] is None:  # full or unique
-            if len(lidx[ind][2]) == 1: # unique
+        name, typ, codec, parent, keys, coef, length = lidx[ind]
+        if (keys, parent, coef) == (None, None, None):  # full or unique
+            if len(codec) == 1: # unique
                 lidx[ind][4] = [0] * leng
-            else:    # full
+            elif len(codec) == leng:    # full
                 lidx[ind][4] = list(range(leng))
+            else:
+                raise IlistError('impossible to generate keys')
             return
-        if keys and len(keys) > 1 and lidx[ind][3] is None:  #complete
+        if keys and len(keys) > 1 and parent is None:  #complete
             return
-        if keys and len(keys) == 1:  #primary
-            coef = keys[0]
-            lidx[ind][4] = [ (ikey % (coef * len(lidx[ind][2]))) // coef for ikey in range(leng)]
+        if coef:  #primary
+            lidx[ind][4] = [ (ikey % (coef * len(codec))) // coef for ikey in range(leng)]
             return  
-        parent = lidx[ind][3]
         if parent is None:
             raise IlistError('keys not referenced')          
         if not lidx[parent][4] or len(lidx[parent][4]) != leng:
             Ilist._init_ntv_keys(parent, lidx, leng)
-        if not keys and len(lidx[ind][2]) == len(lidx[parent][2]):    # implicit
+        if not keys and len(codec) == len(lidx[parent][2]):    # implicit
             lidx[ind][4] = lidx[parent][4]
             return
         lidx[ind][4] = Iindex.keysfromderkeys(lidx[parent][4], keys)  # relative

@@ -67,7 +67,8 @@ class IindexStructure:
         - **unique** :  boolean (default True) - If False, duplication codec if value is present
 
         *Returns* : key of value '''
-        value = util.castval(value, util.typename(self.name, typevalue))
+        #value = util.castval(value, util.typename(self.name, typevalue))
+        value = Ntv.obj(value)
         if value in self._codec and unique:
             key = self._codec.index(value)
         else:
@@ -592,7 +593,7 @@ class IindexStructure:
             return self
         return self.__class__(codec=codec, name=self.name, keys=keys, castobj=False)
 
-    def valrow(self, row):
+    """def valrow(self, row):
         ''' return json val for a record
 
         *Parameters*
@@ -603,7 +604,7 @@ class IindexStructure:
         val = ESValue.uncastsimple(self._codec[self._keys[row]])
         if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes)):
             return val
-        return val.json(encoded=False)
+        return val.json(encoded=False)"""
 
     def valtokey(self, value, extern=True):
         '''convert a value to a key

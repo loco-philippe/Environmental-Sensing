@@ -22,7 +22,7 @@ class Test_iindex(unittest.TestCase):
     def test_init_unitaire(self):
         idx = Iindex()
         idx2 = Iindex.ntv()
-        idx3 = Iindex.dic()
+        idx3 = Iindex.ext()
         self.assertTrue(idx == idx2 == idx3 == Iindex(idx))
         self.assertTrue(
             idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
@@ -37,17 +37,15 @@ class Test_iindex(unittest.TestCase):
     def test_init(self):
         idx = Iindex(codec=[Ntv.obj('er'), Ntv.obj(2), Ntv.obj([1, 2])], name='test', keys=[0, 1, 2, 1])
         idx2 = Iindex.from_ntv({'test': ['er', 2, [1, 2], 2]})
-        #idx2 = Iindex.ext(['er', 2, [1, 2], 2], 'test')
-        #idx3 = Iindex.dic({'test': ['er', 2, [1, 2], 2]})
-        #idx4 = Iindex.dic({'test': ['er', 2, [1, 2], 2]}, fullcodec=True)
-        #idx5 = Iindex.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
+        #idx3 = Iindex.ext(['er', 2, [1, 2], 2], 'test')
+        #idx4 = Iindex.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
         self.assertTrue(Iindex(idx) == idx)
-        #self.assertTrue(Iindex(idx) == Iindex.ext(idx)
-        #                == Iindex.dic(idx) == idx)
+        #self.assertTrue(Iindex(idx) == Iindex.ext(idx) == idx)
         self.assertTrue(idx.name == 'test' and 
                         idx.cod == ['er', 2, [1, 2]] and 
                         idx.keys == [0, 1, 2, 1])
         self.assertTrue(idx == idx2)
+        #self.assertTrue(idx == idx2 ==idx3)
         #self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1, 2], 2]
         #                == idx5.val == idx5.cod and len(idx) == 4)
         '''idx = Iindex(['er', 'rt', 'ty'], 'datation', [0, 1, 2, 2])
@@ -110,6 +108,7 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx.append(8) == 3)
         self.assertTrue(idx.append(8) == 3)
         self.assertTrue(idx.append(8, unique=False) == 4)
+        self.assertTrue(idx[4] == NtvSingle(8))
 
     def test_loc_keyval(self):
         idx = Iindex.ntv(['er', 2, [1, 2]])

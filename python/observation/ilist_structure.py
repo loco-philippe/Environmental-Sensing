@@ -15,6 +15,7 @@ from observation.esconstante import ES
 from observation.iindex import Iindex
 from observation.util import util
 from observation.ilist_interface import IlistError
+from json_ntv import Ntv
 
 
 class IlistStructure:
@@ -97,13 +98,13 @@ class IlistStructure:
 
         *Parameters*
 
-        - **index** : Iindex - index to add (can be index representation)
+        - **index** : Iindex - index to add (can be index Ntv representation)
         - **first** : If True insert index at the first row, else at the end
         - **merge** : create a new index if merge is False
         - **update** : if True, update actual values if index name is present (and merge is True)
 
         *Returns* : none '''
-        idx = Iindex.obj(index)
+        idx = Iindex.ntv(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0:
             raise IlistError('sizes are different')
@@ -136,12 +137,13 @@ class IlistStructure:
         *Returns* : list - key record'''
         if self.lenindex != len(record):
             raise IlistError('len(record) not consistent')
-        if not isinstance(typevalue, list):
+        """if not isinstance(typevalue, list):
             typevalue = [typevalue] * len(record)
         typevalue = [util.typename(self.lname[i], typevalue[i])
                      for i in range(self.lenindex)]
         record = [util.castval(val, typ)
-                  for val, typ in zip(record, typevalue)]
+                  for val, typ in zip(record, typevalue)]"""
+        record = [Ntv.obj(rec) for rec in record]
         if self.isinrecord(self.idxrecord(record), False) and unique:
             return None
         return [self.lindex[i].append(record[i]) for i in range(self.lenindex)]
@@ -546,7 +548,8 @@ class IlistStructure:
         if indexname is None:
             indexname = self.lname
         if extern:
-            record = [idx.valrow(row) for idx in self.lindex]
+            record = [idx.values[row].to_obj() for idx in self.lindex]
+            #record = [idx.valrow(row) for idx in self.lindex]
         else:
             record = [idx.values[row] for idx in self.lindex]
         return [record[self.lname.index(name)] for name in indexname]
@@ -563,7 +566,8 @@ class IlistStructure:
 
         - **list** : val or value for idx'''
         if extern:
-            return [idx.valrow(row) for idx in self.lidx]
+            return [idx.values[row].to_obj() for idx in self.lidx]
+            #return [idx.valrow(row) for idx in self.lidx]
         return [idx.values[row] for idx in self.lidx]
 
     def recvar(self, row, extern=True):
@@ -578,7 +582,8 @@ class IlistStructure:
 
         - **list** : val or value for var'''
         if extern:
-            return [idx.valrow(row) for idx in self.lvar]
+            return [idx.values[row].to_obj() for idx in self.lvar]
+            #return [idx.valrow(row) for idx in self.lvar]
         return [idx.values[row] for idx in self.lvar]
 
     def reindex(self):

@@ -461,11 +461,11 @@ class IindexInterface:
                             NtvList(self.keys, ntv_type='json')], idxname, ntv_type='json')
         if modecodec == 'optimize':
             ntv_value = [NtvList(self.codec, ntv_type=def_type)]
-            if parent:
+            if not parent is None:
                 ntv_value.append(NtvSingle(parent, ntv_type='json'))
             if keys:
                 ntv_value.append(NtvList(keys, ntv_type='json'))    
-            elif not parent:
+            elif parent is None:
                 ntv_value.append(NtvList(self.keys, ntv_type='json'))
             return NtvList(ntv_value, idxname, ntv_type='json')                
 

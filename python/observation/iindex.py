@@ -163,9 +163,8 @@ class Iindex(IindexStructure, IindexInterface):
         if codec == []:
             keysset = util.tocodec(keys)
             codec = [Ntv.obj(key) for key in keysset]
-            #codec = util.tocodec(keys)
-        if not typevalue is None or castobj:
-            #codec = util.castobj(codec, typevalue)
+        #if not typevalue is None or castobj:
+        if castobj:
             codec = [Ntv.obj(key) for key in codec]
         self._keys = keys
         self._codec = codec
@@ -190,7 +189,7 @@ class Iindex(IindexStructure, IindexInterface):
                 values[item] = not default        
         return cls.ext(name=name, values=values)
         
-    @classmethod
+    """@classmethod
     def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
         Iindex constructor (external dictionnary).
@@ -210,7 +209,7 @@ class Iindex(IindexStructure, IindexInterface):
             raise IindexError("one key:values is required")
         name = list(dicvalues.keys())[0]
         values = dicvalues[name]
-        return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)
+        return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)"""
 
     @classmethod
     def ext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
@@ -382,7 +381,7 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __str__(self):
         '''return json string format'''
-        return '    ' + str(self.to_ntv()) + '\n'
+        return '    ' + str(self.to_ntv(modecodec='full')) + '\n'
         #return '    ' + self.to_obj(encoded=True, modecodec='full', untyped=False) + '\n'
 
     def __eq__(self, other):
