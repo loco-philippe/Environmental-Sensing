@@ -18,7 +18,7 @@ import json
 from observation import DatationValue, LocationValue, \
     PropertyValue, ESValue, Ilist, Iindex, ES, util
 from test_obs import dat3, loc3, prop2
-from ntv import Ntv, NtvList
+from json_ntv import Ntv, NtvList
 
 #l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
 #il = Ilist.obj(l)
@@ -51,8 +51,8 @@ class Test_Ilist(unittest.TestCase):
                          Ilist.ntv([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
         il = Ilist([Iindex([{'paris:point': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                    name='location')])
-        self.assertEqual(il.lindex[0].codec[0].ntv_type.long_name, 'point')
-        self.assertEqual(il.lindex[0].codec[1].ntv_type.long_name, 'json')
+        self.assertEqual(il.lindex[0].values[0].type_str, 'point')
+        self.assertEqual(il.lindex[0].values[1].type_str, 'json')
 
     def test_creation_variable(self):
         #self.assertEqual(Ilist2(indexset=['i1', [1, 2, 3]]), Ilist2([defv, [True, True, True]], ['i1', [1, 2, 3]]))
@@ -279,60 +279,61 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(len(il), 4)
         self.assertEqual(len(il.lindex[0].codec), 3)
 
-"""    def test_append_variable(self):
-        il = Ilist.obj([['er', 'rt', 'er', 'ry'], [
+    def test_append_variable(self):
+        il = Ilist.ntv([['er', 'rt', 'er', 'ry'], [
                        0, 2, 0, 2], [30, 12, 20, 15]])
         il.append(['truc', 0, 20], unique=True)
         self.assertEqual(len(il), 5)
         il.append(['truc', 0, 20], unique=True)
         self.assertEqual(len(il), 5)
-        self.assertEqual(il, Ilist.ext([['er', 'rt', 'er', 'ry', 'truc'],
+        self.assertEqual(il, Ilist.ntv([['er', 'rt', 'er', 'ry', 'truc'],
                                         [0, 2, 0, 2, 0], [30, 12, 20, 15, 20]]))
 
     def test_magic(self):
-        iidx5 = Ilist.obj([['datationvalue', [10, 10, 20, 20, 30, 30]],
-                           ['locationvalue', [100, 100, 200, 200, 300, 300]],
-                           ['propertyvalue', [True, False, True, False, True, False]]])
-        self.assertEqual(iidx5.lidx[0], Iindex.ext([10, 10, 20, 20, 30, 30],
-                                                   'datationvalue'))
+        iidx5 = Ilist.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
+                           'locationvalue': [100, 100, 200, 200, 300, 300],
+                           'propertyvalue': [True, False, True, False, True, False]})
+        self.assertEqual(iidx5.lidx[0], Iindex.ntv({'datationvalue': [10, 10, 20, 20, 30, 30]}))
         self.assertEqual(iidx5.idxname, ['datationvalue', 'locationvalue',
                                          'propertyvalue'])
         iidx5 += iidx5
         self.assertEqual(len(iidx5), 12)
-        #iidx5 |= iidx5
-        #self.assertEqual(len(iidx5.lidx), 6)
-        #iidx6 = Ilist() | iidx5
-        #iidx7 = iidx5 | Ilist()
-        #self.assertTrue(iidx6 == iidx7)
-        #self.assertTrue(iidx5 == iidx6 == iidx7)
+        iidx5 |= iidx5
+        self.assertEqual(len(iidx5.lidx), 3)
+        iidx5.orindex(iidx5, first=False, merge=False, update=False)
+        self.assertEqual(len(iidx5.lidx), 6)
+        iidx6 = Ilist() | iidx5
+        iidx7 = iidx5 | Ilist()
+        self.assertTrue(iidx6 == iidx7)
+        self.assertTrue(iidx5 == iidx6 == iidx7)
 
     def test_primary(self):
         #['ext', ['er', 'rt', 'er', 'ry']]
-        ilm = Ilist.ext([['math', 'english', 'software', 'physic', 'english', 'software'],
+        ilm = Ilist.ntv([['math', 'english', 'software', 'physic', 'english', 'software'],
                          ['philippe', 'philippe', 'philippe',
                           'anne', 'anne', 'anne'],
                          [nan, nan, nan, 'gr1', 'gr1', 'gr2'],
                          ['philippe white', 'philippe white', 'philippe white',
                           'anne white', 'anne white', 'anne white']])
         self.assertEqual(ilm.primary, [])
-        ilm = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry']], [0, 2, 0, 2],
+        ilm = Ilist.ntv([{'ext': ['er', 'rt', 'er', 'ry']}, [0, 2, 0, 2],
                          [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
         self.assertEqual(ilm.primary, [0, 2])
-        ilm = Ilist.obj([['ext', ['er', 'rt', 'er', 'ry']], [0, 2, 0, 2],
+        ilm = Ilist.ntv([{'ext': ['er', 'rt', 'er', 'ry']}, [0, 2, 0, 2],
                          [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertEqual(ilm.primary, [0, 2])
-        ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
+        ilm = Ilist.ntv([[0, 2, 0, 2], [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
         self.assertEqual(ilm.primary, [0, 2])
-        ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
+        ilm = Ilist.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertEqual(ilm.primary, [0, 2])
 
     def test_to_obj(self):
-        ilm = Ilist.ext([[0,     0,   2,   3,   4,   4,   6,
-                          7,   8,   9,   9,  11,  12],
+        ilm = Ilist.ntv([[ 0,   0,   2,   3,   4,   4,   6,
+                           7,   8,   9,   9,  11,  12],
                          ['j', 'j', 'f', 'a', 'm', 'm', 's',
                           's', 's', 'n', 'd', 'd', 'd'],
                          ['t1', 't1', 't1', 't2', 't2', 't2', 't3',
@@ -348,11 +349,11 @@ class Test_Ilist(unittest.TestCase):
         test = list(product(coupling, keyscrd))
         for ts in test:
             # ilm.reindex()
-            if coupling:
+            if ts[0]:
                 ilm.coupling()
-            if keyscrd:
+            if ts[1]:
                 ilm.lidx[0].tostdcodec(inplace=True)
-            self.assertEqual(Ilist.from_obj(ilm.to_obj()), ilm)
+            self.assertEqual(Ilist.from_ntv(ilm.to_ntv()), ilm)
             #self.assertEqual(Ilist.from_obj(ilm.to_obj()).to_obj(), ilm.to_obj())
         encoded = [True, False]
         format = ['json', 'cbor']
@@ -362,25 +363,25 @@ class Test_Ilist(unittest.TestCase):
         for ts in test:
             opt = {'encoded': ts[0],
                    'encode_format': ts[1], 'modecodec': ts[2]}
-            self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)
+            self.assertEqual(Ilist.ntv(ilm.to_ntv(ts[2]).to_obj(**opt)), ilm)
             ilm.to_file('test.il', **opt)
             self.assertEqual(Ilist.from_file('test.il'), ilm)
-        ilm = Ilist.ext([[6, 7, 8, 9, 9, 11, 12],
+        ilm = Ilist.ntv([[6, 7, 8, 9, 9, 11, 12],
                          ['s', 's', 's', 'n', 'd', 'd', 'd']])
         ilm.coupling()
         for ts in test:
             opt = {'encoded': ts[0],
                    'encode_format': ts[1], 'modecodec': ts[2]}
             # print(opt)
-            self.assertEqual(Ilist.from_obj(ilm.to_obj(**opt)), ilm)  # '''
-        il = Ilist.obj([['produit', ['po', 'po', 'or', 'or', 'pi', 'pi', 'ba', 'ba']], 
-                        ['aliment', ['fr', 'fr', 'fr', 'fr', 'le', 'le', 'fr', 'fr']],
-                        ['contenant', ['sa', 'ca', 'sa', 'ca', 'sa', 'ca', 'sa', 'ca']],
-                        ['prix', [1, 9, 2, 18, 1.5, 13, 0.5, 4]],
-                        ['dispo', [1,1,0,0,0,0,1,1]]])
-        self.assertEqual(Ilist.from_obj(il.to_obj()), il)
+            self.assertEqual(Ilist.from_ntv(ilm.to_ntv(**opt)), ilm)  # '''
+        il = Ilist.ntv({'produit': ['po', 'po', 'or', 'or', 'pi', 'pi', 'ba', 'ba'], 
+                        'aliment': ['fr', 'fr', 'fr', 'fr', 'le', 'le', 'fr', 'fr'],
+                        'contenant': ['sa', 'ca', 'sa', 'ca', 'sa', 'ca', 'sa', 'ca'],
+                        'prix': [1, 9, 2, 18, 1.5, 13, 0.5, 4],
+                        'dispo': [1,1,0,0,0,0,1,1]})
+        self.assertEqual(Ilist.from_ntv(il.to_ntv()), il)
         
-    def test_to_obj_variable(self):
+"""    def test_to_obj_variable(self):
         il = Ilist.ext([[0, 1, 2, 3, 4, 5],
                         ['j', 'j', 'f', 'f', 'a', 'a'],
                         [100, 100, 200, 200, 300, 300],

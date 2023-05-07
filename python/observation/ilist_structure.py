@@ -113,14 +113,14 @@ class IlistStructure:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif idx.name in idxname and not merge:  # !!! not merge suffit
+        elif not merge:  # si idx.name in idxname
             while idx.name in idxname:
                 idx.name += '(2)'
             if first:
                 self.lindex.insert(0, idx)
             else:
                 self.lindex.append(idx)
-        elif update:  # si merge
+        elif update:  # si merge et si idx.name in idxname
             self.lindex[idxname.index(idx.name)].setlistvalue(idx.values)
 
     def append(self, record, unique=False, typevalue=ES.def_clsName):

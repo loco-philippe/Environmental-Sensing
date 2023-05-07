@@ -187,7 +187,7 @@ class IlistInterface:
 
         *Returns* : Integer - file lenght (bytes)  '''
         option = {'encode_format': 'cbor'} | kwargs | {'encoded': True}
-        data = self.to_obj(**option)
+        data = self.to_ntv(modecodec=option['modecodec']).to_obj(**option)
         if option['encode_format'] == 'cbor':
             size = len(data)
             with open(filename, 'wb') as file:
