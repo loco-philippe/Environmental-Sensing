@@ -255,7 +255,8 @@ class IindexInterface:
             return (ntv.ntv_name, type_ntv, [Ntv.from_obj(ntv.ntv_value)[0]], 
                     None, None, None, 1)
         codec_ntv = ntv[0]
-        leng = len(codec_ntv)
+        #leng = len(codec_ntv)
+        leng = max(len(ind) for ind in ntv)
         type_codec_ntv = codec_ntv.ntv_type.long_name if codec_ntv.ntv_type else None
         if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and \
             isinstance(ntv[1].ntv_value, (int, str)) and not isinstance(ntv[2], NtvSingle) and \
@@ -271,10 +272,6 @@ class IindexInterface:
         if len(ntv) == 2 and len(ntv[1]) > 1  and isinstance(ntv[1][0].ntv_value, int):
             return (ntv.ntv_name, type_codec_ntv, codec_ntv.ntv_value, None, 
                     ntv[1].to_obj(), None, leng)
-        '''if len(ntv) == 2 and isinstance(ntv[1], NtvSingle) and isinstance(ntv[1].ntv_value, (int, str)):
-            return (ntv.ntv_name, type_codec_ntv, codec_ntv.ntv_value, ntv[1].ntv_value, None, 1) 
-        if len(ntv) == 2 and not isinstance(ntv[1], NtvSingle) and isinstance(ntv[1][0].ntv_value, int):
-            return (ntv.ntv_name, type_codec_ntv, codec_ntv.ntv_value, None, ntv[1].to_obj())'''
         return (ntv.ntv_name, type_ntv, ntv.ntv_value, None, None, None, len(ntv))
 
     @staticmethod 

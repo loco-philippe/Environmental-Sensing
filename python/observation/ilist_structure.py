@@ -325,21 +325,23 @@ class IlistStructure:
         in canonical order
 
         *Returns* : self or new Ilist'''
-        if inplace:
-            ilis = self
-        else:
-            ilis = copy(self)
+        ilis = self if inplace else copy(self)
         if not idxname:
             idxname = ilis.primaryname
         if reindex:
             ilis.reindex()
         keysadd = util.idxfull([ilis.nindex(name) for name in idxname])
-        if not keysadd or len(keysadd) == 0:
+        if keysadd and len(keysadd) != 0:
+            lenadd = len(keysadd[0])
+            for ind in range(ilis.lenindex):
+                ilis._fullindex(ind, keysadd, idxname, varname, len(ilis) + lenadd,
+                                fillvalue, fillextern)
+        '''if not keysadd or len(keysadd) == 0:
             return ilis
         lenadd = len(keysadd[0])
         for ind in range(ilis.lenindex):
             ilis._fullindex(ind, keysadd, idxname, varname, len(ilis) + lenadd,
-                            fillvalue, fillextern)
+                            fillvalue, fillextern)   '''     
         if complete:
             ilis.setcanonorder()
         return ilis

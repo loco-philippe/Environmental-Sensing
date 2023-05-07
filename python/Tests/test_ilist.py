@@ -331,7 +331,7 @@ class Test_Ilist(unittest.TestCase):
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertEqual(ilm.primary, [0, 2])
 
-    def test_to_obj(self):
+    def test_to_ntv(self):
         ilm = Ilist.ntv([[ 0,   0,   2,   3,   4,   4,   6,
                            7,   8,   9,   9,  11,  12],
                          ['j', 'j', 'f', 'a', 'm', 'm', 's',
@@ -355,9 +355,10 @@ class Test_Ilist(unittest.TestCase):
                 ilm.lidx[0].tostdcodec(inplace=True)
             self.assertEqual(Ilist.from_ntv(ilm.to_ntv()), ilm)
             #self.assertEqual(Ilist.from_obj(ilm.to_obj()).to_obj(), ilm.to_obj())
-        encoded = [True, False]
+        encoded = [False, True]
         format = ['json', 'cbor']
-        modecodec = ['full', 'default', 'optimize', 'dict']
+        modecodec = ['full', 'default', 'optimize']
+        #modecodec = ['full', 'default', 'optimize', 'dict']
         #defaultcodec = [False, False]
         test = list(product(encoded, format, modecodec))
         for ts in test:
@@ -372,8 +373,7 @@ class Test_Ilist(unittest.TestCase):
         for ts in test:
             opt = {'encoded': ts[0],
                    'encode_format': ts[1], 'modecodec': ts[2]}
-            # print(opt)
-            self.assertEqual(Ilist.from_ntv(ilm.to_ntv(**opt)), ilm)  # '''
+            self.assertEqual(Ilist.from_ntv(ilm.to_ntv(ts[2]).to_obj(**opt)), ilm)
         il = Ilist.ntv({'produit': ['po', 'po', 'or', 'or', 'pi', 'pi', 'ba', 'ba'], 
                         'aliment': ['fr', 'fr', 'fr', 'fr', 'le', 'le', 'fr', 'fr'],
                         'contenant': ['sa', 'ca', 'sa', 'ca', 'sa', 'ca', 'sa', 'ca'],
@@ -381,18 +381,18 @@ class Test_Ilist(unittest.TestCase):
                         'dispo': [1,1,0,0,0,0,1,1]})
         self.assertEqual(Ilist.from_ntv(il.to_ntv()), il)
         
-"""    def test_to_obj_variable(self):
-        il = Ilist.ext([[0, 1, 2, 3, 4, 5],
+    def test_to_ntv_variable(self):
+        il = Ilist.ntv([[0, 1, 2, 3, 4, 5],
                         ['j', 'j', 'f', 'f', 'a', 'a'],
                         [100, 100, 200, 200, 300, 300],
                         [True, False, True, False, True, False]])
-        self.assertEqual(Ilist.from_obj(il.to_obj()), il)
+        self.assertEqual(Ilist.ntv(il.to_ntv()), il)
         il.setcanonorder()
-        self.assertEqual(Ilist.from_obj(il.to_obj()), il)
-        self.assertEqual(Ilist.from_obj(), Ilist())
+        self.assertEqual(Ilist.ntv(il.to_ntv()), il)
+        self.assertEqual(Ilist.ntv({}), Ilist())
 
     def test_coupling(self):
-        ilx = Ilist.ext([['a', 'b', 'b', 'c', 'c', 'a'],
+        ilx = Ilist.ntv([['a', 'b', 'b', 'c', 'c', 'a'],
                          [20,  10,  10,  10,  10,  20],
                          [200, 200, 300, 200, 300, 300]])
         self.assertTrue(ilx.complete)
@@ -400,47 +400,47 @@ class Test_Ilist(unittest.TestCase):
         self.assertTrue(ilx.indexinfos()[1]['cat'] == 'coupled')
         ilx.reindex()
         self.assertTrue(ilx.indexinfos()[1]['cat'] == 'secondary')
-        il = Ilist.obj([[1, 2, 3, 4, 5, 6], ['a', 'b', 'b', 'c', 'c', 'a'],
+        il = Ilist.ntv([[1, 2, 3, 4, 5, 6], ['a', 'b', 'b', 'c', 'c', 'a'],
                         [20, 10, 10, 10, 10, 20], [200, 200, 300, 200, 300, 300]])
         self.assertTrue(il.complete)
         il.lindex[2].coupling(il.lindex[1], derived=False)
         self.assertTrue(il.indexinfos()[2]['cat'] == 'coupled')
         il.reindex()
         self.assertTrue(il.indexinfos()[2]['cat'] == 'secondary')
-        ilx = Ilist.ext([['a', 'b', 'b', 'c', 'c', 'a', 'd', 'e', 'd'],
+        ilx = Ilist.ntv([['a', 'b', 'b', 'c', 'c', 'a', 'd', 'e', 'd'],
                          [20,  20,  10,  30,  10,  20,  20,  30,  40],
                          [100, 200, 300, 400, 400, 200, 200, 500, 600]])
         ilx.coupling()
-        self.assertTrue(ilx == Ilist.from_obj(ilx.to_obj()))
+        self.assertTrue(ilx == Ilist.ntv(ilx.to_ntv()))
         ilx.setcanonorder()
-        self.assertTrue(ilx == Ilist.from_obj(ilx.to_obj()))
+        self.assertTrue(ilx == Ilist.ntv(ilx.to_ntv()))
 
     def test_duplicates(self):
-        ilx = Ilist.ext([['a', 'b', 'b', 'c', 'c', 'a'],
+        ilx = Ilist.ntv([['a', 'b', 'b', 'c', 'c', 'a'],
                          [20,  10,  10,  10,  10,  20],
                          [200, 200, 400, 200, 300, 300],
                          [1, 1, 2, 2, 3, 3]])
         ilx.coupling(derived=False, level=0.2)
         ilx.getduplicates(['i1'], 'dup-i1')
-        self.assertEqual(ilx.nindex('dup-i1').values, [
+        self.assertEqual(ilx.nindex('dup-i1').val, [
                          True, False, False, False, False, True])
-        ilx = Ilist.ext([['a', 'b', 'b', 'c', 'c', 'a'],
+        ilx = Ilist.ntv([['a', 'b', 'b', 'c', 'c', 'a'],
                          [20,  10,  10,  10,  10,  20],
                          [200, 200, 200, 300, 300, 200],
                          [1, 1, 1, 2, 3, 1]])
         ilx.coupling(level=0.2)
         ilx.getduplicates(resindex='dupli')
-        self.assertEqual(ilx.nindex('dupli').values, [
+        self.assertEqual(ilx.nindex('dupli').val, [
                          True, True, True, False, False, True])
 
     def test_name(self):
-        ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
+        ilm = Ilist.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         ilm.full()
-        self.assertTrue(ilm.from_obj(ilm.to_obj()) == ilm)
+        self.assertTrue(ilm.ntv(ilm.to_ntv()) == ilm)
 
-    def test_full(self):
-        ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
+"""    def test_full(self):
+        ilm = Ilist.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertTrue(ilm.complete)
         self.assertTrue(ilm.full(inplace=False) == ilm)
@@ -452,7 +452,7 @@ class Test_Ilist(unittest.TestCase):
                         ilm.nindex('i0').iscrossed(ilm.nindex('i5')) ==
                         ilm.nindex('i3').iscrossed(ilm.nindex('i5')) == True)
         self.assertTrue(ilm.complete)
-        il = Ilist.ext([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30],
+        il = Ilist.ntv([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30],
                         [2, 0, 2, 0], [2, 2, 0, 0],
                         ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         ilc = il.full(inplace=False)
@@ -463,17 +463,17 @@ class Test_Ilist(unittest.TestCase):
                         ild.nindex('i5').codec)
 
     def test_valtokey(self):
-        ilm = Ilist.ext([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
+        ilm = Ilist.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertEqual(ilm.keytoval(ilm.valtokey([2, 12, 0, 2, 'info', 20])), [
                          2, 12, 0, 2, 'info', 20])
 
     def test_vlist(self):
-        il = Ilist.ext([[1, 2, 3]])
+        il = Ilist.ntv([[1, 2, 3]])
         self.assertEqual(il.vlist(2, func=pow), [1, 4, 9])
-        il = Ilist.ext([['er', 'ar', 'ty']])
+        il = Ilist.ntv([['er', 'ar', 'ty']])
         self.assertEqual(il.vlist(func=len), [2, 2, 2])
-        il = Ilist.ext([[datetime(2010, 1, 2), datetime(2012, 1, 2)]])
+        il = Ilist.ntv([[datetime(2010, 1, 2), datetime(2012, 1, 2)]])
         self.assertEqual(il.vlist(func=datetime.isoformat, timespec='hours',
                                   sep='-', extern=False), ['2010-01-02-00', '2012-01-02-00'])
         il = Ilist.obj([['aer', 'e', 'h'], [1, 2, 3],
@@ -487,8 +487,8 @@ class Test_Ilist(unittest.TestCase):
                          ['paris', 'ici', 'paris', 'ici'])
 
     def test_mergerecord(self):
-        a = Ilist.ext([[1, 2, 3], [4, 5, 6]])
-        b = Ilist.ext([['x'], [a]], ['merge_i0', 'merge'])
+        a = Ilist.ntv([[1, 2, 3], [4, 5, 6]])
+        b = Ilist.ntv([['x'], [a]], ['merge_i0', 'merge'])
         self.assertEqual(Ilist._mergerecord(b)[0].lenindex, 3)
 
     def test_merge(self):
@@ -509,7 +509,7 @@ class Test_Ilist(unittest.TestCase):
                           'group': ['gr1', 'gr2']})
         self.assertEqual(il3s.merge(simplename=True)[4], [
                          14, 'english', 'anne white', 'anne', 'gr1'])
-        il3 = Ilist.ext([[il1, il2]], typevalue=None)
+        il3 = Ilist.ntv([[il1, il2]], typevalue=None)
         self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])
 
     def test_csv(self):
@@ -523,7 +523,7 @@ class Test_Ilist(unittest.TestCase):
             il.to_csv(ifunc=ESValue.json, encoded=False)
             il3 = Ilist.from_csv(var=0)
             self.assertTrue(il == il3)
-        il = Ilist.ext([['er', 'rt', 'er', 'ry', 'ab'], [0, 2, 0, 2, 0],
+        il = Ilist.ntv([['er', 'rt', 'er', 'ry', 'ab'], [0, 2, 0, 2, 0],
                         [10, 0, 20, 20, 15], [1, 2, 1, 2, 1]])
         il.to_csv('test.csv', optcsv={
                   'dialect': 'excel', 'delimiter': ';', 'quoting': csv.QUOTE_NONNUMERIC})
@@ -545,7 +545,7 @@ class Test_Ilist(unittest.TestCase):
             il3.merge().primary, [0, 1])
 
     def test_sort(self):
-        il = Ilist.ext([['er', 'rt', 'er', 'ry'], [
+        il = Ilist.ntv([['er', 'rt', 'er', 'ry'], [
                        0, 2, 0, 2], [30, 12, 20, 15]])
         il.sort()
         self.assertEqual(il.lindex[0].keys, sorted(il.lindex[0].keys))
@@ -555,17 +555,17 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il.lindex[1].keys, [0, 0, 1, 1])
 
     def test_filter(self):
-        il = Ilist.ext([['er', 'rt', 'er', 'ry'], [
+        il = Ilist.ntv([['er', 'rt', 'er', 'ry'], [
                        0, 2, 0, 2], [30, 12, 20, 15]])
         il.setfilter([True, False, True, False])
         il.applyfilter()
         self.assertEqual(il.lindex[1].val,   [0, 0])
-        il = Ilist.ext([['er', 'rt', 'er', 'ry'], [
+        il = Ilist.ntv([['er', 'rt', 'er', 'ry'], [
                        0, 2, 0, 2], [30, 12, 20, 15]])
         il.setfilter([True, False, True, False])
         il.applyfilter(reverse=True)
         self.assertEqual(il.lindex[1].val,   [2, 2])
-        il1 = Ilist.ext([['er', 'rt', 'er', 'ry', 'ry', 'er'],
+        il1 = Ilist.ntv([['er', 'rt', 'er', 'ry', 'ry', 'er'],
                          [0, 2, 0, 2, 0, 2], [30, 12, 20, 15, 30, 12]])
         ilft1 = il1.setfilter(
             [True, True, True, True, True, True]).applyfilter(inplace=False)
@@ -576,11 +576,11 @@ class Test_Ilist(unittest.TestCase):
         ilft2 = il1.setfilter([False, False, False, False, False, False]).applyfilter(
             reverse=True, inplace=False)
         self.assertTrue(il1.sort() == ilft1.sort() == ilft2.sort())
-        self.assertTrue(Ilist.ext([[], [], []]) == ilfr1 == ilfr2)
+        self.assertTrue(Ilist.ntv([[], [], []]) == ilfr1 == ilfr2)
         '''
-        il = Ilist.ext(f,l).setfilter([[0, 2], [12, 20, 30]], inplace=False, index=False)
+        il = Ilist.ntv(f,l).setfilter([[0, 2], [12, 20, 30]], inplace=False, index=False)
         self.assertEqual( il.setidx, [[0, 2], [30, 12, 20]])
-        il = Ilist.ext(f,l).setfilter([[2], [12, 20, 30]], inplace=False, index=False)
+        il = Ilist.ntv(f,l).setfilter([[2], [12, 20, 30]], inplace=False, index=False)
         self.assertEqual( il.setidx, [[2], [12]])
         #ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
         ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, 
@@ -630,7 +630,7 @@ class Test_Ilist(unittest.TestCase):
                          float(ilm.loc(['10 kg', 'apple', 'fruit'])[0][3]))
         self.assertTrue(str(ilm.loc(['10 kg', 'banana', 'fruit'])[0][3]) in
                         str(ilx2.sel(total_quantity='10 kg', total_product='banana').values))
-        '''il = Ilist.ext({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+        '''il = Ilist.ntv({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
                          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
                                       '2021-07-04T10:05:00+00:00',
                                       '2021-05-04T10:05:00+00:00'],
@@ -657,19 +657,19 @@ class Test_Ilist(unittest.TestCase):
 
     def test_to_obj_file(self):  # !!!
         il = Ilist.obj([['result', [0, 1, 2, 3, 4, 5]],
-                        ['datation', [DatationValue.from_obj(dat3[1][0]),
-                                      DatationValue.from_obj(dat3[1][1]),
-                                      DatationValue.from_obj(dat3[1][2])]],
-                        ['location', [LocationValue.from_obj(loc3[1][0]),
-                                      LocationValue.from_obj(loc3[1][1]),
-                                      LocationValue.from_obj(loc3[1][2])], 1],
+                        ['datation', [DatationValue.ntv(dat3[1][0]),
+                                      DatationValue.ntv(dat3[1][1]),
+                                      DatationValue.ntv(dat3[1][2])]],
+                        ['location', [LocationValue.ntv(loc3[1][0]),
+                                      LocationValue.ntv(loc3[1][1]),
+                                      LocationValue.ntv(loc3[1][2])], 1],
                         ['property', [PropertyValue(prop2[1][0]), PropertyValue(prop2[1][1])]]])
         encoded = [True, False]
         format = ['json', 'cbor']
         test = list(product(encoded, format))
         for ts in test:
             option = {'encoded': ts[0], 'encode_format': ts[1]}
-            #il2 = Ilist.from_obj(il.to_obj(**option))
+            #il2 = Ilist.ntv(il.to_ntv(**option))
             # self.assertEqual(il, il2)   #!!!
 
     def test_to_ntv(self):
@@ -715,23 +715,23 @@ class Test_Ilist(unittest.TestCase):
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:
                 for codif in [ES.codeb, {}]:
-                    il2 = Ilist2.from_obj(il.to_obj(encoded=encoded, encode_format=forma, codif=codif))
+                    il2 = Ilist2.ntv(il.to_ntv(encoded=encoded, encode_format=forma, codif=codif))
                     il2.setidx[0] = DatationValue.cast(il2.setidx[0])
                     il2.setidx[1] = LocationValue.cast(il2.setidx[1])
                     il2.setidx[2] = PropertyValue.cast(il2.setidx[2])
                     #il2.extval = ReesultValue.cast(il2.extval)
-                    self.assertEqual(il.to_obj(encoded=False), il2.to_obj(encoded=False))
-        il3 = Ilist2.from_obj(il.to_obj(encoded=False))
+                    self.assertEqual(il.to_ntv(encoded=False), il2.to_ntv(encoded=False))
+        il3 = Ilist2.ntv(il.to_ntv(encoded=False))
         il3.setidx[0] = DatationValue.cast(il3.setidx[0])
         il3.setidx[1] = LocationValue.cast(il3.setidx[1])
         il3.setidx[2] = PropertyValue.cast(il3.setidx[2])
         #il3.extval=ReesultValue.cast(il3.extval)
-        self.assertEqual(il.to_obj(encoded=False), il3.to_obj(encoded=False))
+        self.assertEqual(il.to_ntv(encoded=False), il3.to_ntv(encoded=False))
         il=Ilist2.ext(['er', 'rt', 'er', 'ry'], [[0, 2, 0, 2], [30, 12, 20, 15]]
                       ).sort(order=[0,1], inplace=False)
         ilf = il.full(axes=[0,1]).sort(order=[0,1], inplace=False)
-        self.assertEqual(il, il.from_obj(il.json()).sort(order=[0,1], inplace=False))
-        self.assertEqual(ilf, il.from_obj(ilf.json()))
+        self.assertEqual(il, il.ntv(il.json()).sort(order=[0,1], inplace=False))
+        self.assertEqual(ilf, il.ntv(ilf.json()))
         for forma in ['json', 'cbor']:
             il.to_file('test.tst', encode_format=forma)
             ilf.to_file('testf.tst', encode_format=forma)

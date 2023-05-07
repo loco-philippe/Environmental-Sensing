@@ -283,7 +283,7 @@ class Ilist(IlistStructure, IlistInterface):
         return cls.ext(idxval, idxname, typevalue=None, reindex=True)
 
     @classmethod
-    def from_file(cls, filename, forcestring=False):
+    def from_file(cls, filename, forcestring=False, reindex=True):
         '''
         Generate Object from file storage.
 
@@ -292,6 +292,7 @@ class Ilist(IlistStructure, IlistInterface):
         - **filename** : string - file name (with path)
         - **forcestring** : boolean (default False) - if True,
         forces the UTF-8 data format, else the format is calculated
+        - **reindex** : boolean (default True) - if True, default codec for each Iindex
 
         *Returns* : new Object'''
         with open(filename, 'rb') as file:
@@ -302,7 +303,7 @@ class Ilist(IlistStructure, IlistInterface):
         else:
             with open(filename, 'rb') as file:
                 bjson = file.read()
-        return cls.from_obj(bjson, reindex=True)
+        return cls.from_ntv(bjson, reindex=reindex)
 
     @classmethod
     def obj(cls, bsd=None, reindex=True, context=True):
