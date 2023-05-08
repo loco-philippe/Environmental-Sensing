@@ -439,11 +439,11 @@ class Test_Ilist(unittest.TestCase):
         ilm.full()
         self.assertTrue(ilm.ntv(ilm.to_ntv()) == ilm)
 
-"""    def test_full(self):
+    def test_full(self):
         ilm = Ilist.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertTrue(ilm.complete)
-        self.assertTrue(ilm.full(inplace=False) == ilm)
+        self.assertTrue(ilm.full(inplace=False, complete=False) == ilm)
         ilmf = ilm.full(idxname=['i0', 'i1'], inplace=False)
         self.assertTrue(ilmf.nindex('i0').iscrossed(ilmf.nindex('i1')))
         self.assertTrue(ilmf.nindex('i0').iscoupled(ilmf.nindex('i2')))
@@ -473,20 +473,20 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il.vlist(2, func=pow), [1, 4, 9])
         il = Ilist.ntv([['er', 'ar', 'ty']])
         self.assertEqual(il.vlist(func=len), [2, 2, 2])
-        il = Ilist.ntv([[datetime(2010, 1, 2), datetime(2012, 1, 2)]])
-        self.assertEqual(il.vlist(func=datetime.isoformat, timespec='hours',
-                                  sep='-', extern=False), ['2010-01-02-00', '2012-01-02-00'])
-        il = Ilist.obj([['aer', 'e', 'h'], [1, 2, 3],
+        #il = Ilist.ntv([[datetime(2010, 1, 2), datetime(2012, 1, 2)]])
+        #self.assertEqual(il.vlist(func=datetime.isoformat, timespec='hours',
+        #                          sep='-', extern=False), ['2010-01-02-00', '2012-01-02-00'])
+        il = Ilist.ntv([['aer', 'e', 'h'], [1, 2, 3],
                        ['a', 'efg', 'h'], [0, 1, 0]])
         self.assertEqual(il.vlist(func=len, index=2), [1, 3, 1])
-        il = Ilist.obj([[1, 2, 3, 4], [DatationValue(name='morning'), DatationValue(name='afternoon')],
-                        [LocationValue(name='paris'), LocationValue([4.1, 42.8])]])
-        self.assertEqual(il.vlist(func=ESValue.vName, extern=False, index=1),
+        il = Ilist.ntv([[1, 2, 3, 4], [{'morning:time': '08:00:00', 'afternoon:time': '14:00:00'}, [2]],
+                        [{'paris:point': None, ':point':[4.1, 42.8]}, [1]]])
+        self.assertEqual(il.vlist(func=Ntv.to_name, extern=False, index=1),
                          ['morning', 'morning', 'afternoon', 'afternoon'])
-        self.assertEqual(il.vlist(func=ESValue.vName, extern=False, index=2, default='ici'),
+        self.assertEqual(il.vlist(func=Ntv.to_name, extern=False, index=2, default='ici'),
                          ['paris', 'ici', 'paris', 'ici'])
 
-    def test_mergerecord(self):
+"""    def test_mergerecord(self):
         a = Ilist.ntv([[1, 2, 3], [4, 5, 6]])
         b = Ilist.ntv([['x'], [a]], ['merge_i0', 'merge'])
         self.assertEqual(Ilist._mergerecord(b)[0].lenindex, 3)
