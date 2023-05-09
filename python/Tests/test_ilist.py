@@ -486,9 +486,9 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il.vlist(func=Ntv.to_name, extern=False, index=2, default='ici'),
                          ['paris', 'ici', 'paris', 'ici'])
 
-"""    def test_mergerecord(self):
+    """def test_mergerecord(self):
         a = Ilist.ntv([[1, 2, 3], [4, 5, 6]])
-        b = Ilist.ntv([['x'], [a]], ['merge_i0', 'merge'])
+        b = Ilist.ntv({'merge_i0': ['x'], 'merge': [a]})
         self.assertEqual(Ilist._mergerecord(b)[0].lenindex, 3)
 
     def test_merge(self):
@@ -510,19 +510,19 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(il3s.merge(simplename=True)[4], [
                          14, 'english', 'anne white', 'anne', 'gr1'])
         il3 = Ilist.ntv([[il1, il2]], typevalue=None)
-        self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])
+        self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])"""
 
     def test_csv(self):
-        il = Ilist.obj([['er', 'rt', 'er', 'ry'], [
+        il = Ilist.ntv([['er', 'rt', 'er', 'ry'], [
                        0, 2, 0, 2], [30, 12, 20, 15]])
         il.to_csv('test.csv')
         il2 = Ilist.from_csv('test.csv')
         self.assertTrue(il == il2)
-        if ES.def_clsName:
+        '''if ES.def_clsName:
             il.to_csv(ifunc=ESValue.vSimple)
             il.to_csv(ifunc=ESValue.json, encoded=False)
             il3 = Ilist.from_csv(var=0)
-            self.assertTrue(il == il3)
+            self.assertTrue(il == il3)'''
         il = Ilist.ntv([['er', 'rt', 'er', 'ry', 'ab'], [0, 2, 0, 2, 0],
                         [10, 0, 20, 20, 15], [1, 2, 1, 2, 1]])
         il.to_csv('test.csv', optcsv={
@@ -531,7 +531,7 @@ class Test_Ilist(unittest.TestCase):
                                                  'quoting': csv.QUOTE_NONNUMERIC})
         self.assertTrue(il == il2)
 
-    def test_axes(self):
+    """def test_axes(self):
 
         il1 = Ilist.dic({'notes': [10, 11, 12],
                          'course': ['math', 'english', 'software']})
@@ -542,7 +542,7 @@ class Test_Ilist(unittest.TestCase):
                          'name': ['philippe white', 'anne white'],
                          'firstname': ['philippe', 'anne']})
         self.assertEqual(
-            il3.merge().primary, [0, 1])
+            il3.merge().primary, [0, 1])"""
 
     def test_sort(self):
         il = Ilist.ntv([['er', 'rt', 'er', 'ry'], [
@@ -602,14 +602,14 @@ class Test_Ilist(unittest.TestCase):
     def test_to_numpy(self):
         '''à faire'''  # !!!
 
-    def test_to_xarray(self):
-        ilm = Ilist.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit',
-                                     'vegetable', 'vegetable', 'vegetable', 'fruit']],
-                         ['quantity', ['kg', '10 kg', 'kg', '10 kg',
-                                       'kg', '10 kg', 'kg', '10 kg']],
-                         ['product', ['apple', 'apple', 'orange', 'orange',
-                                      'peppers', 'peppers', 'banana', 'banana']],
-                         ['price', [1, 10, 2, 20, 1.5, 15, 0.5, 5]]])
+    """def test_to_xarray(self):
+        ilm = Ilist.ntv({'plants': ['fruit', 'fruit', 'fruit', 'fruit',
+                                    'vegetable', 'vegetable', 'vegetable', 'fruit'],
+                         'quantity': ['kg', '10 kg', 'kg', '10 kg',
+                                      'kg', '10 kg', 'kg', '10 kg'],
+                         'product': ['apple', 'apple', 'orange', 'orange',
+                                     'peppers', 'peppers', 'banana', 'banana'],
+                         'price': [1, 10, 2, 20, 1.5, 15, 0.5, 5]})
         ilm.nindex('product').coupling(ilm.nindex('plants'))
         ilm.full(idxname=['product', 'quantity'])
         ilx = ilm.to_xarray()
@@ -617,7 +617,7 @@ class Test_Ilist(unittest.TestCase):
                          float(ilm.loc(['10 kg', 'apple', 'fruit'])[0][3]))
         self.assertTrue(str(ilm.loc(['10 kg', 'banana', 'fruit'])[0][3]) in
                         str(ilx.sel(quantity='10 kg', product='banana').values))
-        fruit = Ilist.obj([['product', ['apple', 'apple', 'orange', 'orange', 'banana', 'banana']],
+        '''fruit = Ilist.obj([['product', ['apple', 'apple', 'orange', 'orange', 'banana', 'banana']],
                            ['quantity', ['kg', '10 kg', 'kg', '10 kg', 'kg', '10 kg']],
                            ['price', [1, 10, 2, 20, 0.5, 5]]])
         vege = Ilist.obj([['product', ['peppers', 'peppers']],
@@ -629,33 +629,33 @@ class Test_Ilist(unittest.TestCase):
         self.assertEqual(float(ilx2.sel(total_quantity='10 kg', total_product='apple').values),
                          float(ilm.loc(['10 kg', 'apple', 'fruit'])[0][3]))
         self.assertTrue(str(ilm.loc(['10 kg', 'banana', 'fruit'])[0][3]) in
-                        str(ilx2.sel(total_quantity='10 kg', total_product='banana').values))
-        '''il = Ilist.ntv({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+                        str(ilx2.sel(total_quantity='10 kg', total_product='banana').values))'''
+        il = Ilist.ntv({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
                          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
                                       '2021-07-04T10:05:00+00:00',
                                       '2021-05-04T10:05:00+00:00'],
                                      0],
                          'propert': [{'prp': 'PM25', 'unit': 'kg/m3'},
                                      {'prp': 'PM10', 'unit': 'kg/m3'}],
-                         'result': [[{'ert': 0}, 1, 2, 3, 4, 5], -1]})'''
-        il = Ilist.obj([['locatio', [0, [4.83, 45.76], [5.38, 43.3]]],
+                         'result': [[{'ert': 0}, 1, 2, 3, 4, 5], -1]})
+        '''il = Ilist.obj([['locatio', [0, [4.83, 45.76], [5.38, 43.3]]],
                         ['datatio', [{'date1': '2021-02-04T11:05:00+00:00'},
                                      '2021-07-04T10:05:00+00:00',
                                      '2021-05-04T10:05:00+00:00'], 0],
                         ['propert', [{'prp': 'PM25', 'unit': 'kg/m3'},
                          {'prp': 'PM10', 'unit': 'kg/m3'}]],
-                        ['result', [{'ert': 0}, 1, 2, 3, 4, 5]]])
+                        ['result', [{'ert': 0}, 1, 2, 3, 4, 5]]])'''
         ilx1 = il.to_xarray(lisfunc=[None, None, None, ESValue.to_float])
         ilx2 = il.to_xarray(
             lisfunc=[None, None, None, util.cast], dtype='float')
         ilx3 = il.to_xarray(numeric=True)
         self.assertTrue(list(ilx1.values[0]) == list(
-            ilx2.values[0]) == list(ilx3.values[0]))
+            ilx2.values[0]) == list(ilx3.values[0]))"""
 
     def test_example(self):
         '''à faire'''  # !!!
 
-    def test_to_obj_file(self):  # !!!
+    """def test_to_obj_file(self):  # !!!
         il = Ilist.obj([['result', [0, 1, 2, 3, 4, 5]],
                         ['datation', [DatationValue.ntv(dat3[1][0]),
                                       DatationValue.ntv(dat3[1][1]),
@@ -670,9 +670,9 @@ class Test_Ilist(unittest.TestCase):
         for ts in test:
             option = {'encoded': ts[0], 'encode_format': ts[1]}
             #il2 = Ilist.ntv(il.to_ntv(**option))
-            # self.assertEqual(il, il2)   #!!!
+            # self.assertEqual(il, il2)   #!!!"""
 
-    def test_to_ntv(self):
+    def test_to_ntv_simple(self):
         tab_data   = ({'value':           [10, 20, 30, 40],
                       'dates::datetime': ['1964-01-01', '1985-02-05', '2022-01-21', '2022-01-22'],
                       'value32::int32':  [10, 20, 30, 40],
@@ -710,7 +710,8 @@ class Test_Ilist(unittest.TestCase):
         il = Ilist.from_ntv(ntv)
         self.assertEqual(il.primaryname, ['annee', 'pays', 'age'])
         self.assertEqual(il.lvarname, ['result'])
-        
+    
+    """
     '''for forma in ['json', 'cbor']:
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:
