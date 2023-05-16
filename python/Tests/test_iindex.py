@@ -216,6 +216,8 @@ class Test_iindex(unittest.TestCase):
     def test_numpy(self):
         idx = Iindex.ntv(['er', 2, 'er', [1, 2]])
         self.assertEqual(len(idx.to_numpy(func=str)), len(idx))
+        idx = Iindex.ntv([{'test':'er'}, 2, 'er', [1, 2]])
+        self.assertEqual(len(idx.to_numpy(func=str)), len(idx))
 
     def test_coupled_extendvalues(self):
         ia = Iindex.ntv(['anne', 'paul', 'lea', 'andre', 'paul', 'lea'])

@@ -1,0 +1,9 @@
+produit,quantite,aliment,validite::date,id::int,disponibilite,prix
+"""piment""","""sachet 1 kg""","""legume""","""2022-01-01""",15,"""oui""",1.5
+"""piment""","""carton 10 kg""","""legume""","""2022-01-01""",16,"""fin 2022""",15
+"""banane""","""sachet 1 kg""","""fruit""","""2022-01-01""",17,"""oui""",0.5
+"""banane""","""carton 10 kg""","""fruit""","""2022-01-01""",18,"""oui""",5
+"""pomme""","""sachet 1 kg""","""fruit""","""2022-01-01""",11,"""oui""",1
+"""pomme""","""carton 10 kg""","""fruit""","""2022-01-01""",12,"""oui""",10
+"""orange""","""sachet 1 kg""","""fruit""","""2022-01-01""",13,"""fin 2022""",2
+"""orange""","""carton 10 kg""","""fruit""","""2022-01-01""",14,"""fin 2022""",20
