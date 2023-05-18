@@ -168,7 +168,8 @@ class IlistStructure:
         else:
             ilis = copy(self)
         ifilt = ilis.lname.index(filtname)
-        ilis.sort([ifilt], reverse=not reverse, func=None)
+        #ilis.sort([ifilt], reverse=not reverse, func=None) #!!! si pas Ntv
+        ilis.sort([ifilt], reverse=reverse, func=None) #!!! si Ntv
         lisind = ilis.lindex[ifilt].recordfromvalue(reverse)
         if lisind:
             minind = min(lisind)
