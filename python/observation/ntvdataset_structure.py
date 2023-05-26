@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ilist_structure` module contains the `IlistStructure` class
-(`python.observation.ilist.Ilist` methods).
+The `python.observation.ntvdataset_structure` module contains the `NtvdatasetStructure` class
+(`python.observation.ntvdataset.Ntvdataset` methods).
 """
 
 # %% declarations
@@ -14,58 +14,58 @@ from copy import copy
 from observation.esconstante import ES
 from observation.ntvfield import Ntvfield
 from observation.util import util
-from observation.ilist_interface import IlistError
+from observation.ntvdataset_interface import NtvdatasetError
 from json_ntv import Ntv
 
 
-class IlistStructure:
-    '''this class includes Ilist methods :
+class NtvdatasetStructure:
+    '''this class includes Ntvdataset methods :
 
     *selecting - infos methods*
 
-    - `IlistStructure.couplingmatrix`
-    - `IlistStructure.idxrecord`
-    - `IlistStructure.indexinfos`
-    - `IlistStructure.indicator`
-    - `IlistStructure.iscanonorder`
-    - `IlistStructure.isinrecord`
-    - `IlistStructure.keytoval`
-    - `IlistStructure.loc`
-    - `IlistStructure.nindex`
-    - `IlistStructure.record`
-    - `IlistStructure.recidx`
-    - `IlistStructure.recvar`
-    - `IlistStructure.tree`
-    - `IlistStructure.valtokey`
+    - `NtvdatasetStructure.couplingmatrix`
+    - `NtvdatasetStructure.idxrecord`
+    - `NtvdatasetStructure.indexinfos`
+    - `NtvdatasetStructure.indicator`
+    - `NtvdatasetStructure.iscanonorder`
+    - `NtvdatasetStructure.isinrecord`
+    - `NtvdatasetStructure.keytoval`
+    - `NtvdatasetStructure.loc`
+    - `NtvdatasetStructure.nindex`
+    - `NtvdatasetStructure.record`
+    - `NtvdatasetStructure.recidx`
+    - `NtvdatasetStructure.recvar`
+    - `NtvdatasetStructure.tree`
+    - `NtvdatasetStructure.valtokey`
 
     *add - update methods*
 
-    - `IlistStructure.add`
-    - `IlistStructure.addindex`
-    - `IlistStructure.append`
-    - `IlistStructure.delindex`
-    - `IlistStructure.delrecord`
-    - `IlistStructure.orindex`
-    - `IlistStructure.renameindex`
-    - `IlistStructure.setvar`
-    - `IlistStructure.setname`
-    - `IlistStructure.updateindex`
+    - `NtvdatasetStructure.add`
+    - `NtvdatasetStructure.addindex`
+    - `NtvdatasetStructure.append`
+    - `NtvdatasetStructure.delindex`
+    - `NtvdatasetStructure.delrecord`
+    - `NtvdatasetStructure.orindex`
+    - `NtvdatasetStructure.renameindex`
+    - `NtvdatasetStructure.setvar`
+    - `NtvdatasetStructure.setname`
+    - `NtvdatasetStructure.updateindex`
 
     *structure management - methods*
 
-    - `IlistStructure.applyfilter`
-    - `IlistStructure.coupling`
-    - `IlistStructure.full`
-    - `IlistStructure.getduplicates`
-    - `IlistStructure.mix`
-    - `IlistStructure.merging`
-    - `IlistStructure.reindex`
-    - `IlistStructure.reorder`
-    - `IlistStructure.setfilter`
-    - `IlistStructure.sort`
-    - `IlistStructure.swapindex`
-    - `IlistStructure.setcanonorder`
-    - `IlistStructure.tostdcodec`
+    - `NtvdatasetStructure.applyfilter`
+    - `NtvdatasetStructure.coupling`
+    - `NtvdatasetStructure.full`
+    - `NtvdatasetStructure.getduplicates`
+    - `NtvdatasetStructure.mix`
+    - `NtvdatasetStructure.merging`
+    - `NtvdatasetStructure.reindex`
+    - `NtvdatasetStructure.reorder`
+    - `NtvdatasetStructure.setfilter`
+    - `NtvdatasetStructure.sort`
+    - `NtvdatasetStructure.swapindex`
+    - `NtvdatasetStructure.setcanonorder`
+    - `NtvdatasetStructure.tostdcodec`
     '''
     # %% methods
 
@@ -74,7 +74,7 @@ class IlistStructure:
 
         *Parameters*
 
-        - **other** : Ilist object to add to self object
+        - **other** : Ntvdataset object to add to self object
         - **name** : Boolean (default False) - Add values with same index name (True) or
         same index row (False)
         - **solve** : Boolean (default True) - If True, replace None other's codec value
@@ -82,9 +82,9 @@ class IlistStructure:
 
         *Returns* : self '''
         if self.lenindex != other.lenindex:
-            raise IlistError('length are not identical')
+            raise NtvdatasetError('length are not identical')
         if name and sorted(self.lname) != sorted(other.lname):
-            raise IlistError('name are not identical')
+            raise NtvdatasetError('name are not identical')
         for i in range(self.lenindex):
             if name:
                 self.lindex[i].add(other.lindex[other.lname.index(self.lname[i])],
@@ -107,7 +107,7 @@ class IlistStructure:
         idx = Ntvfield.ntv(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0:
-            raise IlistError('sizes are different')
+            raise NtvdatasetError('sizes are different')
         if not idx.name in idxname:
             if first:
                 self.lindex.insert(0, idx)
@@ -128,7 +128,7 @@ class IlistStructure:
 
         *Parameters*
 
-        - **record** :  list of new index values to add to Ilist
+        - **record** :  list of new index values to add to Ntvdataset
         - **unique** :  boolean (default False) - Append isn't done if unique
         is True and record present
         - **typevalue** : list of string (default ES.def_clsName) - typevalue
@@ -136,7 +136,7 @@ class IlistStructure:
 
         *Returns* : list - key record'''
         if self.lenindex != len(record):
-            raise IlistError('len(record) not consistent')
+            raise NtvdatasetError('len(record) not consistent')
         """if not isinstance(typevalue, list):
             typevalue = [typevalue] * len(record)
         typevalue = [util.typename(self.lname[i], typevalue[i])
@@ -160,7 +160,7 @@ class IlistStructure:
         - **delfilter** :  boolean (default True) - If True, delete filter's Ntvfield
         - **inplace** : boolean (default True) - if True, filter is apply to self,
 
-        *Returns* : self or new Ilist'''
+        *Returns* : self or new Ntvdataset'''
         if not filtname in self.lname:
             return None
         if inplace:
@@ -242,7 +242,7 @@ class IlistStructure:
 
         *Parameters*
 
-        - **record** :  list - index values to remove to Ilist
+        - **record** :  list - index values to remove to Ntvdataset
         - **extern** : if True, compare record values to external representation 
         of self.value, else, internal
 
@@ -325,7 +325,7 @@ class IlistStructure:
         - **complete** : boolean (default True) - if True, Ntvfield are ordered 
         in canonical order
 
-        *Returns* : self or new Ilist'''
+        *Returns* : self or new Ntvdataset'''
         ilis = self if inplace else copy(self)
         if not idxname:
             idxname = ilis.primaryname
@@ -530,7 +530,7 @@ class IlistStructure:
 
         *Returns* : none '''
         if len(self) != 0 and len(self) != len(other) and len(other) != 0:
-            raise IlistError("the sizes are not equal")
+            raise NtvdatasetError("the sizes are not equal")
         otherc = copy(other)
         for idx in otherc.lindex:
             self.addindex(idx, first=first, merge=merge, update=update)
@@ -644,7 +644,7 @@ class IlistStructure:
         idx = Ntvfield(filt, name=filtname)
         idx.reindex()
         if not idx.cod in ([True, False], [False, True], [True], [False]):
-            raise IlistError('filt is not consistent')
+            raise NtvdatasetError('filt is not consistent')
         if unique:
             for name in self.lname:
                 if name[:len(ES.filter)] == ES.filter:
@@ -695,7 +695,7 @@ class IlistStructure:
 
         *Returns* : self '''
         if self.lenindex != len(order):
-            raise IlistError('length of order and Ilist different')
+            raise NtvdatasetError('length of order and Ntvdataset different')
         if not order or isinstance(order[0], int):
             self.lindex = [self.lindex[ind] for ind in order]
         elif isinstance(order[0], str):
@@ -708,11 +708,11 @@ class IlistStructure:
         *Parameters*
 
         - **inplace** : boolean  (default False) - if True apply transformation
-        to self, else to a new Ilist
+        to self, else to a new Ntvdataset
         - **full** : boolean (default True)- full codec if True, default if False
 
 
-        *Return Ilist* : self or new Ilist'''
+        *Return Ntvdataset* : self or new Ntvdataset'''
         lindex = [idx.tostdcodec(inplace=False, full=full)
                   for idx in self.lindex]
         if inplace:

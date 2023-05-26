@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ilist_interface` module contains the `IlistInterface` class
-(`python.observation.ilist.Ilist` methods).
+The `python.observation.ntvdataset_interface` module contains the `NtvdatasetInterface` class
+(`python.observation.ntvdataset.Ntvdataset` methods).
 """
 
 # %% declarations
@@ -26,28 +26,28 @@ from observation.util import util
 from json_ntv import NtvList, Ntv
 
 #import sys
-#print("In module ilist_interface sys.path[0], __package__ ==", sys.path[0], __package__)
-#print("In module ilist_interface __package__, __name__ ==", __package__, __name__)
+#print("In module ntvdataset_interface sys.path[0], __package__ ==", sys.path[0], __package__)
+#print("In module ntvdataset_interface __package__, __name__ ==", __package__, __name__)
 
 
-class IlistError(Exception):
-    ''' Ilist Exception'''
+class NtvdatasetError(Exception):
+    ''' Ntvdataset Exception'''
     # pass
 
 
-class IlistInterface:
-    '''this class includes Ilist methods :
+class NtvdatasetInterface:
+    '''this class includes Ntvdataset methods :
 
-    - `IlistInterface.json`
-    - `IlistInterface.plot`
-    - `IlistInterface.to_obj`
-    - `IlistInterface.to_csv`
-    - `IlistInterface.to_file`
-    - `IlistInterface.to_xarray`
-    - `IlistInterface.to_dataframe`
-    - `IlistInterface.view`
-    - `IlistInterface.vlist`
-    - `IlistInterface.voxel`
+    - `NtvdatasetInterface.json`
+    - `NtvdatasetInterface.plot`
+    - `NtvdatasetInterface.to_obj`
+    - `NtvdatasetInterface.to_csv`
+    - `NtvdatasetInterface.to_file`
+    - `NtvdatasetInterface.to_xarray`
+    - `NtvdatasetInterface.to_dataframe`
+    - `NtvdatasetInterface.view`
+    - `NtvdatasetInterface.vlist`
+    - `NtvdatasetInterface.voxel`
     '''
 
     def json(self, **kwargs):
@@ -258,7 +258,7 @@ class IlistInterface:
         - **fullvar** : boolean (default True) - if True and modecodec='optimize, 
         variable index is with a full codec
         - **geojson** : boolean (default False) - geojson for LocationValue if True
-        - **id** : integer (default None) - Observation.id if Ilist is attached to an Observation
+        - **id** : integer (default None) - Observation.id if Ntvdataset is attached to an Observation
 
         *Returns* : string, bytes or dict'''
         option = {'modecodec': 'optimize', 'encoded': False,
@@ -276,7 +276,7 @@ class IlistInterface:
                 lis[name] = dicval
         elif option['modecodec'] == 'ndjson':
             if not option['id']:
-                raise IlistError("an  id is necessary for 'ndjson'")                
+                raise NtvdatasetError("an  id is necessary for 'ndjson'")                
             lis = []
             for rec in self:
                 lis.append({ES.id: option[ES.id]} | 
@@ -328,7 +328,7 @@ class IlistInterface:
         *Returns* : DataArray '''
         option = {'dtype': None} | kwargs
         if not self.consistent:
-            raise IlistError("Ilist not consistent")
+            raise NtvdatasetError("Ntvdataset not consistent")
         if idxname is None or idxname == []:
             idxname = self.primaryname
         ilf = self.full(idxname=idxname, varname=varname, fillvalue=fillvalue,
@@ -396,7 +396,7 @@ class IlistInterface:
         if varname is None and self.lvarname:
             varname = self.lvarname[0]
         if len(idxname) > 3:
-            raise IlistError('number of idx > 3')
+            raise NtvdatasetError('number of idx > 3')
         if len(idxname) == 2:
             self.addindex(Ntvfield('null', ' ', keys=[0]*len(self)))
             idxname += [' ']

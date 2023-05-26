@@ -12,12 +12,12 @@ from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 import datetime
 from itertools import product
-from observation import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue, Ilist, Ntvfield, ES, util
+from observation import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue, Ntvdataset, Ntvfield, ES, util
 from test_obs import dat3, loc3, prop2
 from ntv import Ntv, NtvSingle, NtvList
 
 
-class Test_iindex(unittest.TestCase):
+class Test_Ntvfield(unittest.TestCase):
 
     def test_init_unitaire(self):
         idx = Ntvfield()
@@ -54,13 +54,13 @@ class Test_iindex(unittest.TestCase):
         self.assertTrue(idx == idx2 == idx3)
         self.assertTrue(isinstance(idx.codec[0], DatationValue))
         self.assertTrue(idx.values[3] == DatationValue(name='ty'))
-        idx = Ntvfield(['er', 'rt', Ilist()], 'result', [0, 1, 2, 2])
-        idx2 = Ntvfield.ext(['er', 'rt', Ilist(), Ilist()], 'result')
-        idx3 = Ntvfield.dic({'result': ['er', 'rt', Ilist(), Ilist()]})
+        idx = Ntvfield(['er', 'rt', Ntvdataset()], 'result', [0, 1, 2, 2])
+        idx2 = Ntvfield.ext(['er', 'rt', Ntvdataset(), Ntvdataset()], 'result')
+        idx3 = Ntvfield.dic({'result': ['er', 'rt', Ntvdataset(), Ntvdataset()]})
         self.assertTrue(idx == idx2 == idx3)
         if ES.def_clsName:
             self.assertTrue(isinstance(idx.codec[0], NamedValue))
-        self.assertTrue(idx.values[3].value == Ilist())
+        self.assertTrue(idx.values[3].value == Ntvdataset())
         self.assertTrue(Ntvfield.obj(
             [1, 2, 3], typevalue=None) == Ntvfield([1, 2, 3]))
         self.assertTrue(Ntvfield(codec=[True], lendefault=3).val == [
@@ -96,7 +96,7 @@ class Test_iindex(unittest.TestCase):
         idx = Ntvfield.ntv(['er', 2, [1, 2]])
         self.assertTrue(idx.infos == {'lencodec': 3, 'mincodec': 3, 'maxcodec': 3,
                                       'typecodec': 'complete', 'ratecodec': 0.0})
-        idx2 = Ntvfield.ntv({'result': ['er', Ilist(), Ilist()]} )
+        idx2 = Ntvfield.ntv({'result': ['er', Ntvdataset(), Ntvdataset()]} )
         self.assertTrue(idx2.infos == {'lencodec': 2, 'mincodec': 2, 'maxcodec': 3,
                                        'typecodec': 'default', 'ratecodec': 1.0})
         idx2 = Ntvfield()
@@ -204,9 +204,9 @@ class Test_iindex(unittest.TestCase):
         residx = [[], ['er', '2', 'er', str([1, 2])]]
         for idx, res in zip(testidx, residx):
             self.assertEqual(idx.vlist(str), res)
-        '''il = Ilist.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
+        '''il = Ntvdataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
         idx = Ntvfield.ntv([il, il])
-        self.assertEqual(idx.vlist(func=Ilist.to_obj, extern=False, encoded=False)[0][0],
+        self.assertEqual(idx.vlist(func=Ntvdataset.to_obj, extern=False, encoded=False)[0][0],
                          ['er'])
         idx = Ntvfield.ntv({'datation::datetime': [{'date1': '2021-02-04T11:05:00+00:00'},
                                        '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})

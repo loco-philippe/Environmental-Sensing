@@ -14,7 +14,7 @@ from test_obs import dat3, loc3, prop2, _res, lyon, paris, pol1, \
     pol75, t1, pprop_pm25, t2, s1, t1n, matin, travail, pt1, tnull, pprop_pm10, \
     prop_pm25, pol2, pol13, aprem
 from itertools import product
-from observation import Observation, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Ntvfield, ES, util
+from observation import Observation, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ntvdataset, Ntvfield, ES, util
 
 
 # couverture tests (True if non passed)----------------------------------------
@@ -31,11 +31,11 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ESValue.valClassName('test'), 'NamedValue')
         self.assertEqual(ESValue.valClassName({"truc": 21}), 'NamedValue')
         self.assertEqual(ESValue.valClassName(
-            {"truc": Ilist()}), 'ExternValue')
+            {"truc": Ntvdataset()}), 'ExternValue')
         self.assertEqual(ESValue.valClassName(NamedValue("cou")), 'NamedValue')
         self.assertEqual(ESValue.valClassName(
             LocationValue(name="cou")), 'LocationValue')
-        self.assertEqual(ESValue.valClassName(Ilist()), 'ExternValue')
+        self.assertEqual(ESValue.valClassName(Ntvdataset()), 'ExternValue')
         self.assertEqual(ESValue.valClassName(Observation()), 'ExternValue')
         #self.assertEqual(ESValue.valClassName(datetime.datetime(2020,1,1)), 'datetime')
         self.assertEqual(ESValue.valClassName(
@@ -133,11 +133,11 @@ class TestObsUnitaire(unittest.TestCase):
             PropertyValue.nullValue()), PropertyValue())
 
     def test_externValue(self):
-        il = Ilist()
+        il = Ntvdataset()
         self.assertTrue(ExternValue.from_obj({'truc': il}).value == il ==
                         ExternValue(il).value ==
-                        ExternValue.from_obj({'ilist': {'truc': il}}).value ==
-                        ExternValue.from_obj(json.dumps({"ilist": {"truc": il.json()}})).value)
+                        ExternValue.from_obj({'ntvdataset': {'truc': il}}).value ==
+                        ExternValue.from_obj(json.dumps({"ntvdataset": {"truc": il.json()}})).value)
         """dic={'observation': {'type': 'observation',
           'datation': [{'date1': datetime.datetime(2021, 2, 4, 11, 5, tzinfo=datetime.timezone.utc)},
            datetime.datetime(2021, 7, 4, 10, 5, tzinfo=datetime.timezone.utc),
@@ -254,8 +254,8 @@ class TestObsUnitaire(unittest.TestCase):
         self.assertEqual(ESValue.from_obj(
             {"truc": 21}, simple=False).json(encoded=False), {"truc": 21})
         self.assertEqual(ESValue.from_obj(
-            {"truc": Ilist()}, simple=False).value.__class__.__name__, 'Ilist')
-        #self.assertEqual(ESValue.from_obj(Ilist()).value.__class__.__name__, 'Ilist')
+            {"truc": Ntvdataset()}, simple=False).value.__class__.__name__, 'Ntvdataset')
+        #self.assertEqual(ESValue.from_obj(Ntvdataset()).value.__class__.__name__, 'Ntvdataset')
         self.assertEqual(ESValue.from_obj(
             'test', 'NamedValue'), NamedValue('test'))
         self.assertEqual(ESValue.from_obj(

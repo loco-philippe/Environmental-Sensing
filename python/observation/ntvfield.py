@@ -9,7 +9,7 @@ The `python.observation.ntvfield` module contains the `Ntvfield` class.
 Documentation is available in other pages :
 
 - The Json Standard for Ntvfield is defined [here](https://github.com/loco-philippe/
-Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf)
+Environmental-Sensing/tree/main/documentation/NtvdatasetJSON-Standard.pdf)
 - The concept of 'indexed list' is described in
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 - The non-regression tests are at [this page](https://github.com/loco-philippe/

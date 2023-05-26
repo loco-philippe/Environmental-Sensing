@@ -16,7 +16,7 @@ from itertools import product
 #from datetime import datetime
 #from pymongo import MongoClient
 from observation import Observation, NamedValue, DatationValue, LocationValue,\
-    PropertyValue, ExternValue, ESValue, Ilist, Ntvfield, ES, util, TimeSlot
+    PropertyValue, ExternValue, ESValue, Ntvdataset, Ntvfield, ES, util, TimeSlot
 
 # couverture tests (True if non passed)----------------------------------------
 simple = False  # False
@@ -381,7 +381,7 @@ class TestExamples(unittest.TestCase):
         # print(ob_init.json)
         # operation phase (sensor) -> regularly
         res = 25
-        il_operat = Ilist.dic({'res': [res]})
+        il_operat = Ntvdataset.dic({'res': [res]})
         # if the payload is character payload
         payload1 = il_operat.json(encoded=True)
         #print(len(payload1), payload1)
@@ -389,8 +389,8 @@ class TestExamples(unittest.TestCase):
         payload2 = il_operat.json(encoded=True, encode_format='cbor')
         # print(len(payload2)) # 10 bytes
         # data decoding in the server
-        il_receive1 = Ilist.obj(payload1)
-        il_receive2 = Ilist.obj(payload2)
+        il_receive1 = Ntvdataset.obj(payload1)
+        il_receive2 = Ntvdataset.obj(payload2)
         date_receive = datetime.datetime(2021, 6, 4, 12, 5)
         # print(ob_receive1 == ob_receive2 == ob_sensor)   # it's True !!
         self.assertTrue(il_receive1 == il_receive2 ==
@@ -406,10 +406,10 @@ class TestExamples(unittest.TestCase):
         prop2 = {"prp": "PM10"}
         ob_init = Observation.obj(
             {'data': [['location', [coord]], ['property', [prop1, prop2]]]})
-        # sensor : Ilist acquisition
-        '''il_sensor = Ilist.obj([['res', [], 0], ['datation', []], 
+        # sensor : Ntvdataset acquisition
+        '''il_sensor = Ntvdataset.obj([['res', [], 0], ['datation', []], 
                            ['property', [prop1, prop2], []]])'''
-        il_sensor = Ilist.obj([['res', [], -1], ['datation', []],
+        il_sensor = Ntvdataset.obj([['res', [], -1], ['datation', []],
                                ['property', []]])
         property = [prop1, prop2]
         for i in range(6):  # simule une boucle de mesure
@@ -425,7 +425,7 @@ class TestExamples(unittest.TestCase):
         payload = il_sensor.json(encoded=True, encode_format='cbor')
         # print(len(payload)) # 88 bytes (11 bytes/measure)
         # data decoding in the server
-        il_receive = Ilist.obj(payload, reindex=False)
+        il_receive = Ntvdataset.obj(payload, reindex=False)
         self.assertTrue(il_receive == il_sensor)   # it's True !!
         il_receive.nindex('property').setcodeclist(property)
         # complete observation
@@ -444,7 +444,7 @@ class TestObservation(unittest.TestCase):
     '''Unit tests for `ES.observation.Obs` '''
 
     def test_obs_creation_copy(self):
-        listob = [Observation(), Observation(listidx=Ilist.obj([1, 2, 3])),
+        listob = [Observation(), Observation(listidx=Ntvdataset.obj([1, 2, 3])),
                   Observation.from_obj({'data': [1, 2, 3]}),
                   Observation.obj({'data': [1, 2, 3]}),
                   Observation.obj({'data': [1, 2, 3], 'param':{'date': '21-12'}}),
@@ -453,7 +453,7 @@ class TestObservation(unittest.TestCase):
                   Observation.std(result=[10, 20], datation='dat1',
                                   location=['loc1', 'loc2'], property=[None], name='truc'),
                   Observation(
-                      Ilist.obj([list(dat1), list(loc1), list(prop3), list(_res(3))]), name='truc'),
+                      Ntvdataset.obj([list(dat1), list(loc1), list(prop3), list(_res(3))]), name='truc'),
                   Observation.obj({'data': [list(loc3), list(dat3)+[0], list(prop2),
                                             ['result', [{'file': 'truc', 'path': 'ertert'}, 1, 2, 3,
                                                         4, ['truc', 'rt']]]]})]
@@ -480,7 +480,7 @@ class TestObservation(unittest.TestCase):
         self.assertTrue(ob == ob1 == ob2)
 
     def test_obs_loc_iloc_maj(self):
-        ob = Observation(Ilist.obj([list(dat3), list(loc3)+[0], list(prop2),
+        ob = Observation(Ntvdataset.obj([list(dat3), list(loc3)+[0], list(prop2),
                                     list(_res(6)) + [-1]]), param=truc_mach)
         self.assertTrue([3] ==
                         ob.loc([datetime.datetime.fromisoformat(dat3[1][1]), loc3[1][1],
@@ -507,7 +507,7 @@ class TestObservation(unittest.TestCase):
                          [paris, lyon, marseille])
         self.assertEqual(ob.nindex('datation').vSimple(), [t1, t2, t3])
         #ob = Observation.dic(dict((dat3, dpt2)), param=truc_mach)
-        ob = Observation(Ilist.obj([list(dat3), list(dpt2)]), param=truc_mach)
+        ob = Observation(Ntvdataset.obj([list(dat3), list(dpt2)]), param=truc_mach)
         self.assertEqual(ob.nindex('location').vSimple()[0], pol1centre)
         ob = Observation.obj(
             {'data': [list(dat3), list(loc3)+[0], list(prop2), list(_res(6)) + [-1]]})
@@ -830,7 +830,7 @@ class TestInterne(unittest.TestCase):
 
     @unittest.skipIf(mongo, "test envoi mongo")
     def test_plot(self):
-        il3 = Ilist.dic({'location': [[0,1], [4.83, 45.76], [5.38, 43.3]],
+        il3 = Ntvdataset.dic({'location': [[0,1], [4.83, 45.76], [5.38, 43.3]],
          'datation': [{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -849,7 +849,7 @@ class TestInterne(unittest.TestCase):
         ob3.plot(line=False, order=[0,2,1])
         ob3.plot(line=True, order=[0,2,1])
         
-        il2 = Ilist.dic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+        il2 = Ntvdataset.dic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -863,7 +863,7 @@ class TestInterne(unittest.TestCase):
         ob2.plot(line=False, order=[1,0])
         ob2.plot(line=True, order=[1,0])
         
-        il2 = Ilist.dic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
+        il2 = Ntvdataset.dic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
          'datation': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -875,7 +875,7 @@ class TestInterne(unittest.TestCase):
         ob2.plot(line=False)
         ob2.plot(line=True)
         
-        il1 = Ilist.dic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+        il1 = Ntvdataset.dic({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],
@@ -885,7 +885,7 @@ class TestInterne(unittest.TestCase):
         ob1.plot(line=True)
         ob1.plot(line=False)
         
-        il1 = Ilist.dic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
+        il1 = Ntvdataset.dic({'location': [[1,2], [4.83, 45.76], [5.38, 43.3]],
          'datation': [[{'date1': '2021-02-04T11:05:00+00:00'},
            '2021-07-04T10:05:00+00:00',
            '2021-05-04T10:05:00+00:00'],

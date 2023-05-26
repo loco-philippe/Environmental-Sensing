@@ -10,7 +10,7 @@ spatial and temporal characteristics associated with measurable or observable
 
 The `Observation` Object is built around three main bricks :
 
-- Ilist Object which deal with indexing,
+- Ntvdataset Object which deal with indexing,
 - ESValue Object which integrate the specificities of environmental data,
 - Tools dedicated to particular domains
 ([Shapely](https://shapely.readthedocs.io/en/stable/manual.html)
@@ -35,18 +35,18 @@ from copy import copy
 import folium
 import cbor2
 
-from observation.ilist import Ilist
+from observation.ntvdataset import Ntvdataset
 from observation.util import util
 from observation.ntvfield_interface import NtvfieldEncoder, CborDecoder
 from observation.esconstante import ES
 from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue, ESValueEncoder
-from observation.ilist_analysis import Analysis
+from observation.ntvdataset_analysis import Analysis
 
 
-class Observation(Ilist):
+class Observation(Ntvdataset):
     """
-    An `Observation` is derived from `observation.Ilist` object.
+    An `Observation` is derived from `observation.Ntvdataset` object.
 
     *Additional attributes (for @property see methods)* :
 
@@ -59,9 +59,9 @@ class Observation(Ilist):
 
     - `Observation.dic`
     - `Observation.std`
-    - `python.observation.ilist.Ilist.obj`
+    - `python.observation.ntvdataset.Ntvdataset.obj`
     - `Observation.from_obj`
-    - `python.observation.ilist.Ilist.from_file`
+    - `python.observation.ntvdataset.Ntvdataset.from_file`
 
     *dynamic value (getters @property)*
 
@@ -75,88 +75,88 @@ class Observation(Ilist):
 
     *dynamic value inherited (getters @property)*
 
-    - `python.observation.ilist.Ilist.extidx`
-    - `python.observation.ilist.Ilist.extidxext`
-    - `python.observation.ilist.Ilist.idxname`
-    - `python.observation.ilist.Ilist.idxlen`
-    - `python.observation.ilist.Ilist.iidx`
-    - `python.observation.ilist.Ilist.keys`
-    - `python.observation.ilist.Ilist.lenindex`
-    - `python.observation.ilist.Ilist.lenidx`
-    - `python.observation.ilist.Ilist.lidx`
-    - `python.observation.ilist.Ilist.lidxrow`
-    - `python.observation.ilist.Ilist.lvar`
-    - `python.observation.ilist.Ilist.lvarrow`
-    - `python.observation.ilist.Ilist.lname`
-    - `python.observation.ilist.Ilist.lunicname`
-    - `python.observation.ilist.Ilist.lunicrow`
-    - `python.observation.ilist.Ilist.setidx`
+    - `python.observation.ntvdataset.Ntvdataset.extidx`
+    - `python.observation.ntvdataset.Ntvdataset.extidxext`
+    - `python.observation.ntvdataset.Ntvdataset.idxname`
+    - `python.observation.ntvdataset.Ntvdataset.idxlen`
+    - `python.observation.ntvdataset.Ntvdataset.iidx`
+    - `python.observation.ntvdataset.Ntvdataset.keys`
+    - `python.observation.ntvdataset.Ntvdataset.lenindex`
+    - `python.observation.ntvdataset.Ntvdataset.lenidx`
+    - `python.observation.ntvdataset.Ntvdataset.lidx`
+    - `python.observation.ntvdataset.Ntvdataset.lidxrow`
+    - `python.observation.ntvdataset.Ntvdataset.lvar`
+    - `python.observation.ntvdataset.Ntvdataset.lvarrow`
+    - `python.observation.ntvdataset.Ntvdataset.lname`
+    - `python.observation.ntvdataset.Ntvdataset.lunicname`
+    - `python.observation.ntvdataset.Ntvdataset.lunicrow`
+    - `python.observation.ntvdataset.Ntvdataset.setidx`
 
     *global value (getters @property)*
 
-    - `python.observation.ilist.Ilist.complete`
-    - `python.observation.ilist.Ilist.consistent`
-    - `python.observation.ilist.Ilist.dimension`
-    - `python.observation.ilist.Ilist.lencomplete`
-    - `python.observation.ilist.Ilist.primary`
-    - `python.observation.ilist.Ilist.zip`
+    - `python.observation.ntvdataset.Ntvdataset.complete`
+    - `python.observation.ntvdataset.Ntvdataset.consistent`
+    - `python.observation.ntvdataset.Ntvdataset.dimension`
+    - `python.observation.ntvdataset.Ntvdataset.lencomplete`
+    - `python.observation.ntvdataset.Ntvdataset.primary`
+    - `python.observation.ntvdataset.Ntvdataset.zip`
 
     *selecting - infos methods*
 
-    - `python.observation.ilist.Ilist.couplingmatrix`
-    - `python.observation.ilist.Ilist.idxrecord`
-    - `python.observation.ilist.Ilist.indexinfos`
-    - `python.observation.ilist.Ilist.indicator`
-    - `python.observation.ilist.Ilist.iscanonorder`
-    - `python.observation.ilist.Ilist.isinrecord`
-    - `python.observation.ilist.Ilist.keytoval`
-    - `python.observation.ilist.Ilist.loc`
-    - `python.observation.ilist.Ilist.nindex`
-    - `python.observation.ilist.Ilist.record`
-    - `python.observation.ilist.Ilist.recidx`
-    - `python.observation.ilist.Ilist.recvar`
-    - `python.observation.ilist.Ilist.valtokey`
+    - `python.observation.ntvdataset.Ntvdataset.couplingmatrix`
+    - `python.observation.ntvdataset.Ntvdataset.idxrecord`
+    - `python.observation.ntvdataset.Ntvdataset.indexinfos`
+    - `python.observation.ntvdataset.Ntvdataset.indicator`
+    - `python.observation.ntvdataset.Ntvdataset.iscanonorder`
+    - `python.observation.ntvdataset.Ntvdataset.isinrecord`
+    - `python.observation.ntvdataset.Ntvdataset.keytoval`
+    - `python.observation.ntvdataset.Ntvdataset.loc`
+    - `python.observation.ntvdataset.Ntvdataset.nindex`
+    - `python.observation.ntvdataset.Ntvdataset.record`
+    - `python.observation.ntvdataset.Ntvdataset.recidx`
+    - `python.observation.ntvdataset.Ntvdataset.recvar`
+    - `python.observation.ntvdataset.Ntvdataset.valtokey`
 
     *add - update methods*
 
-    - `python.observation.ilist.Ilist.add`
-    - `python.observation.ilist.Ilist.addindex`
-    - `python.observation.ilist.Ilist.append`
+    - `python.observation.ntvdataset.Ntvdataset.add`
+    - `python.observation.ntvdataset.Ntvdataset.addindex`
+    - `python.observation.ntvdataset.Ntvdataset.append`
     - `Observation.appendObs`
-    - `python.observation.ilist.Ilist.delindex`
-    - `python.observation.ilist.Ilist.delrecord`
-    - `python.observation.ilist.Ilist.renameindex`
-    - `python.observation.ilist.Ilist.setname`
-    - `python.observation.ilist.Ilist.updateindex`
+    - `python.observation.ntvdataset.Ntvdataset.delindex`
+    - `python.observation.ntvdataset.Ntvdataset.delrecord`
+    - `python.observation.ntvdataset.Ntvdataset.renameindex`
+    - `python.observation.ntvdataset.Ntvdataset.setname`
+    - `python.observation.ntvdataset.Ntvdataset.updateindex`
 
     *structure management - methods*
 
-    - `python.observation.ilist.Ilist.applyfilter`
-    - `python.observation.ilist.Ilist.coupling`
-    - `python.observation.ilist.Ilist.full`
-    - `python.observation.ilist.Ilist.getduplicates`
-    - `python.observation.ilist.Ilist.merge`
-    - `python.observation.ilist.Ilist.reindex`
-    - `python.observation.ilist.Ilist.reorder`
-    - `python.observation.ilist.Ilist.setfilter`
-    - `python.observation.ilist.Ilist.sort`
-    - `python.observation.ilist.Ilist.swapindex`
-    - `python.observation.ilist.Ilist.setcanonorder`
-    - `python.observation.ilist.Ilist.tostdcodec`
+    - `python.observation.ntvdataset.Ntvdataset.applyfilter`
+    - `python.observation.ntvdataset.Ntvdataset.coupling`
+    - `python.observation.ntvdataset.Ntvdataset.full`
+    - `python.observation.ntvdataset.Ntvdataset.getduplicates`
+    - `python.observation.ntvdataset.Ntvdataset.merge`
+    - `python.observation.ntvdataset.Ntvdataset.reindex`
+    - `python.observation.ntvdataset.Ntvdataset.reorder`
+    - `python.observation.ntvdataset.Ntvdataset.setfilter`
+    - `python.observation.ntvdataset.Ntvdataset.sort`
+    - `python.observation.ntvdataset.Ntvdataset.swapindex`
+    - `python.observation.ntvdataset.Ntvdataset.setcanonorder`
+    - `python.observation.ntvdataset.Ntvdataset.tostdcodec`
 
     *exports methods*
 
     - `Observation.choropleth`
-    - `python.observation.ilist.Ilist.json`
-    - `python.observation.ilist.Ilist.plot`
-    - `python.observation.ilist.Ilist.to_csv`
-    - `python.observation.ilist.Ilist.to_file`
+    - `python.observation.ntvdataset.Ntvdataset.json`
+    - `python.observation.ntvdataset.Ntvdataset.plot`
+    - `python.observation.ntvdataset.Ntvdataset.to_csv`
+    - `python.observation.ntvdataset.Ntvdataset.to_file`
     - `Observation.to_obj`
     - `Observation.to_xarray`
-    - `python.observation.ilist.Ilist.to_dataframe`
-    - `python.observation.ilist.Ilist.view`
-    - `python.observation.ilist.Ilist.vlist`
-    - `python.observation.ilist.Ilist.voxel`
+    - `python.observation.ntvdataset.Ntvdataset.to_dataframe`
+    - `python.observation.ntvdataset.Ntvdataset.view`
+    - `python.observation.ntvdataset.Ntvdataset.vlist`
+    - `python.observation.ntvdataset.Ntvdataset.voxel`
     """
 
 # %% constructor
@@ -165,7 +165,7 @@ class Observation(Ilist):
 
         *Parameters*
 
-        - **listidx**  : object (default None) - list of Ntvfield data or Ilist or Observation
+        - **listidx**  : object (default None) - list of Ntvfield data or Ntvdataset or Observation
         - **name**     : string (default None) - Obs name
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
 
@@ -179,7 +179,7 @@ class Observation(Ilist):
             self.analysis = Analysis(self)
             return
 
-        if isinstance(listidx, Ilist):
+        if isinstance(listidx, Ntvdataset):
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.param = param
             self.name = name
@@ -187,9 +187,9 @@ class Observation(Ilist):
             return
 
         if not listidx:
-            Ilist.__init__(self)
+            Ntvdataset.__init__(self)
         else:
-            Ilist.__init__(self, listidx=listidx, reindex=reindex)
+            Ntvdataset.__init__(self, listidx=listidx, reindex=reindex)
         self.name = name
         self.param = param
         return
@@ -207,7 +207,7 @@ class Observation(Ilist):
         - **var** :  int (default None) - row of the variable
         - **name**     : string (default None) - Observation name
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
-        listidx = Ilist.dic(idxdic, typevalue=typevalue)
+        listidx = Ntvdataset.dic(idxdic, typevalue=typevalue)
         return cls(listidx=listidx, name=name, param=param)
 
     @classmethod
@@ -281,7 +281,7 @@ class Observation(Ilist):
         if data and not isinstance(data, (list, dict)):
             raise ObsError('data is not a list and not a dict')
 
-        return cls(listidx=Ilist.obj(data, reindex=reindex, context=context),
+        return cls(listidx=Ntvdataset.obj(data, reindex=reindex, context=context),
                    name=name, param=param)
 
 # %% special
@@ -294,7 +294,7 @@ class Observation(Ilist):
         stro = ''
         if self.name:
             stro = ES.name + ': ' + self.name + '\n'
-        stri = Ilist.__str__(self)
+        stri = Ntvdataset.__str__(self)
         if not stri == '':
             stro += ES.data + ':\n' + stri
         if self.param:
@@ -303,7 +303,7 @@ class Observation(Ilist):
 
     def __hash__(self):
         '''return sum of all hash(Ntvfield)'''
-        return hash(json.dumps(self.param)) + hash(self.name) + Ilist.__hash__(self)
+        return hash(json.dumps(self.param)) + hash(self.name) + Ntvdataset.__hash__(self)
 
 # %% properties
     @property
@@ -482,7 +482,7 @@ class Observation(Ilist):
                 lisobs[ES.param] = self.param
             if self.name:
                 lisobs[ES.name] = self.name
-            return [lisobs] + Ilist.to_obj(self, modecodec='ndjson', id=self.id)
+            return [lisobs] + Ntvdataset.to_obj(self, modecodec='ndjson', id=self.id)
         option2 = option | {'encoded': False, 'encode_format': 'json'}
         dic = {ES.type: ES.obs_classES}
 
@@ -490,7 +490,7 @@ class Observation(Ilist):
             dic[ES.obs_name] = self.name
         if self.param:
             dic[ES.obs_param] = self.param
-        dic[ES.obs_data] = Ilist.to_obj(self, **option2)
+        dic[ES.obs_data] = Ntvdataset.to_obj(self, **option2)
         if option["json_param"] and self.param:
             dic[ES.obs_param] = self.param
         dic |= self._info(**option)
@@ -532,7 +532,7 @@ class Observation(Ilist):
         - **kwargs** : parameter for lisfunc
 
         *Returns* : DataArray '''
-        return Ilist.to_xarray(self, info=info, idxname=idxname, varname=varname,
+        return Ntvdataset.to_xarray(self, info=info, idxname=idxname, varname=varname,
                                fillvalue=fillvalue, fillextern=fillextern,
                                lisfunc=lisfunc, name=self.name, numeric=numeric,
                                npdtype=npdtype, attrs=self.param, **kwargs)

@@ -438,7 +438,7 @@ class ESSearch:
 
         *Parameters*
 
-        - **path** :  str (required argument) - name of an IIndex, which corresponds to an Ilist column name, or name of a metadata element.
+        - **path** :  str (required argument) - name of an IIndex, which corresponds to an Ntvdataset column name, or name of a metadata element.
                     (ex: 'datation', 'location', 'property')
 
         - **operand** :  - (default None) - Object used for the comparison.

@@ -4,7 +4,7 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ilist_analysis` module contains the `Analysis` class.
+The `python.observation.ntvdataset_analysis` module contains the `Analysis` class.
 
 """
 
@@ -18,7 +18,7 @@ from observation.util import util
 
 class Analysis:
     '''This class analyses relationships included in a tabular object 
-    (Pandas DataFrame, Ilist, Observation, list of list).
+    (Pandas DataFrame, Ntvdataset, Observation, list of list).
 
     The Analysis class includes the following functions:
     - identification and qualification of the relationships between Ntvfield,
@@ -27,7 +27,7 @@ class Analysis:
 
     *Attributes* :
 
-    - **iobj** : Ilist or Observation associated to the Analysis object
+    - **iobj** : Ntvdataset or Observation associated to the Analysis object
     - **hashi** : internal Id of the iobj
     - **matrix** : square matrix with relationship properties between two fields
     - **infos** : list of characteristics (matrix synthesis)
@@ -54,17 +54,17 @@ class Analysis:
 
          *Parameters*
 
-        - **iobj** : object - tabular object (Pandas DataFrame, Ilist, Observation, 
+        - **iobj** : object - tabular object (Pandas DataFrame, Ntvdataset, Observation, 
         list of list)
 
-        Note: The Analysis data can be update only if tabular object is Ilist or 
+        Note: The Analysis data can be update only if tabular object is Ntvdataset or 
         Observation.
         '''
-        if iobj.__class__.__name__ in ('Ilist', 'Observation'):
+        if iobj.__class__.__name__ in ('Ntvdataset', 'Observation'):
             self.iobj = iobj
         else:
-            from ilist import Ilist
-            self.iobj = Ilist.obj(iobj)
+            from ntvdataset import Ntvdataset
+            self.iobj = Ntvdataset.obj(iobj)
         self.hashi = None
         self.matrix = None
         self.infos = None

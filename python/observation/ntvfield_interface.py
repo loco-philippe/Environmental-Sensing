@@ -43,13 +43,13 @@ class NtvfieldError(Exception):
 
 
 class NtvfieldEncoder(json.JSONEncoder):
-    """new json encoder for Ntvfield and Ilist"""
+    """new json encoder for Ntvfield and Ntvdataset"""
 
     def default(self, o):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
         option = {'encoded': False, 'encode_format': 'json'}
-        if o.__class__.__name__ in ('Ilist', 'TimeSlot'):
+        if o.__class__.__name__ in ('Ntvdataset', 'TimeSlot'):
             return o.json(**option)
         if issubclass(o.__class__, ESValue):
             return o.json(**option)
@@ -305,7 +305,7 @@ class NtvfieldInterface:
         - **keyslist** : list (default = None) - int keys to encode, None if no keys
         - **name** : string (default = None) - name to encode, None if no name
         - **typevalue** : string (default None) - type to convert values
-        - **parent** : int (default ES.nullparent) - Ilist index linked to
+        - **parent** : int (default ES.nullparent) - Ntvdataset index linked to
         - **listunic** : boolean (default False) - if False, when len(result)=1 return value not list
         - **codecval** : boolean (default False) - if True, only list of codec values is included
         - **simpleval** : boolean (default False) - if True, only value (without name) is included
@@ -537,7 +537,7 @@ class NtvfieldInterface:
 
         *Returns* : Pandas Series, Pandas DataFrame, Numpy Array'''
         if len(self) == 0:
-            raise NtvfieldError("Ilist is empty")
+            raise NtvfieldError("Ntvdataset is empty")
         if npdtype:
             npdtype = np.dtype(npdtype)
         else:

@@ -14,14 +14,14 @@ from typing import Dict
 def _classval():
     import datetime
     from observation import LocationValue, DatationValue, PropertyValue, \
-        NamedValue, ExternValue, TimeSlot, Observation, Ilist, Ntvfield
+        NamedValue, ExternValue, TimeSlot, Observation, Ntvdataset, Ntvfield
     return {ES.obs_clsName: Observation,
             ES.dat_clsName: DatationValue,
             ES.loc_clsName: LocationValue,
             ES.prp_clsName: PropertyValue,
             ES.ext_clsName: ExternValue,
             ES.nam_clsName: NamedValue,
-            ES.ili_clsName: Ilist,
+            ES.ili_clsName: Ntvdataset,
             ES.iin_clsName: Ntvfield,
             # ES.coo_clsName: coordinate,
             ES.tim_clsName: datetime.datetime,
@@ -454,7 +454,7 @@ class Es:
         self.prp_clsName = 'PropertyValue'
         self.ext_clsName = 'ExternValue'
         self.nam_clsName = 'NamedValue'
-        self.ili_clsName = 'Ilist'
+        self.ili_clsName = 'Ntvdataset'
         self.iin_clsName = 'Ntvfield'
         self.coo_clsName = 'coordinate'
         self.tim_clsName = 'datetime'

@@ -7,8 +7,8 @@ Created on Sat Jul 30 19:03:20 2022
 import unittest
 from observation import Es
 from test_esvalue import TestObsUnitaire
-from test_ilist import Test_Ilist
-from test_iindex import Test_iindex
+from test_ntvdataset import Test_Ntvdataset
+from test_ntvfield import Test_Ntvfield
 
 if __name__ == '__main__':
     ES = Es(False)

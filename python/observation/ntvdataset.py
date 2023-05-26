@@ -4,23 +4,23 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ilist` module contains the `Ilist` class.
+The `python.observation.ntvdataset` module contains the `Ntvdataset` class.
 
 Documentation is available in other pages :
 
-- The Json Standard for Ilist is define
-[here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf)
+- The Json Standard for Ntvdataset is define
+[here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/NtvdatasetJSON-Standard.pdf)
 - The concept of 'indexed list' is describe in
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 - The non-regression test are at
-[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_ilist.py)
-- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Ilist)
+[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_ntvdataset.py)
+- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Ntvdataset)
  are :
-    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_creation.ipynb)
-    - [variable](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_variable.ipynb)
-    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_update.ipynb)
-    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_structure.ipynb)
-    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ilist/Ilist_structure-analysis.ipynb)
+    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_creation.ipynb)
+    - [variable](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_variable.ipynb)
+    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_update.ipynb)
+    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_structure.ipynb)
+    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_structure-analysis.ipynb)
 
 ---
 """
@@ -38,15 +38,15 @@ from observation.esconstante import ES
 from observation.ntvfield import Ntvfield
 from observation.ntvfield_interface import NtvfieldInterface, CborDecoder
 from observation.util import util
-from observation.ilist_interface import IlistInterface, IlistError
-from observation.ilist_structure import IlistStructure
-from observation.ilist_analysis import Analysis
+from observation.ntvdataset_interface import NtvdatasetInterface, NtvdatasetError
+from observation.ntvdataset_structure import NtvdatasetStructure
+from observation.ntvdataset_analysis import Analysis
 from json_ntv.ntv import Ntv
 
-class Ilist(IlistStructure, IlistInterface):
+class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
     # %% intro
     '''
-    An `Ilist` is a representation of an indexed list.
+    An `Ntvdataset` is a representation of an indexed list.
 
     *Attributes (for @property see methods)* :
 
@@ -57,121 +57,121 @@ class Ilist(IlistStructure, IlistInterface):
 
     *constructor (@classmethod))*
 
-    - `Ilist.dic`
-    - `Ilist.ext`
-    - `Ilist.obj`
-    - `Ilist.from_csv`
-    - `Ilist.from_ntv`
-    - `Ilist.from_obj`
-    - `Ilist.from_file`
-    - `Ilist.merge`
+    - `Ntvdataset.dic`
+    - `Ntvdataset.ext`
+    - `Ntvdataset.obj`
+    - `Ntvdataset.from_csv`
+    - `Ntvdataset.from_ntv`
+    - `Ntvdataset.from_obj`
+    - `Ntvdataset.from_file`
+    - `Ntvdataset.merge`
 
     *dynamic value - module analysis (getters @property)*
 
-    - `Ilist.extidx`
-    - `Ilist.extidxext`
-    - `Ilist.groups`
-    - `Ilist.idxname`
-    - `Ilist.idxlen`
-    - `Ilist.iidx`
-    - `Ilist.lenidx`
-    - `Ilist.lidx`
-    - `Ilist.lidxrow`
-    - `Ilist.lisvar`
-    - `Ilist.lvar`
-    - `Ilist.lvarname`
-    - `Ilist.lvarrow`
-    - `Ilist.lunicname`
-    - `Ilist.lunicrow`
-    - `Ilist.primaryname`
-    - `Ilist.setidx`
-    - `Ilist.zip`
+    - `Ntvdataset.extidx`
+    - `Ntvdataset.extidxext`
+    - `Ntvdataset.groups`
+    - `Ntvdataset.idxname`
+    - `Ntvdataset.idxlen`
+    - `Ntvdataset.iidx`
+    - `Ntvdataset.lenidx`
+    - `Ntvdataset.lidx`
+    - `Ntvdataset.lidxrow`
+    - `Ntvdataset.lisvar`
+    - `Ntvdataset.lvar`
+    - `Ntvdataset.lvarname`
+    - `Ntvdataset.lvarrow`
+    - `Ntvdataset.lunicname`
+    - `Ntvdataset.lunicrow`
+    - `Ntvdataset.primaryname`
+    - `Ntvdataset.setidx`
+    - `Ntvdataset.zip`
 
     *dynamic value (getters @property)*
 
-    - `Ilist.keys`
-    - `Ilist.iindex`
-    - `Ilist.indexlen`
-    - `Ilist.lenindex`
-    - `Ilist.lname`
-    - `Ilist.tiindex`
-    - `Ilist.typevalue`
+    - `Ntvdataset.keys`
+    - `Ntvdataset.iindex`
+    - `Ntvdataset.indexlen`
+    - `Ntvdataset.lenindex`
+    - `Ntvdataset.lname`
+    - `Ntvdataset.tiindex`
+    - `Ntvdataset.typevalue`
 
     *global value (getters @property)*
 
-    - `Ilist.category`
-    - `Ilist.complete`
-    - `Ilist.consistent`
-    - `Ilist.dimension`
-    - `Ilist.lencomplete`
-    - `Ilist.primary`
-    - `Ilist.secondary`
+    - `Ntvdataset.category`
+    - `Ntvdataset.complete`
+    - `Ntvdataset.consistent`
+    - `Ntvdataset.dimension`
+    - `Ntvdataset.lencomplete`
+    - `Ntvdataset.primary`
+    - `Ntvdataset.secondary`
 
-    *selecting - infos methods (`observation.ilist_structure.IlistStructure`)*
+    *selecting - infos methods (`observation.ntvdataset_structure.NtvdatasetStructure`)*
 
-    - `Ilist.couplingmatrix`
-    - `Ilist.idxrecord`
-    - `Ilist.indexinfos`
-    - `Ilist.indicator`
-    - `Ilist.iscanonorder`
-    - `Ilist.isinrecord`
-    - `Ilist.keytoval`
-    - `Ilist.loc`
-    - `Ilist.nindex`
-    - `Ilist.record`
-    - `Ilist.recidx`
-    - `Ilist.recvar`
-    - `Ilist.tree`
-    - `Ilist.valtokey`
+    - `Ntvdataset.couplingmatrix`
+    - `Ntvdataset.idxrecord`
+    - `Ntvdataset.indexinfos`
+    - `Ntvdataset.indicator`
+    - `Ntvdataset.iscanonorder`
+    - `Ntvdataset.isinrecord`
+    - `Ntvdataset.keytoval`
+    - `Ntvdataset.loc`
+    - `Ntvdataset.nindex`
+    - `Ntvdataset.record`
+    - `Ntvdataset.recidx`
+    - `Ntvdataset.recvar`
+    - `Ntvdataset.tree`
+    - `Ntvdataset.valtokey`
 
-    *add - update methods (`observation.ilist_structure.IlistStructure`)*
+    *add - update methods (`observation.ntvdataset_structure.NtvdatasetStructure`)*
 
-    - `Ilist.add`
-    - `Ilist.addindex`
-    - `Ilist.append`
-    - `Ilist.delindex`
-    - `Ilist.delrecord`
-    - `Ilist.orindex`
-    - `Ilist.renameindex`
-    - `Ilist.setvar`
-    - `Ilist.setname`
-    - `Ilist.updateindex`
+    - `Ntvdataset.add`
+    - `Ntvdataset.addindex`
+    - `Ntvdataset.append`
+    - `Ntvdataset.delindex`
+    - `Ntvdataset.delrecord`
+    - `Ntvdataset.orindex`
+    - `Ntvdataset.renameindex`
+    - `Ntvdataset.setvar`
+    - `Ntvdataset.setname`
+    - `Ntvdataset.updateindex`
 
-    *structure management - methods (`observation.ilist_structure.IlistStructure`)*
+    *structure management - methods (`observation.ntvdataset_structure.NtvdatasetStructure`)*
 
-    - `Ilist.applyfilter`
-    - `Ilist.coupling`
-    - `Ilist.full`
-    - `Ilist.getduplicates`
-    - `Ilist.mix`
-    - `Ilist.merging`
-    - `Ilist.reindex`
-    - `Ilist.reorder`
-    - `Ilist.setfilter`
-    - `Ilist.sort`
-    - `Ilist.swapindex`
-    - `Ilist.setcanonorder`
-    - `Ilist.tostdcodec`
+    - `Ntvdataset.applyfilter`
+    - `Ntvdataset.coupling`
+    - `Ntvdataset.full`
+    - `Ntvdataset.getduplicates`
+    - `Ntvdataset.mix`
+    - `Ntvdataset.merging`
+    - `Ntvdataset.reindex`
+    - `Ntvdataset.reorder`
+    - `Ntvdataset.setfilter`
+    - `Ntvdataset.sort`
+    - `Ntvdataset.swapindex`
+    - `Ntvdataset.setcanonorder`
+    - `Ntvdataset.tostdcodec`
 
-    *exports methods (`observation.ilist_interface.IlistInterface`)*
+    *exports methods (`observation.ntvdataset_interface.NtvdatasetInterface`)*
 
-    - `Ilist.json`
-    - `Ilist.plot`
-    - `Ilist.to_obj`
-    - `Ilist.to_csv`
-    - `Ilist.to_dataframe`
-    - `Ilist.to_file`
-    - `Ilist.to_ntv`
-    - `Ilist.to_obj`
-    - `Ilist.to_xarray`
-    - `Ilist.view`
-    - `Ilist.vlist`
-    - `Ilist.voxel`
+    - `Ntvdataset.json`
+    - `Ntvdataset.plot`
+    - `Ntvdataset.to_obj`
+    - `Ntvdataset.to_csv`
+    - `Ntvdataset.to_dataframe`
+    - `Ntvdataset.to_file`
+    - `Ntvdataset.to_ntv`
+    - `Ntvdataset.to_obj`
+    - `Ntvdataset.to_xarray`
+    - `Ntvdataset.view`
+    - `Ntvdataset.vlist`
+    - `Ntvdataset.voxel`
     '''
 
     def __init__(self, listidx=None, reindex=True):
         '''
-        Ilist constructor.
+        Ntvdataset constructor.
 
         *Parameters*
 
@@ -181,7 +181,7 @@ class Ilist(IlistStructure, IlistInterface):
         self.name = self.__class__.__name__
         self.analysis = Analysis(self)
         self.lindex = []
-        if listidx.__class__.__name__ in ['Ilist', 'Observation']:
+        if listidx.__class__.__name__ in ['Ntvdataset', 'Observation']:
             self.lindex = [copy(idx) for idx in listidx.lindex]
             return
         if not listidx:
@@ -195,7 +195,7 @@ class Ilist(IlistStructure, IlistInterface):
     @classmethod
     def dic(cls, idxdic=None, typevalue=ES.def_clsName, reindex=True):
         '''
-        Ilist constructor (external dictionnary).
+        Ntvdataset constructor (external dictionnary).
 
         *Parameters*
 
@@ -204,17 +204,17 @@ class Ilist(IlistStructure, IlistInterface):
         if not idxdic:
             return cls.ext(idxval=None, idxname=None, typevalue=typevalue,
                            reindex=reindex)
-        if isinstance(idxdic, Ilist):
+        if isinstance(idxdic, Ntvdataset):
             return idxdic
         if not isinstance(idxdic, dict):
-            raise IlistError("idxdic not dict")
+            raise NtvdatasetError("idxdic not dict")
         return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
                        typevalue=typevalue, reindex=reindex)
 
     @classmethod
     def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, reindex=True):
         '''
-        Ilist constructor (external index).
+        Ntvdataset constructor (external index).
 
         *Parameters*
 
@@ -228,7 +228,7 @@ class Ilist(IlistStructure, IlistInterface):
         val = [ [idx] if not isinstance(idx, list) else idx for idx in idxval]
         lenval = [len(idx) for idx in val]
         if lenval and max(lenval) != min(lenval):
-            raise IlistError('the length of Ntvfield are different')
+            raise NtvdatasetError('the length of Ntvfield are different')
         length = lenval[0] if lenval else 0
         if idxname is None:
             idxname = [None] * len(val)
@@ -243,14 +243,14 @@ class Ilist(IlistStructure, IlistInterface):
         return cls(lindex, reindex=False)
 
     @classmethod
-    def from_csv(cls, filename='ilist.csv', header=True, nrow=None,
+    def from_csv(cls, filename='ntvdataset.csv', header=True, nrow=None,
                  optcsv={'quoting': csv.QUOTE_NONNUMERIC}, dtype=ES.def_dtype):
         '''
-        Ilist constructor (from a csv file). Each column represents index values.
+        Ntvdataset constructor (from a csv file). Each column represents index values.
 
         *Parameters*
 
-        - **filename** : string (default 'ilist.csv'), name of the file to read
+        - **filename** : string (default 'ntvdataset.csv'), name of the file to read
         - **header** : boolean (default True). If True, the first raw is dedicated to names
         - **nrow** : integer (default None). Number of row. If None, all the row else nrow
         - **dtype** : list of string (default None) - data type for each column (default str)
@@ -319,7 +319,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     @classmethod
     def ntv(cls, ntv_value, reindex=True):
-        '''Generate an Ilist Object from a ntv_value
+        '''Generate an Ntvdataset Object from a ntv_value
 
         *Parameters*
 
@@ -329,7 +329,7 @@ class Ilist(IlistStructure, IlistInterface):
     
     @classmethod
     def from_ntv(cls, ntv_value, reindex=True):
-        '''Generate an Ilist Object from a ntv_value
+        '''Generate an Ntvdataset Object from a ntv_value
 
         *Parameters*
 
@@ -345,7 +345,7 @@ class Ilist(IlistStructure, IlistInterface):
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
-            Ilist._init_ntv_keys(ind, lidx, leng)
+            Ntvdataset._init_ntv_keys(ind, lidx, leng)
         lindex = [Ntvfield(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
@@ -353,7 +353,7 @@ class Ilist(IlistStructure, IlistInterface):
     @classmethod
     def from_obj(cls, bsd=None, reindex=True, context=True):
         '''
-        Generate an Ilist Object from a bytes, string or list value
+        Generate an Ntvdataset Object from a bytes, string or list value
 
         *Parameters*
 
@@ -371,12 +371,12 @@ class Ilist(IlistStructure, IlistInterface):
         elif isinstance(bsd, (list, dict)) or bsd.__class__.__name__ == 'DataFrame':
             lis = bsd
         else:
-            raise IlistError("the type of parameter is not available")
+            raise NtvdatasetError("the type of parameter is not available")
         return cls._init_obj(lis, reindex=reindex, context=context)
 
     def merge(self, fillvalue=math.nan, reindex=False, simplename=False):
         '''
-        Merge method replaces Ilist objects included into its constituents.
+        Merge method replaces Ntvdataset objects included into its constituents.
 
         *Parameters*
 
@@ -385,13 +385,13 @@ class Ilist(IlistStructure, IlistInterface):
         - **simplename** : boolean (default False) - if True, new Ntvfield name are
         the same as merged Ntvfield name else it is a composed name.
 
-        *Returns*: merged Ilist '''
+        *Returns*: merged Ntvdataset '''
         ilc = copy(self)
         delname = []
         row = ilc[0]
         if not isinstance(row, list):
             row = [row]
-        merged, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname),
+        merged, oldname, newname = Ntvdataset._mergerecord(Ntvdataset.ext(row, ilc.lname),
                                                       simplename=simplename)
         if oldname and not oldname in merged.lname:
             delname.append(oldname)
@@ -402,7 +402,7 @@ class Ilist(IlistStructure, IlistInterface):
             row = ilc[ind]
             if not isinstance(row, list):
                 row = [row]
-            rec, oldname, newname = Ilist._mergerecord(Ilist.ext(row, ilc.lname),
+            rec, oldname, newname = Ntvdataset._mergerecord(Ntvdataset.ext(row, ilc.lname),
                                                        simplename=simplename)
             if oldname and newname != [oldname]:
                 delname.append(oldname)
@@ -425,7 +425,7 @@ class Ilist(IlistStructure, IlistInterface):
     @classmethod
     def _init_obj(cls, listidx=None, reindex=True, typevalue=ES.def_clsName, context=True):
         '''
-        Ilist constructor.
+        Ntvdataset constructor.
 
         *Parameters*
 
@@ -478,14 +478,14 @@ class Ilist(IlistStructure, IlistInterface):
                              reindex=reindex) for idx in lidx]
             return cls(lindex, reindex=reindex)
 
-        length, crossed = Ilist._init_len_cros(
+        length, crossed = Ntvdataset._init_len_cros(
             fullmode, leng, isfullkeys, keys, isparent)
         keyscross = util.canonorder([leng[i] for i in crossed])
         # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
         for ind in range(len(crossed)):
             lidx[crossed[ind]][4] = keyscross[ind]  # keys
         for ind in range(len(lidx)):
-            Ilist._init_keys(ind, lidx, length)
+            Ntvdataset._init_keys(ind, lidx, length)
         lindex = [Ntvfield(idx[2], idx[0], idx[4], idx[1],
                          reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=False)
@@ -537,7 +537,7 @@ class Ilist(IlistStructure, IlistInterface):
             elif len(codec) == leng:    # full
                 lidx[ind][4] = list(range(leng))
             else:
-                raise IlistError('impossible to generate keys')
+                raise NtvdatasetError('impossible to generate keys')
             return
         if keys and len(keys) > 1 and parent is None:  #complete
             return
@@ -545,9 +545,9 @@ class Ilist(IlistStructure, IlistInterface):
             lidx[ind][4] = [ (ikey % (coef * len(codec))) // coef for ikey in range(leng)]
             return  
         if parent is None:
-            raise IlistError('keys not referenced')          
+            raise NtvdatasetError('keys not referenced')          
         if not lidx[parent][4] or len(lidx[parent][4]) != leng:
-            Ilist._init_ntv_keys(parent, lidx, leng)
+            Ntvdataset._init_ntv_keys(parent, lidx, leng)
         if not keys and len(codec) == len(lidx[parent][2]):    # implicit
             lidx[ind][4] = lidx[parent][4]
             return
@@ -566,12 +566,12 @@ class Ilist(IlistStructure, IlistInterface):
             lidx[ind][4] = [0] * leng
             return
         if lidx[ind][3] is None:
-            raise IlistError('keys not referenced')
+            raise NtvdatasetError('keys not referenced')
         if lidx[ind][3] < 0:
             lidx[ind][4] = list(range(leng))
             return
         if not lidx[lidx[ind][3]][4] or len(lidx[lidx[ind][3]][4]) != leng:
-            Ilist._init_keys(lidx[ind][3], lidx, leng)
+            Ntvdataset._init_keys(lidx[ind][3], lidx, leng)
         if not lidx[ind][4] and len(lidx[ind][2]) == len(lidx[lidx[ind][3]][2]):
             # coupled format
             lidx[ind][4] = lidx[lidx[ind][3]][4]
@@ -591,7 +591,7 @@ class Ilist(IlistStructure, IlistInterface):
             row = [row]
         var = -1
         for ind, val in enumerate(row):
-            if val.__class__.__name__ in ['Ilist', 'Observation']:
+            if val.__class__.__name__ in ['Ntvdataset', 'Observation']:
                 var = ind
                 break
         if var < 0:
@@ -675,7 +675,7 @@ class Ilist(IlistStructure, IlistInterface):
         return hash(self) == hash(other)
 
     def __add__(self, other):
-        ''' Add other's values to self's values in a new Ilist'''
+        ''' Add other's values to self's values in a new Ntvdataset'''
         newil = copy(self)
         newil.__iadd__(other)
         return newil
@@ -685,7 +685,7 @@ class Ilist(IlistStructure, IlistInterface):
         return self.add(other, name=True, solve=False)
 
     def __or__(self, other):
-        ''' Add other's index to self's index in a new Ilist'''
+        ''' Add other's index to self's index in a new Ntvdataset'''
         newil = copy(self)
         newil.__ior__(other)
         return newil
@@ -696,12 +696,12 @@ class Ilist(IlistStructure, IlistInterface):
 
     def __copy__(self):
         ''' Copy all the data '''
-        return Ilist(self)
+        return Ntvdataset(self)
 
 # %% property
     @property
     def complete(self):
-        '''return a boolean (True if Ilist is complete and consistent)'''
+        '''return a boolean (True if Ntvdataset is complete and consistent)'''
         return self.lencomplete == len(self) and self.consistent
 
     @property
