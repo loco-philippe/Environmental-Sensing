@@ -20,8 +20,8 @@ from tabulate import tabulate
 import cbor2
 
 from observation.esconstante import ES
-from observation.ntvfield import Iindex
-from observation.ntvfield_interface import IindexEncoder
+from observation.ntvfield import Ntvfield
+from observation.ntvfield_interface import NtvfieldEncoder
 from observation.util import util
 from json_ntv import NtvList, Ntv
 
@@ -213,33 +213,33 @@ class IlistInterface:
         *Returns* : Ntv object'''
         idxname = [name or iname != 'i' + str(i) for i, iname in enumerate(self.lname)]
         if modecodec != 'optimize':
-            lis = [Iindex.to_ntv(index, modecodec=modecodec, name=iname) 
+            lis = [Ntvfield.to_ntv(index, modecodec=modecodec, name=iname) 
                    for index, iname in zip(self.lindex, idxname)]
         else:
             lis = []
             indexinfos = self.indexinfos()
             for idx, inf, iname in zip(self.lindex, indexinfos, idxname):
-                coef = Iindex.encodecoef(idx.keys)
+                coef = Ntvfield.encodecoef(idx.keys)
                 if inf['cat'] == 'unique':
-                    lis.append(Iindex.to_ntv(idx, name=iname))
+                    lis.append(Ntvfield.to_ntv(idx, name=iname))
                 elif inf['cat'] == 'coupled':
                     idx_coup = idx.setkeys(self.lindex[inf['parent']].keys, inplace=False)
-                    lis.append(Iindex.to_ntv(idx_coup, parent=inf['parent'], name=iname))
+                    lis.append(Ntvfield.to_ntv(idx_coup, parent=inf['parent'], name=iname))
                 elif coef:
-                    lis.append(Iindex.to_ntv(idx, keys=[coef], name=iname))
+                    lis.append(Ntvfield.to_ntv(idx, keys=[coef], name=iname))
                 elif inf['parent'] == -1:  # cat='variable' or 'secondary'
                     if idx.keys == list(range(len(self))):
-                        lis.append(Iindex.to_ntv(idx, modecodec='full', name=iname))
+                        lis.append(Ntvfield.to_ntv(idx, modecodec='full', name=iname))
                     else:
-                        lis.append(Iindex.to_ntv(idx, modecodec='default', name=iname))                
+                        lis.append(Ntvfield.to_ntv(idx, modecodec='default', name=iname))                
                 else:  # derived
                     if len(self.lindex[inf['parent']].codec) == len(self):
-                        lis.append(Iindex.to_ntv(idx, modecodec='default', name=iname))             
+                        lis.append(Ntvfield.to_ntv(idx, modecodec='default', name=iname))             
                     #elif idx.iskeysfromderkeys(self.lindex[inf['parent']]): # periodic derived
-                    #    lis.append(Iindex.to_ntv(idx, parent=inf['parent'], name=iname))
+                    #    lis.append(Ntvfield.to_ntv(idx, parent=inf['parent'], name=iname))
                     else: #derived
                         keys = idx.derkeys(self.lindex[inf['parent']])
-                        lis.append(Iindex.to_ntv(idx, keys=keys, parent=inf['parent'], name=iname))            
+                        lis.append(Ntvfield.to_ntv(idx, keys=keys, parent=inf['parent'], name=iname))            
         return NtvList(lis, None, ntv_type=def_type)
 
     def to_obj(self, **kwargs):
@@ -295,7 +295,7 @@ class IlistInterface:
                 lis = self._optimize_obj(indexname, **option2)
 
         if option['encoded'] and option['encode_format'] == 'json':
-            return json.dumps(lis, cls=IindexEncoder)
+            return json.dumps(lis, cls=NtvfieldEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor':
             return cbor2.dumps(lis, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
@@ -358,7 +358,7 @@ class IlistInterface:
             npdtype = 'float'
             option['dtype'] = 'float'
         if ivar == -1:
-            data = Iindex(list(range(len(ilf)))).to_numpy(npdtype='int')\
+            data = Ntvfield(list(range(len(ilf)))).to_numpy(npdtype='int')\
                 .reshape([len(ilf.nindex(name).codec) for name in idxname])
         else:
             data = ilf.lindex[ivar]\
@@ -398,11 +398,11 @@ class IlistInterface:
         if len(idxname) > 3:
             raise IlistError('number of idx > 3')
         if len(idxname) == 2:
-            self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
+            self.addindex(Ntvfield('null', ' ', keys=[0]*len(self)))
             idxname += [' ']
         elif len(idxname) == 1:
-            self.addindex(Iindex('null', ' ', keys=[0]*len(self)))
-            self.addindex(Iindex('null', '  ', keys=[0]*len(self)))
+            self.addindex(Ntvfield('null', ' ', keys=[0]*len(self)))
+            self.addindex(Ntvfield('null', '  ', keys=[0]*len(self)))
             idxname += [' ', '  ']
         xar = self.to_xarray(idxname=idxname, varname=varname, fillvalue='?',
                              fillextern=False, lisfunc=util.isNotEqual, tovalue='?')

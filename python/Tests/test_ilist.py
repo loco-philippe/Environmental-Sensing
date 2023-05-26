@@ -16,7 +16,7 @@ from math import nan
 from itertools import product
 import json
 from observation import DatationValue, LocationValue, \
-    PropertyValue, ESValue, Ilist, Iindex, ES, util
+    PropertyValue, ESValue, Ilist, Ntvfield, ES, util
 from test_obs import dat3, loc3, prop2
 from json_ntv import Ntv, NtvList
 
@@ -49,7 +49,7 @@ class Test_Ilist(unittest.TestCase):
                         iidx2.lindex[2].values == iidx4.lindex[2].values)
         self.assertEqual(Ilist(Ilist.ntv([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])),
                          Ilist.ntv([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
-        il = Ilist([Iindex([{'paris:point': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
+        il = Ilist([Ntvfield([{'paris:point': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                    name='location')])
         self.assertEqual(il.lindex[0].values[0].type_str, 'point')
         self.assertEqual(il.lindex[0].values[1].type_str, 'json')
@@ -190,8 +190,8 @@ class Test_Ilist(unittest.TestCase):
 
     def test_addindex(self):
         iidx = Ilist.ntv([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
-        idx = Iindex.ext([6, 7, 8], 'i2')
-        idx2 = Iindex.ext([6, 7, 8], 'truc')
+        idx = Ntvfield.ext([6, 7, 8], 'i2')
+        idx2 = Ntvfield.ext([6, 7, 8], 'truc')
         iidx.addindex(idx)
         iidx.addindex(idx)
         self.assertEqual(iidx.idxname, ['i0', 'i1', 'i2', 'i2(2)', 'i2(2)(2)'])
@@ -293,7 +293,7 @@ class Test_Ilist(unittest.TestCase):
         iidx5 = Ilist.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
                            'locationvalue': [100, 100, 200, 200, 300, 300],
                            'propertyvalue': [True, False, True, False, True, False]})
-        self.assertEqual(iidx5.lidx[0], Iindex.ntv({'datationvalue': [10, 10, 20, 20, 30, 30]}))
+        self.assertEqual(iidx5.lidx[0], Ntvfield.ntv({'datationvalue': [10, 10, 20, 20, 30, 30]}))
         self.assertEqual(iidx5.idxname, ['datationvalue', 'locationvalue',
                                          'propertyvalue'])
         iidx5 += iidx5

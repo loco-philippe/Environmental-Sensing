@@ -21,7 +21,7 @@ class Analysis:
     (Pandas DataFrame, Ilist, Observation, list of list).
 
     The Analysis class includes the following functions:
-    - identification and qualification of the relationships between Iindex,
+    - identification and qualification of the relationships between Ntvfield,
     - generation of the global properties of the structure
     - data actualization based on structure updates
 
@@ -175,7 +175,7 @@ class Analysis:
         return None
 
     def getvarname(self):
-        '''return variable Iindex name'''
+        '''return variable Ntvfield name'''
         if self.hashi != self.iobj._hashi():
             self.actualize()
         return self.lvarname
@@ -205,7 +205,7 @@ class Analysis:
         return self.groups
 
     def tree(self, mode='derived', width=5, lname=20, string=True):
-        '''return a string with a tree of derived Iindex.
+        '''return a string with a tree of derived Ntvfield.
 
          *Parameters*
 
@@ -328,7 +328,7 @@ class Analysis:
                 infosp[i]['pparent'] = infosp[infosp[i]['parent']]['pparent']
 
     def _setparent(self):
-        '''set parent (Iindex with minimal diff) for each Iindex'''
+        '''set parent (Ntvfield with minimal diff) for each Ntvfield'''
         # parent : min(diff) -> child
         # distparent : min(distrate) -> diffdistparent, linkrate(rateA)
         # minparent : min(distance) -> rate(rateB), distance
@@ -409,7 +409,7 @@ class Analysis:
         return {str(n).ljust(2, '*'): lis}
 
     def _setgroups(self):
-        '''set groups (list of crossed Iindex groups)'''
+        '''set groups (list of crossed Ntvfield groups)'''
         self.groups = []
         crossed = {info['num'] for info in self.infos if info['crossed']}
         remove = set()
@@ -429,7 +429,7 @@ class Analysis:
         return None
 
     def _setpartition(self):
-        '''set partition (list of Iindex partitions)'''
+        '''set partition (list of Ntvfield partitions)'''
         brother = {idx['num']: idx['crossed']
                    for idx in self.infos if idx['crossed']}
         self.partition = []

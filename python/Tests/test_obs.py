@@ -16,7 +16,7 @@ from itertools import product
 #from datetime import datetime
 #from pymongo import MongoClient
 from observation import Observation, NamedValue, DatationValue, LocationValue,\
-    PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
+    PropertyValue, ExternValue, ESValue, Ilist, Ntvfield, ES, util, TimeSlot
 
 # couverture tests (True if non passed)----------------------------------------
 simple = False  # False

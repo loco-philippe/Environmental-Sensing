@@ -4,58 +4,58 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvfield_structure` module contains the `IindexStructure` class
-(`python.observation.ntvfield.Iindex` methods).
+The `python.observation.ntvfield_structure` module contains the `NtvfieldStructure` class
+(`python.observation.ntvfield.Ntvfield` methods).
 """
 from collections import defaultdict, Counter
 
 from observation.esvalue_base import ESValue
 from observation.util import util
 from observation.esconstante import ES
-from observation.ntvfield_interface import IindexError
+from observation.ntvfield_interface import NtvfieldError
 from ntv import Ntv
 
-class IindexStructure:
-    '''this class includes Iindex methods :
+class NtvfieldStructure:
+    '''this class includes Ntvfield methods :
 
     *add - update methods*
 
-    - `IindexStructure.append`
-    - `IindexStructure.setcodecvalue`
-    - `IindexStructure.setcodeclist`
-    - `IindexStructure.setname`
-    - `IindexStructure.setkeys`
-    - `IindexStructure.setlistvalue`
-    - `IindexStructure.setvalue`
+    - `NtvfieldStructure.append`
+    - `NtvfieldStructure.setcodecvalue`
+    - `NtvfieldStructure.setcodeclist`
+    - `NtvfieldStructure.setname`
+    - `NtvfieldStructure.setkeys`
+    - `NtvfieldStructure.setlistvalue`
+    - `NtvfieldStructure.setvalue`
 
     *transform methods*
 
-    - `IindexStructure.coupling`
-    - `IindexStructure.extendkeys`
-    - `IindexStructure.full`
-    - `IindexStructure.reindex`
-    - `IindexStructure.reorder`
-    - `IindexStructure.sort`
-    - `IindexStructure.tocoupled`
-    - `IindexStructure.tostdcodec`
+    - `NtvfieldStructure.coupling`
+    - `NtvfieldStructure.extendkeys`
+    - `NtvfieldStructure.full`
+    - `NtvfieldStructure.reindex`
+    - `NtvfieldStructure.reorder`
+    - `NtvfieldStructure.sort`
+    - `NtvfieldStructure.tocoupled`
+    - `NtvfieldStructure.tostdcodec`
 
     *getters methods*
 
-    - `IindexStructure.couplinginfos`
-    - `IindexStructure.derkeys`
-    - `IindexStructure.getduplicates`
-    - `IindexStructure.iscrossed`
-    - `IindexStructure.iscoupled`
-    - `IindexStructure.isderived`
-    - `IindexStructure.islinked`
-    - `IindexStructure.isvalue`
-    - `IindexStructure.iskeysfromderkeys`
-    - `IindexStructure.keysfromderkeys`
-    - `IindexStructure.keytoval`
-    - `IindexStructure.loc`
-    - `IindexStructure.recordfromkeys`
-    - `IindexStructure.recordfromvalue`
-    - `IindexStructure.valtokey`  '''
+    - `NtvfieldStructure.couplinginfos`
+    - `NtvfieldStructure.derkeys`
+    - `NtvfieldStructure.getduplicates`
+    - `NtvfieldStructure.iscrossed`
+    - `NtvfieldStructure.iscoupled`
+    - `NtvfieldStructure.isderived`
+    - `NtvfieldStructure.islinked`
+    - `NtvfieldStructure.isvalue`
+    - `NtvfieldStructure.iskeysfromderkeys`
+    - `NtvfieldStructure.keysfromderkeys`
+    - `NtvfieldStructure.keytoval`
+    - `NtvfieldStructure.loc`
+    - `NtvfieldStructure.recordfromkeys`
+    - `NtvfieldStructure.recordfromvalue`
+    - `NtvfieldStructure.valtokey`  '''
 
     def append(self, value,  typevalue=ES.def_clsName, unique=True):
         '''add a new value
@@ -85,7 +85,7 @@ class IindexStructure:
 
         *Parameters*
 
-        - **idx** : single Iindex or list of Iindex to be coupled or derived.
+        - **idx** : single Ntvfield or list of Ntvfield to be coupled or derived.
         - **derived** : boolean (default : True) - if True result is derived,
         if False coupled
         - **duplicate** : boolean (default: True) - if True, return duplicate records 
@@ -168,18 +168,18 @@ class IindexStructure:
 
         *Parameters*
 
-        - **parent** : Iindex - parent
+        - **parent** : Ntvfield - parent
 
         *Returns* : list of keys'''
         derkey = [ES.nullparent] * len(parent._codec)
         for i in range(len(self)):
             derkey[parent._keys[i]] = self._keys[i]
         if min(derkey) < 0:
-            raise IindexError("parent is not a derive Iindex")
+            raise NtvfieldError("parent is not a derive Ntvfield")
         return derkey
 
     def extendkeys(self, keys):
-        '''add keys to the Iindex
+        '''add keys to the Ntvfield
 
         *Parameters*
 
@@ -187,7 +187,7 @@ class IindexStructure:
 
         *Returns* : None '''
         if min(keys) < 0 or max(keys) > len(self._codec) - 1:
-            raise IindexError('keys not consistent with codec')
+            raise NtvfieldError('keys not consistent with codec')
         self._keys += keys
 
     @staticmethod
@@ -196,7 +196,7 @@ class IindexStructure:
 
         *Parameters*
 
-        - **listidx** : list of Iindex to transform
+        - **listidx** : list of Ntvfield to transform
 
         *Returns* : tuple of records added '''
         idx1 = listidx[0]
@@ -367,17 +367,17 @@ class IindexStructure:
         return self
 
     def reorder(self, sort=None, inplace=True):
-        '''Change the Iindex order with a new order define by sort and reset the codec.
+        '''Change the Ntvfield order with a new order define by sort and reset the codec.
 
         *Parameters*
 
         - **sort** : int list (default None)- new record order to apply. If None, no change.
         - **inplace** : boolean (default True) - if True, new order is apply to self,
-        if False a new Iindex is created.
+        if False a new Ntvfield is created.
 
         *Returns*
 
-        - **Iindex** : self if inplace, new Iindex if not inplace'''
+        - **Ntvfield** : self if inplace, new Ntvfield if not inplace'''
         values = util.reorder(self.values, sort)
         codec, keys = util.resetidx(values)
         if inplace:
@@ -455,9 +455,9 @@ class IindexStructure:
         *Parameters*
 
         - **keys** : list of keys to apply
-        - **inplace** : if True, update self data, else create a new Iindex
+        - **inplace** : if True, update self data, else create a new Ntvfield
 
-        *Returns* : self or new Iindex'''
+        *Returns* : self or new Ntvfield'''
         codec = util.tocodec(self.values, keys)
         if inplace:
             self._codec = codec
@@ -466,7 +466,7 @@ class IindexStructure:
         return self.__class__(codec=codec, name=self.name, keys=keys)
 
     def setname(self, name):
-        '''update the Iindex name
+        '''update the Ntvfield name
 
         *Parameters*
 
@@ -535,12 +535,12 @@ class IindexStructure:
 
         - **reverse** : boolean (defaut False) - codec is sorted with reverse order
         - **inplace** : boolean (default True) - if True, new order is apply to self,
-        if False a new Iindex is created.
+        if False a new Ntvfield is created.
         - **func**    : function (default str) - key used in the sorted function
 
         *Return*
 
-        - **Iindex** : self if inplace, new Iindex if not inplace'''
+        - **Ntvfield** : self if inplace, new Ntvfield if not inplace'''
         if inplace:
             self.reindex(codec=sorted(self._codec, reverse=reverse, key=func))
             self._keys.sort()
@@ -563,7 +563,7 @@ class IindexStructure:
         *Returns* : None'''
         dic = util.idxlink(other._keys, self._keys)
         if not dic:
-            raise IindexError("Iindex is not coupled or derived from other")
+            raise NtvfieldError("Ntvfield is not coupled or derived from other")
         self._codec = [self._codec[dic[i]] for i in range(len(dic))]
         self._keys = other._keys
         if not coupling:
@@ -580,7 +580,7 @@ class IindexStructure:
 
         *Return*
 
-        - **Iindex** : self if inplace, new Iindex if not inplace'''
+        - **Ntvfield** : self if inplace, new Ntvfield if not inplace'''
         if full:
             codec = self.values
             keys = list(range(len(codec)))

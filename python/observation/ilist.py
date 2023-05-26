@@ -35,8 +35,8 @@ import cbor2
 import pandas
 
 from observation.esconstante import ES
-from observation.ntvfield import Iindex
-from observation.ntvfield_interface import IindexInterface, CborDecoder
+from observation.ntvfield import Ntvfield
+from observation.ntvfield_interface import NtvfieldInterface, CborDecoder
 from observation.util import util
 from observation.ilist_interface import IlistInterface, IlistError
 from observation.ilist_structure import IlistStructure
@@ -50,7 +50,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     *Attributes (for @property see methods)* :
 
-    - **lindex** : list of Iindex
+    - **lindex** : list of Ntvfield
     - **analysis** : Analysis object (data structure)
 
     The methods defined in this class are :
@@ -175,8 +175,8 @@ class Ilist(IlistStructure, IlistInterface):
 
         *Parameters*
 
-        - **listidx** :  list (default None) - list of Iindex data
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        - **listidx** :  list (default None) - list of Ntvfield data
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
 
         self.name = self.__class__.__name__
         self.analysis = Analysis(self)
@@ -218,8 +218,8 @@ class Ilist(IlistStructure, IlistInterface):
 
         *Parameters*
 
-        - **idxval** : list of Iindex or list of values (see data model)
-        - **idxname** : list of string (default None) - list of Iindex name (see data model)
+        - **idxval** : list of Ntvfield or list of values (see data model)
+        - **idxname** : list of string (default None) - list of Ntvfield name (see data model)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
         if idxval is None:
             idxval = []
@@ -228,16 +228,16 @@ class Ilist(IlistStructure, IlistInterface):
         val = [ [idx] if not isinstance(idx, list) else idx for idx in idxval]
         lenval = [len(idx) for idx in val]
         if lenval and max(lenval) != min(lenval):
-            raise IlistError('the length of Iindex are different')
+            raise IlistError('the length of Ntvfield are different')
         length = lenval[0] if lenval else 0
         if idxname is None:
             idxname = [None] * len(val)
         for ind, name in enumerate(idxname):
             if name is None or name == ES.defaultindex:
                 idxname[ind] = 'i'+str(ind)
-        lidx = [list(IindexInterface.decodeobj(
+        lidx = [list(NtvfieldInterface.decodeobj(
             idx, typevalue, context=False)) for idx in val]
-        lindex = [Iindex(idx[2], name, list(range(length)), idx[1],
+        lindex = [Ntvfield(idx[2], name, list(range(length)), idx[1],
                          lendefault=length, reindex=reindex)
                   for idx, name in zip(lidx, idxname)]
         return cls(lindex, reindex=False)
@@ -292,7 +292,7 @@ class Ilist(IlistStructure, IlistInterface):
         - **filename** : string - file name (with path)
         - **forcestring** : boolean (default False) - if True,
         forces the UTF-8 data format, else the format is calculated
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
 
         *Returns* : new Object'''
         with open(filename, 'rb') as file:
@@ -313,7 +313,7 @@ class Ilist(IlistStructure, IlistInterface):
         *Parameters*
 
         - **bsd** : bytes, string or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
         - **context** : boolean (default True) - if False, only codec and keys are included'''
         return cls.from_obj(bsd, reindex=reindex, context=context)
 
@@ -324,7 +324,7 @@ class Ilist(IlistStructure, IlistInterface):
         *Parameters*
 
         - **ntv_value** : bytes, string, Ntv object to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
         return cls.from_ntv(ntv_value, reindex=reindex)
     
     @classmethod
@@ -334,19 +334,19 @@ class Ilist(IlistStructure, IlistInterface):
         *Parameters*
 
         - **ntv_value** : bytes, string, Ntv object to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex'''
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
         ntv = Ntv.obj(ntv_value)
         if len(ntv) == 0:
             return cls()
         #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
         # decode: name, type, codec, parent, keys, coef, leng
-        lidx = [list(Iindex.decode_ntv(ntvf)) for ntvf in ntv]
+        lidx = [list(Ntvfield.decode_ntv(ntvf)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
             Ilist._init_ntv_keys(ind, lidx, leng)
-        lindex = [Iindex(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+        lindex = [Ntvfield(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
 
@@ -358,7 +358,7 @@ class Ilist(IlistStructure, IlistInterface):
         *Parameters*
 
         - **bsd** : bytes, string, DataFrame or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
         - **context** : boolean (default True) - if False, only codec and keys are included'''
         if isinstance(bsd, cls):
             return bsd
@@ -382,8 +382,8 @@ class Ilist(IlistStructure, IlistInterface):
 
         - **fillvalue** : object (default nan) - value used for the additional data
         - **reindex** : boolean (default False) - if True, set default codec after transformation
-        - **simplename** : boolean (default False) - if True, new Iindex name are
-        the same as merged Iindex name else it is a composed name.
+        - **simplename** : boolean (default False) - if True, new Ntvfield name are
+        the same as merged Ntvfield name else it is a composed name.
 
         *Returns*: merged Ilist '''
         ilc = copy(self)
@@ -398,7 +398,7 @@ class Ilist(IlistStructure, IlistInterface):
         for ind in range(1, len(ilc)):
             oldidx = ilc.nindex(oldname)
             for name in newname:
-                ilc.addindex(Iindex(oldidx.codec, name, oldidx.keys))
+                ilc.addindex(Ntvfield(oldidx.codec, name, oldidx.keys))
             row = ilc[ind]
             if not isinstance(row, list):
                 row = [row]
@@ -411,7 +411,7 @@ class Ilist(IlistStructure, IlistInterface):
                 fillval = util.castval(
                     fillvalue, util.typename(name, ES.def_clsName))
                 merged.addindex(
-                    Iindex([fillval] * len(merged), name, oldidx.keys))
+                    Ntvfield([fillval] * len(merged), name, oldidx.keys))
             merged += rec
         for name in set(delname):
             if name:
@@ -429,8 +429,8 @@ class Ilist(IlistStructure, IlistInterface):
 
         *Parameters*
 
-        - **listidx** :  list (default None) - list of compatible Iindex data
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **listidx** :  list (default None) - list of compatible Ntvfield data
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         '''
         lindex = []
@@ -441,13 +441,13 @@ class Ilist(IlistStructure, IlistInterface):
                 if lis and isinstance(lis[0], pandas._libs.tslibs.timestamps.Timestamp):
                     lis = [ts.to_pydatetime().astimezone(datetime.timezone.utc)
                            for ts in lis]
-                lindex.append(Iindex(lis, name, list(idx.cat.codes),
+                lindex.append(Ntvfield(lis, name, list(idx.cat.codes),
                                      lendefault=len(listidx), castobj=False))
             return cls(lindex, reindex=reindex)
 
         if isinstance(listidx, dict):
             for idxname in listidx:
-                var, idx = Iindex.from_dict_obj({idxname: listidx[idxname]},
+                var, idx = Ntvfield.from_dict_obj({idxname: listidx[idxname]},
                                                 typevalue=typevalue, reindex=reindex)
                 lindex.append(idx)
             return cls(lindex, reindex=reindex)
@@ -456,7 +456,7 @@ class Ilist(IlistStructure, IlistInterface):
             return cls()
 
         # decode: name, typevaluedec, codec, parent, keys, isfullkeys, isparent
-        lidx = [list(IindexInterface.decodeobj(idx, typevalue, context))
+        lidx = [list(NtvfieldInterface.decodeobj(idx, typevalue, context))
                 for idx in listidx]
         for ind in range(len(lidx)):
             if lidx[ind][0] is None or lidx[ind][0] == ES.defaultindex:
@@ -474,7 +474,7 @@ class Ilist(IlistStructure, IlistInterface):
 
         # not max(isparent) : tous isparent = False
         if not max(isparent) and (fullmode or defmode):  # mode full ou mode default
-            lindex = [Iindex(idx[2], idx[0], idx[4], idx[1],
+            lindex = [Ntvfield(idx[2], idx[0], idx[4], idx[1],
                              reindex=reindex) for idx in lidx]
             return cls(lindex, reindex=reindex)
 
@@ -486,7 +486,7 @@ class Ilist(IlistStructure, IlistInterface):
             lidx[crossed[ind]][4] = keyscross[ind]  # keys
         for ind in range(len(lidx)):
             Ilist._init_keys(ind, lidx, length)
-        lindex = [Iindex(idx[2], idx[0], idx[4], idx[1],
+        lindex = [Ntvfield(idx[2], idx[0], idx[4], idx[1],
                          reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=False)
 
@@ -551,7 +551,7 @@ class Ilist(IlistStructure, IlistInterface):
         if not keys and len(codec) == len(lidx[parent][2]):    # implicit
             lidx[ind][4] = lidx[parent][4]
             return
-        lidx[ind][4] = Iindex.keysfromderkeys(lidx[parent][4], keys)  # relative
+        lidx[ind][4] = Ntvfield.keysfromderkeys(lidx[parent][4], keys)  # relative
         return
 
     @staticmethod
@@ -580,7 +580,7 @@ class Ilist(IlistStructure, IlistInterface):
         if not lidx[ind][4]:  # derived format without keys
             lenp = len(lidx[lidx[ind][3]][2])  # len codec parent
             lidx[ind][4] = [(i*len(lidx[ind][2])) // lenp for i in range(lenp)]
-        lidx[ind][4] = Iindex.keysfromderkeys(
+        lidx[ind][4] = Ntvfield.keysfromderkeys(
             lidx[lidx[ind][3]][4], lidx[ind][4])
         return
 
@@ -651,23 +651,23 @@ class Ilist(IlistStructure, IlistInterface):
         return res
 
     def __setitem__(self, ind, item):
-        ''' modify the Iindex values for each Iindex at the row ind'''
+        ''' modify the Ntvfield values for each Ntvfield at the row ind'''
         if not isinstance(item, list):
             item = [item]
         for val, idx in zip(item, self.lindex):
             idx[ind] = val
 
     def __delitem__(self, ind):
-        ''' remove all Iindex item at the row ind'''
+        ''' remove all Ntvfield item at the row ind'''
         for idx in self.lindex:
             del idx[ind]
 
     def __hash__(self):
-        '''return sum of all hash(Iindex)'''
+        '''return sum of all hash(Ntvfield)'''
         return sum([hash(idx) for idx in self.lindex])
 
     def _hashi(self):
-        '''return sum of all hashi(Iindex)'''
+        '''return sum of all hashi(Ntvfield)'''
         return sum([idx._hashi() for idx in self.lindex])
 
     def __eq__(self, other):
@@ -713,12 +713,12 @@ class Ilist(IlistStructure, IlistInterface):
 
     @property
     def category(self):
-        ''' dict with category for each Iindex'''
+        ''' dict with category for each Ntvfield'''
         return {field['name']: field['cat'] for field in self.indexinfos()}
 
     @property
     def dimension(self):
-        ''' integer : number of primary Iindex'''
+        ''' integer : number of primary Ntvfield'''
         return len(self.primary)
 
     @property
@@ -733,7 +733,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     @property
     def groups(self):
-        ''' list with crossed Iindex groups'''
+        ''' list with crossed Ntvfield groups'''
         return self.analysis.getgroups()
 
     @property
@@ -789,7 +789,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     @property
     def lisvar(self):
-        '''list of boolean : True if Iindex is var'''
+        '''list of boolean : True if Ntvfield is var'''
         return [name in self.lvarname for name in self.lname]
 
     @property
@@ -799,7 +799,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     @property
     def lvarname(self):
-        ''' list of variable Iindex name'''
+        ''' list of variable Ntvfield name'''
         return self.analysis.getvarname()
 
     @property
@@ -859,7 +859,7 @@ class Ilist(IlistStructure, IlistInterface):
 
     @property
     def typevalue(self):
-        '''return typevalue calculated from Iindex name'''
+        '''return typevalue calculated from Ntvfield name'''
         return [util.typename(name)for name in self.lname]
 
     @property

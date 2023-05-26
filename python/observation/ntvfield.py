@@ -4,28 +4,28 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvfield` module contains the `Iindex` class.
+The `python.observation.ntvfield` module contains the `Ntvfield` class.
 
 Documentation is available in other pages :
 
-- The Json Standard for Iindex is defined [here](https://github.com/loco-philippe/
+- The Json Standard for Ntvfield is defined [here](https://github.com/loco-philippe/
 Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf)
 - The concept of 'indexed list' is described in
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 - The non-regression tests are at [this page](https://github.com/loco-philippe/
 Environmental-Sensing/blob/main/python/Tests/test_iindex.py)
 - The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/
-python/Examples/Iindex) are :
+python/Examples/Ntvfield) are :
     - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Iindex/Iindex_creation.ipynb)
+    python/Examples/Ntvfield/Ntvfield_creation.ipynb)
     - [value](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Iindex/Iindex_value.ipynb)
+    python/Examples/Ntvfield/Ntvfield_value.ipynb)
     - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Iindex/Iindex_update.ipynb)
+    python/Examples/Ntvfield/Ntvfield_update.ipynb)
     - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Iindex/Iindex_structure.ipynb)
+    python/Examples/Ntvfield/Ntvfield_structure.ipynb)
     - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/
-    blob/main/python/Examples/Iindex/Iindex_structure-analysis.ipynb)
+    blob/main/python/Examples/Ntvfield/Ntvfield_structure-analysis.ipynb)
 
 ---
 """
@@ -33,21 +33,21 @@ python/Examples/Iindex) are :
 from copy import copy, deepcopy
 
 from observation.esconstante import ES
-from observation.ntvfield_interface import IindexInterface, IindexError
-from observation.ntvfield_structure import IindexStructure
+from observation.ntvfield_interface import NtvfieldInterface, NtvfieldError
+from observation.ntvfield_structure import NtvfieldStructure
 from observation.util import util
 from ntv import Ntv
 
 
 
-class Iindex(IindexStructure, IindexInterface):
+class Ntvfield(NtvfieldStructure, NtvfieldInterface):
     # %% intro
     '''
-    An `Iindex` is a representation of an index list .
+    An `Ntvfield` is a representation of an index list .
 
     *Attributes (for dynamic attributes see @property methods)* :
 
-    - **name** : name of the Iindex
+    - **name** : name of the Ntvfield
     - **codec** : list of values for each key
     - **keys** : list of code values
 
@@ -55,76 +55,76 @@ class Iindex(IindexStructure, IindexInterface):
 
     *constructor (@classmethod)*
 
-    - `Iindex.bol`
-    - `Iindex.dic`
-    - `Iindex.ext`
-    - `Iindex.obj`
-    - `Iindex.from_parent`
-    - `Iindex.from_obj`
-    - `Iindex.merging`
+    - `Ntvfield.bol`
+    - `Ntvfield.dic`
+    - `Ntvfield.ext`
+    - `Ntvfield.obj`
+    - `Ntvfield.from_parent`
+    - `Ntvfield.from_obj`
+    - `Ntvfield.merging`
 
     *dynamic value (getters @property)*
 
-    - `Iindex.values`
-    - `Iindex.val`
-    - `Iindex.cod`
-    - `Iindex.infos`
+    - `Ntvfield.values`
+    - `Ntvfield.val`
+    - `Ntvfield.cod`
+    - `Ntvfield.infos`
 
-    *add - update methods (`observation.ntvfield_structure.IindexStructure`)*
+    *add - update methods (`observation.ntvfield_structure.NtvfieldStructure`)*
 
-    - `Iindex.append`
-    - `Iindex.setcodecvalue`
-    - `Iindex.setcodeclist`
-    - `Iindex.setname`
-    - `Iindex.setkeys`
-    - `Iindex.setlistvalue`
-    - `Iindex.setvalue`
+    - `Ntvfield.append`
+    - `Ntvfield.setcodecvalue`
+    - `Ntvfield.setcodeclist`
+    - `Ntvfield.setname`
+    - `Ntvfield.setkeys`
+    - `Ntvfield.setlistvalue`
+    - `Ntvfield.setvalue`
 
-    *transform methods (`observation.ntvfield_structure.IindexStructure`)*
+    *transform methods (`observation.ntvfield_structure.NtvfieldStructure`)*
 
-    - `Iindex.coupling`
-    - `Iindex.extendkeys`
-    - `Iindex.full`
-    - `Iindex.reindex`
-    - `Iindex.reorder`
-    - `Iindex.sort`
-    - `Iindex.tocoupled`
-    - `Iindex.tostdcodec`
+    - `Ntvfield.coupling`
+    - `Ntvfield.extendkeys`
+    - `Ntvfield.full`
+    - `Ntvfield.reindex`
+    - `Ntvfield.reorder`
+    - `Ntvfield.sort`
+    - `Ntvfield.tocoupled`
+    - `Ntvfield.tostdcodec`
 
-    *getters methods (`observation.ntvfield_structure.IindexStructure`)*
+    *getters methods (`observation.ntvfield_structure.NtvfieldStructure`)*
 
-    - `Iindex.couplinginfos`
-    - `Iindex.derkeys`
-    - `Iindex.getduplicates`
-    - `Iindex.iscrossed`
-    - `Iindex.iscoupled`
-    - `Iindex.isderived`
-    - `Iindex.islinked`
-    - `Iindex.isvalue`
-    - `Iindex.iskeysfromderkeys`
-    - `Iindex.keysfromderkeys`
-    - `Iindex.keytoval`
-    - `Iindex.loc`
-    - `Iindex.recordfromkeys`
-    - `Iindex.recordfromvalue`
-    - `Iindex.valtokey`
+    - `Ntvfield.couplinginfos`
+    - `Ntvfield.derkeys`
+    - `Ntvfield.getduplicates`
+    - `Ntvfield.iscrossed`
+    - `Ntvfield.iscoupled`
+    - `Ntvfield.isderived`
+    - `Ntvfield.islinked`
+    - `Ntvfield.isvalue`
+    - `Ntvfield.iskeysfromderkeys`
+    - `Ntvfield.keysfromderkeys`
+    - `Ntvfield.keytoval`
+    - `Ntvfield.loc`
+    - `Ntvfield.recordfromkeys`
+    - `Ntvfield.recordfromvalue`
+    - `Ntvfield.valtokey`
 
-    *export methods (`observation.ntvfield_interface.IindexInterface`)*
+    *export methods (`observation.ntvfield_interface.NtvfieldInterface`)*
 
-    - `Iindex.json`
-    - `Iindex.to_obj`
-    - `Iindex.to_dict_obj`
-    - `Iindex.to_numpy`
-    - `Iindex.to_pandas`
-    - `Iindex.vlist`
-    - `Iindex.vName`
-    - `Iindex.vSimple`
+    - `Ntvfield.json`
+    - `Ntvfield.to_obj`
+    - `Ntvfield.to_dict_obj`
+    - `Ntvfield.to_numpy`
+    - `Ntvfield.to_pandas`
+    - `Ntvfield.vlist`
+    - `Ntvfield.vName`
+    - `Ntvfield.vSimple`
     '''
 
     def __init__(self, codec=None, name=None, keys=None, typevalue=None,
                  lendefault=0, reindex=False, castobj=True):
         '''
-        Iindex constructor.
+        Ntvfield constructor.
 
         *Parameters*
 
@@ -135,7 +135,7 @@ class Iindex(IindexStructure, IindexInterface):
         - **lendefault** : integer (default 0) - default len if no keys is defined
         - **reindex** : boolean (default True) - if True, default codec is apply
         - **castobj** : boolean (default True) - if True, codec is converted to ntv'''
-        if isinstance(codec, Iindex):
+        if isinstance(codec, Ntvfield):
             self._keys = copy(codec._keys)
             self._codec = deepcopy(codec._codec)
             self.name = copy(codec.name)
@@ -153,13 +153,13 @@ class Iindex(IindexStructure, IindexInterface):
             name = ES.defaultindex
         #typevalue = util.typename(name, typevalue)
         if not (keys is None or isinstance(keys, list)):
-            raise IindexError("keys not list")
+            raise NtvfieldError("keys not list")
         if keys is None and leng == 0:
             keys = []
         elif keys is None:
             keys = [(i*len(codec))//leng for i in range(leng)]
         if not isinstance(codec, list):
-            raise IindexError("codec not list")
+            raise NtvfieldError("codec not list")
         if codec == []:
             keysset = util.tocodec(keys)
             codec = [Ntv.obj(key) for key in keysset]
@@ -175,14 +175,14 @@ class Iindex(IindexStructure, IindexInterface):
     @classmethod
     def bol(cls, leng, notdef=None, name=None, default=True):
         '''
-        Iindex constructor (boolean value).
+        Ntvfield constructor (boolean value).
 
         *Parameters*
 
-        - **leng** : integer - length of the Iindex
+        - **leng** : integer - length of the Ntvfield
         - **notdef** : list (default None) - list of records without default value
         - **default** : boolean (default True) - default value
-        - **name** : string (default None) - name of Iindex'''
+        - **name** : string (default None) - name of Ntvfield'''
         values = [default] * leng
         if notdef:
             for item in notdef:
@@ -192,7 +192,7 @@ class Iindex(IindexStructure, IindexInterface):
     """@classmethod
     def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
-        Iindex constructor (external dictionnary).
+        Ntvfield constructor (external dictionnary).
 
         *Parameters*
 
@@ -201,12 +201,12 @@ class Iindex(IindexStructure, IindexInterface):
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec'''
         if not dicvalues:
             return cls.ext(name=None, values=None, typevalue=typevalue, fullcodec=fullcodec)
-        if isinstance(dicvalues, Iindex):
+        if isinstance(dicvalues, Ntvfield):
             return copy(dicvalues)
         if not isinstance(dicvalues, dict):
-            raise IindexError("dicvalues not dict")
+            raise NtvfieldError("dicvalues not dict")
         if len(dicvalues) != 1:
-            raise IindexError("one key:values is required")
+            raise NtvfieldError("one key:values is required")
         name = list(dicvalues.keys())[0]
         values = dicvalues[name]
         return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)"""
@@ -214,7 +214,7 @@ class Iindex(IindexStructure, IindexInterface):
     @classmethod
     def ext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
-        Iindex constructor (external list).
+        Ntvfield constructor (external list).
 
         *Parameters*
 
@@ -224,7 +224,7 @@ class Iindex(IindexStructure, IindexInterface):
         - **fullcodec** : boolean (default False) - full codec if True'''
         if not values:
             return cls(name=name, typevalue=typevalue)
-        if isinstance(values, Iindex):
+        if isinstance(values, Ntvfield):
             return copy(values)
         if not isinstance(values, list):
             values = [values]
@@ -238,38 +238,38 @@ class Iindex(IindexStructure, IindexInterface):
 
     @classmethod
     def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
-        '''Generate an Iindex Object from specific codec and parent keys.
+        '''Generate an Ntvfield Object from specific codec and parent keys.
 
         *Parameters*
 
         - **codec** : list of objects
         - **name** : string (default None) - name of index (see data model)
-        - **parent** : Iindex, parent of the new Iindex
+        - **parent** : Ntvfield, parent of the new Ntvfield
         - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **reindex** : boolean (default True) - if True, default codec is apply
 
-        *Returns* : Iindex '''
-        if isinstance(codec, Iindex):
+        *Returns* : Ntvfield '''
+        if isinstance(codec, Ntvfield):
             return copy(codec)
         return cls(codec=codec, name=name, keys=parent._keys, typevalue=typevalue, reindex=reindex)
 
     @classmethod 
     def ntv(cls, ntv_value=None, extkeys=None, reindex=True):
-        '''Generate an Iindex Object from a Ntv field object'''
+        '''Generate an Ntvfield Object from a Ntv field object'''
         return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex)
     
     @classmethod 
     def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True):
-        '''Generate an Iindex Object from a Ntv field object'''
-        if isinstance(ntv_value, Iindex):
+        '''Generate an Ntvfield Object from a Ntv field object'''
+        if isinstance(ntv_value, Ntvfield):
             return copy(ntv_value)
         if ntv_value is None:
             return cls()
-        name, typ, codec, parent, keys, coef, leng = Iindex.decode_ntv(ntv_value, encode_format='json')
+        name, typ, codec, parent, keys, coef, leng = Ntvfield.decode_ntv(ntv_value, encode_format='json')
         if (parent and not extkeys) or coef:
             return None
         if extkeys and parent:
-            keys = Iindex.keysfromderkeys(extkeys, keys)
+            keys = Ntvfield.keysfromderkeys(extkeys, keys)
         elif extkeys and not parent:
             keys = extkeys
         if keys is None:
@@ -278,8 +278,8 @@ class Iindex(IindexStructure, IindexInterface):
 
     @classmethod
     def from_obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
-        '''Generate an Iindex Object from a bytes, json or dict value and from
-        a keys list (derived Iindex)
+        '''Generate an Ntvfield Object from a bytes, json or dict value and from
+        a keys list (derived Ntvfield)
 
         *Parameters*
 
@@ -289,13 +289,13 @@ class Iindex(IindexStructure, IindexInterface):
         - **context** : boolean (default True) - if False, only codec and keys are included
         - **reindex** : boolean (default False) - if True, default codec is apply
 
-        *Returns* : tuple(code, Iindex) '''
-        if isinstance(bsd, Iindex):
+        *Returns* : tuple(code, Ntvfield) '''
+        if isinstance(bsd, Ntvfield):
             return (ES.nullparent, copy(bsd))
         name, typevaluedec, codec, parent, keys, isfullindex, isparent =\
-            Iindex.decodeobj(bsd, typevalue, context)
+            Ntvfield.decodeobj(bsd, typevalue, context)
         if extkeys and parent >= 0:
-            keys = Iindex.keysfromderkeys(extkeys, keys)
+            keys = Ntvfield.keysfromderkeys(extkeys, keys)
         elif extkeys and parent < 0:
             keys = extkeys
         if keys is None:
@@ -307,14 +307,14 @@ class Iindex(IindexStructure, IindexInterface):
 
     @classmethod
     def from_dict_obj(cls, bsd, typevalue=ES.def_clsName, reindex=False):
-        '''Generate an Iindex Object from a dict value'''
+        '''Generate an Ntvfield Object from a dict value'''
         var = False
         if not isinstance(bsd, dict):
-            raise IindexError('data is not a dict')
+            raise NtvfieldError('data is not a dict')
         name = list(bsd.keys())[0]
         bsdv = list(bsd.values())[0]
         if not 'value' in bsdv:
-            raise IindexError('value is not present')
+            raise NtvfieldError('value is not present')
         value = bsdv['value']
         if not isinstance(value, list):
             value = [value]
@@ -339,14 +339,14 @@ class Iindex(IindexStructure, IindexInterface):
 
     @classmethod
     def merging(cls, listidx, name=None):
-        '''Create a new Iindex with values are tuples of listidx Iindex values
+        '''Create a new Ntvfield with values are tuples of listidx Ntvfield values
 
         *Parameters*
 
-        - **listidx** : list of Iindex to be merged.
-        - **name** : string (default : None) - Name of the new Iindex
+        - **listidx** : list of Ntvfield to be merged.
+        - **name** : string (default : None) - Name of the new Ntvfield
 
-        *Returns* : new Iindex'''
+        *Returns* : new Ntvfield'''
         if not name:
             name = str(list({idx.name for idx in listidx}))
         values = util.tuple(util.transpose([idx.values for idx in listidx]))
@@ -354,8 +354,8 @@ class Iindex(IindexStructure, IindexInterface):
 
     @classmethod
     def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
-        '''Generate an Iindex Object from a bytes, json or dict value and from
-        a keys list (derived Iindex)
+        '''Generate an Ntvfield Object from a bytes, json or dict value and from
+        a keys list (derived Ntvfield)
 
         *Parameters*
 
@@ -365,7 +365,7 @@ class Iindex(IindexStructure, IindexInterface):
         - **context** : boolean (default True) - if False, only codec and keys are included
         - **reindex** : boolean (default True) - if True, default codec is apply
 
-        *Returns* : tuple(code, Iindex) '''
+        *Returns* : tuple(code, Ntvfield) '''
         if isinstance(bsd, dict):
             return cls.from_dict_obj(bsd, typevalue=typevalue, reindex=reindex)[1]
         return cls.from_obj(bsd, extkeys=extkeys, typevalue=typevalue,
@@ -406,7 +406,7 @@ class Iindex(IindexStructure, IindexInterface):
     def __setitem__(self, ind, value):
         ''' modify values item'''
         if ind < 0 or ind >= len(self):
-            raise IindexError("out of bounds")
+            raise NtvfieldError("out of bounds")
         self.setvalue(ind, value, extern=True)
 
     def __delitem__(self, ind):
@@ -427,7 +427,7 @@ class Iindex(IindexStructure, IindexInterface):
         return hash(tuple(self._codec)) + hash(tuple(self._keys))
 
     def __add__(self, other):
-        ''' Add other's values to self's values in a new Iindex'''
+        ''' Add other's values to self's values in a new Ntvfield'''
         newiindex = self.__copy__()
         newiindex.__iadd__(other)
         return newiindex
@@ -441,7 +441,7 @@ class Iindex(IindexStructure, IindexInterface):
 
         *Parameters*
 
-        - **other** : Iindex object to add to self object
+        - **other** : Ntvfield object to add to self object
         - **solve** : Boolean (default True) - If True, replace None other's codec value
         with self codec value.
 
@@ -462,7 +462,7 @@ class Iindex(IindexStructure, IindexInterface):
 
     def __copy__(self):
         ''' Copy all the data '''
-        return Iindex(self)
+        return Ntvfield(self)
 
 # %% property
     @property

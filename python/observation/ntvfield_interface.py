@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvfield_interface` module contains the `IindexInterface` class
-(`python.observation.ntvfield.Iindex` methods).
+The `python.observation.ntvfield_interface` module contains the `NtvfieldInterface` class
+(`python.observation.ntvfield.Ntvfield` methods).
 """
 # %% declarations
 import json
@@ -37,13 +37,13 @@ class CborDecoder(json.JSONDecoder):
         return dic2
 
 
-class IindexError(Exception):
-    ''' Iindex Exception'''
+class NtvfieldError(Exception):
+    ''' Ntvfield Exception'''
     # pass
 
 
-class IindexEncoder(json.JSONEncoder):
-    """new json encoder for Iindex and Ilist"""
+class NtvfieldEncoder(json.JSONEncoder):
+    """new json encoder for Ntvfield and Ilist"""
 
     def default(self, o):
         if isinstance(o, datetime.datetime):
@@ -62,22 +62,22 @@ class IindexEncoder(json.JSONEncoder):
                 return json.JSONEncoder.default(self, o)
 
 
-class IindexInterface:
-    '''this class includes Iindex methods :
+class NtvfieldInterface:
+    '''this class includes Ntvfield methods :
 
-    - `IindexInterface.json`
-    - `IindexInterface.to_obj`
-    - `IindexInterface.to_dict_obj`
-    - `IindexInterface.to_numpy`
-    - `IindexInterface.to_pandas`
-    - `IindexInterface.vlist`
-    - `IindexInterface.vName`
-    - `IindexInterface.vSimple`
+    - `NtvfieldInterface.json`
+    - `NtvfieldInterface.to_obj`
+    - `NtvfieldInterface.to_dict_obj`
+    - `NtvfieldInterface.to_numpy`
+    - `NtvfieldInterface.to_pandas`
+    - `NtvfieldInterface.vlist`
+    - `NtvfieldInterface.vName`
+    - `NtvfieldInterface.vSimple`
     '''
 
     @staticmethod
     def decodetype(decobj, lenparent=None):
-        '''Return the Iindex type of a decoded json value
+        '''Return the Ntvfield type of a decoded json value
 
         *Parameters*
 
@@ -86,7 +86,7 @@ class IindexInterface:
 
         *Returns* 
 
-        - **string** : name of the Iindex type'''
+        - **string** : name of the Ntvfield type'''
         codec, parent, keys = decobj[2:5]
 
         if parent < 0 and not keys:
@@ -95,21 +95,21 @@ class IindexInterface:
             if lenparent and len(codec) == lenparent:
                 return 'root coupled'
             if not lenparent:
-                raise IindexError(
+                raise NtvfieldError(
                     "lenparent is necessary to define the format")
             return 'primary'
         if parent >= 0 and not keys:
             if lenparent and len(codec) == lenparent:
                 return 'coupled'
             if not lenparent:
-                raise IindexError(
+                raise NtvfieldError(
                     "lenparent is necessary to define the format")
             return 'periodic derived'
         if len(keys) == lenparent and len(codec) < lenparent and parent < 0:
             return 'root derived'
         if len(keys) < lenparent and parent >= 0 and len(codec) < lenparent:
             return 'derived'
-        raise IindexError("data are inconsistenty to define the format")
+        raise NtvfieldError("data are inconsistenty to define the format")
         return
 
     @staticmethod
@@ -125,12 +125,12 @@ class IindexInterface:
         *Returns* 
 
         - **tuple** : name, dtype, codec, parent, keys, isfullindex, isparent
-            name (None or string): name of the Iindex
+            name (None or string): name of the Ntvfield
             dtype (None or string): type of data
-            codec (list): lilst of Iindex codec values
-            parent (int): Iindex parent or ES.nullparent
-            keys (None or list): Iindex keys
-            isfullindex (boolean): True if Iindex is full (len(keys) = len(self))
+            codec (list): lilst of Ntvfield codec values
+            parent (int): Ntvfield parent or ES.nullparent
+            keys (None or list): Ntvfield keys
+            isfullindex (boolean): True if Ntvfield is full (len(keys) = len(self))
             isparent(boolean): True if parent is >= 0
             '''
         if bs is None:
@@ -150,26 +150,26 @@ class IindexInterface:
         if not lis:  # format empty
             return (None, None, [], ES.nullparent, None, False, False)
         if context and (not isinstance(lis[0], (str, dict, list)) or len(lis) > 3):
-            return (None, None, IindexInterface.decodecodec(lis, classname),
+            return (None, None, NtvfieldInterface.decodecodec(lis, classname),
                     ES.nullparent, None, False, False)
         if not context and len(lis) > 2:
-            return (None, None, IindexInterface.decodecodec(lis, classname),
+            return (None, None, NtvfieldInterface.decodecodec(lis, classname),
                     ES.nullparent, None, False, False)
         if len(lis) == 3 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
                 and isinstance(lis[2], (list, int)) and context:
-            return (*IindexInterface.decodecontext(lis[0]),
-                    IindexInterface.decodecodec(lis[1], classname),
-                    *IindexInterface.decodekeys(lis[2]))
+            return (*NtvfieldInterface.decodecontext(lis[0]),
+                    NtvfieldInterface.decodecodec(lis[1], classname),
+                    *NtvfieldInterface.decodekeys(lis[2]))
         if len(lis) == 2 and isinstance(lis[0], (str, dict)) and isinstance(lis[1], list) \
                 and context:
-            return (*IindexInterface.decodecontext(lis[0]),
-                    IindexInterface.decodecodec(
+            return (*NtvfieldInterface.decodecontext(lis[0]),
+                    NtvfieldInterface.decodecodec(
                         lis[1], classname), ES.nullparent, None, False, False)
         if len(lis) == 2 and isinstance(lis[0], (tuple, list)) \
-                and IindexInterface.iskeysobj(lis[1]):
-            return (None, None, IindexInterface.decodecodec(lis[0], classname),
-                    *IindexInterface.decodekeys(lis[1]))
-        return (None, None, IindexInterface.decodecodec(lis, classname), ES.nullparent,
+                and NtvfieldInterface.iskeysobj(lis[1]):
+            return (None, None, NtvfieldInterface.decodecodec(lis[0], classname),
+                    *NtvfieldInterface.decodekeys(lis[1]))
+        return (None, None, NtvfieldInterface.decodecodec(lis, classname), ES.nullparent,
                 None, False, False)
 
     @staticmethod
@@ -184,12 +184,12 @@ class IindexInterface:
             name, dtype = list(context.items())[0][0]
             if isinstance(name, str) and isinstance(dtype, str) and dtype in ES.typeName.keys():
                 return (name, ES.typeName[dtype])
-            raise IindexError('name or typevalue is unconsistent')
+            raise NtvfieldError('name or typevalue is unconsistent')
         if context in ES.typeName.keys():
             return (context, ES.typeName[context])
         if isinstance(context, str):
             return (context, None)
-        raise IindexError('name or typevalue is unconsistent')
+        raise NtvfieldError('name or typevalue is unconsistent')
 
     @staticmethod
     def decodekeys(keys):
@@ -212,7 +212,7 @@ class IindexInterface:
             return (keys[0], keys[1], False, True)
         if isinstance(keys, list) and len(keys) > 1:
             return (ES.notcrossed, keys, True, False)
-        raise IindexError('parent or keys is unconsistent')
+        raise NtvfieldError('parent or keys is unconsistent')
 
     @staticmethod 
     def decode_ntv(field, encode_format='json'):
@@ -226,13 +226,13 @@ class IindexInterface:
         *Returns* 
 
         - **tuple** : name, dtype, codec, parent, keys, coef, leng
-            name (None or string): name of the Iindex
+            name (None or string): name of the Ntvfield
             dtype (None or string): type of data
-            codec (list): list of Iindex codec values
-            parent (None or int): Iindex parent or None
-            keys (None or list): Iindex keys
-            coef (None or int): coef if primary Iindex else None
-            leng (int): length of the Iindex
+            codec (list): list of Ntvfield codec values
+            parent (None or int): Ntvfield parent or None
+            keys (None or list): Ntvfield keys
+            coef (None or int): coef if primary Ntvfield else None
+            leng (int): length of the Ntvfield
         '''
         if field is None:
             return (None, None, [], ES.nullparent, None, None, 0)
@@ -343,7 +343,7 @@ class IindexInterface:
         if len(js) == 1:
             js = js[0]
         if option['encoded'] and option['encode_format'] == 'json':
-            return json.dumps(js, cls=IindexEncoder)
+            return json.dumps(js, cls=NtvfieldEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor':
             return cbor2.dumps(js, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
@@ -376,12 +376,12 @@ class IindexInterface:
 
     def json(self, keys=None, typevalue=None, modecodec='optimize', simpleval=False,
              codecval=False, parent=ES.nullparent, **kwargs):
-        '''Return a formatted object (string, bytes or dict) for the Iindex
+        '''Return a formatted object (string, bytes or dict) for the Ntvfield
 
         *Parameters*
 
         - **keys** : list (default None) - list: List of keys to include - None:
-        no list - else: Iindex keys
+        no list - else: Ntvfield keys
         - **typevalue** : string (default None) - type to convert values
         - **modecodec** : string (default 'optimize') - json mode
         - **simpleval** : boolean (default False) - if True, only codec is included
@@ -419,11 +419,11 @@ class IindexInterface:
 
     def to_numpy(self, func=None, codec=False, npdtype=None, **kwargs):
         '''
-        Transform Iindex in a Numpy array.
+        Transform Ntvfield in a Numpy array.
 
         *Parameters*
 
-        - **func** : function (default None) - function to apply for each value of the Iindex.
+        - **func** : function (default None) - function to apply for each value of the Ntvfield.
         If func is the 'index' string, values are replaced by raw values.
         - **npdtype** : string (default None) - numpy dtype for the Array ('object' if None)
         - **kwargs** : parameters to apply to the func function
@@ -469,13 +469,13 @@ class IindexInterface:
     def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
                codecval=False, parent=ES.nullparent, name=True, listunic=False,
                **kwargs):
-        '''Return a formatted object (string, bytes or dict) for the Iindex
+        '''Return a formatted object (string, bytes or dict) for the Ntvfield
 
         *Parameters*
 
         - **modecodec** : string (default 'optimize') - json mode
         - **keys** : list (default None) - list: List of keys to include - None or False:
-        no list - else: Iindex keys
+        no list - else: Ntvfield keys
         - **typevalue** : string (default None) - type to convert values
         - **name** : boolean (default True) - if False, name is not included
         - **codecval** : boolean (default False) - if True, only list of codec values is included
@@ -515,18 +515,18 @@ class IindexInterface:
             dtype = ES.valname[typevalue]
         else:
             dtype = None
-        return IindexInterface.encodeobj(codeclist, keyslist, idxname, simpleval,
+        return NtvfieldInterface.encodeobj(codeclist, keyslist, idxname, simpleval,
                                          codecval, dtype, parent, listunic,
                                          modecodec, **kwargs)
 
     def to_pandas(self, func=None, codec=False, npdtype=None,
                   series=True, index=True, numpy=False, **kwargs):
         '''
-        Transform Iindex in a Pandas Series, Pandas DataFrame or Numpy array.
+        Transform Ntvfield in a Pandas Series, Pandas DataFrame or Numpy array.
 
         *Parameters*
 
-        - **func** : function (default None) - function to apply for each value of the Iindex.
+        - **func** : function (default None) - function to apply for each value of the Ntvfield.
         If func is the 'index' string, values are replaced by raw values.
         - **npdtype** : string (default None) - numpy dtype for the Array ('object' if None)
         - **series** : boolean (default True) - if True, return a Series. 
@@ -537,7 +537,7 @@ class IindexInterface:
 
         *Returns* : Pandas Series, Pandas DataFrame, Numpy Array'''
         if len(self) == 0:
-            raise IindexError("Ilist is empty")
+            raise NtvfieldError("Ilist is empty")
         if npdtype:
             npdtype = np.dtype(npdtype)
         else:

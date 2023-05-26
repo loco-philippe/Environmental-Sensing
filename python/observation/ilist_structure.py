@@ -12,7 +12,7 @@ The `python.observation.ilist_structure` module contains the `IlistStructure` cl
 from copy import copy
 
 from observation.esconstante import ES
-from observation.ntvfield import Iindex
+from observation.ntvfield import Ntvfield
 from observation.util import util
 from observation.ilist_interface import IlistError
 from json_ntv import Ntv
@@ -98,13 +98,13 @@ class IlistStructure:
 
         *Parameters*
 
-        - **index** : Iindex - index to add (can be index Ntv representation)
+        - **index** : Ntvfield - index to add (can be index Ntv representation)
         - **first** : If True insert index at the first row, else at the end
         - **merge** : create a new index if merge is False
         - **update** : if True, update actual values if index name is present (and merge is True)
 
         *Returns* : none '''
-        idx = Iindex.ntv(index)
+        idx = Ntvfield.ntv(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0:
             raise IlistError('sizes are different')
@@ -156,8 +156,8 @@ class IlistStructure:
 
         - **reverse** :  boolean (default False) - delete record with filter's 
         value is reverse
-        - **filtname** : string (default ES.filter) - Name of the filter Iindex added
-        - **delfilter** :  boolean (default True) - If True, delete filter's Iindex
+        - **filtname** : string (default ES.filter) - Name of the filter Ntvfield added
+        - **delfilter** :  boolean (default True) - If True, delete filter's Ntvfield
         - **inplace** : boolean (default True) - if True, filter is apply to self,
 
         *Returns* : self or new Ilist'''
@@ -224,7 +224,7 @@ class IlistStructure:
                               parent[param], level, infos)
 
     def _couplingidx(self, idx, child, derived, param, parentparam, level, infos):
-        ''' Iindex coupling (included childrens of the Iindex)'''
+        ''' Ntvfield coupling (included childrens of the Ntvfield)'''
         inf = infos[idx]
         if inf['cat'] in ('coupled', 'unique') or inf[parentparam] == -1\
                 or inf[param] >= level or (derived and inf['cat'] == 'derived'):
@@ -257,7 +257,7 @@ class IlistStructure:
         return row
 
     def delindex(self, delname=None, savename=None):
-        '''remove an Iindex or a list of Iindex.
+        '''remove an Ntvfield or a list of Ntvfield.
 
         *Parameters*
 
@@ -322,7 +322,7 @@ class IlistStructure:
         - **fillextern** : boolean(default True) - if True, fillvalue is converted 
         to typevalue
         - **inplace** : boolean (default True) - if True, filter is apply to self,
-        - **complete** : boolean (default True) - if True, Iindex are ordered 
+        - **complete** : boolean (default True) - if True, Ntvfield are ordered 
         in canonical order
 
         *Returns* : self or new Ilist'''
@@ -354,7 +354,7 @@ class IlistStructure:
         *Parameters*
 
         - **indexname** : list of string (default none) - name of indexes to check 
-        (if None, all Iindex)
+        (if None, all Ntvfield)
         - **resindex** : string (default None) - Add a new index named resindex 
         with check result (False if duplicate)
         - **indexview** : list of str (default None) - list of fields to return
@@ -366,7 +366,7 @@ class IlistStructure:
         for name in indexname:
             duplicates += self.nindex(name).getduplicates()
         if resindex and isinstance(resindex, str):
-            newidx = Iindex([True] * len(self), name=resindex)
+            newidx = Ntvfield([True] * len(self), name=resindex)
             for item in duplicates:
                 newidx[item] = False
             self.addindex(newidx)
@@ -387,7 +387,7 @@ class IlistStructure:
 
         *Parameters*
 
-        - **record** : list - value for each Iindex
+        - **record** : list - value for each Ntvfield
         - **extern** : if True, compare record values to external representation
         of self.value, else, internal
 
@@ -493,7 +493,7 @@ class IlistStructure:
         return [self.record(locr, extern=extern) for locr in locrow]
 
     def mix(self, other, fillvalue=None):
-        '''add other Iindex not included in self and add other's values'''
+        '''add other Ntvfield not included in self and add other's values'''
         sname = set(self.lname)
         oname = set(other.lname)
         newself = copy(self)
@@ -505,9 +505,9 @@ class IlistStructure:
         return newself.add(copother, name=True, solve=False)
 
     def merging(self, listname=None):
-        ''' add a new Iindex build with Iindex define in listname.
-        Values of the new Iindex are set of values in listname Iindex'''
-        self.addindex(Iindex.merging([self.nindex(name) for name in listname]))
+        ''' add a new Ntvfield build with Ntvfield define in listname.
+        Values of the new Ntvfield are set of values in listname Ntvfield'''
+        self.addindex(Ntvfield.merging([self.nindex(name) for name in listname]))
 
     def nindex(self, name):
         ''' index with name equal to attribute name'''
@@ -636,12 +636,12 @@ class IlistStructure:
         - **filt** : list of boolean - values of the filter idx to add
         - **first** : boolean (default False) - If True insert index at the first row,
         else at the end
-        - **filtname** : string (default ES.filter) - Name of the filter Iindex added
+        - **filtname** : string (default ES.filter) - Name of the filter Ntvfield added
 
         *Returns* : self'''
         if not filt:
             filt = [True] * len(self)
-        idx = Iindex(filt, name=filtname)
+        idx = Ntvfield(filt, name=filtname)
         idx.reindex()
         if not idx.cod in ([True, False], [False, True], [True], [False]):
             raise IlistError('filt is not consistent')
@@ -653,7 +653,7 @@ class IlistStructure:
         return self
 
     def setname(self, listname=None):
-        '''Update Iindex name by the name in listname'''
+        '''Update Ntvfield name by the name in listname'''
         for i in range(min(self.lenindex, len(listname))):
             self.lindex[i].name = listname[i]
         self.analysis.actualize()
@@ -721,7 +721,7 @@ class IlistStructure:
         return self.__class__(lindex, self.lvarname)
 
     def tree(self, mode='derived', width=5, lname=20, string=True):
-        '''return a string with a tree of derived Iindex.
+        '''return a string with a tree of derived Ntvfield.
 
          *Parameters*
 

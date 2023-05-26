@@ -37,7 +37,7 @@ import cbor2
 
 from observation.ilist import Ilist
 from observation.util import util
-from observation.ntvfield_interface import IindexEncoder, CborDecoder
+from observation.ntvfield_interface import NtvfieldEncoder, CborDecoder
 from observation.esconstante import ES
 from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue, ESValueEncoder
@@ -165,7 +165,7 @@ class Observation(Ilist):
 
         *Parameters*
 
-        - **listidx**  : object (default None) - list of Iindex data or Ilist or Observation
+        - **listidx**  : object (default None) - list of Ntvfield data or Ilist or Observation
         - **name**     : string (default None) - Obs name
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
 
@@ -201,8 +201,8 @@ class Observation(Ilist):
 
         *Parameters*
 
-        - **idxdic** : dict (default None) - dict of Iindex element (Iindex name :
-        list of Iindex values)
+        - **idxdic** : dict (default None) - dict of Ntvfield element (Ntvfield name :
+        list of Ntvfield values)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable
         - **name**     : string (default None) - Observation name
@@ -218,10 +218,10 @@ class Observation(Ilist):
 
         *Parameters*
 
-        - **datation** : compatible Iindex (default None) - index for DatationValue
-        - **location** : compatible Iindex (default None) - index for LocationValue
-        - **property** : compatible Iindex (default None) - index for PropertyValue
-        - **result  ** : compatible Iindex (default None) - index for Variable(NamedValue)
+        - **datation** : compatible Ntvfield (default None) - index for DatationValue
+        - **location** : compatible Ntvfield (default None) - index for LocationValue
+        - **property** : compatible Ntvfield (default None) - index for PropertyValue
+        - **result  ** : compatible Ntvfield (default None) - index for Variable(NamedValue)
         - **name**     : string (default None) - Observation name
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
         idxdic = {}
@@ -250,7 +250,7 @@ class Observation(Ilist):
         *Parameters*
 
         - **bs** : bytes, string or dict data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Iindex
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
         - **context** : boolean (default True) - if False, only codec and keys are included'''
         if not bs:
             bs = {}
@@ -302,7 +302,7 @@ class Observation(Ilist):
         return stro
 
     def __hash__(self):
-        '''return sum of all hash(Iindex)'''
+        '''return sum of all hash(Ntvfield)'''
         return hash(json.dumps(self.param)) + hash(self.name) + Ilist.__hash__(self)
 
 # %% properties
@@ -505,7 +505,7 @@ class Observation(Ilist):
             js2 = dic
 
         if option['encoded'] and option['encode_format'] == 'json':
-            return json.dumps(js2, cls=IindexEncoder)
+            return json.dumps(js2, cls=NtvfieldEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor':
             return cbor2.dumps(js2, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
@@ -544,9 +544,9 @@ class Observation(Ilist):
         *Parameters*
 
         - **json_info** : boolean (default False) - if True, add main information
-        about Observation and Iindex
+        about Observation and Ntvfield
         - **json_info_detail** : boolean (default False) - if True, add complemantary
-        information about Iindex
+        information about Ntvfield
         '''
         option = {"json_info": False, "json_info_detail": False} | kwargs
         dcobs = {}

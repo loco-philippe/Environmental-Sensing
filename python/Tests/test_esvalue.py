@@ -14,7 +14,7 @@ from test_obs import dat3, loc3, prop2, _res, lyon, paris, pol1, \
     pol75, t1, pprop_pm25, t2, s1, t1n, matin, travail, pt1, tnull, pprop_pm10, \
     prop_pm25, pol2, pol13, aprem
 from itertools import product
-from observation import Observation, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util
+from observation import Observation, NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue, ESValue, Ilist, Ntvfield, ES, util
 
 
 # couverture tests (True if non passed)----------------------------------------
@@ -240,7 +240,7 @@ class TestObsUnitaire(unittest.TestCase):
                 #['{"truc":{"observation":{}}}',             'NamedValue'],
                 ['{"locvalue":1, "obs":{}}',        'str'],
                 #['{"locvalue":1, "observation":{}}',        'PropertyValue'],
-                [{"iindex": ["simple", [{"truc": 25}, 21]]}, 'Iindex']
+                [{"iindex": ["simple", [{"truc": 25}, 21]]}, 'Ntvfield']
                 ]
         for dat in data:
             #print(dat[0], util.castval(dat[0]).__class__.__name__, dat[1])

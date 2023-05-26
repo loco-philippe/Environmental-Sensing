@@ -13,7 +13,7 @@ from copy import copy
 from datetime import datetime
 from math import nan
 from observation import Observation, NamedValue, DatationValue, LocationValue, \
-    PropertyValue, ExternValue, ESValue, Ilist, Iindex, ES, util, TimeSlot
+    PropertyValue, ExternValue, ESValue, Ilist, Ntvfield, ES, util, TimeSlot
 from test_obs import dat3, loc3, prop2, _res
 
 #l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
@@ -82,7 +82,7 @@ class Test_Analysis(unittest.TestCase):
         self.assertTrue(iidx.lidx[2].values == iidx2.lidx[2].values == iidx4.lidx[2].values)
         self.assertEqual(Ilist(Ilist.obj ([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])),
                          Ilist.obj([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
-        il = Ilist([Iindex([{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
+        il = Ilist([Ntvfield([{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                    name='location')])
         self.assertEqual(
             il.lindex[0].codec[1].value.__class__.__name__, 'Point')
@@ -234,8 +234,8 @@ class Test_Analysis(unittest.TestCase):
 
     def test_addindex(self):
         iidx = Ilist.obj([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
-        idx = Iindex.ext([6, 7, 8], 'i2')
-        idx2 = Iindex.ext([6, 7, 8], 'truc')
+        idx = Ntvfield.ext([6, 7, 8], 'i2')
+        idx2 = Ntvfield.ext([6, 7, 8], 'truc')
         iidx.addindex(idx)
         iidx.addindex(idx)
         self.assertEqual(iidx.idxname, ['i0', 'i1', 'i2', 'i2(2)', 'i2(2)(2)'])
@@ -336,7 +336,7 @@ class Test_Analysis(unittest.TestCase):
         iidx5 = Ilist.obj([['datationvalue', [10, 10, 20, 20, 30, 30]],
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
-        self.assertEqual(iidx5.lidx[0], Iindex.ext(
+        self.assertEqual(iidx5.lidx[0], Ntvfield.ext(
             [10, 10, 20, 20, 30, 30], 'datationvalue'))
         self.assertEqual(
             iidx5.idxname, ['datationvalue', 'locationvalue', 'propertyvalue'])

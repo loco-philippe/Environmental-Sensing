@@ -86,7 +86,7 @@ Modules contain the following classes:
 
     - `python.observation.ilist`, `python.observation.ilist_structure`, `python.observation.ilist_interface`
 
-- Iindex :
+- Ntvfield :
 
     - `python.observation.ntvfield`, `python.observation.ntvfield_structure`, 
     `python.observation.ntvfield_interface`
@@ -105,9 +105,9 @@ from observation.esvalue_base import ESValue
 from observation.ilist import Ilist
 from observation.ilist_interface import IlistInterface, IlistError
 from observation.ilist_structure import IlistStructure
-from observation.ntvfield import Iindex
-from observation.ntvfield_structure import IindexStructure
-from observation.ntvfield_interface import CborDecoder, IindexError, IindexEncoder, IindexInterface
+from observation.ntvfield import Ntvfield
+from observation.ntvfield_structure import NtvfieldStructure
+from observation.ntvfield_interface import CborDecoder, NtvfieldError, NtvfieldEncoder, NtvfieldInterface
 #from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
 from observation.util import util
