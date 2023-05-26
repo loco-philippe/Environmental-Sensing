@@ -61,7 +61,7 @@ from pymongo.command_cursor import CommandCursor
 import bson
 
 from observation.esobservation import Observation
-from observation.iindex import Iindex
+from observation.ntvfield import Iindex
 from observation.util import util
 from observation.timeslot import TimeSlot
 

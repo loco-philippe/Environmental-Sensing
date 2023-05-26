@@ -4,7 +4,7 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.iindex` module contains the `Iindex` class.
+The `python.observation.ntvfield` module contains the `Iindex` class.
 
 Documentation is available in other pages :
 
@@ -33,8 +33,8 @@ python/Examples/Iindex) are :
 from copy import copy, deepcopy
 
 from observation.esconstante import ES
-from observation.iindex_interface import IindexInterface, IindexError
-from observation.iindex_structure import IindexStructure
+from observation.ntvfield_interface import IindexInterface, IindexError
+from observation.ntvfield_structure import IindexStructure
 from observation.util import util
 from ntv import Ntv
 
@@ -70,7 +70,7 @@ class Iindex(IindexStructure, IindexInterface):
     - `Iindex.cod`
     - `Iindex.infos`
 
-    *add - update methods (`observation.iindex_structure.IindexStructure`)*
+    *add - update methods (`observation.ntvfield_structure.IindexStructure`)*
 
     - `Iindex.append`
     - `Iindex.setcodecvalue`
@@ -80,7 +80,7 @@ class Iindex(IindexStructure, IindexInterface):
     - `Iindex.setlistvalue`
     - `Iindex.setvalue`
 
-    *transform methods (`observation.iindex_structure.IindexStructure`)*
+    *transform methods (`observation.ntvfield_structure.IindexStructure`)*
 
     - `Iindex.coupling`
     - `Iindex.extendkeys`
@@ -91,7 +91,7 @@ class Iindex(IindexStructure, IindexInterface):
     - `Iindex.tocoupled`
     - `Iindex.tostdcodec`
 
-    *getters methods (`observation.iindex_structure.IindexStructure`)*
+    *getters methods (`observation.ntvfield_structure.IindexStructure`)*
 
     - `Iindex.couplinginfos`
     - `Iindex.derkeys`
@@ -109,7 +109,7 @@ class Iindex(IindexStructure, IindexInterface):
     - `Iindex.recordfromvalue`
     - `Iindex.valtokey`
 
-    *export methods (`observation.iindex_interface.IindexInterface`)*
+    *export methods (`observation.ntvfield_interface.IindexInterface`)*
 
     - `Iindex.json`
     - `Iindex.to_obj`

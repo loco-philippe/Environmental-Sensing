@@ -12,7 +12,7 @@ The `python.observation.ilist_structure` module contains the `IlistStructure` cl
 from copy import copy
 
 from observation.esconstante import ES
-from observation.iindex import Iindex
+from observation.ntvfield import Iindex
 from observation.util import util
 from observation.ilist_interface import IlistError
 from json_ntv import Ntv

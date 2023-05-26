@@ -37,7 +37,7 @@ import cbor2
 
 from observation.ilist import Ilist
 from observation.util import util
-from observation.iindex_interface import IindexEncoder, CborDecoder
+from observation.ntvfield_interface import IindexEncoder, CborDecoder
 from observation.esconstante import ES
 from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue, ESValueEncoder

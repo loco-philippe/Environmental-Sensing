@@ -88,7 +88,8 @@ Modules contain the following classes:
 
 - Iindex :
 
-    - `python.observation.iindex`, `python.observation.iindex_structure`, `python.observation.iindex_interface`
+    - `python.observation.ntvfield`, `python.observation.ntvfield_structure`, 
+    `python.observation.ntvfield_interface`
 
 - TimeSlot :
 
@@ -104,9 +105,9 @@ from observation.esvalue_base import ESValue
 from observation.ilist import Ilist
 from observation.ilist_interface import IlistInterface, IlistError
 from observation.ilist_structure import IlistStructure
-from observation.iindex import Iindex
-from observation.iindex_structure import IindexStructure
-from observation.iindex_interface import CborDecoder, IindexError, IindexEncoder, IindexInterface
+from observation.ntvfield import Iindex
+from observation.ntvfield_structure import IindexStructure
+from observation.ntvfield_interface import CborDecoder, IindexError, IindexEncoder, IindexInterface
 #from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
 from observation.util import util

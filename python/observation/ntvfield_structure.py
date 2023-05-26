@@ -4,15 +4,15 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.iindex_structure` module contains the `IindexStructure` class
-(`python.observation.iindex.Iindex` methods).
+The `python.observation.ntvfield_structure` module contains the `IindexStructure` class
+(`python.observation.ntvfield.Iindex` methods).
 """
 from collections import defaultdict, Counter
 
 from observation.esvalue_base import ESValue
 from observation.util import util
 from observation.esconstante import ES
-from observation.iindex_interface import IindexError
+from observation.ntvfield_interface import IindexError
 from ntv import Ntv
 
 class IindexStructure:

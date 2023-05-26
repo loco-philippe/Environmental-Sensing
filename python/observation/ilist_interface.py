@@ -20,8 +20,8 @@ from tabulate import tabulate
 import cbor2
 
 from observation.esconstante import ES
-from observation.iindex import Iindex
-from observation.iindex_interface import IindexEncoder
+from observation.ntvfield import Iindex
+from observation.ntvfield_interface import IindexEncoder
 from observation.util import util
 from json_ntv import NtvList, Ntv
 

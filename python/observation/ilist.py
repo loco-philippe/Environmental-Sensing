@@ -35,8 +35,8 @@ import cbor2
 import pandas
 
 from observation.esconstante import ES
-from observation.iindex import Iindex
-from observation.iindex_interface import IindexInterface, CborDecoder
+from observation.ntvfield import Iindex
+from observation.ntvfield_interface import IindexInterface, CborDecoder
 from observation.util import util
 from observation.ilist_interface import IlistInterface, IlistError
 from observation.ilist_structure import IlistStructure
