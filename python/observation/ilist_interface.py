@@ -235,9 +235,9 @@ class IlistInterface:
                 else:  # derived
                     if len(self.lindex[inf['parent']].codec) == len(self):
                         lis.append(Iindex.to_ntv(idx, modecodec='default', name=iname))             
-                    elif idx.iskeysfromderkeys(self.lindex[inf['parent']]):
-                        lis.append(Iindex.to_ntv(idx, parent=inf['parent'], name=iname))
-                    else: # periodic derived
+                    #elif idx.iskeysfromderkeys(self.lindex[inf['parent']]): # periodic derived
+                    #    lis.append(Iindex.to_ntv(idx, parent=inf['parent'], name=iname))
+                    else: #derived
                         keys = idx.derkeys(self.lindex[inf['parent']])
                         lis.append(Iindex.to_ntv(idx, keys=keys, parent=inf['parent'], name=iname))            
         return NtvList(lis, None, ntv_type=def_type)
