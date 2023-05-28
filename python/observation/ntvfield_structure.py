@@ -68,7 +68,8 @@ class NtvfieldStructure:
 
         *Returns* : key of value '''
         #value = util.castval(value, util.typename(self.name, typevalue))
-        value = Ntv.obj(value)
+        #value = Ntv.obj(value)
+        value = self.s_to_i(value)
         if value in self._codec and unique:
             key = self._codec.index(value)
         else:
@@ -329,7 +330,8 @@ class NtvfieldStructure:
         - **list of int** : list of record number finded (None else)'''
 
         if extern:
-            value = Ntv.obj(value)
+            value = self.s_to_i(value)
+            #value = Ntv.obj(value)
             #value = util.castval(
             #    value, util.typename(self.name, ES.def_clsName))
         if not value in self._codec:
@@ -402,8 +404,10 @@ class NtvfieldStructure:
         *Returns* : int - last codec rank updated (-1 if None)'''
         #typevalue = util.typename(self.name, typevalue)
         if extern:
-            newvalue = Ntv.obj(newvalue)
-            oldvalue = Ntv.obj(oldvalue)
+            newvalue = self.s_to_i(newvalue)
+            oldvalue = self.s_to_i(oldvalue)
+            #newvalue = Ntv.obj(newvalue)
+            #oldvalue = Ntv.obj(oldvalue)
             #newvalue = util.castval(newvalue, typevalue)
             #oldvalue = util.castval(oldvalue, typevalue)
         rank = -1
@@ -493,7 +497,8 @@ class NtvfieldStructure:
         *Returns* : None'''
         #typevalue = util.typename(self.name, typevalue)
         if extern:
-            value = Ntv.obj(value)
+            value = self.s_to_i(value)
+            #value = Ntv.obj(value)
         values = self.values
         if nameonly:
             values[ind].setName(values.ntv_name)
@@ -517,7 +522,8 @@ class NtvfieldStructure:
         *Returns* : None'''
         #typevalue = util.typename(self.name, typevalue)
         if extern:
-            listvalue = [Ntv.obj(value) for value in listvalue]
+            #listvalue = [Ntv.obj(value) for value in listvalue]
+            listvalue = self.l_to_i(listvalue)
         values = self.values
         for i, value_i in enumerate(listvalue):
             if nameonly:
@@ -618,7 +624,8 @@ class NtvfieldStructure:
 
         - **int** : first key finded (None else)'''
         if extern:
-            value = Ntv.obj(value)
+            value = self.s_to_i(value)
+            #value = Ntv.obj(value)
             #value = util.castval(
             #    value, util.typename(self.name, ES.def_clsName))
         if value in self._codec:

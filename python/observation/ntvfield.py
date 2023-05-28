@@ -162,10 +162,12 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
             raise NtvfieldError("codec not list")
         if codec == []:
             keysset = util.tocodec(keys)
-            codec = [Ntv.obj(key) for key in keysset]
+            #codec = [Ntv.obj(key) for key in keysset]
+            codec = self.l_to_i(keysset)
         #if not typevalue is None or castobj:
         if castobj:
-            codec = [Ntv.obj(key) for key in codec]
+            #codec = [Ntv.obj(key) for key in codec]
+            codec = self.l_to_i(codec)
         self._keys = keys
         self._codec = codec
         self.name = name
@@ -265,11 +267,11 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
             return copy(ntv_value)
         if ntv_value is None:
             return cls()
-        name, typ, codec, parent, keys, coef, leng = Ntvfield.decode_ntv(ntv_value, encode_format='json')
+        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv_value, encode_format='json')
         if (parent and not extkeys) or coef:
             return None
         if extkeys and parent:
-            keys = Ntvfield.keysfromderkeys(extkeys, keys)
+            keys = cls.keysfromderkeys(extkeys, keys)
         elif extkeys and not parent:
             keys = extkeys
         if keys is None:
@@ -462,13 +464,15 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
 
     def __copy__(self):
         ''' Copy all the data '''
-        return Ntvfield(self)
+        #return Ntvfield(self)
+        return self.__class__(self)
 
 # %% property
     @property
     def cod(self):
-        '''return codec conversion to ntv '''
-        return [codec.to_obj() for codec in self._codec]
+        '''return codec conversion to json value '''
+        return self.l_to_e(self._codec)
+        #return [codec.to_obj() for codec in self._codec]
         #return [codec.ntv_value for codec in self._codec]
         #return self.to_ntv(codecval=True).ntv_value
         #return self.to_obj(modecodec='optimize', codecval=True, encoded=False, listunic=True)
@@ -520,5 +524,31 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
     @property
     def val(self):
         '''return values conversion to string '''
-        return [self._codec[key].to_obj() for key in self._keys]
+        return [self.s_to_e(self._codec[key]) for key in self._keys]
+        #return [self._codec[key].to_obj() for key in self._keys]
         #return self.to_obj(modecodec='full', codecval=True, encoded=False)
+
+# %% a supprimer
+    @staticmethod
+    def l_to_i(lis):
+        return [Ntv.obj(val) for val in lis]
+
+    @staticmethod
+    def s_to_i(val):
+        return Ntv.obj(val)
+
+    @staticmethod
+    def n_to_i(ntv):
+        return ntv
+
+    @staticmethod
+    def l_to_e(lis):
+        return [ntv.to_obj() for ntv in lis]    
+
+    @staticmethod
+    def s_to_e(val):
+        return val.to_obj()
+
+    @staticmethod
+    def i_to_n(val):
+        return val

@@ -214,8 +214,8 @@ class NtvfieldInterface:
             return (ES.notcrossed, keys, True, False)
         raise NtvfieldError('parent or keys is unconsistent')
 
-    @staticmethod 
-    def decode_ntv(field, encode_format='json'):
+    @classmethod 
+    def decode_ntv(cls, field, encode_format='json'):
         '''Generate a tuple data from a Ntv value(bytes, string, json, Ntv object)
 
         *Parameters*
@@ -248,13 +248,17 @@ class NtvfieldInterface:
         nam = ntv.name
         val = ntv.val
         if isinstance(ntv, NtvSingle):
-            return (nam, typ, [Ntv.from_obj(val)], None, None, None, 1)
+            #return (nam, typ, [Ntv.from_obj(val)], None, None, None, 1)
+            return (nam, typ, [cls.s_to_i(val)], None, None, None, 1)
         if len(ntv) == 0:
-            return (nam, typ, val, None, None, None, 0)
+            #return (nam, typ, val, None, None, None, 0)
+            return (nam, typ, cls.n_to_i(val), None, None, None, 0)
         if len(ntv) > 3 or isinstance(ntv[0], NtvSingle):
-            return (nam, typ, val, None, None, None, len(ntv))
+            #return (nam, typ, val, None, None, None, len(ntv))
+            return (nam, typ, cls.n_to_i(val), None, None, None, len(ntv))
         if len(ntv) == 1:
-            return (nam, typ, [Ntv.from_obj(val)[0]], None, None, None, 1)
+            #return (nam, typ, [Ntv.from_obj(val)[0]], None, None, None, 1)
+            return (nam, typ, [cls.s_to_i(val)[0]], None, None, None, 1)
 
         ntvc = ntv[0]
         leng = max(len(ind) for ind in ntv)
@@ -263,15 +267,19 @@ class NtvfieldInterface:
         if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and \
             isinstance(ntv[1].val, (int, str)) and not isinstance(ntv[2], NtvSingle) and \
             isinstance(ntv[2][0].val, int):
-            return (nam, typc, valc, ntv[1].val, ntv[2].to_obj(), None, leng)
+            #return (nam, typc, valc, ntv[1].val, ntv[2].to_obj(), None, leng)
+            return (nam, typc, cls.n_to_i(valc), ntv[1].val, ntv[2].to_obj(), None, leng)
         if len(ntv) == 2 and len(ntv[1]) == 1 and \
             isinstance(ntv[1].val, (int, str)):
-            return (nam, typc, valc, ntv[1].val, None, None, leng) 
+            #return (nam, typc, valc, ntv[1].val, None, None, leng) 
+            return (nam, typc, cls.n_to_i(valc), ntv[1].val, None, None, leng) 
         if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, list):
             leng = leng * ntv[1][0].val
-            return (nam, typc, valc, None, None, ntv[1][0].val, leng) 
+            #return (nam, typc, valc, None, None, ntv[1][0].val, leng) 
+            return (nam, typc, cls.n_to_i(valc), None, None, ntv[1][0].val, leng) 
         if len(ntv) == 2 and len(ntv[1]) > 1  and isinstance(ntv[1][0].val, int):
-            return (nam, typc, valc, None, ntv[1].to_obj(), None, leng)
+            #return (nam, typc, valc, None, ntv[1].to_obj(), None, leng)
+            return (nam, typc, cls.n_to_i(valc), None, ntv[1].to_obj(), None, leng)
         return (nam, typ, val, None, None, None, len(ntv))
 
     @staticmethod 
@@ -446,8 +454,9 @@ class NtvfieldInterface:
 
         *Returns* : Ntv object'''
         leng = len(self)
+        codec = self.i_to_n(self.codec)
         idxname = None if self.name == '$default' or not name else self.name       
-        if len(self.codec) == 1:
+        '''if len(self.codec) == 1:
             return NtvSingle(self.codec[0].ntv_value, idxname, self.codec[0].ntv_type)
         if codecval:
             return NtvList(self.codec, idxname, ntv_type=def_type)
@@ -457,7 +466,18 @@ class NtvfieldInterface:
             return NtvList([NtvList(self.codec, ntv_type=def_type), 
                             NtvList(self.keys, ntv_type='json')], idxname, ntv_type='json')
         if modecodec == 'optimize':
-            ntv_value = [NtvList(self.codec, ntv_type=def_type)]
+            ntv_value = [NtvList(self.codec, ntv_type=def_type)]'''
+        if len(codec) == 1:
+            return NtvSingle(codec[0].ntv_value, idxname, codec[0].ntv_type)
+        if codecval:
+            return NtvList(codec, idxname, ntv_type=def_type)
+        if len(codec) == leng or modecodec == 'full':
+            return NtvList(self.values, idxname, ntv_type=def_type)
+        if modecodec == 'default':
+            return NtvList([NtvList(codec, ntv_type=def_type), 
+                            NtvList(self.keys, ntv_type='json')], idxname, ntv_type='json')
+        if modecodec == 'optimize':
+            ntv_value = [NtvList(codec, ntv_type=def_type)]
             if not parent is None:
                 ntv_value.append(NtvSingle(parent, ntv_type='json'))
             if keys:
