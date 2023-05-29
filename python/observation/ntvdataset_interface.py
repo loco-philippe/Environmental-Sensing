@@ -24,6 +24,7 @@ from observation.ntvfield import Ntvfield
 from observation.ntvfield_interface import NtvfieldEncoder
 from observation.util import util
 from json_ntv import NtvList, Ntv
+from observation.fields import Nfield, Sfield
 
 #import sys
 #print("In module ntvdataset_interface sys.path[0], __package__ ==", sys.path[0], __package__)
@@ -213,7 +214,7 @@ class NtvdatasetInterface:
         *Returns* : Ntv object'''
         idxname = [name or iname != 'i' + str(i) for i, iname in enumerate(self.lname)]
         if modecodec != 'optimize':
-            lis = [Ntvfield.to_ntv(index, modecodec=modecodec, name=iname) 
+            lis = [index.to_ntv(modecodec=modecodec, name=iname) 
                    for index, iname in zip(self.lindex, idxname)]
         else:
             lis = []
@@ -221,25 +222,25 @@ class NtvdatasetInterface:
             for idx, inf, iname in zip(self.lindex, indexinfos, idxname):
                 coef = Ntvfield.encodecoef(idx.keys)
                 if inf['cat'] == 'unique':
-                    lis.append(Ntvfield.to_ntv(idx, name=iname))
+                    lis.append(idx.to_ntv(name=iname))
                 elif inf['cat'] == 'coupled':
                     idx_coup = idx.setkeys(self.lindex[inf['parent']].keys, inplace=False)
-                    lis.append(Ntvfield.to_ntv(idx_coup, parent=inf['parent'], name=iname))
+                    lis.append(idx_coup.to_ntv(parent=inf['parent'], name=iname))
                 elif coef:
-                    lis.append(Ntvfield.to_ntv(idx, keys=[coef], name=iname))
+                    lis.append(idx.to_ntv(keys=[coef], name=iname))
                 elif inf['parent'] == -1:  # cat='variable' or 'secondary'
                     if idx.keys == list(range(len(self))):
-                        lis.append(Ntvfield.to_ntv(idx, modecodec='full', name=iname))
+                        lis.append(idx.to_ntv(modecodec='full', name=iname))
                     else:
-                        lis.append(Ntvfield.to_ntv(idx, modecodec='default', name=iname))                
+                        lis.append(idx.to_ntv(modecodec='default', name=iname))                
                 else:  # derived
                     if len(self.lindex[inf['parent']].codec) == len(self):
-                        lis.append(Ntvfield.to_ntv(idx, modecodec='default', name=iname))             
+                        lis.append(idx.to_ntv(modecodec='default', name=iname))             
                     #elif idx.iskeysfromderkeys(self.lindex[inf['parent']]): # periodic derived
                     #    lis.append(Ntvfield.to_ntv(idx, parent=inf['parent'], name=iname))
                     else: #derived
                         keys = idx.derkeys(self.lindex[inf['parent']])
-                        lis.append(Ntvfield.to_ntv(idx, keys=keys, parent=inf['parent'], name=iname))            
+                        lis.append(idx.to_ntv(keys=keys, parent=inf['parent'], name=iname))            
         return NtvList(lis, None, ntv_type=def_type)
 
     def to_obj(self, **kwargs):
@@ -358,7 +359,7 @@ class NtvdatasetInterface:
             npdtype = 'float'
             option['dtype'] = 'float'
         if ivar == -1:
-            data = Ntvfield(list(range(len(ilf)))).to_numpy(npdtype='int')\
+            data = self.field(list(range(len(ilf)))).to_numpy(npdtype='int')\
                 .reshape([len(ilf.nindex(name).codec) for name in idxname])
         else:
             data = ilf.lindex[ivar]\
@@ -398,11 +399,11 @@ class NtvdatasetInterface:
         if len(idxname) > 3:
             raise NtvdatasetError('number of idx > 3')
         if len(idxname) == 2:
-            self.addindex(Ntvfield('null', ' ', keys=[0]*len(self)))
+            self.addindex(self.field('null', ' ', keys=[0]*len(self)))
             idxname += [' ']
         elif len(idxname) == 1:
-            self.addindex(Ntvfield('null', ' ', keys=[0]*len(self)))
-            self.addindex(Ntvfield('null', '  ', keys=[0]*len(self)))
+            self.addindex(self.field('null', ' ', keys=[0]*len(self)))
+            self.addindex(self.field('null', '  ', keys=[0]*len(self)))
             idxname += [' ', '  ']
         xar = self.to_xarray(idxname=idxname, varname=varname, fillvalue='?',
                              fillextern=False, lisfunc=util.isNotEqual, tovalue='?')

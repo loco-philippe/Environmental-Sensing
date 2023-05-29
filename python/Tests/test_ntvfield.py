@@ -20,7 +20,12 @@ from observation.fields import Nfield, Sfield
 Field = Ntvfield
 Field = Nfield
 Field = Sfield
+arr12 = 'ar[1,2]' if Field == Sfield else [1,2]
 
+def internal(val):
+    if Field == Sfield:
+        return val
+    return NtvSingle(val)
 
 class Test_Field(unittest.TestCase):
 
@@ -40,19 +45,25 @@ class Test_Field(unittest.TestCase):
         self.assertTrue(Field('trux') == Field(['trux']))
 
     def test_init(self):
-        idx = Field(codec=[Ntv.obj('er'), Ntv.obj(2), Ntv.obj([1, 2])], name='test', keys=[0, 1, 2, 1])
-        idx2 = Field.from_ntv({'test': ['er', 2, [1, 2], 2]})
-        #idx3 = Field.ext(['er', 2, [1, 2], 2], 'test')
-        #idx4 = Field.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
-        self.assertTrue(Field(idx) == idx)
-        #self.assertTrue(Field(idx) == Field.ext(idx) == idx)
-        self.assertTrue(idx.name == 'test' and 
-                        idx.cod == ['er', 2, [1, 2]] and 
-                        idx.keys == [0, 1, 2, 1])
-        self.assertTrue(idx == idx2)
-        #self.assertTrue(idx == idx2 ==idx3)
-        #self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1, 2], 2]
-        #                == idx5.val == idx5.cod and len(idx) == 4)
+        if Field != Sfield:
+            idx = Field(codec=[Ntv.obj('er'), Ntv.obj(2), Ntv.obj(arr12)], name='test', keys=[0, 1, 2, 1])
+            idx2 = Field.from_ntv({'test': ['er', 2, arr12, 2]})
+            #idx3 = Field.ext(['er', 2, [1, 2], 2], 'test')
+            #idx4 = Field.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
+            self.assertTrue(Field(idx) == idx)
+            #self.assertTrue(Field(idx) == Field.ext(idx) == idx)
+            self.assertTrue(idx.name == 'test' and 
+                            idx.cod == ['er', 2, arr12] and 
+                            idx.keys == [0, 1, 2, 1])
+            self.assertTrue(idx == idx2)
+            #self.assertTrue(idx == idx2 ==idx3)
+            #self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1, 2], 2]
+            #                == idx5.val == idx5.cod and len(idx) == 4)
+        else:
+            idx = Field(codec=['er', 2, arr12], name='test', keys=[0, 1, 2, 1])
+            idx2 = Field.from_ntv({'test': ['er', 2, arr12, 2]})
+            self.assertTrue(Field(idx) == idx)
+            self.assertTrue(idx == idx2)            
         '''idx = Field(['er', 'rt', 'ty'], 'datation', [0, 1, 2, 2])
         idx2 = Field.ext(['er', 'rt', 'ty', 'ty'], 'datation')
         idx3 = Field.dic({'datation': ['er', 'rt', 'ty', 'ty']})
@@ -75,7 +86,9 @@ class Test_Field(unittest.TestCase):
         listval = [{'name': ['value']}, 
                    'value', 
                    ['value'], 
-                   ['value', 'value2'],
+                   ['value', 'value2']]
+        if Field != Sfield:
+            listval += [
                    {'b': ['value', [[1], [2]], [[3], [4]]]},
                    {'b': ['value', [[[0.0, 1.0], [1.0, 2.0], [1.0, 1.0], [0.0, 1.0]]],
                           [[[0.0, 2.0], [2.0, 2.0], [1.0, 1.0], [0.0, 2.0]]]]}
@@ -98,58 +111,65 @@ class Test_Field(unittest.TestCase):
         self.assertTrue(Field.ntv(val).to_ntv().to_obj() == val2)
 
     def test_infos(self):
-        idx = Field.ntv(['er', 2, [1, 2]])
+        idx = Field.ntv(['er', 2, arr12])
         self.assertTrue(idx.infos == {'lencodec': 3, 'mincodec': 3, 'maxcodec': 3,
                                       'typecodec': 'complete', 'ratecodec': 0.0})
-        idx2 = Field.ntv({'result': ['er', Ntvdataset(), Ntvdataset()]} )
-        self.assertTrue(idx2.infos == {'lencodec': 2, 'mincodec': 2, 'maxcodec': 3,
-                                       'typecodec': 'default', 'ratecodec': 1.0})
+        if Field != Sfield:
+            idx2 = Field.ntv({'result': ['er', Ntvdataset(), Ntvdataset()]} )
+            self.assertTrue(idx2.infos == {'lencodec': 2, 'mincodec': 2, 'maxcodec': 3,
+                                           'typecodec': 'default', 'ratecodec': 1.0})
         idx2 = Field()
         self.assertTrue(idx2.infos == {'lencodec': 0, 'mincodec': 0, 'maxcodec': 0,
                                        'typecodec': 'null', 'ratecodec': 0.0})
 
     def test_append(self):
-        idx = Field.ntv(['er', 2, (1, 2)])
+        idx = Field.ntv(['er', 2, arr12])
         self.assertTrue(idx.append(8) == 3)
         self.assertTrue(idx.append(8) == 3)
         self.assertTrue(idx.append(8, unique=False) == 4)
-        self.assertTrue(idx[4] == NtvSingle(8))
+        self.assertTrue(idx[4] == internal(8))
 
     def test_loc_keyval(self):
-        idx = Field.ntv(['er', 2, [1, 2]])
-        self.assertTrue(idx.keytoval(idx.valtokey([1, 2])) == [1, 2])
-        self.assertTrue(idx.isvalue([1, 2]))
-        idx = Field.ntv( {'location::point': 
+        idx = Field.ntv(['er', 2, arr12])
+        self.assertTrue(idx.keytoval(idx.valtokey(arr12)) == arr12)
+        self.assertTrue(idx.isvalue(arr12))
+        if Field != Sfield:
+            idx = Field.ntv( {'location::point': 
                            [{'paris': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]]})
-        self.assertTrue(idx.keytoval(
-            idx.valtokey({':point':[4.83, 45.76]})) == {':point':[4.83, 45.76]})
-        self.assertTrue(idx.loc({':point':[4.83, 45.76]}) == [1])
+            self.assertTrue(idx.keytoval(
+                idx.valtokey({':point':[4.83, 45.76]})) == {':point':[4.83, 45.76]})
+            self.assertTrue(idx.loc({':point':[4.83, 45.76]}) == [1])
         idx = Field.ntv([1, 3, 3, 2, 5, 3, 4])
         self.assertTrue(idx.loc(3) == [1, 2, 5])
 
     def test_setvalue_setname(self):
-        idx = Field.ntv(['er', 2, [1, 2]])
-        idx[1] = Ntv.obj('er')
-        self.assertTrue(idx.val == ['er', 'er', [1, 2]])
+        idx = Field.ntv(['er', 2, arr12])
+        idx[1] = internal('er')
+        #idx[1] = Ntv.obj('er')
+        self.assertTrue(idx.val == ['er', 'er', arr12])
         idx.setcodecvalue('er', 'ez')
-        self.assertTrue(idx.val == ['ez', 'ez', [1, 2]])
-        idx[1] = Ntv.obj(3)
-        self.assertTrue(idx.val == ['ez', 3, [1, 2]])
-        idx.setvalue(0, {':date': '2001-02-03'})
-        self.assertTrue(idx.val == [{':date': '2001-02-03'}, 3, [1, 2]])
-        self.assertTrue(idx.values[0] == Ntv.obj({':date': '2001-02-03'}))
-        idx.setlistvalue([3, [3, 4], 'ee'])
-        self.assertTrue(idx.val == [3, [3, 4], 'ee'])
+        self.assertTrue(idx.val == ['ez', 'ez', arr12])
+        idx[1] = internal(3)
+        self.assertTrue(idx.val == ['ez', 3, arr12])
+        if Field != Sfield:
+            idx.setvalue(0, {':date': '2001-02-03'})
+            self.assertTrue(idx.val == [{':date': '2001-02-03'}, 3, arr12])
+            self.assertTrue(idx.values[0] == Ntv.obj({':date': '2001-02-03'}))
+            idx.setlistvalue([3, [3, 4], 'ee'])
+            self.assertTrue(idx.val == [3, [3, 4], 'ee'])
         idx.setname('truc')
         self.assertEqual(idx.name, 'truc')
 
     def test_record(self):
         ia = Field.ntv(['anne', 'paul', 'lea', 'andre', 'paul', 'lea'])
-        self.assertEqual([ia[i].to_obj()
+        if Field != Sfield:
+            self.assertEqual([ia[i].to_obj()
                          for i in ia.recordfromvalue('paul')], ['paul', 'paul'])
-
+        else:
+            self.assertEqual([ia[i] for i in ia.recordfromvalue('paul')], ['paul', 'paul'])
+            
     def test_reset_reorder_sort(self):
-        idx = Field.ntv(['er', 2, 'er', [1, 2]])
+        idx = Field.ntv(['er', 2, 'er', arr12])
         cod = copy(idx.codec)
         idx.codec.append(Ntv.obj('ez'))
         # idx.resetkeys()
@@ -157,11 +177,17 @@ class Test_Field(unittest.TestCase):
         self.assertEqual(cod, idx.codec)
         order = [1, 3, 0, 2]
         idx.reorder(order)
-        self.assertEqual(idx.val, [2, [1, 2], 'er', 'er'])
+        self.assertEqual(idx.val, [2, arr12, 'er', 'er'])
         # idx.sort()
-        self.assertEqual(idx.sort().val, ['er', 'er', 2, [1, 2]])
+        if Field != Sfield:
+            self.assertEqual(idx.sort().val, ['er', 'er', 2, arr12])
+        else:
+            self.assertEqual(idx.sort().val, [2, arr12, 'er', 'er'])
         idxs = idx.sort(inplace=False, reverse=True)
-        self.assertEqual(idxs.val, [[1, 2], 2, 'er', 'er'])
+        if Field != Sfield:
+            self.assertEqual(idxs.val, [arr12, 2, 'er', 'er'])
+        else:
+            self.assertEqual(idxs.val, ['er', 'er', arr12, 2])
         idx = Field.ntv([1, 3, 3, 2, 5, 3, 4]).sort(inplace=False)
         self.assertEqual(idx.val, [1, 2, 3, 3, 3, 4, 5])
         self.assertEqual(idx.cod,  [1, 2, 3, 4, 5])
@@ -205,16 +231,11 @@ class Test_Field(unittest.TestCase):
         self.assertTrue(ia.iscrossed(ib))
 
     def test_vlist(self):
-        if Field != Sfield:
-            testidx = [Field(), Field.ntv(['er', 2, 'er', [1, 2]])]
-            residx = [[], ['er', '2', 'er', str([1, 2])]]
-            for idx, res in zip(testidx, residx):
-                self.assertEqual(idx.vlist(str), res)
-        else:
-            testidx = [Field(), Field.ntv(['er', 2, 'er'])]
-            residx = [[], ['er', '2', 'er']]
-            for idx, res in zip(testidx, residx):
-                self.assertEqual(idx.vlist(str), res)
+        testidx = [Field(), Field.ntv(['er', 2, 'er', arr12])]
+        residx = [[], ['er', '2', 'er', str(arr12)]]
+        for idx, res in zip(testidx, residx):
+            self.assertEqual(idx.vlist(str), res)
+
         '''il = Ntvdataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
         idx = Field.ntv([il, il])
         self.assertEqual(idx.vlist(func=Ntvdataset.to_obj, extern=False, encoded=False)[0][0],
@@ -226,9 +247,9 @@ class Test_Field(unittest.TestCase):
 
     def test_numpy(self):
         if Field != Sfield:
-            idx = Field.ntv(['er', 2, 'er', [1, 2]])
+            idx = Field.ntv(['er', 2, 'er', arr12])
             self.assertEqual(len(idx.to_numpy(func=str)), len(idx))
-            idx = Field.ntv([{'test':'er'}, 2, 'er', [1, 2]])
+            idx = Field.ntv([{'test':'er'}, 2, 'er', arr12])
             self.assertEqual(len(idx.to_numpy(func=str)), len(idx))
         else:
             idx = Field.ntv(['er', 2, 'er'])
@@ -399,14 +420,14 @@ class Test_Field(unittest.TestCase):
                        Field.ntv([0]),
                        Field.ntv(['a']),
                        Field.ntv({'datatio': ['er', 'rt', 'ty', 'ty']}),
-                       Field.ntv([[1, 2], [2, 3], [3, 4]]),
+                       Field.ntv([arr12, [2, 3], [3, 4]]),
                        Field(codec=['s', 'n', 's', 'd', 's', 'd'],
                               keys=[0, 4, 2, 1, 5, 3, 3]),
-                       Field.ntv(['er', 2, 'er', [1, 2]]),
-                       Field(codec=['er', 2, [1, 2]],
+                       Field.ntv(['er', 2, 'er', arr12]),
+                       Field(codec=['er', 2, arr12],
                               name='test', keys=[0, 1, 2, 1]),
                        #Field.ntv(['er', 2, [1, 2], 2], 'test'),
-                       Field.ntv({'test': ['er', 2, [1, 2], 2]}),
+                       Field.ntv({'test': ['er', 2, arr12, 2]}),
                        #Field.dic({'test': ['er', 2, [1, 2], 2]}, fullcodec=True),
                        #Field.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
                        ]
@@ -444,7 +465,7 @@ class Test_Field(unittest.TestCase):
 
     def test_iadd(self):
         if Field != Sfield:
-            idx = Field.ntv(['er', 2, [1, 2]])
+            idx = Field.ntv(['er', 2, arr12])
         else:
             idx = Field.ntv(['er', 2])
         idx2 = idx + idx
@@ -490,7 +511,6 @@ class Test_Field(unittest.TestCase):
     def test_ntv(self):
         fields = [{'full_dates::datetime': ['1964-01-01', '1985-02-05', '2022-01-21']},
                   ['1964-01-01', '1985-02-05', '2022-01-21'],
-                  {'full_coord::point':    [[1,2], [3,4], [5,6]]},
                   {'full_simple': [1,2,3,4]},
                   {'complete_test': [['a', 'b'], [0, 0, 1, 0]]},
                   {'complete_test': [['a', 'b'], [0, 0, 1, 0]]},
@@ -505,6 +525,8 @@ class Test_Field(unittest.TestCase):
                   {'primary': [['oui', 'fin 2022'], [1]]},
                   [['oui', 'fin 2022'], [1]]
                   ]
+        if Field != Sfield:
+            fields += [{'full_coord::point':    [[1,2], [3,4], [5,6]]}]
         for field in fields:
             idx = Field.from_ntv(field, reindex=False)
             #print(idx, type(idx.values[0]))

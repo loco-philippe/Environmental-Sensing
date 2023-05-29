@@ -104,7 +104,7 @@ class NtvdatasetStructure:
         - **update** : if True, update actual values if index name is present (and merge is True)
 
         *Returns* : none '''
-        idx = Ntvfield.ntv(index)
+        idx = self.field.ntv(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0:
             raise NtvdatasetError('sizes are different')

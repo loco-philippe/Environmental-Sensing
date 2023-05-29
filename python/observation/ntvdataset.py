@@ -35,6 +35,7 @@ import cbor2
 import pandas
 
 from observation.esconstante import ES
+from observation.fields import Nfield, Sfield
 from observation.ntvfield import Ntvfield
 from observation.ntvfield_interface import NtvfieldInterface, CborDecoder
 from observation.util import util
@@ -169,7 +170,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
     - `Ntvdataset.voxel`
     '''
 
-    def __init__(self, listidx=None, reindex=True):
+    def __init__(self, listidx=None, reindex=True, field=Nfield):
         '''
         Ntvdataset constructor.
 
@@ -178,15 +179,16 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         - **listidx** :  list (default None) - list of Ntvfield data
         - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
 
-        self.name = self.__class__.__name__
+        self.name     = self.__class__.__name__
+        self.field    = field
         self.analysis = Analysis(self)
-        self.lindex = []
+        self.lindex   = []
         if listidx.__class__.__name__ in ['Ntvdataset', 'Observation']:
             self.lindex = [copy(idx) for idx in listidx.lindex]
             return
         if not listidx:
             return
-        self.lindex = listidx
+        self.lindex   = listidx
         if reindex:
             self.reindex()
         self.analysis.actualize()
@@ -328,7 +330,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return cls.from_ntv(ntv_value, reindex=reindex)
     
     @classmethod
-    def from_ntv(cls, ntv_value, reindex=True):
+    def from_ntv(cls, ntv_value, reindex=True, field=Nfield):
         '''Generate an Ntvdataset Object from a ntv_value
 
         *Parameters*
@@ -340,13 +342,15 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
             return cls()
         #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
         # decode: name, type, codec, parent, keys, coef, leng
-        lidx = [list(Ntvfield.decode_ntv(ntvf)) for ntvf in ntv]
+        #lidx = [list(Ntvfield.decode_ntv(ntvf)) for ntvf in ntv]
+        lidx = [list(field.decode_ntv(ntvf)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
             Ntvdataset._init_ntv_keys(ind, lidx, leng)
-        lindex = [Ntvfield(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+        #lindex = [Ntvfield(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+        lindex = [field(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
 
@@ -398,7 +402,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         for ind in range(1, len(ilc)):
             oldidx = ilc.nindex(oldname)
             for name in newname:
-                ilc.addindex(Ntvfield(oldidx.codec, name, oldidx.keys))
+                ilc.addindex(self.field(oldidx.codec, name, oldidx.keys))
             row = ilc[ind]
             if not isinstance(row, list):
                 row = [row]
@@ -411,7 +415,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                 fillval = util.castval(
                     fillvalue, util.typename(name, ES.def_clsName))
                 merged.addindex(
-                    Ntvfield([fillval] * len(merged), name, oldidx.keys))
+                    self.field([fillval] * len(merged), name, oldidx.keys))
             merged += rec
         for name in set(delname):
             if name:
@@ -696,7 +700,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
 
     def __copy__(self):
         ''' Copy all the data '''
-        return Ntvdataset(self)
+        return self.__class__(self)
 
 # %% property
     @property

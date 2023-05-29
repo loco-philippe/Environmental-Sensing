@@ -63,6 +63,10 @@ class Sfield(Ntvfield):
         return lis
     
     @staticmethod
+    def s_to_e(val):
+        return val
+
+    @staticmethod
     def i_to_n(val):
         return Ntv.obj(val)
     

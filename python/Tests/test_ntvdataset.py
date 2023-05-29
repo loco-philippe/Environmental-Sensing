@@ -19,6 +19,7 @@ from observation import DatationValue, LocationValue, \
     PropertyValue, ESValue, Ntvdataset, Ntvfield, ES, util
 from test_obs import dat3, loc3, prop2
 from json_ntv import Ntv, NtvList
+from observation.fields import Nfield
 
 #l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
 #il = Ntvdataset.obj(l)
@@ -293,7 +294,7 @@ class Test_Ntvdataset(unittest.TestCase):
         iidx5 = Ntvdataset.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
                            'locationvalue': [100, 100, 200, 200, 300, 300],
                            'propertyvalue': [True, False, True, False, True, False]})
-        self.assertEqual(iidx5.lidx[0], Ntvfield.ntv({'datationvalue': [10, 10, 20, 20, 30, 30]}))
+        self.assertEqual(iidx5.lidx[0], Nfield.ntv({'datationvalue': [10, 10, 20, 20, 30, 30]}))
         self.assertEqual(iidx5.idxname, ['datationvalue', 'locationvalue',
                                          'propertyvalue'])
         iidx5 += iidx5
