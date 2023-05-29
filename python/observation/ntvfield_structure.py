@@ -95,12 +95,16 @@ class NtvfieldStructure:
         with default codec. But if not derived, idx indexes MUST to be reindexed.
 
         *Returns* : tuple with duplicate records (errors) if 'duplicate', None else'''
+        #from observation.fields import Nfield
         if not isinstance(idx, list):
             index = [idx]
         else:
             index = idx
-        idxzip = self.__class__.ext(list(zip(*([self._keys] + [ix._keys for ix in index]))),
-                                    typevalue=None)
+        #idxzip = self.__class__.ext(list(zip(*([self._keys] + [ix._keys for ix in index]))),
+        #                            typevalue=None)
+        idxzip = self.__class__(list(zip(*([self._keys] + [ix._keys for ix in index]))),
+                                reindex=True)
+        #print(idxzip)
         self.tocoupled(idxzip)
         if not derived:
             for ind in index:

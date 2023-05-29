@@ -17,11 +17,11 @@ class Nfield(Ntvfield):
 
     @staticmethod
     def l_to_i(lis):
-        return [Ntv.obj(val) for val in lis]
+        return [Ntv.from_obj(val) for val in lis]
 
     @staticmethod
     def s_to_i(val):
-        return Ntv.obj(val)
+        return Ntv.from_obj(val)
 
     @staticmethod
     def n_to_i(ntv):

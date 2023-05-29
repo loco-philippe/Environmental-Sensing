@@ -194,7 +194,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         self.analysis.actualize()
         return
 
-    @classmethod
+    """@classmethod
     def dic(cls, idxdic=None, typevalue=ES.def_clsName, reindex=True):
         '''
         Ntvdataset constructor (external dictionnary).
@@ -211,7 +211,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         if not isinstance(idxdic, dict):
             raise NtvdatasetError("idxdic not dict")
         return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
-                       typevalue=typevalue, reindex=reindex)
+                       typevalue=typevalue, reindex=reindex)"""
 
     @classmethod
     def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, reindex=True):
@@ -246,7 +246,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
 
     @classmethod
     def from_csv(cls, filename='ntvdataset.csv', header=True, nrow=None,
-                 optcsv={'quoting': csv.QUOTE_NONNUMERIC}, dtype=ES.def_dtype):
+                 optcsv={'quoting': csv.QUOTE_NONNUMERIC}, field=Nfield):
         '''
         Ntvdataset constructor (from a csv file). Each column represents index values.
 
@@ -255,7 +255,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         - **filename** : string (default 'ntvdataset.csv'), name of the file to read
         - **header** : boolean (default True). If True, the first raw is dedicated to names
         - **nrow** : integer (default None). Number of row. If None, all the row else nrow
-        - **dtype** : list of string (default None) - data type for each column (default str)
         - **optcsv** : dict (default : quoting) - see csv.reader options'''
         if not optcsv:
             optcsv = {}
@@ -268,21 +267,24 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                 if irow == nrow:
                     break
                 if irow == 0:
-                    if dtype and not isinstance(dtype, list):
-                        dtype = [dtype] * len(row)
+                    #if dtype and not isinstance(dtype, list):
+                    #    dtype = [dtype] * len(row)
                     idxval = [[] for i in range(len(row))]
-                    idxname = None
+                    idxname = [''] * len(row)
                 if irow == 0 and header:
                     idxname = row
                 else:
-                    if not dtype:
+                    for i in range(len(row)):
+                        idxval[i].append(row[i])
+                    """if not dtype:
                         for i in range(len(row)):
                             idxval[i].append(row[i])
                     else:
                         for i in range(len(row)):
-                            idxval[i].append(util.cast(row[i], dtype[i]))
+                            idxval[i].append(util.cast(row[i], dtype[i]))"""
                 irow += 1
-        return cls.ext(idxval, idxname, typevalue=None, reindex=True)
+        lindex = [field.ntv({name:idx}) for idx, name in zip(idxval, idxname)]
+        return cls(listidx=lindex, reindex=True, field=Nfield)
 
     @classmethod
     def from_file(cls, filename, forcestring=False, reindex=True):
@@ -307,7 +309,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                 bjson = file.read()
         return cls.from_ntv(bjson, reindex=reindex)
 
-    @classmethod
+    """@classmethod
     def obj(cls, bsd=None, reindex=True, context=True):
         '''
         Generate a new Object from a bytes, string or list value
@@ -317,7 +319,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         - **bsd** : bytes, string or list data to convert
         - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
         - **context** : boolean (default True) - if False, only codec and keys are included'''
-        return cls.from_obj(bsd, reindex=reindex, context=context)
+        return cls.from_obj(bsd, reindex=reindex, context=context)"""
 
     @classmethod
     def ntv(cls, ntv_value, reindex=True):
@@ -354,7 +356,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
 
-    @classmethod
+    """@classmethod
     def from_obj(cls, bsd=None, reindex=True, context=True):
         '''
         Generate an Ntvdataset Object from a bytes, string or list value
@@ -376,7 +378,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
             lis = bsd
         else:
             raise NtvdatasetError("the type of parameter is not available")
-        return cls._init_obj(lis, reindex=reindex, context=context)
+        return cls._init_obj(lis, reindex=reindex, context=context)"""
 
     def merge(self, fillvalue=math.nan, reindex=False, simplename=False):
         '''
@@ -426,7 +428,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return ilc
 
 # %% internal
-    @classmethod
+    """@classmethod
     def _init_obj(cls, listidx=None, reindex=True, typevalue=ES.def_clsName, context=True):
         '''
         Ntvdataset constructor.
@@ -492,9 +494,9 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
             Ntvdataset._init_keys(ind, lidx, length)
         lindex = [Ntvfield(idx[2], idx[0], idx[4], idx[1],
                          reindex=reindex) for idx in lidx]
-        return cls(lindex, reindex=False)
+        return cls(lindex, reindex=False)"""
 
-    @staticmethod
+    """@staticmethod
     def _init_len_cros(fullmode, leng, isfullkeys, keys, isparent):
         ''' initialization of length and crossed data'''
         # crossed : pas d'index (isfullindex false), pas de parent(isparent false)
@@ -528,7 +530,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
             crossed = [i for i, (isfullk, ispar, lengt) in
                        enumerate(zip(isfullkeys, isparent, leng))
                        if not ispar and not isfullk and 1 < lengt < length]
-        return length, crossed
+        return length, crossed"""
 
     @staticmethod
     def _init_ntv_keys(ind, lidx, leng):
@@ -555,10 +557,10 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         if not keys and len(codec) == len(lidx[parent][2]):    # implicit
             lidx[ind][4] = lidx[parent][4]
             return
-        lidx[ind][4] = Ntvfield.keysfromderkeys(lidx[parent][4], keys)  # relative
+        lidx[ind][4] = Nfield.keysfromderkeys(lidx[parent][4], keys)  # relative
         return
 
-    @staticmethod
+    """@staticmethod
     def _init_keys(ind, lidx, leng):
         ''' initialization of keys data'''
         # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
@@ -586,7 +588,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
             lidx[ind][4] = [(i*len(lidx[ind][2])) // lenp for i in range(lenp)]
         lidx[ind][4] = Ntvfield.keysfromderkeys(
             lidx[lidx[ind][3]][4], lidx[ind][4])
-        return
+        return"""
 
     @staticmethod
     def _mergerecord(rec, mergeidx=True, updateidx=True, simplename=False):

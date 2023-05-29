@@ -189,7 +189,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         if notdef:
             for item in notdef:
                 values[item] = not default        
-        return cls.ext(name=name, values=values)
+        return cls.ntv({name: values})
         
     """@classmethod
     def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
@@ -213,7 +213,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         values = dicvalues[name]
         return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)"""
 
-    @classmethod
+    """@classmethod
     def ext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
         '''
         Ntvfield constructor (external list).
@@ -236,7 +236,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
             codec, keys = (values, list(range(len(values))))
         else:
             codec, keys = util.resetidx(values)
-        return cls(codec=codec, name=name, keys=keys, typevalue=None, castobj=False)
+        return cls(codec=codec, name=name, keys=keys, typevalue=None, castobj=False)"""
 
     @classmethod
     def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
@@ -352,7 +352,8 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         if not name:
             name = str(list({idx.name for idx in listidx}))
         values = util.tuple(util.transpose([idx.values for idx in listidx]))
-        return cls.ext(values, name)
+        #return cls.ext(values, name)
+        return cls.ntv({name: values})
 
     @classmethod
     def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):

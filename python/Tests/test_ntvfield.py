@@ -32,8 +32,9 @@ class Test_Field(unittest.TestCase):
     def test_init_unitaire(self):
         idx = Field()
         idx2 = Field.ntv()
-        idx3 = Field.ext()
-        self.assertTrue(idx == idx2 == idx3 == Field(idx))
+        #idx3 = Field.ext()
+        #self.assertTrue(idx == idx2 == idx3 == Field(idx))
+        self.assertTrue(idx == idx2 == Field(idx))
         self.assertTrue(
             idx.name == ES.defaultindex and idx.codec == [] and idx.keys == [])
         self.assertTrue(idx.values == [])

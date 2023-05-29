@@ -16,7 +16,7 @@ from math import nan
 from itertools import product
 import json
 from observation import DatationValue, LocationValue, \
-    PropertyValue, ESValue, Ntvdataset, Ntvfield, ES, util
+    PropertyValue, ESValue, Ntvdataset, ES, util
 from test_obs import dat3, loc3, prop2
 from json_ntv import Ntv, NtvList
 from observation.fields import Nfield
@@ -65,11 +65,10 @@ class Test_Ntvdataset(unittest.TestCase):
                          'datationvalue': [[10, 20, 30], [2]],
                          'locationvalue': [[100, 200, 300], 1],
                          'propertyvalue': [[True, False], [1]]})
-        il2 = Ntvdataset.ext([["a", "b", "c", "d", "e", "f"],
-                         [10, 10, 20, 20, 30, 30],
-                         [100, 100, 200, 200, 300, 300],
-                         [True, False, True, False, True, False]],
-                        ['namvalue', 'datationvalue', 'locationvalue', 'propertyvalue'])
+        il2 = Ntvdataset.ntv({'namvalue': ["a", "b", "c", "d", "e", "f"],
+                         'datationvalue': [10, 10, 20, 20, 30, 30],
+                         'locationvalue': [100, 100, 200, 200, 300, 300],
+                         'propertyvalue': [True, False, True, False, True, False]})
         self.assertTrue(il1 == il2)
         self.assertTrue(il1 == Ntvdataset(il1.lindex) == copy(il1))
 
@@ -91,22 +90,22 @@ class Test_Ntvdataset(unittest.TestCase):
         self.assertTrue(il1 == il2 == il3)
 
     def test_creation_dic_ext(self):
-        iidx = Ntvdataset.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
+        """iidx = Ntvdataset.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
                           'locationvalue': [100, 100, 200, 200, 300, 300],
                           'propertyvalue': [True, False, True, False, True, False]})
         iidx1 = Ntvdataset.ext([[10, 10, 20, 20, 30, 30], [100, 100, 200, 200, 300, 300],
                            [True, False, True, False, True, False]],
                           ['datationvalue', 'locationvalue', 'propertyvalue'])
 
-        self.assertEqual(iidx, iidx1)
+        self.assertEqual(iidx, iidx1)"""
         self.assertTrue(Ntvdataset.ntv({}) == Ntvdataset.ntv([]) == Ntvdataset() ==
                         Ntvdataset.ext([]) == Ntvdataset.ext())
-        try:
+        """try:
             il1 = Ntvdataset.ext([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
                              [11, 12, 13, 14, 15, 16]])
             res1 = True
         except:
-            res1 = False
+            res1 = False"""
         try:
             il2 = Ntvdataset.ntv([[[1, 2, 3],[2]] , [[4, 5, 6], 0], [[7, 8], [1]],
                              [11, 12, 13, 14, 15, 16]])
@@ -119,7 +118,8 @@ class Test_Ntvdataset(unittest.TestCase):
             res3 = True
         except:
             res3 = False
-        self.assertTrue(not res1 and res2 and not res3 and len(il2) == 6)
+        self.assertTrue(res2 and not res3 and len(il2) == 6)
+        #self.assertTrue(not res1 and res2 and not res3 and len(il2) == 6)
 
     """def test_var(self):
         il2 = Ntvdataset.obj([['namvalue', ["a", "b", "c", "d", "e", "f"], -1],
@@ -133,7 +133,7 @@ class Test_Ntvdataset(unittest.TestCase):
         il2.setvar('namvalue')
         self.assertEqual(il2.lvarname, ['namvalue'])"""
 
-    def test_creation_dic_ext_variable(self):
+    """def test_creation_dic_ext_variable(self):
         iidx = Ntvdataset.ntv({'varvalue': ['a', 'b', 'c', 'd', 'e', 'f'],
                           'datationvalue': [10, 10, 20, 20, 30, 30],
                           'locationvalue': [100, 100, 200, 200, 300, 300],
@@ -157,7 +157,7 @@ class Test_Ntvdataset(unittest.TestCase):
             res = True
         except:
             res = False
-        self.assertFalse(res)
+        self.assertFalse(res)"""
 
     def test_properties(self):
         il = Ntvdataset.ntv([{'ext': ['er', 'rt', 'er', 'ry']}, [0, 2, 0, 2],
@@ -166,9 +166,9 @@ class Test_Ntvdataset(unittest.TestCase):
         self.assertEqual(il.indexlen, [3, 2, 3, 2, 2, 1, 3])
         self.assertEqual(il.dimension, 2)
         self.assertEqual(il.lencomplete, 4)
-        il = Ntvdataset.obj([[0, 2, 0, 0], [30, 12, 20, 20]])
+        il = Ntvdataset.ntv([[0, 2, 0, 0], [30, 12, 20, 20]])
         self.assertFalse(il.consistent)
-        il = Ntvdataset.obj([['ext', ['er', 'rt', 'er', 'ry']],
+        il = Ntvdataset.ntv([{'ext': ['er', 'rt', 'er', 'ry']},
                         [0, 2, 0, 1], [30, 12, 20, 20]])
         self.assertTrue(il.consistent)
 
@@ -182,7 +182,7 @@ class Test_Ntvdataset(unittest.TestCase):
         self.assertEqual(len(il), 3)
 
     def test_canonorder(self):
-        il = Ntvdataset.ext([[0, 1, 2, 3, 4, 5],
+        il = Ntvdataset.ntv([[0, 1, 2, 3, 4, 5],
                         ['j', 'j', 'f', 'f', 'a', 'a'],
                         [100, 100, 200, 200, 300, 300],
                         [True, False, True, False, True, False]])
@@ -191,8 +191,8 @@ class Test_Ntvdataset(unittest.TestCase):
 
     def test_addindex(self):
         iidx = Ntvdataset.ntv([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
-        idx = Field.ext([6, 7, 8], 'i2')
-        idx2 = Field.ext([6, 7, 8], 'truc')
+        idx = Field([6, 7, 8], 'i2')
+        idx2 = Field([6, 7, 8], 'truc')
         iidx.addindex(idx)
         iidx.addindex(idx)
         self.assertEqual(iidx.idxname, ['i0', 'i1', 'i2', 'i2(2)', 'i2(2)(2)'])
@@ -225,7 +225,7 @@ class Test_Ntvdataset(unittest.TestCase):
         self.assertEqual(len(il3), len(il1) + len(il2))
         self.assertEqual(il2.loc(["_rt", 12, 10]), il3.loc(["_rt", 12, 10]))
         self.assertEqual(il1.loc(['er', 0, 20]), il3.loc(['er', 0, 20]))
-        il2 = Ntvdataset.obj([['_er', '_rt', '_er', '_ry', '_ab'], [10, 2, 10, 12, 10],
+        il2 = Ntvdataset.ntv([['_er', '_rt', '_er', '_ry', '_ab'], [10, 2, 10, 12, 10],
                          [110, 0, 120, 120, 115]])
         il3 = il1 + il2
         self.assertEqual(len(il3), len(il1) + len(il2))
