@@ -25,7 +25,7 @@ from observation.fields import Nfield
 #il = Ntvdataset.obj(l)
 defv = 'default value'
 i1 = 'i1'
-
+Field = Nfield
 
 class Test_Ntvdataset(unittest.TestCase):
 
@@ -50,7 +50,7 @@ class Test_Ntvdataset(unittest.TestCase):
                         iidx2.lindex[2].values == iidx4.lindex[2].values)
         self.assertEqual(Ntvdataset(Ntvdataset.ntv([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]])),
                          Ntvdataset.ntv([[0, 2, 0, 2, 0], [10, 0, 20, 20, 15]]))
-        il = Ntvdataset([Ntvfield([{'paris:point': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
+        il = Ntvdataset([Field([{'paris:point': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                    name='location')])
         self.assertEqual(il.lindex[0].values[0].type_str, 'point')
         self.assertEqual(il.lindex[0].values[1].type_str, 'json')
@@ -191,8 +191,8 @@ class Test_Ntvdataset(unittest.TestCase):
 
     def test_addindex(self):
         iidx = Ntvdataset.ntv([['a', 'b', 'c'], [1, 2, 2], [4, 5, 5]])
-        idx = Ntvfield.ext([6, 7, 8], 'i2')
-        idx2 = Ntvfield.ext([6, 7, 8], 'truc')
+        idx = Field.ext([6, 7, 8], 'i2')
+        idx2 = Field.ext([6, 7, 8], 'truc')
         iidx.addindex(idx)
         iidx.addindex(idx)
         self.assertEqual(iidx.idxname, ['i0', 'i1', 'i2', 'i2(2)', 'i2(2)(2)'])
@@ -294,7 +294,7 @@ class Test_Ntvdataset(unittest.TestCase):
         iidx5 = Ntvdataset.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
                            'locationvalue': [100, 100, 200, 200, 300, 300],
                            'propertyvalue': [True, False, True, False, True, False]})
-        self.assertEqual(iidx5.lidx[0], Nfield.ntv({'datationvalue': [10, 10, 20, 20, 30, 30]}))
+        self.assertEqual(iidx5.lidx[0], Field.ntv({'datationvalue': [10, 10, 20, 20, 30, 30]}))
         self.assertEqual(iidx5.idxname, ['datationvalue', 'locationvalue',
                                          'propertyvalue'])
         iidx5 += iidx5

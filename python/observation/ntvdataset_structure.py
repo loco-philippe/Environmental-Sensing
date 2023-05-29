@@ -366,7 +366,7 @@ class NtvdatasetStructure:
         for name in indexname:
             duplicates += self.nindex(name).getduplicates()
         if resindex and isinstance(resindex, str):
-            newidx = Ntvfield([True] * len(self), name=resindex)
+            newidx = self.field([True] * len(self), name=resindex)
             for item in duplicates:
                 newidx[item] = False
             self.addindex(newidx)
@@ -641,7 +641,7 @@ class NtvdatasetStructure:
         *Returns* : self'''
         if not filt:
             filt = [True] * len(self)
-        idx = Ntvfield(filt, name=filtname)
+        idx = self.field(filt, name=filtname)
         idx.reindex()
         if not idx.cod in ([True, False], [False, True], [True], [False]):
             raise NtvdatasetError('filt is not consistent')
