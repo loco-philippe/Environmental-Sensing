@@ -278,7 +278,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
             keys = list(range(len(codec)))
         return cls(codec=codec, name=name, keys=keys, typevalue=None, reindex=reindex)
 
-    @classmethod
+    """@classmethod
     def from_obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
         '''Generate an Ntvfield Object from a bytes, json or dict value and from
         a keys list (derived Ntvfield)
@@ -305,7 +305,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         if typevaluedec:
             typevalue = typevaluedec
         return (parent, cls(codec=codec, name=name, keys=keys, typevalue=typevalue,
-                            reindex=reindex))
+                            reindex=reindex))"""
 
     @classmethod
     def from_dict_obj(cls, bsd, typevalue=ES.def_clsName, reindex=False):
