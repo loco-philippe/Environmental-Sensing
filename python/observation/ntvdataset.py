@@ -28,16 +28,12 @@ Documentation is available in other pages :
 from collections import Counter
 from copy import copy
 import math
-import json
 import csv
-import datetime
-import cbor2
-import pandas
 
 from observation.esconstante import ES
-from observation.fields import Nfield, Sfield
+from observation.fields import Nfield
 from observation.ntvfield import Ntvfield
-from observation.ntvfield_interface import NtvfieldInterface, CborDecoder
+from observation.ntvfield_interface import NtvfieldInterface
 from observation.util import util
 from observation.ntvdataset_interface import NtvdatasetInterface, NtvdatasetError
 from observation.ntvdataset_structure import NtvdatasetStructure
@@ -170,7 +166,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
     - `Ntvdataset.voxel`
     '''
 
-    def __init__(self, listidx=None, reindex=True, field=Nfield):
+    def __init__(self, listidx=None, reindex=True):
         '''
         Ntvdataset constructor.
 
@@ -180,10 +176,10 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
 
         self.name     = self.__class__.__name__
-        self.field    = field
+        self.field    = self.field_class()
         self.analysis = Analysis(self)
         self.lindex   = []
-        if listidx.__class__.__name__ in ['Ntvdataset', 'Observation']:
+        if listidx.__class__.__name__ in ['Ntvdataset', 'Observation', 'Ndataset', 'Sdataset']:
             self.lindex = [copy(idx) for idx in listidx.lindex]
             return
         if not listidx:
@@ -213,7 +209,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
                        typevalue=typevalue, reindex=reindex)"""
 
-    @classmethod
+    """@classmethod
     def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, reindex=True):
         '''
         Ntvdataset constructor (external index).
@@ -242,11 +238,11 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         lindex = [Ntvfield(idx[2], name, list(range(length)), idx[1],
                          lendefault=length, reindex=reindex)
                   for idx, name in zip(lidx, idxname)]
-        return cls(lindex, reindex=False)
+        return cls(lindex, reindex=False)"""
 
     @classmethod
     def from_csv(cls, filename='ntvdataset.csv', header=True, nrow=None,
-                 optcsv={'quoting': csv.QUOTE_NONNUMERIC}, field=Nfield):
+                 optcsv={'quoting': csv.QUOTE_NONNUMERIC}):
         '''
         Ntvdataset constructor (from a csv file). Each column represents index values.
 
@@ -283,8 +279,8 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                         for i in range(len(row)):
                             idxval[i].append(util.cast(row[i], dtype[i]))"""
                 irow += 1
-        lindex = [field.ntv({name:idx}) for idx, name in zip(idxval, idxname)]
-        return cls(listidx=lindex, reindex=True, field=Nfield)
+        lindex = [cls.field_class().ntv({name:idx}) for idx, name in zip(idxval, idxname)]
+        return cls(listidx=lindex, reindex=True)
 
     @classmethod
     def from_file(cls, filename, forcestring=False, reindex=True):
@@ -332,7 +328,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return cls.from_ntv(ntv_value, reindex=reindex)
     
     @classmethod
-    def from_ntv(cls, ntv_value, reindex=True, field=Nfield):
+    def from_ntv(cls, ntv_value, reindex=True):
         '''Generate an Ntvdataset Object from a ntv_value
 
         *Parameters*
@@ -345,14 +341,14 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
         # decode: name, type, codec, parent, keys, coef, leng
         #lidx = [list(Ntvfield.decode_ntv(ntvf)) for ntvf in ntv]
-        lidx = [list(field.decode_ntv(ntvf)) for ntvf in ntv]
+        lidx = [list(cls.field_class().decode_ntv(ntvf)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
             Ntvdataset._init_ntv_keys(ind, lidx, leng)
         #lindex = [Ntvfield(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
-        lindex = [field(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+        lindex = [cls.field_class()(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
 
@@ -875,3 +871,10 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         if not textidx:
             return None
         return tuple(tuple(idx) for idx in textidx)
+
+# %% a supprimer
+
+    @staticmethod 
+    def field_class():
+        return Nfield
+    

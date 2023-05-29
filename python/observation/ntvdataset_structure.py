@@ -15,8 +15,7 @@ from observation.esconstante import ES
 from observation.ntvfield import Ntvfield
 from observation.util import util
 from observation.ntvdataset_interface import NtvdatasetError
-from json_ntv import Ntv
-from observation.fields import Sfield, Nfield
+from observation.fields import Sfield
 
 
 class NtvdatasetStructure:
@@ -144,7 +143,8 @@ class NtvdatasetStructure:
                      for i in range(self.lenindex)]
         record = [util.castval(val, typ)
                   for val, typ in zip(record, typevalue)]"""
-        record = [Ntv.obj(rec) for rec in record]
+        #record = [Ntv.obj(rec) for rec in record]
+        record = self.field.l_to_i(record)
         if self.isinrecord(self.idxrecord(record), False) and unique:
             return None
         return [self.lindex[i].append(record[i]) for i in range(self.lenindex)]
@@ -169,10 +169,9 @@ class NtvdatasetStructure:
         else:
             ilis = copy(self)
         ifilt = ilis.lname.index(filtname)
-        if self.field == Nfield:
+        if self.field != Sfield:
             reverse = not reverse
-        #ilis.sort([ifilt], reverse=not reverse, func=None) #!!! si pas Ntv
-        ilis.sort([ifilt], reverse=reverse, func=None) #!!! si Ntv
+        ilis.sort([ifilt], reverse=reverse, func=None)
         lisind = ilis.lindex[ifilt].recordfromvalue(not reverse)
         if lisind:
             minind = min(lisind)
@@ -297,8 +296,9 @@ class NtvdatasetStructure:
         elif inf[ind]['parent'] == -1 or self.lname[ind] in varname:
             fillval = fillvalue
             if fillextern:
-                fillval = util.castval(fillvalue, util.typename(self.lname[ind],
-                                                                ES.def_clsName))
+                fillval = self.field.s_to_i(fillvalue)
+                #fillval = util.castval(fillvalue, util.typename(self.lname[ind],
+                #                                                ES.def_clsName))
             idx.set_keys(idx.keys + [len(idx.codec)] * len(keysadd[0]))
             idx.set_codec(idx.codec + [fillval])
         else:
@@ -554,7 +554,8 @@ class NtvdatasetStructure:
         if indexname is None:
             indexname = self.lname
         if extern:
-            record = [idx.values[row].to_obj() for idx in self.lindex]
+            record = [idx.val[row] for idx in self.lindex]
+            #record = [idx.values[row].to_obj() for idx in self.lindex]
             #record = [idx.valrow(row) for idx in self.lindex]
         else:
             record = [idx.values[row] for idx in self.lindex]

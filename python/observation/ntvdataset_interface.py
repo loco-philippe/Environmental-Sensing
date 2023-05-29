@@ -9,22 +9,16 @@ The `python.observation.ntvdataset_interface` module contains the `NtvdatasetInt
 """
 
 # %% declarations
-import datetime
-import json
 import csv
 import math
 import xarray
 import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
-import cbor2
 
-from observation.esconstante import ES
+from json_ntv.ntv import NtvList
 from observation.ntvfield import Ntvfield
-from observation.ntvfield_interface import NtvfieldEncoder
 from observation.util import util
-from json_ntv import NtvList, Ntv
-from observation.fields import Nfield, Sfield
 
 #import sys
 #print("In module ntvdataset_interface sys.path[0], __package__ ==", sys.path[0], __package__)
@@ -243,7 +237,7 @@ class NtvdatasetInterface:
                         lis.append(idx.to_ntv(keys=keys, parent=inf['parent'], name=iname))            
         return NtvList(lis, None, ntv_type=def_type)
 
-    def to_obj(self, **kwargs):
+    """def to_obj(self, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict).
 
         *Parameters (kwargs)*
@@ -300,7 +294,7 @@ class NtvdatasetInterface:
         if option['encoded'] and option['encode_format'] == 'cbor':
             return cbor2.dumps(lis, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
-        return lis
+        return lis"""
 
     def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?',
                   fillextern=True, lisfunc=None, name=None, numeric=False,
@@ -471,7 +465,7 @@ class NtvdatasetInterface:
         return self.lindex[index].vlist(func, *args, **kwargs)
 
     # %%internal
-    def _optimize_obj(self, idxname, **option2):
+    """def _optimize_obj(self, idxname, **option2):
         '''return list object with optimize modecodec'''
         indexinfos = self.indexinfos()
         notkeys = True
@@ -505,7 +499,7 @@ class NtvdatasetInterface:
                     keys = idx.derkeys(self.lindex[inf['parent']])
                     lis.append(idx.to_obj(keys=keys, parent=inf['parent'],
                                           name=iname, **option2))
-        return lis
+        return lis"""
 
     def _to_tab(self, **kwargs):
         ''' data preparation (dict of dict) for view or csv export.

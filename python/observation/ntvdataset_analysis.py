@@ -60,7 +60,7 @@ class Analysis:
         Note: The Analysis data can be update only if tabular object is Ntvdataset or 
         Observation.
         '''
-        if iobj.__class__.__name__ in ('Ntvdataset', 'Observation'):
+        if iobj.__class__.__name__ in ('Ntvdataset', 'Observation', 'Ndataset', 'Sdataset'):
             self.iobj = iobj
         else:
             from ntvdataset import Ntvdataset

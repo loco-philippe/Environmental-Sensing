@@ -10,16 +10,15 @@ The `observation.test_iindex` module contains the unit tests (class unittest) fo
 import unittest
 from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-import datetime
+
 from itertools import product
-from observation import NamedValue, DatationValue, LocationValue, PropertyValue, ESValue, Ntvdataset, Ntvfield, ES, util
-from test_obs import dat3, loc3, prop2
+from observation import Ntvdataset, Ntvfield, ES, util
 from ntv import Ntv, NtvSingle, NtvList
 from observation.fields import Nfield, Sfield
 
 Field = Ntvfield
 Field = Nfield
-Field = Sfield
+#Field = Sfield
 arr12 = 'ar[1,2]' if Field == Sfield else [1,2]
 
 def internal(val):
@@ -476,14 +475,14 @@ class Test_Field(unittest.TestCase):
         idx += idx
         self.assertEqual(idx2, idx)
 
-    def test_iskeys(self):
+    '''def test_iskeys(self):
         istrue = [1, [1], [-1, [1, 2, 3]], [1, [1]], [1, 2, 3]]
         isfalse = ['a', [[1, 2]], [[1, 2], [2, 3]], [1, 2, [2, 3]], [[1], 2, 3], [1, [1, 2, 0.1]],
                    [-1.5, [1, 2, 3]], [1, 2, 3.2]]
         for isT in istrue:
             self.assertTrue(Field.iskeysobj(isT))
         for isF in isfalse:
-            self.assertFalse(Field.iskeysobj(isF))
+            self.assertFalse(Field.iskeysobj(isF))'''
 
     '''def test_jsontype(self):
         self.assertEqual(Field.decodetype(

@@ -9,11 +9,9 @@ The `python.observation.ntvfield_structure` module contains the `NtvfieldStructu
 """
 from collections import defaultdict, Counter
 
-from observation.esvalue_base import ESValue
 from observation.util import util
 from observation.esconstante import ES
 from observation.ntvfield_interface import NtvfieldError
-from ntv import Ntv
 
 class NtvfieldStructure:
     '''this class includes Ntvfield methods :

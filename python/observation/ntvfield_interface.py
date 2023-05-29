@@ -15,7 +15,7 @@ import pandas as pd
 import cbor2
 
 from observation.esconstante import ES
-from observation.esvalue_base import ESValueEncoder, ESValue
+from observation.esvalue_base import ESValueEncoder
 from observation.util import util, identity
 from json_ntv.ntv import Ntv, NtvSingle, NtvList
 
@@ -49,10 +49,10 @@ class NtvfieldEncoder(json.JSONEncoder):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
         option = {'encoded': False, 'encode_format': 'json'}
-        if o.__class__.__name__ in ('Ntvdataset', 'TimeSlot'):
+        if o.__class__.__name__ in ('Ntvdataset', 'TimeSlot', 'Ndataset', 'Sdataset'):
             return o.json(**option)
-        if issubclass(o.__class__, ESValue):
-            return o.json(**option)
+        #if issubclass(o.__class__, ESValue):
+        #    return o.json(**option)
         try:
             return o.to_json(**option)
         except:
@@ -75,7 +75,7 @@ class NtvfieldInterface:
     - `NtvfieldInterface.vSimple`
     '''
 
-    @staticmethod
+    """@staticmethod
     def decodetype(decobj, lenparent=None):
         '''Return the Ntvfield type of a decoded json value
 
@@ -110,9 +110,9 @@ class NtvfieldInterface:
         if len(keys) < lenparent and parent >= 0 and len(codec) < lenparent:
             return 'derived'
         raise NtvfieldError("data are inconsistenty to define the format")
-        return
+        return"""
 
-    @staticmethod
+    """@staticmethod
     def decodeobj(bs=None, classname=None, context=True):
         '''Generate a tuple data from a bytes, json or dict value
 
@@ -170,9 +170,9 @@ class NtvfieldInterface:
             return (None, None, NtvfieldInterface.decodecodec(lis[0], classname),
                     *NtvfieldInterface.decodekeys(lis[1]))
         return (None, None, NtvfieldInterface.decodecodec(lis, classname), ES.nullparent,
-                None, False, False)
+                None, False, False)"""
 
-    @staticmethod
+    """@staticmethod
     def decodecodec(codecobj, classname=ES.nam_clsName):
         '''Generate a codec list from a json value'''
         return [ESValue.from_obj(val, classname=classname) for val in codecobj]
@@ -212,7 +212,7 @@ class NtvfieldInterface:
             return (keys[0], keys[1], False, True)
         if isinstance(keys, list) and len(keys) > 1:
             return (ES.notcrossed, keys, True, False)
-        raise NtvfieldError('parent or keys is unconsistent')
+        raise NtvfieldError('parent or keys is unconsistent')"""
 
     @classmethod 
     def decode_ntv(cls, field, encode_format='json'):
@@ -298,7 +298,7 @@ class NtvfieldInterface:
             return coef
         return 0
     
-    @staticmethod
+    """@staticmethod
     def encodeobj(codeclist, keyslist=None, name=None, simpleval=False,
                   codecval=False, typevalue=None, parent=ES.nullparent,
                   listunic=False, modecodec='optimize', **kwargs):
@@ -355,9 +355,9 @@ class NtvfieldInterface:
         if option['encoded'] and option['encode_format'] == 'cbor':
             return cbor2.dumps(js, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
-        return js
+        return js"""
 
-    @staticmethod
+    """@staticmethod
     def iskeysobj(obj):
         if isinstance(obj, int):
             return True
@@ -380,7 +380,7 @@ class NtvfieldInterface:
         for i in range(len(obj)):
             if not isinstance(obj[i], int):
                 return False
-        return True
+        return True"""
 
     def json(self, keys=None, typevalue=None, modecodec='optimize', simpleval=False,
              codecval=False, parent=ES.nullparent, **kwargs):
@@ -486,7 +486,7 @@ class NtvfieldInterface:
                 ntv_value.append(NtvList(self.keys, ntv_type='json'))
             return NtvList(ntv_value, idxname, ntv_type='json')                
 
-    def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
+    """def to_obj(self, keys=None, typevalue=None, simpleval=False, modecodec='optimize',
                codecval=False, parent=ES.nullparent, name=True, listunic=False,
                **kwargs):
         '''Return a formatted object (string, bytes or dict) for the Ntvfield
@@ -537,7 +537,7 @@ class NtvfieldInterface:
             dtype = None
         return NtvfieldInterface.encodeobj(codeclist, keyslist, idxname, simpleval,
                                          codecval, dtype, parent, listunic,
-                                         modecodec, **kwargs)
+                                         modecodec, **kwargs)"""
 
     def to_pandas(self, func=None, codec=False, npdtype=None,
                   series=True, index=True, numpy=False, **kwargs):
