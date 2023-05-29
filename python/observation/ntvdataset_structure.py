@@ -16,6 +16,7 @@ from observation.ntvfield import Ntvfield
 from observation.util import util
 from observation.ntvdataset_interface import NtvdatasetError
 from json_ntv import Ntv
+from observation.fields import Sfield, Nfield
 
 
 class NtvdatasetStructure:
@@ -168,9 +169,11 @@ class NtvdatasetStructure:
         else:
             ilis = copy(self)
         ifilt = ilis.lname.index(filtname)
+        if self.field == Nfield:
+            reverse = not reverse
         #ilis.sort([ifilt], reverse=not reverse, func=None) #!!! si pas Ntv
         ilis.sort([ifilt], reverse=reverse, func=None) #!!! si Ntv
-        lisind = ilis.lindex[ifilt].recordfromvalue(reverse)
+        lisind = ilis.lindex[ifilt].recordfromvalue(not reverse)
         if lisind:
             minind = min(lisind)
             for idx in ilis.lindex:

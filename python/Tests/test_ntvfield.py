@@ -19,7 +19,7 @@ from observation.fields import Nfield, Sfield
 
 Field = Ntvfield
 Field = Nfield
-#Field = Sfield
+Field = Sfield
 arr12 = 'ar[1,2]' if Field == Sfield else [1,2]
 
 def internal(val):

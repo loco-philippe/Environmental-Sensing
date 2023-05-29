@@ -25,29 +25,29 @@ i1 = 'i1'
 class Test_Analysis(unittest.TestCase):
 
     def test_modele_mixte(self):
-        ilm = Ntvdataset.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit',
-                                     'vegetable', 'vegetable', 'vegetable', 'vegetable']],
-                         ['quantity', ['1 kg', '10 kg', '1 kg', '10 kg',
-                                       '1 kg', '10 kg', '1 kg', '10 kg']],
-                         ['product', ['apple', 'apple', 'orange', 'orange',
-                                      'peppers', 'peppers', 'banana', 'banana']],
-                         ['price', [1, 10, 2, 20, 1.5, 15, 1, 1.5]],
-                         ['group', ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
-                                    'veget', 'veget', 'veget', 'veget']],
-                         ['id', [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008]]])
+        ilm = Ntvdataset.ntv({'plants': ['fruit', 'fruit', 'fruit', 'fruit',
+                                     'vegetable', 'vegetable', 'vegetable', 'vegetable'],
+                         'quantity': ['1 kg', '10 kg', '1 kg', '10 kg',
+                                       '1 kg', '10 kg', '1 kg', '10 kg'],
+                         'product': ['apple', 'apple', 'orange', 'orange',
+                                      'peppers', 'peppers', 'banana', 'banana'],
+                         'price': [1, 10, 2, 20, 1.5, 15, 1, 1.5],
+                         'group': ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
+                                    'veget', 'veget', 'veget', 'veget'],
+                         'id': [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008]})
         pprint(ilm.indexinfos(
             keys=['num', 'name', 'lencodec', 'parent', 'typecoupl']), width=100)
         # not full
-        ilm_nf = Ntvdataset.obj([['plants', ['fruit', 'fruit', 'fruit', 'fruit',
-                                        'vegetable', 'vegetable', 'vegetable']],
-                            ['quantity', ['1 kg', '10 kg', '1 kg', '10 kg',
-                                          '1 kg', '10 kg', '1 kg']],
-                            ['product', ['apple', 'apple', 'orange', 'orange',
-                                         'peppers', 'peppers', 'banana']],
-                            ['price', [1, 10, 2, 20, 1.5, 15, 1]],
-                            ['group', ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
-                                       'veget', 'veget', 'veget']],
-                            ['id', [1001, 1002, 1003, 1004, 1005, 1006, 1007]]])
+        ilm_nf = Ntvdataset.ntv({'plants': ['fruit', 'fruit', 'fruit', 'fruit',
+                                        'vegetable', 'vegetable', 'vegetable'],
+                            'quantity': ['1 kg', '10 kg', '1 kg', '10 kg',
+                                          '1 kg', '10 kg', '1 kg'],
+                            'product': ['apple', 'apple', 'orange', 'orange',
+                                         'peppers', 'peppers', 'banana'],
+                            'price': [1, 10, 2, 20, 1.5, 15, 1],
+                            'group': ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
+                                       'veget', 'veget', 'veget'],
+                            'id': [1001, 1002, 1003, 1004, 1005, 1006, 1007]})
 
 
 """        self.assertTrue(Ntvdataset().to_obj() == [])
