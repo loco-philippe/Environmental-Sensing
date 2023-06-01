@@ -108,6 +108,8 @@ from observation.ntvdataset_structure import NtvdatasetStructure
 from observation.ntvfield import Ntvfield
 from observation.ntvfield_structure import NtvfieldStructure
 from observation.ntvfield_interface import CborDecoder, NtvfieldError, NtvfieldEncoder, NtvfieldInterface
+from observation.fields import Nfield, Sfield
+from observation.datasets import Ndataset, Sdataset
 #from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
 from observation.util import util

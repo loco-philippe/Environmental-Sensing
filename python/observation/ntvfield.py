@@ -36,7 +36,7 @@ from observation.esconstante import ES
 from observation.ntvfield_interface import NtvfieldInterface, NtvfieldError
 from observation.ntvfield_structure import NtvfieldStructure
 from observation.util import util
-from ntv import Ntv
+from json_ntv import Ntv
 
 
 

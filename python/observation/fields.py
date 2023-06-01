@@ -4,7 +4,7 @@ Created on Sun May 28 19:34:03 2023
 
 @author: a lab in the Air
 """
-from ntvfield import Ntvfield
+from observation.ntvfield import Ntvfield
 from json_ntv import Ntv
 
     
