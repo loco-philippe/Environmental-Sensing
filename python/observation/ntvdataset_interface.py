@@ -86,7 +86,8 @@ class NtvdatasetInterface:
         if idxname:
             idxname = [name for name in idxname if len(
                 self.nindex(name).codec) > 1]
-        xar = self.to_xarray(numeric=True, varname=varname, idxname=idxname, lisfunc=[util.cast],
+        #xar = self.to_xarray(numeric=True, varname=varname, idxname=idxname, lisfunc=[util.cast],##
+        xar = self.to_xarray(numeric=True, varname=varname, idxname=idxname, lisfunc=None,
                              dtype='str', npdtype='str', maxlen=maxlen, coord=True)
         if not order:
             order = [0, 1, 2]
@@ -348,7 +349,7 @@ class NtvdatasetInterface:
         coords = ilf._xcoord(idxname, ivar, lisfuncname, coord, **option)
         dims = idxname
         if numeric:
-            lisfunc[ivar] = util.cast
+            #lisfunc[ivar] = util.cast
             fillvalue = math.nan
             npdtype = 'float'
             option['dtype'] = 'float'
@@ -545,7 +546,8 @@ class NtvdatasetInterface:
                         if char in option[name]:
                             val = self.nindex(name).values[i]
                             if char == 'j':
-                                reslist.append(util.cast(val, dtype='json'))
+                                #reslist.append(util.cast(val, dtype='json'))
+                                reslist.append(self.field.s_to_e(val))
                             elif char == 'n':
                                 reslist.append(util.cast(val, dtype='name'))
                             elif char == 's':

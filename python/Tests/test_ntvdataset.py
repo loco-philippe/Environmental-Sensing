@@ -367,16 +367,16 @@ class Test_Ntvdataset(unittest.TestCase):
         for ts in test:
             opt = {'encoded': ts[0],
                    'encode_format': ts[1], 'modecodec': ts[2]}
-            self.assertEqual(Dataset.ntv(ilm.to_ntv(ts[2]).to_obj(**opt)), ilm)
+            self.assertEqual(Dataset.from_ntv(ilm.to_ntv(ts[2]).to_obj(**opt), decode_str=True), ilm)
             ilm.to_file('test.il', **opt)
-            self.assertEqual(Dataset.from_file('test.il'), ilm)
+            self.assertEqual(Dataset.from_file('test.il', decode_str=True), ilm)
         ilm = Dataset.ntv([[6, 7, 8, 9, 9, 11, 12],
                          ['s', 's', 's', 'n', 'd', 'd', 'd']])
         ilm.coupling()
         for ts in test:
             opt = {'encoded': ts[0],
                    'encode_format': ts[1], 'modecodec': ts[2]}
-            self.assertEqual(Dataset.from_ntv(ilm.to_ntv(ts[2]).to_obj(**opt)), ilm)
+            self.assertEqual(Dataset.from_ntv(ilm.to_ntv(ts[2]).to_obj(**opt), decode_str=True), ilm)
         il = Dataset.ntv({'produit': ['po', 'po', 'or', 'or', 'pi', 'pi', 'ba', 'ba'], 
                         'aliment': ['fr', 'fr', 'fr', 'fr', 'le', 'le', 'fr', 'fr'],
                         'contenant': ['sa', 'ca', 'sa', 'ca', 'sa', 'ca', 'sa', 'ca'],
@@ -721,7 +721,7 @@ class Test_Ntvdataset(unittest.TestCase):
         for tab in tab_data:
             lis = [tab, json.dumps(tab), Ntv.obj(tab)]
             for data in lis:
-                il = Dataset.from_ntv(data)
+                il = Dataset.from_ntv(data, decode_str=True)
                 for mode in ['full', 'default', 'optimize']:
                     #print(to_ntv_ntvdataset(il, mode))
                     self.assertEqual(il, Dataset.from_ntv(il.to_ntv(mode)))

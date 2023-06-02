@@ -283,7 +283,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return cls(listidx=lindex, reindex=True)
 
     @classmethod
-    def from_file(cls, filename, forcestring=False, reindex=True):
+    def from_file(cls, filename, forcestring=False, reindex=True, decode_str=False):
         '''
         Generate Object from file storage.
 
@@ -293,6 +293,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         - **forcestring** : boolean (default False) - if True,
         forces the UTF-8 data format, else the format is calculated
         - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
+        - **decode_str**: boolean (default False) - if True, string are loaded in json data
 
         *Returns* : new Object'''
         with open(filename, 'rb') as file:
@@ -303,7 +304,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         else:
             with open(filename, 'rb') as file:
                 bjson = file.read()
-        return cls.from_ntv(bjson, reindex=reindex)
+        return cls.from_ntv(bjson, reindex=reindex, decode_str=decode_str)
 
     """@classmethod
     def obj(cls, bsd=None, reindex=True, context=True):
@@ -328,14 +329,15 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return cls.from_ntv(ntv_value, reindex=reindex)
     
     @classmethod
-    def from_ntv(cls, ntv_value, reindex=True):
+    def from_ntv(cls, ntv_value, reindex=True, decode_str=False):
         '''Generate an Ntvdataset Object from a ntv_value
 
         *Parameters*
 
         - **ntv_value** : bytes, string, Ntv object to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
-        ntv = Ntv.obj(ntv_value)
+        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
+        - **decode_str**: boolean (default False) - if True, string are loaded in json data'''
+        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         if len(ntv) == 0:
             return cls()
         #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
@@ -410,8 +412,9 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                 delname.append(oldname)
             for name in newname:
                 oldidx = merged.nindex(oldname)
-                fillval = util.castval(
-                    fillvalue, util.typename(name, ES.def_clsName))
+                fillval = self.field.s_to_i(fillvalue)
+                #fillval = util.castval(##
+                #    fillvalue, util.typename(name, ES.def_clsName))
                 merged.addindex(
                     self.field([fillval] * len(merged), name, oldidx.keys))
             merged += rec
