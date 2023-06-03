@@ -436,16 +436,18 @@ class NtvfieldStructure:
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : int - last codec rank updated (-1 if None)'''
-        typevalue = util.typename(self.name, typevalue)
+        #typevalue = util.typename(self.name, typevalue)
         if extern:
-            listcodec = util.castobj(listcodec, typevalue)
-        for i in range(len(self._codec)):
+            listcodec = self.l_to_i(listcodec)
+            #listcodec = util.castobj(listcodec, typevalue)
+        self._codec = listcodec
+        '''for i in range(len(self._codec)):
             if typevalue in ES.ESclassName and nameonly:
                 self._codec[i].setName(listcodec[i].name)
             elif typevalue in ES.ESclassName and valueonly:
                 self._codec[i].setValue(listcodec[i].value)
             else:
-                self._codec[i] = listcodec[i]
+                self._codec[i] = listcodec[i]'''
 
     def set_keys(self, keys):
         ''' _keys setters '''

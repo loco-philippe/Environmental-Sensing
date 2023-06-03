@@ -169,10 +169,11 @@ class NtvdatasetStructure:
         else:
             ilis = copy(self)
         ifilt = ilis.lname.index(filtname)
-        if self.field.__class__.__name__ != 'Sfield':
-            reverse = not reverse
-        ilis.sort([ifilt], reverse=reverse, func=None)
-        lisind = ilis.lindex[ifilt].recordfromvalue(not reverse)
+        if self.field.__name__ == 'Sfield':
+            ilis.sort([ifilt], reverse= not reverse, func=None)
+        else:
+            ilis.sort([ifilt], reverse=reverse, func=None)
+        lisind = ilis.lindex[ifilt].recordfromvalue(reverse)
         if lisind:
             minind = min(lisind)
             for idx in ilis.lindex:

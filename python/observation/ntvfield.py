@@ -261,13 +261,14 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex)
     
     @classmethod 
-    def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True):
+    def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
         '''Generate an Ntvfield Object from a Ntv field object'''
         if isinstance(ntv_value, Ntvfield):
             return copy(ntv_value)
+        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         if ntv_value is None:
             return cls()
-        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv_value, encode_format='json')
+        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv, encode_format='json')
         if (parent and not extkeys) or coef:
             return None
         if extkeys and parent:
@@ -307,7 +308,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         return (parent, cls(codec=codec, name=name, keys=keys, typevalue=typevalue,
                             reindex=reindex))"""
 
-    @classmethod
+    """@classmethod
     def from_dict_obj(cls, bsd, typevalue=ES.def_clsName, reindex=False):
         '''Generate an Ntvfield Object from a dict value'''
         var = False
@@ -337,7 +338,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         keys = list(list(zip(*sorted(pairs)))[1])
 
         idx = cls(name=name, codec=codec, keys=keys, typevalue=None)
-        return (var, idx)
+        return (var, idx)"""
 
     @classmethod
     def merging(cls, listidx, name=None):
@@ -355,7 +356,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         #return cls.ext(values, name)
         return cls.ntv({name: values})
 
-    @classmethod
+    """@classmethod
     def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
         '''Generate an Ntvfield Object from a bytes, json or dict value and from
         a keys list (derived Ntvfield)
@@ -372,7 +373,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         if isinstance(bsd, dict):
             return cls.from_dict_obj(bsd, typevalue=typevalue, reindex=reindex)[1]
         return cls.from_obj(bsd, extkeys=extkeys, typevalue=typevalue,
-                            context=context, reindex=reindex)[1]
+                            context=context, reindex=reindex)[1]"""
 
 
 # %% special

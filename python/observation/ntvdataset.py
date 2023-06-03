@@ -28,6 +28,7 @@ Documentation is available in other pages :
 from collections import Counter
 from copy import copy
 import math
+import json
 import csv
 
 from observation.esconstante import ES
@@ -241,7 +242,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return cls(lindex, reindex=False)"""
 
     @classmethod
-    def from_csv(cls, filename='ntvdataset.csv', header=True, nrow=None,
+    def from_csv(cls, filename='ntvdataset.csv', header=True, nrow=None, decode_str=True,
                  optcsv={'quoting': csv.QUOTE_NONNUMERIC}):
         '''
         Ntvdataset constructor (from a csv file). Each column represents index values.
@@ -271,7 +272,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                     idxname = row
                 else:
                     for i in range(len(row)):
-                        idxval[i].append(row[i])
+                        idxval[i].append(json.loads(row[i]))
                     """if not dtype:
                         for i in range(len(row)):
                             idxval[i].append(row[i])
@@ -279,7 +280,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                         for i in range(len(row)):
                             idxval[i].append(util.cast(row[i], dtype[i]))"""
                 irow += 1
-        lindex = [cls.field_class().ntv({name:idx}) for idx, name in zip(idxval, idxname)]
+        lindex = [cls.field_class().from_ntv({name:idx}, decode_str=decode_str) for idx, name in zip(idxval, idxname)]
         return cls(listidx=lindex, reindex=True)
 
     @classmethod

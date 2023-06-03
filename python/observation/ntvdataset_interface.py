@@ -538,7 +538,7 @@ class NtvdatasetInterface:
                 opt = name if name in option else 'defcode'
                 if opt != 'defcode' or option['all']:
                     for char, code in diccode.items():
-                        if char in option['defcode']:
+                        if char in option[opt]:
                             reslist.append(code + name)
             tab.append(reslist)
         lenres = option['lenres']
@@ -550,16 +550,15 @@ class NtvdatasetInterface:
                 opt = name if name in option else 'defcode'
                 if opt != 'defcode' or option['all']:
                     for char, code in diccode.items():
-                        if char in option[name]:
+                        if char in option[opt]:
                             val = self.nindex(name).values[i]
                             if char == 'j':
                                 #reslist.append(util.cast(val, dtype='json'))
-                                reslist.append(self.field.s_to_e(val))
+                                reslist.append(json.dumps(self.field.s_to_e(val)))
                             elif char == 'n':
                                 reslist.append(self.field.i_to_name(val))
                             elif char == 's':
-                                reslist.append(
-                                    json.dumps(self.field.s_to_e(val)))
+                                reslist.append(json.dumps(self.field.s_to_e(val)))
                             elif char == 'f':
                                 reslist.append(util.funclist(
                                     val, option['ifunc'], **kwargs))                    
@@ -597,7 +596,7 @@ class NtvdatasetInterface:
 
     def _xcoord(self, axename, ivar, lisfuncname=None, coord=False, **kwargs):
         ''' Coords generation for Xarray'''
-        maxlen = kwargs.get('maxlen', 20)
+        #maxlen = kwargs.get('maxlen', 20)
         info = self.indexinfos()
         coords = {}
         for i in range(self.lenindex):
@@ -615,8 +614,9 @@ class NtvdatasetInterface:
                 if coord:
                     coords[iname+'_row'] = (iname,
                                             np.arange(len(coords[iname])))
-                    coords[iname+'_str'] = (iname, self.lindex[i].to_numpy(func=util.cast,
-                                                                           codec=True, dtype='str', maxlen=maxlen))
+                    #coords[iname+'_str'] = (iname, self.lindex[i].to_numpy(func=util.cast,
+                    #                                                       codec=True, dtype='str', maxlen=maxlen))
+                    coords[iname+'_str'] = (iname, self.lindex[i].to_numpy(func=str, codec=True))
             else:
                 self.lindex[i].setkeys(
                     self.lindex[fieldi['pparent']].keys)  # !!!

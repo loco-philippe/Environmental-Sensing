@@ -13,12 +13,12 @@ from copy import copy
 
 from itertools import product
 from observation import Ntvdataset, Ntvfield, ES, util
-from ntv import Ntv, NtvSingle, NtvList
+from json_ntv import Ntv, NtvSingle, NtvList
 from observation.fields import Nfield, Sfield
 
 Field = Ntvfield
 Field = Nfield
-#Field = Sfield
+Field = Sfield
 arr12 = 'ar[1,2]' if Field == Sfield else [1,2]
 
 def internal(val):
@@ -375,13 +375,13 @@ class Test_Field(unittest.TestCase):
         test = list(product(encoded, format))
         for ts in test:
             option = {'encoded': ts[0], 'encode_format': ts[1]}
-            idx2 = Field.ntv(idx.to_ntv().to_obj(**option))
+            idx2 = Field.from_ntv(idx.to_ntv().to_obj(**option), decode_str=True)
             #idx2 = Field.obj(idx.to_obj(keys=True, **option))
             self.assertEqual(idx.values, idx2.values)
-            idx2 = Field.ntv(idx.tostdcodec().to_ntv().to_obj(**option))  # full format
+            idx2 = Field.from_ntv(idx.tostdcodec().to_ntv().to_obj(**option), decode_str=True)  # full format
             self.assertEqual(idx.values, idx2.values)
-            idx2 = Field.ntv(idx.to_ntv(keys=fils.derkeys(parent), parent=1).to_obj(**option),
-                              extkeys=parent.keys)  # default format
+            idx2 = Field.from_ntv(idx.to_ntv(keys=fils.derkeys(parent), parent=1).to_obj(**option),
+                              extkeys=parent.keys, decode_str=True)  # default format
             self.assertEqual(idx.values, idx2.values)
 
     """def test_castobj(self):  # !!!
@@ -456,7 +456,7 @@ class Test_Field(unittest.TestCase):
                 option = {
                     'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
                 #print(i, option)
-                idx2 = Field.ntv(idx.to_ntv().to_obj(**option))
+                idx2 = Field.from_ntv(idx.to_ntv().to_obj(**option), decode_str=True)
                 '''if ts[2] == 'dict':
                     idx2 = Field.obj(idx.to_dict_obj(**option))
                 else:

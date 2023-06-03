@@ -620,9 +620,10 @@ class NtvfieldInterface:
         - **maxlen** : integer (default None) - max length of name
 
         *Returns* : list of name founded'''
-        return [util.cast(val, dtype='name', default=default, maxlen=maxlen) for val in self.values]
+        #return [util.cast(val, dtype='name', default=default, maxlen=maxlen) for val in self.values]
+        return [self.i_to_name(val) for val in self.values]
 
-    def vSimple(self, string=False):
+    """def vSimple(self, string=False):
         '''
         Apply a vSimple function to values and return the result.
 
@@ -634,4 +635,4 @@ class NtvfieldInterface:
         if string:
             return json.dumps([util.cast(val, 'simple', string=string) for val in self.values],
                               cls=ESValueEncoder)
-        return [util.cast(val, 'simple', string=string) for val in self.values]
+        return [util.cast(val, 'simple', string=string) for val in self.values]"""
