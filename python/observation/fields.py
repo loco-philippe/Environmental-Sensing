@@ -38,6 +38,10 @@ class Nfield(Ntvfield):
     @staticmethod
     def i_to_n(val):
         return val
+
+    @staticmethod
+    def i_to_name(val):
+        return val.name   
     
 class Sfield(Ntvfield):
     
@@ -69,4 +73,7 @@ class Sfield(Ntvfield):
     @staticmethod
     def i_to_n(val):
         return Ntv.obj(val)
-    
+
+    @staticmethod
+    def i_to_name(val):
+        return ''   

@@ -9,12 +9,7 @@ The `observation.test_analysis` module contains the unit tests (class unittest) 
 """
 import unittest
 from pprint import pprint
-from copy import copy
-from datetime import datetime
-from math import nan
-from observation import Observation, NamedValue, DatationValue, LocationValue, \
-    PropertyValue, ExternValue, ESValue, Ntvdataset, Ntvfield, ES, util, TimeSlot
-from test_obs import dat3, loc3, prop2, _res
+from observation import Ntvdataset
 
 #l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
 #il = Ntvdataset.obj(l)

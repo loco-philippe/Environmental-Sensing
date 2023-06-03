@@ -11,6 +11,7 @@ The `python.observation.ntvdataset_interface` module contains the `NtvdatasetInt
 # %% declarations
 import csv
 import math
+import json
 import xarray
 import numpy as np
 import matplotlib.pyplot as plt
@@ -526,11 +527,16 @@ class NtvdatasetInterface:
         diccode = {'j': '', 'n': 'name-', 's': 'smpl-', 'f': 'func-'}
         if option['header']:
             for name in self.lname:
-                if name in option:
+                '''if name in option:
                     for char, code in diccode.items():
                         if char in option[name]:
                             reslist.append(code + name)
                 elif option['all']:
+                    for char, code in diccode.items():
+                        if char in option['defcode']:
+                            reslist.append(code + name)'''
+                opt = name if name in option else 'defcode'
+                if opt != 'defcode' or option['all']:
                     for char, code in diccode.items():
                         if char in option['defcode']:
                             reslist.append(code + name)
@@ -541,7 +547,8 @@ class NtvdatasetInterface:
         for i in range(min(lenres, len(self))):
             reslist = []
             for name in self.lname:
-                if name in option:
+                opt = name if name in option else 'defcode'
+                if opt != 'defcode' or option['all']:
                     for char, code in diccode.items():
                         if char in option[name]:
                             val = self.nindex(name).values[i]
@@ -549,10 +556,25 @@ class NtvdatasetInterface:
                                 #reslist.append(util.cast(val, dtype='json'))
                                 reslist.append(self.field.s_to_e(val))
                             elif char == 'n':
-                                reslist.append(util.cast(val, dtype='name'))
+                                reslist.append(self.field.i_to_name(val))
                             elif char == 's':
                                 reslist.append(
-                                    util.cast(val, dtype='json', string=True))
+                                    json.dumps(self.field.s_to_e(val)))
+                            elif char == 'f':
+                                reslist.append(util.funclist(
+                                    val, option['ifunc'], **kwargs))                    
+                '''if name in option:
+                    for char, code in diccode.items():
+                        if char in option[name]:
+                            val = self.nindex(name).values[i]
+                            if char == 'j':
+                                #reslist.append(util.cast(val, dtype='json'))
+                                reslist.append(self.field.s_to_e(val))
+                            elif char == 'n':
+                                reslist.append(self.field.i_to_name(val))
+                            elif char == 's':
+                                reslist.append(
+                                    json.dumps(self.field.s_to_e(val)))
                             elif char == 'f':
                                 reslist.append(util.funclist(
                                     val, option['ifunc'], **kwargs))
@@ -569,7 +591,7 @@ class NtvdatasetInterface:
                                     util.cast(val, dtype='json', string=True))
                             elif char == 'f':
                                 reslist.append(util.funclist(
-                                    val, option['ifunc'], **kwargs))
+                                    val, option['ifunc'], **kwargs))'''
             tab.append(reslist)
         return tab
 
