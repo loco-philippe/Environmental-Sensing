@@ -55,17 +55,15 @@ class NtvfieldStructure:
     - `NtvfieldStructure.recordfromvalue`
     - `NtvfieldStructure.valtokey`  '''
 
-    def append(self, value,  typevalue=ES.def_clsName, unique=True):
+    def append(self, value, unique=True):
         '''add a new value
 
         *Parameters*
 
         - **value** : new object value
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to value
         - **unique** :  boolean (default True) - If False, duplication codec if value is present
 
         *Returns* : key of value '''
-        #value = util.castval(value, util.typename(self.name, typevalue))
         #value = Ntv.obj(value)
         value = self.s_to_i(value)
         if value in self._codec and unique:
@@ -93,16 +91,12 @@ class NtvfieldStructure:
         with default codec. But if not derived, idx indexes MUST to be reindexed.
 
         *Returns* : tuple with duplicate records (errors) if 'duplicate', None else'''
-        #from observation.fields import Nfield
         if not isinstance(idx, list):
             index = [idx]
         else:
             index = idx
-        #idxzip = self.__class__.ext(list(zip(*([self._keys] + [ix._keys for ix in index]))),
-        #                            typevalue=None)
         idxzip = self.__class__(list(zip(*([self._keys] + [ix._keys for ix in index]))),
                                 reindex=True)
-        #print(idxzip)
         self.tocoupled(idxzip)
         if not derived:
             for ind in index:
@@ -333,9 +327,6 @@ class NtvfieldStructure:
 
         if extern:
             value = self.s_to_i(value)
-            #value = Ntv.obj(value)
-            #value = util.castval(
-            #    value, util.typename(self.name, ES.def_clsName))
         if not value in self._codec:
             return None
         listkeys = [cod for cod, val in zip(
@@ -390,7 +381,7 @@ class NtvfieldStructure:
             return None
         return self.__class__(name=self.name, codec=codec, keys=keys)
 
-    def setcodecvalue(self, oldvalue, newvalue, extern=True, typevalue=None,
+    def setcodecvalue(self, oldvalue, newvalue, extern=True,
                       nameonly=False, valueonly=False):
         '''update all the oldvalue by newvalue
 
@@ -398,20 +389,14 @@ class NtvfieldStructure:
 
         - **oldvalue** : list of values to replace
         - **newvalue** : list of new value to apply
-        - **typevalue** : str (default None) - cast to apply to the new value
         - **extern** : if True, the newvalue has external representation, else internal
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : int - last codec rank updated (-1 if None)'''
-        #typevalue = util.typename(self.name, typevalue)
         if extern:
             newvalue = self.s_to_i(newvalue)
             oldvalue = self.s_to_i(oldvalue)
-            #newvalue = Ntv.obj(newvalue)
-            #oldvalue = Ntv.obj(oldvalue)
-            #newvalue = util.castval(newvalue, typevalue)
-            #oldvalue = util.castval(oldvalue, typevalue)
         rank = -1
         for i in range(len(self._codec)):
             if self._codec[i] == oldvalue:
@@ -424,30 +409,20 @@ class NtvfieldStructure:
                 rank = i
         return rank
 
-    def setcodeclist(self, listcodec, extern=True, typevalue=None, nameonly=False, valueonly=False):
+    def setcodeclist(self, listcodec, extern=True, nameonly=False, valueonly=False):
         '''update codec with listcodec values
 
         *Parameters*
 
         - **listcodec** : list of new codec values to apply
-        - **typevalue** : str (default None) - cast to apply to the new value
         - **extern** : if True, the newvalue has external representation, else internal
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : int - last codec rank updated (-1 if None)'''
-        #typevalue = util.typename(self.name, typevalue)
         if extern:
             listcodec = self.l_to_i(listcodec)
-            #listcodec = util.castobj(listcodec, typevalue)
         self._codec = listcodec
-        '''for i in range(len(self._codec)):
-            if typevalue in ES.ESclassName and nameonly:
-                self._codec[i].setName(listcodec[i].name)
-            elif typevalue in ES.ESclassName and valueonly:
-                self._codec[i].setValue(listcodec[i].value)
-            else:
-                self._codec[i] = listcodec[i]'''
 
     def set_keys(self, keys):
         ''' _keys setters '''
@@ -486,7 +461,7 @@ class NtvfieldStructure:
             return True
         return False
 
-    def setvalue(self, ind, value, extern=True, typevalue=None, nameonly=False, valueonly=False):
+    def setvalue(self, ind, value, extern=True, nameonly=False, valueonly=False):
         '''update a value at the rank ind (and update codec and keys)
 
         *Parameters*
@@ -494,15 +469,12 @@ class NtvfieldStructure:
         - **ind** : rank of the value
         - **value** : new value
         - **extern** : if True, the value has external representation, else internal
-        - **typevalue** : str (default None) - cast to apply to the new value
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : None'''
-        #typevalue = util.typename(self.name, typevalue)
         if extern:
             value = self.s_to_i(value)
-            #value = Ntv.obj(value)
         values = self.values
         if nameonly:
             values[ind].setName(values.ntv_name)
@@ -512,21 +484,18 @@ class NtvfieldStructure:
             values[ind] = value
         self._codec, self._keys = util.resetidx(values)
 
-    def setlistvalue(self, listvalue, extern=True, typevalue=None, nameonly=False, valueonly=False):
+    def setlistvalue(self, listvalue, extern=True, nameonly=False, valueonly=False):
         '''update the values (and update codec and keys)
 
         *Parameters*
 
         - **listvalue** : list - list of new values
-        - **typevalue** : str (default None) - class to apply to the new value
         - **extern** : if True, the value has external representation, else internal
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : None'''
-        #typevalue = util.typename(self.name, typevalue)
         if extern:
-            #listvalue = [Ntv.obj(value) for value in listvalue]
             listvalue = self.l_to_i(listvalue)
         values = self.values
         for i, value_i in enumerate(listvalue):
@@ -601,20 +570,7 @@ class NtvfieldStructure:
             self._codec = codec
             self._keys = keys
             return self
-        return self.__class__(codec=codec, name=self.name, keys=keys, castobj=False)
-
-    """def valrow(self, row):
-        ''' return json val for a record
-
-        *Parameters*
-
-        - **row** : record to obtain val
-
-        *Returns* : val[row]'''
-        val = ESValue.uncastsimple(self._codec[self._keys[row]])
-        if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes)):
-            return val
-        return val.json(encoded=False)"""
+        return self.__class__(codec=codec, name=self.name, keys=keys)
 
     def valtokey(self, value, extern=True):
         '''convert a value to a key
@@ -629,9 +585,6 @@ class NtvfieldStructure:
         - **int** : first key finded (None else)'''
         if extern:
             value = self.s_to_i(value)
-            #value = Ntv.obj(value)
-            #value = util.castval(
-            #    value, util.typename(self.name, ES.def_clsName))
         if value in self._codec:
             return self._codec.index(value)
         return None

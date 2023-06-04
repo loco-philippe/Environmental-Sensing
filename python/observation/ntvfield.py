@@ -121,8 +121,8 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
     - `Ntvfield.vSimple`
     '''
 
-    def __init__(self, codec=None, name=None, keys=None, typevalue=None,
-                 lendefault=0, reindex=False, castobj=True):
+    def __init__(self, codec=None, name=None, keys=None,
+                 lendefault=0, reindex=False):
         '''
         Ntvfield constructor.
 
@@ -131,10 +131,8 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         - **codec** :  list (default None) - external different values of index (see data model)
         - **keys** :  list (default None)  - key value of index (see data model)
         - **name** : string (default None) - name of index (see data model)
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **lendefault** : integer (default 0) - default len if no keys is defined
-        - **reindex** : boolean (default True) - if True, default codec is apply
-        - **castobj** : boolean (default True) - if True, codec is converted to ntv'''
+        - **reindex** : boolean (default True) - if True, default codec is apply'''
         if isinstance(codec, Ntvfield):
             self._keys = copy(codec._keys)
             self._codec = deepcopy(codec._codec)
@@ -151,7 +149,6 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
             leng = len(keys)
         if not name:
             name = ES.defaultindex
-        #typevalue = util.typename(name, typevalue)
         if not (keys is None or isinstance(keys, list)):
             raise NtvfieldError("keys not list")
         if keys is None and leng == 0:
@@ -164,10 +161,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
             keysset = util.tocodec(keys)
             #codec = [Ntv.obj(key) for key in keysset]
             codec = self.l_to_i(keysset)
-        #if not typevalue is None or castobj:
-        if castobj:
-            #codec = [Ntv.obj(key) for key in codec]
-            codec = self.l_to_i(codec)
+        codec = self.l_to_i(codec)
         self._keys = keys
         self._codec = codec
         self.name = name
@@ -191,55 +185,8 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
                 values[item] = not default        
         return cls.ntv({name: values})
         
-    """@classmethod
-    def dic(cls, dicvalues=None, typevalue=ES.def_clsName, fullcodec=False):
-        '''
-        Ntvfield constructor (external dictionnary).
-
-        *Parameters*
-
-        - **dicvalues** : {name : values}  (see data model)
-        - **fullcodec** : boolean (default False) - full codec if True
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec'''
-        if not dicvalues:
-            return cls.ext(name=None, values=None, typevalue=typevalue, fullcodec=fullcodec)
-        if isinstance(dicvalues, Ntvfield):
-            return copy(dicvalues)
-        if not isinstance(dicvalues, dict):
-            raise NtvfieldError("dicvalues not dict")
-        if len(dicvalues) != 1:
-            raise NtvfieldError("one key:values is required")
-        name = list(dicvalues.keys())[0]
-        values = dicvalues[name]
-        return cls.ext(name=name, values=values, typevalue=typevalue, fullcodec=fullcodec)"""
-
-    """@classmethod
-    def ext(cls, values=None, name=None, typevalue=ES.def_clsName, fullcodec=False):
-        '''
-        Ntvfield constructor (external list).
-
-        *Parameters*
-
-        - **values** :  list (default None) - external values of index (see data model)
-        - **name** : string (default None) - name of index (see data model)
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
-        - **fullcodec** : boolean (default False) - full codec if True'''
-        if not values:
-            return cls(name=name, typevalue=typevalue)
-        if isinstance(values, Ntvfield):
-            return copy(values)
-        if not isinstance(values, list):
-            values = [values]
-        typevalue = util.typename(name, typevalue)
-        values = util.castobj(values, typevalue)
-        if fullcodec:
-            codec, keys = (values, list(range(len(values))))
-        else:
-            codec, keys = util.resetidx(values)
-        return cls(codec=codec, name=name, keys=keys, typevalue=None, castobj=False)"""
-
     @classmethod
-    def from_parent(cls, codec, parent, name=None, typevalue=ES.def_clsName, reindex=False):
+    def from_parent(cls, codec, parent, name=None, reindex=False):
         '''Generate an Ntvfield Object from specific codec and parent keys.
 
         *Parameters*
@@ -247,13 +194,12 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         - **codec** : list of objects
         - **name** : string (default None) - name of index (see data model)
         - **parent** : Ntvfield, parent of the new Ntvfield
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
         - **reindex** : boolean (default True) - if True, default codec is apply
 
         *Returns* : Ntvfield '''
         if isinstance(codec, Ntvfield):
             return copy(codec)
-        return cls(codec=codec, name=name, keys=parent._keys, typevalue=typevalue, reindex=reindex)
+        return cls(codec=codec, name=name, keys=parent._keys, reindex=reindex)
 
     @classmethod 
     def ntv(cls, ntv_value=None, extkeys=None, reindex=True):
@@ -277,36 +223,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
             keys = extkeys
         if keys is None:
             keys = list(range(len(codec)))
-        return cls(codec=codec, name=name, keys=keys, typevalue=None, reindex=reindex)
-
-    """@classmethod
-    def from_obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
-        '''Generate an Ntvfield Object from a bytes, json or dict value and from
-        a keys list (derived Ntvfield)
-
-        *Parameters*
-
-        - **bsd** : bytes, string or dict data to convert
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
-        - **extkeys** : list (default None) of int, string or dict data to convert in keys
-        - **context** : boolean (default True) - if False, only codec and keys are included
-        - **reindex** : boolean (default False) - if True, default codec is apply
-
-        *Returns* : tuple(code, Ntvfield) '''
-        if isinstance(bsd, Ntvfield):
-            return (ES.nullparent, copy(bsd))
-        name, typevaluedec, codec, parent, keys, isfullindex, isparent =\
-            Ntvfield.decodeobj(bsd, typevalue, context)
-        if extkeys and parent >= 0:
-            keys = Ntvfield.keysfromderkeys(extkeys, keys)
-        elif extkeys and parent < 0:
-            keys = extkeys
-        if keys is None:
-            keys = list(range(len(codec)))
-        if typevaluedec:
-            typevalue = typevaluedec
-        return (parent, cls(codec=codec, name=name, keys=keys, typevalue=typevalue,
-                            reindex=reindex))"""
+        return cls(codec=codec, name=name, keys=keys, reindex=reindex)
 
     """@classmethod
     def from_dict_obj(cls, bsd, typevalue=ES.def_clsName, reindex=False):
@@ -355,25 +272,6 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         values = util.tuple(util.transpose([idx.values for idx in listidx]))
         #return cls.ext(values, name)
         return cls.ntv({name: values})
-
-    """@classmethod
-    def obj(cls, bsd, extkeys=None, typevalue=ES.def_clsName, context=True, reindex=False):
-        '''Generate an Ntvfield Object from a bytes, json or dict value and from
-        a keys list (derived Ntvfield)
-
-        *Parameters*
-
-        - **bsd** : bytes, string or dict data to convert
-        - **typevalue** : string (default ES.def_clsName) - typevalue to apply to codec
-        - **extkeys** : list (default None) of int, string or dict data to convert in keys
-        - **context** : boolean (default True) - if False, only codec and keys are included
-        - **reindex** : boolean (default True) - if True, default codec is apply
-
-        *Returns* : tuple(code, Ntvfield) '''
-        if isinstance(bsd, dict):
-            return cls.from_dict_obj(bsd, typevalue=typevalue, reindex=reindex)[1]
-        return cls.from_obj(bsd, extkeys=extkeys, typevalue=typevalue,
-                            context=context, reindex=reindex)[1]"""
 
 
 # %% special
@@ -466,7 +364,6 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
 
     def __copy__(self):
         ''' Copy all the data '''
-        #return Ntvfield(self)
         return self.__class__(self)
 
 # %% property
@@ -514,11 +411,6 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         return self._keys
 
     @property
-    def typevalue(self):
-        '''return typevalue calculated from name'''
-        return util.typename(self.name)
-
-    @property
     def values(self):
         '''return values (see data model)'''
         return [self._codec[key] for key in self._keys]
@@ -529,28 +421,3 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         return [self.s_to_e(self._codec[key]) for key in self._keys]
         #return [self._codec[key].to_obj() for key in self._keys]
         #return self.to_obj(modecodec='full', codecval=True, encoded=False)
-
-# %% a supprimer
-    @staticmethod
-    def l_to_i(lis):
-        return [Ntv.obj(val) for val in lis]
-
-    @staticmethod
-    def s_to_i(val):
-        return Ntv.obj(val)
-
-    @staticmethod
-    def n_to_i(ntv):
-        return ntv
-
-    @staticmethod
-    def l_to_e(lis):
-        return [ntv.to_obj() for ntv in lis]    
-
-    @staticmethod
-    def s_to_e(val):
-        return val.to_obj()
-
-    @staticmethod
-    def i_to_n(val):
-        return val

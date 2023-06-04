@@ -159,7 +159,7 @@ class NtvdatasetInterface:
         - **idx** : list (default none) - list of idx to be completed. If [],
         self.primary is used.
         - **fillvalue** : object (default '?') - value used for the new extval
-        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted to internal value
         - **lisfunc** : function (default none) - list of function to apply to indexes before export
         - **name** : string (default None) - DataArray name. If None, variable name
         - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.
@@ -313,7 +313,7 @@ class NtvdatasetInterface:
         - **varname** : string (default none) - Name of the variable to use. If None,
         first lvarname is used.
         - **fillvalue** : object (default '?') - value used for the new extval
-        - **fillextern** : boolean(default True) - if True, fillvalue is converted to typevalue
+        - **fillextern** : boolean(default True) - if True, fillvalue is converted to internal value
         - **lisfunc** : function (default none) - list of function to apply to indexes before export
         - **name** : string (default None) - DataArray name. If None, variable name
         - **numeric** : Boolean (default False) - Generate a numeric DataArray.Values.

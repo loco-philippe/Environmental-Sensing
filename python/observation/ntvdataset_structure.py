@@ -123,7 +123,7 @@ class NtvdatasetStructure:
         elif update:  # si merge et si idx.name in idxname
             self.lindex[idxname.index(idx.name)].setlistvalue(idx.values)
 
-    def append(self, record, unique=False, typevalue=ES.def_clsName):
+    def append(self, record, unique=False):
         '''add a new record.
 
         *Parameters*
@@ -131,19 +131,10 @@ class NtvdatasetStructure:
         - **record** :  list of new index values to add to Ntvdataset
         - **unique** :  boolean (default False) - Append isn't done if unique
         is True and record present
-        - **typevalue** : list of string (default ES.def_clsName) - typevalue
-        to convert record or string if typevalue is not define in indexes
-
+        
         *Returns* : list - key record'''
         if self.lenindex != len(record):
             raise NtvdatasetError('len(record) not consistent')
-        """if not isinstance(typevalue, list):
-            typevalue = [typevalue] * len(record)
-        typevalue = [util.typename(self.lname[i], typevalue[i])
-                     for i in range(self.lenindex)]
-        record = [util.castval(val, typ)
-                  for val, typ in zip(record, typevalue)]"""
-        #record = [Ntv.obj(rec) for rec in record]
         record = self.field.l_to_i(record)
         if self.isinrecord(self.idxrecord(record), False) and unique:
             return None
@@ -298,8 +289,6 @@ class NtvdatasetStructure:
             fillval = fillvalue
             if fillextern:
                 fillval = self.field.s_to_i(fillvalue)
-                #fillval = util.castval(fillvalue, util.typename(self.lname[ind],
-                #                                                ES.def_clsName))
             idx.set_keys(idx.keys + [len(idx.codec)] * len(keysadd[0]))
             idx.set_codec(idx.codec + [fillval])
         else:
@@ -324,7 +313,7 @@ class NtvdatasetStructure:
         before transformation
         - **fillvalue** : object value used for var extension
         - **fillextern** : boolean(default True) - if True, fillvalue is converted 
-        to typevalue
+        to internal value
         - **inplace** : boolean (default True) - if True, filter is apply to self,
         - **complete** : boolean (default True) - if True, Ntvfield are ordered 
         in canonical order
@@ -739,19 +728,17 @@ class NtvdatasetStructure:
         '''
         return self.analysis.tree(width=width, lname=lname, mode=mode, string=string)
 
-    def updateindex(self, listvalue, index, extern=True, typevalue=None):
+    def updateindex(self, listvalue, index, extern=True):
         '''update values of an index.
 
         *Parameters*
 
         - **listvalue** : list - index values to replace
         - **index** : integer - index row to update
-        - **typevalue** : str (default None) - class to apply to the new value
         - **extern** : if True, the listvalue has external representation, else internal
 
         *Returns* : none '''
-        self.lindex[index].setlistvalue(
-            listvalue, extern=extern, typevalue=typevalue)
+        self.lindex[index].setlistvalue(listvalue, extern=extern)
 
     def valtokey(self, rec, extern=True):
         '''convert a record list (value or val for each idx) to a key list 

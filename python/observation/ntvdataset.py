@@ -31,10 +31,7 @@ import math
 import json
 import csv
 
-from observation.esconstante import ES
 from observation.fields import Nfield
-from observation.ntvfield import Ntvfield
-from observation.ntvfield_interface import NtvfieldInterface
 from observation.util import util
 from observation.ntvdataset_interface import NtvdatasetInterface, NtvdatasetError
 from observation.ntvdataset_structure import NtvdatasetStructure
@@ -93,7 +90,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
     - `Ntvdataset.lenindex`
     - `Ntvdataset.lname`
     - `Ntvdataset.tiindex`
-    - `Ntvdataset.typevalue`
 
     *global value (getters @property)*
 
@@ -192,26 +188,24 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return
 
     """@classmethod
-    def dic(cls, idxdic=None, typevalue=ES.def_clsName, reindex=True):
+    def dic(cls, idxdic=None, reindex=True):
         '''
         Ntvdataset constructor (external dictionnary).
 
         *Parameters*
 
         - **idxdic** : {name : values}  (see data model)
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
         if not idxdic:
-            return cls.ext(idxval=None, idxname=None, typevalue=typevalue,
-                           reindex=reindex)
+            return cls.ext(idxval=None, idxname=None, reindex=reindex)
         if isinstance(idxdic, Ntvdataset):
             return idxdic
         if not isinstance(idxdic, dict):
             raise NtvdatasetError("idxdic not dict")
         return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
-                       typevalue=typevalue, reindex=reindex)"""
+                       reindex=reindex)"""
 
     """@classmethod
-    def ext(cls, idxval=None, idxname=None, typevalue=ES.def_clsName, reindex=True):
+    def ext(cls, idxval=None, idxname=None, reindex=True):
         '''
         Ntvdataset constructor (external index).
 
@@ -219,7 +213,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
 
         - **idxval** : list of Ntvfield or list of values (see data model)
         - **idxname** : list of string (default None) - list of Ntvfield name (see data model)
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)'''
         if idxval is None:
             idxval = []
         if not isinstance(idxval, list):
@@ -264,8 +257,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                 if irow == nrow:
                     break
                 if irow == 0:
-                    #if dtype and not isinstance(dtype, list):
-                    #    dtype = [dtype] * len(row)
                     idxval = [[] for i in range(len(row))]
                     idxname = [''] * len(row)
                 if irow == 0 and header:
@@ -273,12 +264,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                 else:
                     for i in range(len(row)):
                         idxval[i].append(json.loads(row[i]))
-                    """if not dtype:
-                        for i in range(len(row)):
-                            idxval[i].append(row[i])
-                    else:
-                        for i in range(len(row)):
-                            idxval[i].append(util.cast(row[i], dtype[i]))"""
                 irow += 1
         lindex = [cls.field_class().from_ntv({name:idx}, decode_str=decode_str) for idx, name in zip(idxval, idxname)]
         return cls(listidx=lindex, reindex=True)
@@ -414,8 +399,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
             for name in newname:
                 oldidx = merged.nindex(oldname)
                 fillval = self.field.s_to_i(fillvalue)
-                #fillval = util.castval(##
-                #    fillvalue, util.typename(name, ES.def_clsName))
                 merged.addindex(
                     self.field([fillval] * len(merged), name, oldidx.keys))
             merged += rec
@@ -428,109 +411,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         return ilc
 
 # %% internal
-    """@classmethod
-    def _init_obj(cls, listidx=None, reindex=True, typevalue=ES.def_clsName, context=True):
-        '''
-        Ntvdataset constructor.
-
-        *Parameters*
-
-        - **listidx** :  list (default None) - list of compatible Ntvfield data
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
-        - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
-        '''
-        lindex = []
-        if listidx.__class__.__name__ == 'DataFrame':
-            lindex = []
-            for name, idx in listidx.astype('category').items():
-                lis = list(idx.cat.categories)
-                if lis and isinstance(lis[0], pandas._libs.tslibs.timestamps.Timestamp):
-                    lis = [ts.to_pydatetime().astimezone(datetime.timezone.utc)
-                           for ts in lis]
-                lindex.append(Ntvfield(lis, name, list(idx.cat.codes),
-                                     lendefault=len(listidx), castobj=False))
-            return cls(lindex, reindex=reindex)
-
-        if isinstance(listidx, dict):
-            for idxname in listidx:
-                var, idx = Ntvfield.from_dict_obj({idxname: listidx[idxname]},
-                                                typevalue=typevalue, reindex=reindex)
-                lindex.append(idx)
-            return cls(lindex, reindex=reindex)
-
-        if isinstance(listidx, list) and len(listidx) == 0:
-            return cls()
-
-        # decode: name, typevaluedec, codec, parent, keys, isfullkeys, isparent
-        lidx = [list(NtvfieldInterface.decodeobj(idx, typevalue, context))
-                for idx in listidx]
-        for ind in range(len(lidx)):
-            if lidx[ind][0] is None or lidx[ind][0] == ES.defaultindex:
-                lidx[ind][0] = 'i'+str(ind)
-            if lidx[ind][1] is None:
-                lidx[ind][1] = util.typename(lidx[ind][0], typevalue)
-        name, typevaluedec, codec, parent, keys, isfullkeys, isparent =\
-            tuple(zip(*lidx))
-
-        leng = [len(cod) for cod in codec]
-        # mode full : tous False et même longueur
-        fullmode = not max(isfullkeys) and max(leng) == min(leng)
-        # mode default : tous True (idem all(isfullkeys))
-        defmode = min(isfullkeys)
-
-        # not max(isparent) : tous isparent = False
-        if not max(isparent) and (fullmode or defmode):  # mode full ou mode default
-            lindex = [Ntvfield(idx[2], idx[0], idx[4], idx[1],
-                             reindex=reindex) for idx in lidx]
-            return cls(lindex, reindex=reindex)
-
-        length, crossed = Ntvdataset._init_len_cros(
-            fullmode, leng, isfullkeys, keys, isparent)
-        keyscross = util.canonorder([leng[i] for i in crossed])
-        # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
-        for ind in range(len(crossed)):
-            lidx[crossed[ind]][4] = keyscross[ind]  # keys
-        for ind in range(len(lidx)):
-            Ntvdataset._init_keys(ind, lidx, length)
-        lindex = [Ntvfield(idx[2], idx[0], idx[4], idx[1],
-                         reindex=reindex) for idx in lidx]
-        return cls(lindex, reindex=False)"""
-
-    """@staticmethod
-    def _init_len_cros(fullmode, leng, isfullkeys, keys, isparent):
-        ''' initialization of length and crossed data'''
-        # crossed : pas d'index (isfullindex false), pas de parent(isparent false)
-        crossed = []
-        if fullmode:  # au moins un fullkeys ou une longueur différente
-            length = max(leng)
-            return length, crossed
-
-        # au moins un fullkeys ou une longueur différente
-        if max(isfullkeys):
-            length = len(keys[isfullkeys.index(True)])
-            crossed = [i for i, (isfullk, ispar, lengt) in
-                       enumerate(zip(isfullkeys, isparent, leng))
-                       if not ispar and not isfullk and 1 < lengt < length]
-            return length, crossed
-
-        # max(leng) != min(leng) pas de fullindex => matrice et dérivés
-        crossed = [i for i, (isfullk, ispar, lengt) in
-                   enumerate(zip(isfullkeys, isparent, leng))
-                   if not ispar and not isfullk and 1 < lengt]
-        lencrossed = [leng[ind] for ind in crossed]
-
-        if max(lencrossed) == min(lencrossed):
-            length = lencrossed[0]
-            crossed = []
-            return length, crossed
-
-        length = math.prod([leng[i] for i in crossed])
-        if length / max(lencrossed) == max(lencrossed):
-            length = max(lencrossed)
-            crossed = [i for i, (isfullk, ispar, lengt) in
-                       enumerate(zip(isfullkeys, isparent, leng))
-                       if not ispar and not isfullk and 1 < lengt < length]
-        return length, crossed"""
 
     @staticmethod
     def _init_ntv_keys(ind, lidx, leng):
@@ -559,36 +439,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
             return
         lidx[ind][4] = Nfield.keysfromderkeys(lidx[parent][4], keys)  # relative
         return
-
-    """@staticmethod
-    def _init_keys(ind, lidx, leng):
-        ''' initialization of keys data'''
-        # name: 0, typevaluedec: 1, codec: 2, parent: 3, keys: 4
-        if lidx[ind][4] and (lidx[ind][3] is None or lidx[ind][3] < 0):
-            return
-        if lidx[ind][4] and len(lidx[ind][4]) == leng:
-            return
-        if len(lidx[ind][2]) == 1:
-            lidx[ind][4] = [0] * leng
-            return
-        if lidx[ind][3] is None:
-            raise NtvdatasetError('keys not referenced')
-        if lidx[ind][3] < 0:
-            lidx[ind][4] = list(range(leng))
-            return
-        if not lidx[lidx[ind][3]][4] or len(lidx[lidx[ind][3]][4]) != leng:
-            Ntvdataset._init_keys(lidx[ind][3], lidx, leng)
-        if not lidx[ind][4] and len(lidx[ind][2]) == len(lidx[lidx[ind][3]][2]):
-            # coupled format
-            lidx[ind][4] = lidx[lidx[ind][3]][4]
-            return
-        # derived keys
-        if not lidx[ind][4]:  # derived format without keys
-            lenp = len(lidx[lidx[ind][3]][2])  # len codec parent
-            lidx[ind][4] = [(i*len(lidx[ind][2])) // lenp for i in range(lenp)]
-        lidx[ind][4] = Ntvfield.keysfromderkeys(
-            lidx[lidx[ind][3]][4], lidx[ind][4])
-        return"""
 
     @staticmethod
     def _mergerecord(rec, mergeidx=True, updateidx=True, simplename=False):
@@ -862,11 +712,6 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
     def tiindex(self):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
-
-    @property
-    def typevalue(self):
-        '''return typevalue calculated from Ntvfield name'''
-        return [util.typename(name)for name in self.lname]
 
     @property
     def zip(self):

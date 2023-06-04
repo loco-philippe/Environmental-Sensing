@@ -38,7 +38,7 @@ class util:
         listrange = [range(lidx) for lidx in lenidx]
         return util.transpose(util.list(list(product(*listrange))))
 
-    @staticmethod
+    """@staticmethod
     def cast(val, dtype=None, string=True, default=None, maxlen=None):
         ''' convert val in the type defined by the string dtype'''
         typeval = val.__class__.__name__
@@ -130,7 +130,7 @@ class util:
         if classvalue in ES.className:
             return _classval()[classvalue].obj(value)
             # return _classval()[classvalue](value)
-        return val
+        return val"""
 
     @staticmethod
     def couplinginfos(l1, l2):
@@ -409,17 +409,6 @@ class util:
     def tupled(idx):
         '''transform a list of list in a tuple of tuple'''
         return tuple([val if not isinstance(val, list) else util.tupled(val) for val in idx])
-
-    @staticmethod
-    def typename(name, typevalue=None):
-        if not name:
-            return typevalue
-        if name in ES.typeName:
-            return ES.typeName[name]
-        if name[0:2] == 'ES':
-            return ES.ES_clsName
-        return typevalue
-
 
 class utilError(Exception):
     ''' util Exception'''

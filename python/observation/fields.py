@@ -10,10 +10,10 @@ from json_ntv import Ntv
     
 class Nfield(Ntvfield):
     
-    def __init__(self, codec=None, name=None, keys=None, typevalue=None,
-                 lendefault=0, reindex=False, castobj=True):
-        super().__init__(codec=codec, name=name, keys=keys, typevalue=typevalue,
-                     lendefault=lendefault, reindex=reindex, castobj=castobj)
+    def __init__(self, codec=None, name=None, keys=None,
+                 lendefault=0, reindex=False):
+        super().__init__(codec=codec, name=name, keys=keys,
+                     lendefault=lendefault, reindex=reindex)
 
     @staticmethod
     def l_to_i(lis):
@@ -45,10 +45,10 @@ class Nfield(Ntvfield):
     
 class Sfield(Ntvfield):
     
-    def __init__(self, codec=None, name=None, keys=None, typevalue=None,
-                 lendefault=0, reindex=False, castobj=True):
-        super().__init__(codec=codec, name=name, keys=keys, typevalue=typevalue,
-                     lendefault=lendefault, reindex=reindex, castobj=castobj)
+    def __init__(self, codec=None, name=None, keys=None,
+                 lendefault=0, reindex=False):
+        super().__init__(codec=codec, name=name, keys=keys,
+                     lendefault=lendefault, reindex=reindex)
         
     @staticmethod
     def l_to_i(lis):

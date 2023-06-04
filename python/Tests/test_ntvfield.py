@@ -15,10 +15,17 @@ from itertools import product
 from observation import Ntvdataset, Ntvfield, ES, util
 from json_ntv import Ntv, NtvSingle, NtvList
 from observation.fields import Nfield, Sfield
+from observation.datasets import Ndataset, Sdataset
 
-Field = Ntvfield
-Field = Nfield
-Field = Sfield
+type_test = 'ntv'
+#type_test = 'simple'
+
+if type_test == 'ntv':
+    Field = Nfield
+    Dataset = Ndataset
+else:
+    Field = Sfield
+    Dataset = Sdataset
 arr12 = 'ar[1,2]' if Field == Sfield else [1,2]
 
 def internal(val):
@@ -48,15 +55,14 @@ class Test_Field(unittest.TestCase):
         if Field != Sfield:
             idx = Field(codec=[Ntv.obj('er'), Ntv.obj(2), Ntv.obj(arr12)], name='test', keys=[0, 1, 2, 1])
             idx2 = Field.from_ntv({'test': ['er', 2, arr12, 2]})
-            #idx3 = Field.ext(['er', 2, [1, 2], 2], 'test')
+            idx3 = Field(['er', 2, [1, 2], 2], 'test')
             #idx4 = Field.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
             self.assertTrue(Field(idx) == idx)
             #self.assertTrue(Field(idx) == Field.ext(idx) == idx)
             self.assertTrue(idx.name == 'test' and 
                             idx.cod == ['er', 2, arr12] and 
                             idx.keys == [0, 1, 2, 1])
-            self.assertTrue(idx == idx2)
-            #self.assertTrue(idx == idx2 ==idx3)
+            self.assertTrue(idx == idx2 ==idx3)
             #self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1, 2], 2]
             #                == idx5.val == idx5.cod and len(idx) == 4)
         else:
@@ -64,23 +70,23 @@ class Test_Field(unittest.TestCase):
             idx2 = Field.from_ntv({'test': ['er', 2, arr12, 2]})
             self.assertTrue(Field(idx) == idx)
             self.assertTrue(idx == idx2)            
+        idx = Field(['er', 'rt', Dataset()], 'result', [0, 1, 2, 2])
+        idx2 = Field(['er', 'rt', Dataset(), Dataset()], 'result')
+        self.assertTrue(idx == idx2)
+        self.assertTrue(idx.val[3] == Dataset())
+        self.assertTrue(Field.ntv([1, 2, 3]) == Field([1, 2, 3]))
+        self.assertTrue(Field(codec=[True], lendefault=3).val == [
+                        True, True, True])
         '''idx = Field(['er', 'rt', 'ty'], 'datation', [0, 1, 2, 2])
         idx2 = Field.ext(['er', 'rt', 'ty', 'ty'], 'datation')
         idx3 = Field.dic({'datation': ['er', 'rt', 'ty', 'ty']})
         self.assertTrue(idx == idx2 == idx3)
         self.assertTrue(isinstance(idx.codec[0], DatationValue))
         self.assertTrue(idx.values[3] == DatationValue(name='ty'))
-        idx = Field(['er', 'rt', Ntvdataset()], 'result', [0, 1, 2, 2])
-        idx2 = Field.ext(['er', 'rt', Ntvdataset(), Ntvdataset()], 'result')
-        idx3 = Field.dic({'result': ['er', 'rt', Ntvdataset(), Ntvdataset()]})
-        self.assertTrue(idx == idx2 == idx3)
         if ES.def_clsName:
             self.assertTrue(isinstance(idx.codec[0], NamedValue))
-        self.assertTrue(idx.values[3].value == Ntvdataset())
-        self.assertTrue(Field.obj(
-            [1, 2, 3], typevalue=None) == Field([1, 2, 3]))
-        self.assertTrue(Field(codec=[True], lendefault=3).val == [
-                        True, True, True])'''
+
+        '''
 
     def test_obj(self):
         listval = [{'name': ['value']}, 
@@ -115,7 +121,7 @@ class Test_Field(unittest.TestCase):
         self.assertTrue(idx.infos == {'lencodec': 3, 'mincodec': 3, 'maxcodec': 3,
                                       'typecodec': 'complete', 'ratecodec': 0.0})
         if Field != Sfield:
-            idx2 = Field.ntv({'result': ['er', Ntvdataset(), Ntvdataset()]} )
+            idx2 = Field.ntv({'result': ['er', Dataset(), Dataset()]} )
             self.assertTrue(idx2.infos == {'lencodec': 2, 'mincodec': 2, 'maxcodec': 3,
                                            'typecodec': 'default', 'ratecodec': 1.0})
         idx2 = Field()
