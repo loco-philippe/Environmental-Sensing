@@ -720,10 +720,3 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         if not textidx:
             return None
         return tuple(tuple(idx) for idx in textidx)
-
-# %% a supprimer
-
-    @staticmethod 
-    def field_class():
-        return Nfield
-    

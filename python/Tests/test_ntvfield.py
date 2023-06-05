@@ -18,7 +18,7 @@ from observation.fields import Nfield, Sfield
 from observation.datasets import Ndataset, Sdataset
 
 type_test = 'ntv'
-#type_test = 'simple'
+type_test = 'simple'
 
 if type_test == 'ntv':
     Field = Nfield
@@ -73,7 +73,10 @@ class Test_Field(unittest.TestCase):
         idx = Field(['er', 'rt', Dataset()], 'result', [0, 1, 2, 2])
         idx2 = Field(['er', 'rt', Dataset(), Dataset()], 'result')
         self.assertTrue(idx == idx2)
-        self.assertTrue(idx.val[3] == Dataset())
+        if Field == Sfield:
+            self.assertTrue(idx[3] == Dataset())
+        else:
+            self.assertTrue(idx[3].to_obj(encode_format='obj', dicobj={'tab':'NdatasetConnec'}) == Dataset())            
         self.assertTrue(Field.ntv([1, 2, 3]) == Field([1, 2, 3]))
         self.assertTrue(Field(codec=[True], lendefault=3).val == [
                         True, True, True])
@@ -241,15 +244,15 @@ class Test_Field(unittest.TestCase):
         residx = [[], ['er', '2', 'er', str(arr12)]]
         for idx, res in zip(testidx, residx):
             self.assertEqual(idx.vlist(str), res)
-
+        idx = Nfield.ntv({'datation::datetime': [{'date1': '2021-02-04T11:05:00+00:00'},
+                                       '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
+        self.assertTrue(idx.vlist(func=Ntv.to_name, extern=False) ==
+                        ['date1', '', ''] == idx.vName())
         '''il = Ntvdataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
         idx = Field.ntv([il, il])
         self.assertEqual(idx.vlist(func=Ntvdataset.to_obj, extern=False, encoded=False)[0][0],
                          ['er'])
-        idx = Field.ntv({'datation::datetime': [{'date1': '2021-02-04T11:05:00+00:00'},
-                                       '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
-        self.assertTrue(idx.vlist(func=ESValue.vName, extern=False, default='ici') ==
-                        ['date1', 'ici', 'ici'] == idx.vName(default='ici'))'''
+        '''
 
     def test_numpy(self):
         if Field != Sfield:
@@ -274,16 +277,16 @@ class Test_Field(unittest.TestCase):
         self.assertEqual(ib.val, [25, 25, 12, 12, 25, 12])
         self.assertTrue(ib.cod, [25, 12] and ib.isderived(ia))
 
-    '''def test_crossed(self):
-        ia = Field.ext(['anne', 'paul', 'anne', 'lea'])
-        ib = Field.ext([25,25,12,12])
-        Field.tocrossed([ia,ib])
+    def test_full(self):
+        ia = Field(['anne', 'paul', 'anne', 'lea'])
+        ib = Field([25,25,12,12])
+        Field.full([ia,ib])
         self.assertTrue(ib.iscrossed(ia))
-        ia = Field.ext(['anne', 'paul', 'anne', 'lea'])
-        ib = Field.ext([25,25,12,12])
-        ic = Field.ext(['White', 'Grey', 'White', 'Grey'])
-        Field.tocrossed([ia,ib, ic])
-        self.assertTrue(ib.iscrossed(ia) and ib.iscrossed(ic))'''
+        ia = Field(['anne', 'paul', 'anne', 'lea'])
+        ib = Field([25,25,12,12])
+        ic = Field(['White', 'Grey', 'White', 'Grey'])
+        Field.full([ia,ib, ic])
+        self.assertTrue(ib.iscrossed(ia) and ib.iscrossed(ic))
 
     def test_tocodec(self):
         v = [10,10,10,10,30,10,20,20,20]        
@@ -367,57 +370,23 @@ class Test_Field(unittest.TestCase):
         parent = Field.ntv(['j', 'j', 'f', 'f', 'm', 's', 's'])
         fils = Field.ntv(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
         js = fils.tostdcodec().to_ntv(parent=-1)
-        #prt, idx = Field.from_ntv(js)
         idx = Field.from_ntv(js)
         self.assertEqual(idx, fils)
-        #self.assertEqual(prt, -1)
         js = fils.to_ntv(keys=fils.derkeys(parent), parent=1)
-        #prt, idx = Field.from_obj(js, extkeys=parent.keys)
         idx = Field.from_ntv(js, extkeys=parent.keys)
         self.assertEqual(idx, fils)
-        #self.assertEqual(prt, 1)
         encoded = [True, False]
         format = ['json', 'cbor']
         test = list(product(encoded, format))
         for ts in test:
             option = {'encoded': ts[0], 'encode_format': ts[1]}
             idx2 = Field.from_ntv(idx.to_ntv().to_obj(**option), decode_str=True)
-            #idx2 = Field.obj(idx.to_obj(keys=True, **option))
             self.assertEqual(idx.values, idx2.values)
             idx2 = Field.from_ntv(idx.tostdcodec().to_ntv().to_obj(**option), decode_str=True)  # full format
             self.assertEqual(idx.values, idx2.values)
             idx2 = Field.from_ntv(idx.to_ntv(keys=fils.derkeys(parent), parent=1).to_obj(**option),
                               extkeys=parent.keys, decode_str=True)  # default format
             self.assertEqual(idx.values, idx2.values)
-
-    """def test_castobj(self):  # !!!
-        liste = [['{"namvalue":{"val":21}}',    'ESValue',         NamedValue],
-                 [{"val": 21},                     'ESValue',         NamedValue],
-                 [{"val": 21},                     None,              str],
-                 #[{"val":21},                     None,              NamedValue],
-                 ['{"namvalue":{"val":21}}',      None,              NamedValue],
-                 ['{"locvalue":{"val":[2, 1]}}',
-                     'LocationValue',   LocationValue],
-                 ['{"locvalue":{"val":[2, 1]}}',
-                     None,              LocationValue],
-                 #['{"observation":{"val":21}}',  'Observation',     Observation],
-                 #[Observation(),                 'Observation',     Observation],
-                 #[Observation(),                  None,             Observation],
-                 [datetime.datetime(2020, 1, 1),
-                  'DatationValue',   DatationValue],
-                 #[datetime.datetime(2020,1,1),   'TimeSlot',        TimeSlot],
-                 [datetime.datetime(2020, 1, 1),    None,              datetime.datetime]]
-        for t in liste:
-            self.assertTrue(isinstance(util.castobj([t[0]], t[1])[0], t[2]))
-        idx = Field.dic({'datation': ['er', 'rt', 'ty', 'ty']})
-        self.assertTrue(isinstance(idx.values[0], DatationValue))
-        idx = Field.dic({'ESdatation': ['er', 'rt', 'ty', 'ty']})
-        self.assertTrue(isinstance(idx.values[0], NamedValue))
-        idx = Field.dic({'dates': ['er', 'rt', 'ty', 'ty']})
-        if not ES.def_clsName:
-            self.assertTrue(isinstance(idx.values[0], str))
-        else:
-            self.assertTrue(isinstance(idx.values[0], NamedValue))"""
 
     def test_to_from_obj(self):
         if Field != Sfield:
@@ -454,7 +423,6 @@ class Test_Field(unittest.TestCase):
                        ]
         encoded = [True, False]
         format = ['json', 'cbor']
-        #modecodec = ['full', 'default', 'dict']
         modecodec = ['full', 'default', 'optimize']
         test = list(product(encoded, format, modecodec))
         for i, idx in enumerate(listobj):
@@ -480,32 +448,6 @@ class Test_Field(unittest.TestCase):
         self.assertEqual(len(idx2), 2 * len(idx))
         idx += idx
         self.assertEqual(idx2, idx)
-
-    '''def test_iskeys(self):
-        istrue = [1, [1], [-1, [1, 2, 3]], [1, [1]], [1, 2, 3]]
-        isfalse = ['a', [[1, 2]], [[1, 2], [2, 3]], [1, 2, [2, 3]], [[1], 2, 3], [1, [1, 2, 0.1]],
-                   [-1.5, [1, 2, 3]], [1, 2, 3.2]]
-        for isT in istrue:
-            self.assertTrue(Field.iskeysobj(isT))
-        for isF in isfalse:
-            self.assertFalse(Field.iskeysobj(isF))'''
-
-    '''def test_jsontype(self):
-        self.assertEqual(Field.decodetype(
-            Field.decodeobj([1, 2, 3, 4]), 4), 'root coupled')
-        self.assertEqual(Field.decodetype(
-            Field.decodeobj([1, 2, 3, 4]), 3), 'primary')
-        self.assertEqual(Field.decodetype(Field.decodeobj([1])), 'unique')
-        self.assertEqual(Field.decodetype(Field.decodeobj(
-            [[1, 2, 3], [0, 1, 2, 0]]), 4), 'root derived')
-        self.assertEqual(Field.decodetype(Field.decodeobj(
-            [[1, 2, 3], [1]]), 4), 'periodic derived')
-        self.assertEqual(Field.decodetype(
-            Field.decodeobj([[1, 2, 3], 1]), 4), 'periodic derived')
-        self.assertEqual(Field.decodetype(
-            Field.decodeobj([[1, 2, 3, 4], 1]), 4), 'coupled')
-        self.assertEqual(Field.decodetype(Field.decodeobj(
-            [[1, 2, 3], [1, [0, 1, 2]]]), 4), 'derived')'''
 
     def test_periodic_coef(self):
         self.assertEqual(Field.encodecoef([0,0,1,1,2,2,3,3]), 2)
