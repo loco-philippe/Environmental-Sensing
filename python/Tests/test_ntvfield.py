@@ -18,7 +18,7 @@ from observation.fields import Nfield, Sfield
 from observation.datasets import Ndataset, Sdataset
 
 type_test = 'ntv'
-type_test = 'simple'
+#type_test = 'simple'
 
 if type_test == 'ntv':
     Field = Nfield
@@ -55,16 +55,14 @@ class Test_Field(unittest.TestCase):
         if Field != Sfield:
             idx = Field(codec=[Ntv.obj('er'), Ntv.obj(2), Ntv.obj(arr12)], name='test', keys=[0, 1, 2, 1])
             idx2 = Field.from_ntv({'test': ['er', 2, arr12, 2]})
-            idx3 = Field(['er', 2, [1, 2], 2], 'test')
-            #idx4 = Field.ext(['er', 2, [1, 2], 2], 'test', fullcodec=True)
+            idx3 = Field(['er', 2, [1, 2], 2], 'test', reindex=True)
+            idx4 = Field(['er', 2, [1, 2], 2], 'test')
             self.assertTrue(Field(idx) == idx)
-            #self.assertTrue(Field(idx) == Field.ext(idx) == idx)
             self.assertTrue(idx.name == 'test' and 
                             idx.cod == ['er', 2, arr12] and 
                             idx.keys == [0, 1, 2, 1])
-            self.assertTrue(idx == idx2 ==idx3)
-            #self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1, 2], 2]
-            #                == idx5.val == idx5.cod and len(idx) == 4)
+            self.assertTrue(idx == idx2 == idx3 == idx4 and len(idx) == 4)
+            self.assertTrue(idx.val == idx4.val == idx4.cod == ['er', 2, [1, 2], 2])
         else:
             idx = Field(codec=['er', 2, arr12], name='test', keys=[0, 1, 2, 1])
             idx2 = Field.from_ntv({'test': ['er', 2, arr12, 2]})
@@ -78,18 +76,12 @@ class Test_Field(unittest.TestCase):
         else:
             self.assertTrue(idx[3].to_obj(encode_format='obj', dicobj={'tab':'NdatasetConnec'}) == Dataset())            
         self.assertTrue(Field.ntv([1, 2, 3]) == Field([1, 2, 3]))
-        self.assertTrue(Field(codec=[True], lendefault=3).val == [
-                        True, True, True])
-        '''idx = Field(['er', 'rt', 'ty'], 'datation', [0, 1, 2, 2])
-        idx2 = Field.ext(['er', 'rt', 'ty', 'ty'], 'datation')
-        idx3 = Field.dic({'datation': ['er', 'rt', 'ty', 'ty']})
+        self.assertTrue(Field(codec=[True], lendefault=3).val == [True, True, True])
+        idx = Field(['er', 'rt', 'ty'], 'datation', [0, 1, 2, 2])
+        idx2 = Field(['er', 'rt', 'ty', 'ty'], 'datation')
+        idx3 = Field.ntv({'datation': ['er', 'rt', 'ty', 'ty']})
         self.assertTrue(idx == idx2 == idx3)
-        self.assertTrue(isinstance(idx.codec[0], DatationValue))
-        self.assertTrue(idx.values[3] == DatationValue(name='ty'))
-        if ES.def_clsName:
-            self.assertTrue(isinstance(idx.codec[0], NamedValue))
-
-        '''
+        self.assertTrue(idx.val[3] == 'ty')
 
     def test_obj(self):
         listval = [{'name': ['value']}, 
@@ -248,11 +240,13 @@ class Test_Field(unittest.TestCase):
                                        '2021-07-04T10:05:00+00:00', '2021-05-04T10:05:00+00:00']})
         self.assertTrue(idx.vlist(func=Ntv.to_name, extern=False) ==
                         ['date1', '', ''] == idx.vName())
-        '''il = Ntvdataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
-        idx = Field.ntv([il, il])
-        self.assertEqual(idx.vlist(func=Ntvdataset.to_obj, extern=False, encoded=False)[0][0],
-                         ['er'])
-        '''
+        il = Ndataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
+        idx = Nfield.ntv([il, il])
+        self.assertEqual(idx.vlist(func=Ntv.to_obj, extern=False, encode_format='obj', dicobj={'tab':'NdatasetConnec'})[0][0][0].val,
+                         'er')
+        il = Sdataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
+        idx = Sfield([il, il])
+        self.assertEqual(idx.vlist(func=Sdataset.vlist, extern=False, index=0)[0][0], 'er')
 
     def test_numpy(self):
         if Field != Sfield:
@@ -431,10 +425,6 @@ class Test_Field(unittest.TestCase):
                     'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
                 #print(i, option)
                 idx2 = Field.from_ntv(idx.to_ntv().to_obj(**option), decode_str=True)
-                '''if ts[2] == 'dict':
-                    idx2 = Field.obj(idx.to_dict_obj(**option))
-                else:
-                    idx2 = Field.obj(idx.to_obj(**option))'''
                 self.assertEqual(idx, idx2)
 
     def test_iadd(self):
