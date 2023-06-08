@@ -74,7 +74,7 @@ class Test_Field(unittest.TestCase):
         if Field == Sfield:
             self.assertTrue(idx[3] == Dataset())
         else:
-            self.assertTrue(idx[3].to_obj(encode_format='obj', dicobj={'tab':'NdatasetConnec'}) == Dataset())            
+            self.assertTrue(idx[3].to_obj(format='obj', dicobj={'tab':'NdatasetConnec'}) == Dataset())            
         self.assertTrue(Field.ntv([1, 2, 3]) == Field([1, 2, 3]))
         self.assertTrue(Field(codec=[True], lendefault=3).val == [True, True, True])
         idx = Field(['er', 'rt', 'ty'], 'datation', [0, 1, 2, 2])
@@ -242,7 +242,7 @@ class Test_Field(unittest.TestCase):
                         ['date1', '', ''] == idx.vName())
         il = Ndataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
         idx = Nfield.ntv([il, il])
-        self.assertEqual(idx.vlist(func=Ntv.to_obj, extern=False, encode_format='obj', dicobj={'tab':'NdatasetConnec'})[0][0][0].val,
+        self.assertEqual(idx.vlist(func=Ntv.to_obj, extern=False, format='obj', dicobj={'tab':'NdatasetConnec'})[0][0][0].val,
                          'er')
         il = Sdataset.ntv({"i0": ["er", "er"], "i1": [0, 0], "i2": [30, 20]})
         idx = Sfield([il, il])
@@ -373,7 +373,7 @@ class Test_Field(unittest.TestCase):
         format = ['json', 'cbor']
         test = list(product(encoded, format))
         for ts in test:
-            option = {'encoded': ts[0], 'encode_format': ts[1]}
+            option = {'encoded': ts[0], 'format': ts[1]}
             idx2 = Field.from_ntv(idx.to_ntv().to_obj(**option), decode_str=True)
             self.assertEqual(idx.values, idx2.values)
             idx2 = Field.from_ntv(idx.tostdcodec().to_ntv().to_obj(**option), decode_str=True)  # full format
@@ -422,7 +422,7 @@ class Test_Field(unittest.TestCase):
         for i, idx in enumerate(listobj):
             for ts in test:
                 option = {
-                    'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
+                    'encoded': ts[0], 'format': ts[1], 'modecodec': ts[2]}
                 #print(i, option)
                 idx2 = Field.from_ntv(idx.to_ntv().to_obj(**option), decode_str=True)
                 self.assertEqual(idx, idx2)

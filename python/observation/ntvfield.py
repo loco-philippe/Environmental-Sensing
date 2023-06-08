@@ -214,7 +214,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         if ntv_value is None:
             return cls()
-        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv, encode_format='json')
+        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv, format='json')
         if (parent and not extkeys) or coef:
             return None
         if extkeys and parent:

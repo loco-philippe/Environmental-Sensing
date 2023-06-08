@@ -54,7 +54,7 @@ class NtvdatasetInterface:
 
         - **encoded** : boolean (default False) - choice for return format
         (string/bytes if True, dict else)
-        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
+        - **format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
         if 'default' each index has keys, if 'optimize' keys are optimized, 
@@ -183,9 +183,9 @@ class NtvdatasetInterface:
         - **kwargs** : see 'to_obj' parameters
 
         *Returns* : Integer - file lenght (bytes)  '''
-        option = {'encode_format': 'cbor'} | kwargs | {'encoded': True}
+        option = {'format': 'cbor'} | kwargs | {'encoded': True}
         data = self.to_ntv(modecodec=option['modecodec']).to_obj(**option)
-        if option['encode_format'] == 'cbor':
+        if option['format'] == 'cbor':
             size = len(data)
             with open(filename, 'wb') as file:
                 file.write(data)
@@ -246,7 +246,7 @@ class NtvdatasetInterface:
 
         - **encoded** : boolean (default False) - choice for return format
         (string/bytes if True, dict else)
-        - **encode_format**  : string (default 'json')- choice for return format (json, cbor)
+        - **format**  : string (default 'json')- choice for return format (json, cbor)
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
         if 'default' each index has keys, if 'optimize' keys are optimized, 
@@ -259,9 +259,9 @@ class NtvdatasetInterface:
 
         *Returns* : string, bytes or dict'''
         option = {'modecodec': 'optimize', 'encoded': False,
-                  'encode_format': 'json', 'codif': ES.codeb, 'name': False,
+                  'format': 'json', 'codif': ES.codeb, 'name': False,
                   'geojson': False, 'fullvar': True, 'id': None} | kwargs
-        option2 = {'encoded': False, 'encode_format': 'json',
+        option2 = {'encoded': False, 'format': 'json',
                    'codif': option['codif'], 'geojson': option['geojson'],
                    'modecodec': option['modecodec'], 'fullvar': option['fullvar']}
         if option['modecodec'] == 'dict':
@@ -291,9 +291,9 @@ class NtvdatasetInterface:
             else:
                 lis = self._optimize_obj(indexname, **option2)
 
-        if option['encoded'] and option['encode_format'] == 'json':
+        if option['encoded'] and option['format'] == 'json':
             return json.dumps(lis, cls=NtvfieldEncoder)
-        if option['encoded'] and option['encode_format'] == 'cbor':
+        if option['encoded'] and option['format'] == 'cbor':
             return cbor2.dumps(lis, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
         return lis"""

@@ -394,7 +394,7 @@ class Test_Analysis(unittest.TestCase):
         #defaultcodec = [False, False]
         test = list(product(encoded, format, modecodec))
         for ts in test:
-            opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
+            opt = {'encoded': ts[0], 'format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Ntvdataset.from_obj(ilm.to_obj(**opt)), ilm)
             ilm.to_file('test.il', **opt)
             self.assertEqual(Ntvdataset.from_file('test.il'), ilm)
@@ -402,7 +402,7 @@ class Test_Analysis(unittest.TestCase):
                           ['s', 's', 's', 'n', 'd', 'd', 'd']])
         ilm.coupling()
         for ts in test:
-            opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2]}
+            opt = {'encoded': ts[0], 'format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Ntvdataset.from_obj(ilm.to_obj(**opt)), ilm)#'''
     
     def test_to_obj_variable(self):
@@ -673,7 +673,7 @@ class Test_Analysis(unittest.TestCase):
         format = ['json', 'cbor']
         test = list(product(encoded, format))
         for ts in test:
-            option = {'encoded': ts[0], 'encode_format': ts[1]}
+            option = {'encoded': ts[0], 'format': ts[1]}
             #il2 = Ntvdataset.from_obj(il.to_obj(**option))
             # self.assertEqual(il, il2)   #!!!
     
@@ -681,7 +681,7 @@ class Test_Analysis(unittest.TestCase):
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:
                 for codif in [ES.codeb, {}]:
-                    il2 = Ntvdataset2.from_obj(il.to_obj(encoded=encoded, encode_format=forma, codif=codif))
+                    il2 = Ntvdataset2.from_obj(il.to_obj(encoded=encoded, format=forma, codif=codif))
                     il2.setidx[0] = DatationValue.cast(il2.setidx[0])
                     il2.setidx[1] = LocationValue.cast(il2.setidx[1])
                     il2.setidx[2] = PropertyValue.cast(il2.setidx[2])
@@ -699,8 +699,8 @@ class Test_Analysis(unittest.TestCase):
         self.assertEqual(il, il.from_obj(il.json()).sort(order=[0,1], inplace=False))
         self.assertEqual(ilf, il.from_obj(ilf.json()))
         for forma in ['json', 'cbor']:
-            il.to_file('test.tst', encode_format=forma)
-            ilf.to_file('testf.tst', encode_format=forma)
+            il.to_file('test.tst', format=forma)
+            ilf.to_file('testf.tst', format=forma)
             self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
             self.assertEqual(ilf, il.from_file('testf.tst'))'''
 """

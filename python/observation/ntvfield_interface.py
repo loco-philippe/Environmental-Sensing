@@ -48,7 +48,7 @@ class NtvfieldEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
-        option = {'encoded': False, 'encode_format': 'json'}
+        option = {'encoded': False, 'format': 'json'}
         if o.__class__.__name__ in ('Ntvdataset', 'TimeSlot', 'Ndataset', 'Sdataset'):
             return o.json(**option)
         #if issubclass(o.__class__, ESValue):
@@ -77,13 +77,13 @@ class NtvfieldInterface:
 
 
     @classmethod 
-    def decode_ntv(cls, field, encode_format='json'):
+    def decode_ntv(cls, field, format='json'):
         '''Generate a tuple data from a Ntv value(bytes, string, json, Ntv object)
 
         *Parameters*
 
         - **field** : bytes, string json or Ntv object to convert
-        - **encode_format** : string (default 'json') - format to convert ntv_value
+        - **format** : string (default 'json') - format to convert ntv_value
 
         *Returns* 
 
@@ -161,7 +161,7 @@ class NtvfieldInterface:
         return 0
 
     def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
-        option = {'encoded': False, 'encode_format': 'json', 'untyped': False,
+        option = {'encoded': False, 'format': 'json', 'untyped': False,
                   'codif': {}, 'geojson': False} | kwargs
         dic = {}
         if self.typevalue:

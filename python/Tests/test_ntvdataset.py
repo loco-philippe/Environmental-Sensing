@@ -366,7 +366,7 @@ class Test_Ntvdataset(unittest.TestCase):
         test = list(product(encoded, format, modecodec))
         for ts in test:
             opt = {'encoded': ts[0],
-                   'encode_format': ts[1], 'modecodec': ts[2]}
+                   'format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Dataset.from_ntv(ilm.to_ntv(ts[2]).to_obj(**opt), decode_str=True), ilm)
             ilm.to_file('test.il', **opt)
             self.assertEqual(Dataset.from_file('test.il', decode_str=True), ilm)
@@ -375,7 +375,7 @@ class Test_Ntvdataset(unittest.TestCase):
         ilm.coupling()
         for ts in test:
             opt = {'encoded': ts[0],
-                   'encode_format': ts[1], 'modecodec': ts[2]}
+                   'format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Dataset.from_ntv(ilm.to_ntv(ts[2]).to_obj(**opt), decode_str=True), ilm)
         il = Dataset.ntv({'produit': ['po', 'po', 'or', 'or', 'pi', 'pi', 'ba', 'ba'], 
                         'aliment': ['fr', 'fr', 'fr', 'fr', 'le', 'le', 'fr', 'fr'],
@@ -672,7 +672,7 @@ class Test_Ntvdataset(unittest.TestCase):
         format = ['json', 'cbor']
         test = list(product(encoded, format))
         for ts in test:
-            option = {'encoded': ts[0], 'encode_format': ts[1]}
+            option = {'encoded': ts[0], 'format': ts[1]}
             #il2 = Dataset.ntv(il.to_ntv(**option))
             # self.assertEqual(il, il2)   #!!!"""
 
@@ -740,7 +740,7 @@ class Test_Ntvdataset(unittest.TestCase):
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:
                 for codif in [ES.codeb, {}]:
-                    il2 = Dataset2.ntv(il.to_ntv(encoded=encoded, encode_format=forma, codif=codif))
+                    il2 = Dataset2.ntv(il.to_ntv(encoded=encoded, format=forma, codif=codif))
                     il2.setidx[0] = DatationValue.cast(il2.setidx[0])
                     il2.setidx[1] = LocationValue.cast(il2.setidx[1])
                     il2.setidx[2] = PropertyValue.cast(il2.setidx[2])
@@ -758,8 +758,8 @@ class Test_Ntvdataset(unittest.TestCase):
         self.assertEqual(il, il.ntv(il.json()).sort(order=[0,1], inplace=False))
         self.assertEqual(ilf, il.ntv(ilf.json()))
         for forma in ['json', 'cbor']:
-            il.to_file('test.tst', encode_format=forma)
-            ilf.to_file('testf.tst', encode_format=forma)
+            il.to_file('test.tst', format=forma)
+            ilf.to_file('testf.tst', format=forma)
             self.assertEqual(il, il.from_file('test.tst').sort(order=[0,1], inplace=False))
             self.assertEqual(ilf, il.from_file('testf.tst'))'''
 """

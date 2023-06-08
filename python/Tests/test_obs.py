@@ -158,7 +158,7 @@ def _envoi_mongo_url(data):
 
 
 def _indic(res):
-    return [res.json(encoded=True, encode_format='json', json_res_index=True),
+    return [res.json(encoded=True, format='json', json_res_index=True),
             res.dim, res.nMax,
             res.nInd, res.axes, res.maxIndex, res.isextIndex, res.measureRate,
             res.error, res.vListIndex, res.nValue, res.vListName, res.vListValue, _sort(res)]
@@ -322,7 +322,7 @@ class TestExamples(unittest.TestCase):
         payload1 = ob_sensor.json(encoded=True)
         #print(len(payload1), payload1)
         # if the payload is binary payload
-        payload2 = ob_sensor.json(encoded=True, encode_format='cbor')
+        payload2 = ob_sensor.json(encoded=True, format='cbor')
         # print(len(payload2)) # 99 bytes
         # data decoding in the server
         ob_receive1 = Observation.obj(payload1)
@@ -346,7 +346,7 @@ class TestExamples(unittest.TestCase):
                                [1.1+i, 40.2+i], prop1])
         self.assertTrue(obs_sensor.dimension == 1 and len(obs_sensor) == 6)
         # if the payload is binary payload
-        payload = obs_sensor.json(encoded=True, encode_format='cbor')
+        payload = obs_sensor.json(encoded=True, format='cbor')
         # print(len(payload)) # 41.8 bytes/measure
         # data decoding in the server
         obs_receive = Observation.obj(payload)
@@ -366,7 +366,7 @@ class TestExamples(unittest.TestCase):
         ob_sensor.full(idxname=['datation', 'property'], fillvalue=None)
         self.assertTrue(ob_sensor.dimension == 2 and len(ob_sensor) == 12)
         # if the payload is binary payload
-        payload = ob_sensor.json(encoded=True, encode_format='cbor')
+        payload = ob_sensor.json(encoded=True, format='cbor')
         # print(len(payload)) # 280 bytes (35 bytes/measure)
         # data decoding in the server
         ob_receive = Observation.obj(payload)
@@ -386,7 +386,7 @@ class TestExamples(unittest.TestCase):
         payload1 = il_operat.json(encoded=True)
         #print(len(payload1), payload1)
         # if the payload is binary payload
-        payload2 = il_operat.json(encoded=True, encode_format='cbor')
+        payload2 = il_operat.json(encoded=True, format='cbor')
         # print(len(payload2)) # 10 bytes
         # data decoding in the server
         il_receive1 = Ntvdataset.obj(payload1)
@@ -422,7 +422,7 @@ class TestExamples(unittest.TestCase):
         self.assertTrue(il_sensor.dimension == 2 and len(il_sensor) == 12)
         # send data
         # if the payload is binary payload
-        payload = il_sensor.json(encoded=True, encode_format='cbor')
+        payload = il_sensor.json(encoded=True, format='cbor')
         # print(len(payload)) # 88 bytes (11 bytes/measure)
         # data decoding in the server
         il_receive = Ntvdataset.obj(payload, reindex=False)
@@ -534,7 +534,7 @@ class TestObservation(unittest.TestCase):
         geojson = [True, False]
         test = list(product(encoded, format, modecodec, geojson))
         for ts in test:
-            opt = {'encoded': ts[0], 'encode_format': ts[1], 'modecodec': ts[2],
+            opt = {'encoded': ts[0], 'format': ts[1], 'modecodec': ts[2],
                    'geojson': ts[3]}
             self.assertEqual(Observation.from_obj(ob.to_obj(**opt)), ob)
 
@@ -574,7 +574,7 @@ class TestObservation(unittest.TestCase):
             ob1.setLocation[ind[1]].value, LocationValue.Box(ob.bounds[1]).value)
         ob1 = Observation.std()
         ob1.appendObs(ob)
-        ob2 = Observation.obj(ob1.to_obj(encode_format='json', encoded=False))
+        ob2 = Observation.obj(ob1.to_obj(format='json', encoded=False))
 
     def test_obs_sort(self):
         dat = d1, c2, d3 = [{'d1': t1}, {'c2': t2}, {'d3': t3}]
@@ -671,7 +671,7 @@ class TestObservation(unittest.TestCase):
         test = list(product(encoded, format, modecodec))
         for ts in test:
             opt = {'encoded': ts[0],
-                   'encode_format': ts[1], 'modecodec': ts[2]}
+                   'format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Observation.from_obj(ob.to_obj(**opt)), ob)
             ob.to_file('test.obs', **opt)
             self.assertEqual(Observation.from_file('test.obs'), ob)
@@ -683,9 +683,9 @@ class TestExports(unittest.TestCase):
     """@unittest.skipIf(mongo, "test envoi mongo")
     def test__envoi_mongo(self):
         ob = Observation(dict((obs_1, dat3, loc3, prop2, _res(6))), idxref={'location':'datation'})
-        data = ob.to_json(encoded=False, encode_format='bson', json_info=True)
+        data = ob.to_json(encoded=False, format='bson', json_info=True)
         self.assertFalse(_envoi_mongo_python(data)==None)
-        data = ob.to_json(encoded=True, encode_format='json', json_info=True)
+        data = ob.to_json(encoded=True, format='json', json_info=True)
         self.assertEqual(_envoi_mongo_url(data), 200)"""
 
     def test_geo_interface(self):
