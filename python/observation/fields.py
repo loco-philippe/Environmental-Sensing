@@ -9,7 +9,29 @@ from json_ntv import Ntv
 
     
 class Nfield(Ntvfield):
+    ''' Nfield is a child class of NtvField where values are NTV objects
+
+    The methods defined in this class are conversion methods:
     
+    *converting external value to internal value:*
+    
+    - `Nfield.l_to_i`
+    - `Nfield.s_to_i`
+
+    *converting internal value to external value:*
+    
+    - `Nfield.l_to_e`
+    - `Nfield.s_to_e`
+
+    *converting internal value / NTV value:*
+    
+    - `Nfield.i_to_n`
+    - `Nfield.n_to_i`
+
+    *extract the name of the value:*
+
+    - `Nfield.i_to_name`
+    '''
     def __init__(self, codec=None, name=None, keys=None,
                  lendefault=0, reindex=False):
         super().__init__(codec=codec, name=name, keys=keys,
@@ -17,34 +39,63 @@ class Nfield(Ntvfield):
 
     @staticmethod
     def l_to_i(lis):
+        ''' converting a list of external values to a list of internal values'''
         return [Ntv.from_obj(val) for val in lis]
 
     @staticmethod
     def s_to_i(val):
+        '''converting an external value to an internal value'''
         return Ntv.from_obj(val)
 
     @staticmethod
     def n_to_i(ntv):
+        ''' converting a NTV value to an internal value'''
         return ntv
 
     @staticmethod
     def l_to_e(lis):
+        ''' converting a list of internal values to a list of external values'''
         return [ntv.to_obj() for ntv in lis]    
 
     @staticmethod
     def s_to_e(val):
+        '''converting an internal value to an external value'''
         return val.to_obj()
 
     @staticmethod
     def i_to_n(val):
+        ''' converting an internal value to a NTV value'''
         return val
 
     @staticmethod
     def i_to_name(val):
+        ''' return the name of the internal value'''
         return val.name   
     
 class Sfield(Ntvfield):
+    ''' Sfield is a child class of NtvField where inner and outer values are same
+
+    The methods defined in this class are conversion methods:
     
+    *converting external value to internal value:*
+    
+    - `Nfield.l_to_i`
+    - `Nfield.s_to_i`
+
+    *converting internal value to external value:*
+    
+    - `Nfield.l_to_e`
+    - `Nfield.s_to_e`
+
+    *converting internal value / NTV value:*
+    
+    - `Nfield.i_to_n`
+    - `Nfield.n_to_i`
+
+    *extract the name of the value:*
+
+    - `Nfield.i_to_name`
+    '''    
     def __init__(self, codec=None, name=None, keys=None,
                  lendefault=0, reindex=False):
         super().__init__(codec=codec, name=name, keys=keys,
@@ -52,28 +103,35 @@ class Sfield(Ntvfield):
         
     @staticmethod
     def l_to_i(lis):
+        ''' converting a list of external values to a list of internal values'''
         return lis
     
     @staticmethod
     def s_to_i(val):
+        '''converting an external value to an internal value'''
         return val
     
     @staticmethod
     def n_to_i(ntv_lis):
+        ''' converting a NTV value to an internal value'''
         return [ntv.val for ntv in ntv_lis]
     
     @staticmethod
     def l_to_e(lis):
+        ''' converting a list of internal values to a list of external values'''
         return lis
     
     @staticmethod
     def s_to_e(val):
+        '''converting an internal value to an external value'''
         return val
 
     @staticmethod
     def i_to_n(val):
+        ''' converting an internal value to a NTV value'''
         return Ntv.obj(val)
 
     @staticmethod
     def i_to_name(val):
+        ''' return the name of the internal value'''
         return ''   

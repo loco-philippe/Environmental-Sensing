@@ -31,6 +31,7 @@ python/Examples/Ntvfield) are :
 """
 # %% declarations
 from copy import copy, deepcopy
+from abc import ABC, abstractmethod
 
 from observation.esconstante import ES
 from observation.ntvfield_interface import NtvfieldInterface, NtvfieldError
@@ -40,7 +41,7 @@ from json_ntv import Ntv
 
 
 
-class Ntvfield(NtvfieldStructure, NtvfieldInterface):
+class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
     # %% intro
     '''
     An `Ntvfield` is a representation of an index list .
@@ -56,19 +57,29 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
     *constructor (@classmethod)*
 
     - `Ntvfield.bol`
-    - `Ntvfield.dic`
-    - `Ntvfield.ext`
-    - `Ntvfield.obj`
+    - `Ntvfield.ntv`
     - `Ntvfield.from_parent`
-    - `Ntvfield.from_obj`
+    - `Ntvfield.from_ntv`
     - `Ntvfield.merging`
+
+    *conversion abstract static methods (@abstractmethod, @staticmethod)*
+
+    - `Ntvfield.l_to_i`
+    - `Ntvfield.s_to_i`
+    - `Ntvfield.l_to_e`
+    - `Ntvfield.s_to_e`
+    - `Ntvfield.i_to_n`
+    - `Ntvfield.n_to_i`
+    - `Ntvfield.i_to_name`
 
     *dynamic value (getters @property)*
 
     - `Ntvfield.values`
     - `Ntvfield.val`
     - `Ntvfield.cod`
+    - `Ntvfield.codec`
     - `Ntvfield.infos`
+    - `Ntvfield.keys`
 
     *add - update methods (`observation.ntvfield_structure.NtvfieldStructure`)*
 
@@ -274,8 +285,49 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface):
         return cls.ntv({name: values})
 
 
-# %% special
+# %% abstract
+    @staticmethod    
+    @abstractmethod
+    def l_to_i(lis):
+        ''' converting a list of external values to a list of internal values'''
+        pass
 
+    @staticmethod
+    @abstractmethod
+    def s_to_i(val):
+        '''converting an external value to an internal value'''
+        pass 
+
+    @staticmethod
+    @abstractmethod
+    def n_to_i(ntv):
+        ''' converting a NTV value to an internal value'''
+        pass 
+
+    @staticmethod
+    @abstractmethod
+    def l_to_e(lis):
+        ''' converting a list of internal values to a list of external values'''
+        pass 
+
+    @staticmethod
+    @abstractmethod
+    def s_to_e(val):
+        '''converting an internal value to an external value'''
+        pass 
+
+    @staticmethod
+    @abstractmethod
+    def i_to_n(val):
+        ''' converting an internal value to a NTV value'''
+        pass 
+
+    @staticmethod
+    @abstractmethod
+    def i_to_name(val):
+        ''' return the name of the internal value'''
+        pass 
+# %% special
 
     def __repr__(self):
         '''return classname and number of value'''

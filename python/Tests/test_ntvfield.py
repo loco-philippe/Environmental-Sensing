@@ -18,7 +18,7 @@ from observation.fields import Nfield, Sfield
 from observation.datasets import Ndataset, Sdataset
 
 type_test = 'ntv'
-#type_test = 'simple'
+type_test = 'simple'
 
 if type_test == 'ntv':
     Field = Nfield

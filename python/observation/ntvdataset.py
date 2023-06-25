@@ -27,6 +27,7 @@ Documentation is available in other pages :
 # %% declarations
 from collections import Counter
 from copy import copy
+from abc import ABC
 import math
 import json
 import csv
@@ -38,7 +39,7 @@ from observation.ntvdataset_structure import NtvdatasetStructure
 from observation.ntvdataset_analysis import Analysis
 from json_ntv.ntv import Ntv
 
-class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
+class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
     # %% intro
     '''
     An `Ntvdataset` is a representation of an indexed list.
@@ -52,15 +53,16 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
 
     *constructor (@classmethod))*
 
-    - `Ntvdataset.dic`
-    - `Ntvdataset.ext`
-    - `Ntvdataset.obj`
+    - `Ntvdataset.ntv`
     - `Ntvdataset.from_csv`
     - `Ntvdataset.from_ntv`
-    - `Ntvdataset.from_obj`
     - `Ntvdataset.from_file`
     - `Ntvdataset.merge`
 
+    *abstract static methods (@abstractmethod, @staticmethod)*
+
+    - `Ntvdataset.field_class`
+    
     *dynamic value - module analysis (getters @property)*
 
     - `Ntvdataset.extidx`
@@ -163,6 +165,8 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
     - `Ntvdataset.voxel`
     '''
 
+    field_class = None
+    
     def __init__(self, listidx=None, reindex=True):
         '''
         Ntvdataset constructor.
@@ -173,7 +177,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
 
         self.name     = self.__class__.__name__
-        self.field    = self.field_class()
+        self.field    = self.field_class
         self.analysis = Analysis(self)
         self.lindex   = []
         if listidx.__class__.__name__ in ['Ntvdataset', 'Observation', 'Ndataset', 'Sdataset']:
@@ -265,7 +269,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
                     for i in range(len(row)):
                         idxval[i].append(json.loads(row[i]))
                 irow += 1
-        lindex = [cls.field_class().from_ntv({name:idx}, decode_str=decode_str) for idx, name in zip(idxval, idxname)]
+        lindex = [cls.field_class.from_ntv({name:idx}, decode_str=decode_str) for idx, name in zip(idxval, idxname)]
         return cls(listidx=lindex, reindex=True)
 
     @classmethod
@@ -329,14 +333,14 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface):
         #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
         # decode: name, type, codec, parent, keys, coef, leng
         #lidx = [list(Ntvfield.decode_ntv(ntvf)) for ntvf in ntv]
-        lidx = [list(cls.field_class().decode_ntv(ntvf)) for ntvf in ntv]
+        lidx = [list(cls.field_class.decode_ntv(ntvf)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
             Ntvdataset._init_ntv_keys(ind, lidx, leng)
         #lindex = [Ntvfield(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
-        lindex = [cls.field_class()(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+        lindex = [cls.field_class(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
 
