@@ -6,7 +6,7 @@ Created on Sun May 28 19:34:03 2023
 """
 from observation.ntvfield import Ntvfield
 from json_ntv import Ntv, NtvSingle
-
+import json
     
 class Nfield(Ntvfield):
     ''' Nfield is a child class of NtvField where values are NTV objects
@@ -67,12 +67,12 @@ class Nfield(Ntvfield):
         return ntv
 
     @staticmethod
-    def l_to_e(lis):
+    def l_to_e(lis, fast=False):
         ''' converting a list of internal values to a list of external values'''
         return [ntv.to_obj() for ntv in lis]    
 
     @staticmethod
-    def s_to_e(val):
+    def s_to_e(val, fast=False):
         '''converting an internal value to an external value'''
         return val.to_obj()
 
@@ -118,12 +118,20 @@ class Sfield(Ntvfield):
     @staticmethod
     def l_to_i(lis, fast=False):
         ''' converting a list of external values to a list of internal values'''
-        return lis
+        if fast:
+            return lis
+        return [Sfield.s_to_i(val) for val in lis]
     
     @staticmethod
     def s_to_i(val, fast=False):
         '''converting an external value to an internal value'''
-        return val
+        if fast:
+            return val
+        if isinstance(val, list):
+            return Sfield._tupled(val)
+        if isinstance(val, dict):
+            return json.dumps(val)
+        return val    
     
     @staticmethod
     def n_to_i(ntv_lis):
@@ -131,15 +139,23 @@ class Sfield(Ntvfield):
         return [ntv.val for ntv in ntv_lis]
     
     @staticmethod
-    def l_to_e(lis):
+    def l_to_e(lis, fast=False):
         ''' converting a list of internal values to a list of external values'''
-        return lis
+        if fast:
+            return lis
+        return [Sfield.s_to_e(val) for val in lis]
     
     @staticmethod
-    def s_to_e(val):
+    def s_to_e(val, fast=False):
         '''converting an internal value to an external value'''
+        if fast:
+            return val
+        if isinstance(val, tuple):
+            return Sfield._listed(val)
+        if isinstance(val, str) and len(val) > 0 and val[0] == '{':
+            return json.loads(val)
         return val
-
+    
     @staticmethod
     def i_to_n(val):
         ''' converting an internal value to a NTV value'''
@@ -148,4 +164,14 @@ class Sfield(Ntvfield):
     @staticmethod
     def i_to_name(val):
         ''' return the name of the internal value'''
-        return ''   
+        return ''
+    
+    @staticmethod
+    def _tupled(lis):
+        '''transform a list of list in a tuple of tuple'''
+        return tuple([val if not isinstance(val, list) else Sfield._tupled(val) for val in lis])
+
+    @staticmethod
+    def _listed(lis):
+        '''transform a tuple of tuple in a list of list'''
+        return [val if not isinstance(val, tuple) else Sfield._listed(val) for val in lis]
