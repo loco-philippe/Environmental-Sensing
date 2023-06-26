@@ -5,7 +5,7 @@ Created on Sun May 28 19:34:03 2023
 @author: a lab in the Air
 """
 from observation.ntvfield import Ntvfield
-from json_ntv import Ntv
+from json_ntv import Ntv, NtvSingle
 
     
 class Nfield(Ntvfield):
@@ -33,18 +33,32 @@ class Nfield(Ntvfield):
     - `Nfield.i_to_name`
     '''
     def __init__(self, codec=None, name=None, keys=None,
-                 lendefault=0, reindex=False):
+                 lendefault=0, reindex=False, fast=False):
         super().__init__(codec=codec, name=name, keys=keys,
-                     lendefault=lendefault, reindex=reindex)
+                     lendefault=lendefault, reindex=reindex, fast=fast)
 
     @staticmethod
-    def l_to_i(lis):
-        ''' converting a list of external values to a list of internal values'''
+    def l_to_i(lis, fast=False):
+        ''' converting a list of external values to a list of internal values
+        
+        *Parameters*
+
+        - **fast**: boolean (default False) - list is created with a list of json values 
+        without control'''
+        if fast:
+            return [NtvSingle(val, fast=True) for val in lis]
         return [Ntv.from_obj(val) for val in lis]
 
     @staticmethod
-    def s_to_i(val):
-        '''converting an external value to an internal value'''
+    def s_to_i(val, fast=False):
+        '''converting an external value to an internal value
+
+        *Parameters*
+
+        - **fast**: boolean (default False) - list is created with a list of json values 
+        without control'''
+        if fast:
+            return NtvSingle(val, fast=True)        
         return Ntv.from_obj(val)
 
     @staticmethod
@@ -97,17 +111,17 @@ class Sfield(Ntvfield):
     - `Nfield.i_to_name`
     '''    
     def __init__(self, codec=None, name=None, keys=None,
-                 lendefault=0, reindex=False):
+                 lendefault=0, reindex=False, fast=False):
         super().__init__(codec=codec, name=name, keys=keys,
-                     lendefault=lendefault, reindex=reindex)
+                     lendefault=lendefault, reindex=reindex, fast=fast)
         
     @staticmethod
-    def l_to_i(lis):
+    def l_to_i(lis, fast=False):
         ''' converting a list of external values to a list of internal values'''
         return lis
     
     @staticmethod
-    def s_to_i(val):
+    def s_to_i(val, fast=False):
         '''converting an external value to an internal value'''
         return val
     

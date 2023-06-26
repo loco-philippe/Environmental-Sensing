@@ -133,7 +133,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
     '''
 
     def __init__(self, codec=None, name=None, keys=None,
-                 lendefault=0, reindex=False):
+                 lendefault=0, reindex=False, fast=False):
         '''
         Ntvfield constructor.
 
@@ -143,7 +143,9 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         - **keys** :  list (default None)  - key value of index (see data model)
         - **name** : string (default None) - name of index (see data model)
         - **lendefault** : integer (default 0) - default len if no keys is defined
-        - **reindex** : boolean (default True) - if True, default codec is apply'''
+        - **reindex** : boolean (default True) - if True, default codec is apply
+        - **fast**: boolean (default False) - codec is created with a list of json values 
+        without control'''
         if isinstance(codec, Ntvfield):
             self._keys = copy(codec._keys)
             self._codec = deepcopy(codec._codec)
@@ -171,8 +173,8 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         if codec == []:
             keysset = util.tocodec(keys)
             #codec = [Ntv.obj(key) for key in keysset]
-            codec = self.l_to_i(keysset)
-        codec = self.l_to_i(codec)
+            codec = self.l_to_i(keysset, fast=True)
+        codec = self.l_to_i(codec, fast=fast)
         self._keys = keys
         self._codec = codec
         self.name = name
