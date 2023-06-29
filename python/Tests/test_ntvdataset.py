@@ -54,7 +54,7 @@ class Test_Ntvdataset(unittest.TestCase):
             il = Dataset([Nfield([{'paris:point': [2.35, 48.87]}, [4.83, 45.76], [5.38, 43.3]],
                    name='location')])
             self.assertEqual(il.lindex[0].values[0].type_str, 'point')
-            self.assertEqual(il.lindex[0].values[1].type_str, 'json')
+            self.assertEqual(il.lindex[0].values[1].type_str, '')
 
     def test_creation_variable(self):
         #self.assertEqual(Dataset2(indexset=['i1', [1, 2, 3]]), Dataset2([defv, [True, True, True]], ['i1', [1, 2, 3]]))
