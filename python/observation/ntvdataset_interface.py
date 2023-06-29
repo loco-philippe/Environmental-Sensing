@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tabulate import tabulate
 
-from json_ntv.ntv import NtvList
+from json_ntv.ntv import NtvList, NtvJsonEncoder
 from observation.ntvfield import Ntvfield
 from observation.util import util
 
@@ -554,11 +554,11 @@ class NtvdatasetInterface:
                             val = self.nindex(name).values[i]
                             if char == 'j':
                                 #reslist.append(util.cast(val, dtype='json'))
-                                reslist.append(json.dumps(self.field.s_to_e(val)))
+                                reslist.append(json.dumps(self.field.s_to_e(val), cls=NtvJsonEncoder))
                             elif char == 'n':
                                 reslist.append(self.field.i_to_name(val))
                             elif char == 's':
-                                reslist.append(json.dumps(self.field.s_to_e(val)))
+                                reslist.append(json.dumps(self.field.s_to_e(val), cls=NtvJsonEncoder))
                             elif char == 'f':
                                 reslist.append(util.funclist(
                                     val, option['ifunc'], **kwargs))                    

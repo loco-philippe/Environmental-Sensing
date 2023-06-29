@@ -5,7 +5,7 @@ Created on Sun May 28 19:34:03 2023
 @author: a lab in the Air
 """
 from observation.ntvfield import Ntvfield
-from json_ntv import Ntv, NtvSingle
+from json_ntv import Ntv, NtvSingle, NtvJsonEncoder
 import json
     
 class Nfield(Ntvfield):
@@ -130,7 +130,7 @@ class Sfield(Ntvfield):
         if isinstance(val, list):
             return Sfield._tupled(val)
         if isinstance(val, dict):
-            return json.dumps(val)
+            return json.dumps(val, cls=NtvJsonEncoder)
         return val    
     
     @staticmethod
