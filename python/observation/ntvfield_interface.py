@@ -110,16 +110,12 @@ class NtvfieldInterface:
         nam = ntv.name
         val = ntv.val
         if isinstance(ntv, NtvSingle):
-            #return (nam, typ, [Ntv.from_obj(val)], None, None, None, 1)
             return (nam, typ, [cls.s_to_i(val)], None, None, None, 1)
         if len(ntv) == 0:
-            #return (nam, typ, val, None, None, None, 0)
             return (nam, typ, cls.n_to_i(val), None, None, None, 0)
         if len(ntv) > 3 or isinstance(ntv[0], NtvSingle):
-            #return (nam, typ, val, None, None, None, len(ntv))
             return (nam, typ, cls.n_to_i(val), None, None, None, len(ntv))
         if len(ntv) == 1:
-            #return (nam, typ, [Ntv.from_obj(val)[0]], None, None, None, 1)
             return (nam, typ, [cls.s_to_i(val)[0]], None, None, None, 1)
 
         ntvc = ntv[0]
@@ -129,18 +125,14 @@ class NtvfieldInterface:
         if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and \
             isinstance(ntv[1].val, (int, str)) and not isinstance(ntv[2], NtvSingle) and \
             isinstance(ntv[2][0].val, int):
-            #return (nam, typc, valc, ntv[1].val, ntv[2].to_obj(), None, leng)
             return (nam, typc, cls.n_to_i(valc), ntv[1].val, ntv[2].to_obj(), None, leng)
         if len(ntv) == 2 and len(ntv[1]) == 1 and \
             isinstance(ntv[1].val, (int, str)):
-            #return (nam, typc, valc, ntv[1].val, None, None, leng) 
             return (nam, typc, cls.n_to_i(valc), ntv[1].val, None, None, leng) 
         if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, list):
             leng = leng * ntv[1][0].val
-            #return (nam, typc, valc, None, None, ntv[1][0].val, leng) 
             return (nam, typc, cls.n_to_i(valc), None, None, ntv[1][0].val, leng) 
         if len(ntv) == 2 and len(ntv[1]) > 1  and isinstance(ntv[1][0].val, int):
-            #return (nam, typc, valc, None, ntv[1].to_obj(), None, leng)
             return (nam, typc, cls.n_to_i(valc), None, ntv[1].to_obj(), None, leng)
         return (nam, typ, val, None, None, None, len(ntv))
 
