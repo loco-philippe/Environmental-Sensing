@@ -282,8 +282,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         *Returns* : new Ntvfield'''
         if not name:
             name = str(list({idx.name for idx in listidx}))
-        values = util.tuple(util.transpose([idx.values for idx in listidx]))
-        #return cls.ext(values, name)
+        values = util.transpose([idx.values for idx in listidx])
         return cls.ntv({name: values})
 
 
