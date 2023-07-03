@@ -414,6 +414,37 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         ilc.lindex = merged.lindex
         return ilc
 
+    @classmethod
+    def ext(cls, idxval=None, idxname=None, reindex=True, fast=False):
+        '''
+        Dataset constructor (external index).
+
+        *Parameters*
+
+        - **idxval** : list of Field or list of values (see data model)
+        - **idxname** : list of string (default None) - list of Field name (see data model)'''
+        if idxval is None:
+            idxval = []
+        if not isinstance(idxval, list):
+            return None
+        val = []
+        for idx in idxval:
+            if not isinstance(idx, list):
+                val.append([idx])
+            else:
+                val.append(idx)
+        lenval = [len(idx) for idx in val]
+        if lenval and max(lenval) != min(lenval):
+            raise NtvdatasetError('the length of Iindex are different')
+        length = lenval[0] if lenval else 0
+        idxname = [None] * len(val) if idxname is None else idxname
+        for ind, name in enumerate(idxname):
+            if name is None or name == '$default':
+                idxname[ind] = 'i'+str(ind)
+        lindex = [cls.field_class(codec, name, lendefault=length, reindex=reindex,
+                                  fast=fast) for codec, name in zip(val, idxname)]
+        return cls(lindex, reindex=False)
+    
 # %% internal
 
     @staticmethod
@@ -451,7 +482,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
             row = [row]
         var = -1
         for ind, val in enumerate(row):
-            if val.__class__.__name__ in ['Ntvdataset', 'Observation']:
+            if val.__class__.__name__ in ['Sdataset', 'Ndataset', 'Observation']:
                 var = ind
                 break
         if var < 0:
