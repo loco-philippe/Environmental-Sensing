@@ -91,14 +91,14 @@ class Test_Ntvdataset(unittest.TestCase):
         self.assertTrue(il1 == il2 == il3)
 
     def test_creation_dic_ext(self):
-        """iidx = Dataset.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
+        iidx = Dataset.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
                           'locationvalue': [100, 100, 200, 200, 300, 300],
                           'propertyvalue': [True, False, True, False, True, False]})
         iidx1 = Dataset.ext([[10, 10, 20, 20, 30, 30], [100, 100, 200, 200, 300, 300],
                            [True, False, True, False, True, False]],
                           ['datationvalue', 'locationvalue', 'propertyvalue'])
 
-        self.assertEqual(iidx, iidx1)"""
+        self.assertEqual(iidx, iidx1)
         self.assertTrue(Dataset.ntv({}) == Dataset.ntv([]) == Dataset()) # ==
         #                Dataset.ext([]) == Dataset.ext())
         """try:
