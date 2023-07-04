@@ -491,20 +491,20 @@ class Test_Ntvdataset(unittest.TestCase):
                              ['paris', 'ici', 'paris', 'ici'])
 
     def test_mergerecord(self):
-        a = Dataset.ntv([[1, 2, 3], [4, 5, 6]])
-        b = Dataset.ntv({'merge_i0': ['x'], 'merge': [a]})
-        self.assertEqual(Dataset._mergerecord(b)[0].lenindex, 3)
+        a = Sdataset.ntv([[1, 2, 3], [4, 5, 6]])
+        b = Sdataset([a.field_class(['x'], 'merge_i0'), a.field_class([a], 'merge')])
+        self.assertEqual(Sdataset._mergerecord(b)[0].lenindex, 3)
 
-    """def test_merge(self):
-        il1 = Dataset.dic({'notes': [10, 11, 12],
+    def test_merge(self):
+        il1 = Sdataset.ntv({'notes': [10, 11, 12],
                          'course': ['math', 'english', 'software']})
-        il2 = Dataset.dic({'notes': [15, 14, 11],
+        il2 = Sdataset.ntv({'notes': [15, 14, 11],
                          'course': ['physic', 'english', 'software'],
                          'group': ['gr1', 'gr1', 'gr2']})
-        il3 = Dataset.dic({'student': [il1, il2],
-                         'name': ['philippe white', 'anne white'],
-                         'firstname': ['philippe', 'anne'],
-                         'student_group': ['gr1', 'gr2']})
+        il3 = Sdataset([Sfield([il1, il2], 'student'),
+                        Sfield(['philippe white', 'anne white'], 'name'),
+                        Sfield(['philippe', 'anne'], 'firstname'),
+                        Sfield(['gr1', 'gr2'], 'student_group')])
         self.assertEqual(il3.merge()[4], [
                          14, 'english', 'anne white', 'anne', 'gr1'])
         il3s = Dataset.dic({'student': [il1, il2],
@@ -514,7 +514,7 @@ class Test_Ntvdataset(unittest.TestCase):
         self.assertEqual(il3s.merge(simplename=True)[4], [
                          14, 'english', 'anne white', 'anne', 'gr1'])
         il3 = Dataset.ntv([[il1, il2]], typevalue=None)
-        self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])"""
+        self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])
 
     def test_csv(self):
         il = Dataset.ntv([['er', 'rt', 'er', 'ry'], [

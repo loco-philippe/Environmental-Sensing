@@ -502,8 +502,10 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
                 newname.remove(name)
             else:
                 updidx = name in ilis.lname and not updateidx
-                ilis.addindex([name, [rec.nindex(name)[0]] * len(ilis)],
+                ilis.addindex({name: [rec.nindex(name)[0]] * len(ilis)},
                               merge=mergeidx, update=updidx)
+                #ilis.addindex([name, [rec.nindex(name)[0]] * len(ilis)],
+                #              merge=mergeidx, update=updidx)
         return (ilis, oldname, newname)
 
 # %% special
