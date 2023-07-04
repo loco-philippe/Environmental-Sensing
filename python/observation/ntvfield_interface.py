@@ -209,7 +209,7 @@ class NtvfieldInterface:
                             NtvList(self.keys, ntv_type='json')], idxname, ntv_type='json')
         if modecodec == 'optimize':
             ntv_value = [NtvList(self.codec, ntv_type=def_type)]'''
-        if len(codec) == 1:
+        if leng == 1 or len(codec) == 1 and modecodec != 'full':
             return NtvSingle(codec[0].ntv_value, idxname, codec[0].ntv_type)
         if codecval:
             return NtvList(codec, idxname, ntv_type=def_type)
