@@ -490,12 +490,12 @@ class Test_Ntvdataset(unittest.TestCase):
             self.assertEqual(il.vlist(func=Ntv.to_name, extern=False, index=2, default='ici'),
                              ['paris', 'ici', 'paris', 'ici'])
 
-    """def test_mergerecord(self):
+    def test_mergerecord(self):
         a = Dataset.ntv([[1, 2, 3], [4, 5, 6]])
         b = Dataset.ntv({'merge_i0': ['x'], 'merge': [a]})
         self.assertEqual(Dataset._mergerecord(b)[0].lenindex, 3)
 
-    def test_merge(self):
+    """def test_merge(self):
         il1 = Dataset.dic({'notes': [10, 11, 12],
                          'course': ['math', 'english', 'software']})
         il2 = Dataset.dic({'notes': [15, 14, 11],

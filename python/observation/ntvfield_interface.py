@@ -15,7 +15,6 @@ import pandas as pd
 import cbor2
 
 from observation.esconstante import ES
-from observation.esvalue_base import ESValueEncoder
 from observation.util import util, identity
 from json_ntv.ntv import Ntv, NtvSingle, NtvList
 
