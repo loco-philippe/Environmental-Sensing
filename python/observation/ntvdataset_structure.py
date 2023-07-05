@@ -494,9 +494,9 @@ class NtvdatasetStructure:
         newself = copy(self)
         copother = copy(other)
         for nam in oname - sname:
-            newself.addindex([nam, [fillvalue] * len(newself)])
+            newself.addindex({nam: [fillvalue] * len(newself)})
         for nam in sname - oname:
-            copother.addindex([nam, [fillvalue] * len(copother)])
+            copother.addindex({nam: [fillvalue] * len(copother)})
         return newself.add(copother, name=True, solve=False)
 
     def merging(self, listname=None):

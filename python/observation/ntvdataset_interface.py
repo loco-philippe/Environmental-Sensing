@@ -180,10 +180,10 @@ class NtvdatasetInterface:
          *Parameters (kwargs)*
 
         - **filename** : string - file name (with path)
-        - **kwargs** : see 'to_obj' parameters
+        - **kwargs** : see 'to_ntv' parameters
 
         *Returns* : Integer - file lenght (bytes)  '''
-        option = {'format': 'cbor'} | kwargs | {'encoded': True}
+        option = {'format': 'cbor', 'modecodec': 'optimize'} | kwargs | {'encoded': True}
         data = self.to_ntv(modecodec=option['modecodec']).to_obj(**option)
         if option['format'] == 'cbor':
             size = len(data)

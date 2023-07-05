@@ -24,7 +24,7 @@ field = {Ntvdataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ntvdataset
 Dataset = Ndataset
-#Dataset = Sdataset
+Dataset = Sdataset
 
 
 class Test_Ntvdataset(unittest.TestCase):
@@ -495,6 +495,15 @@ class Test_Ntvdataset(unittest.TestCase):
         b = Sdataset([a.field_class(['x'], 'merge_i0'), a.field_class([a], 'merge')])
         self.assertEqual(Sdataset._mergerecord(b)[0].lenindex, 3)
 
+    def test_mix(self):
+        il = Dataset.ntv({'month':['jan',   'jan',  'apr',       'apr',  'sep'     ],
+                           'city': ['paris', 'lyon', 'marseille', 'lyon', 'toulouse'],
+                           'temp': [ 12,      14,     21,          16,      21      ]})
+        il2 = Dataset.ntv({'country':     ['france', 'france', 'france'],
+                            'city':        ['paris', 'lyon', 'strasbourg']})
+        self.assertEqual(il.mix(il2).nindex('country').val[:5], [None]*5)
+        self.assertEqual(il.mix(il2).nindex('temp').val[5:], [None]*3)
+        
     def test_merge(self):
         il1 = Sdataset.ntv({'notes': [10, 11, 12],
                          'course': ['math', 'english', 'software']})
