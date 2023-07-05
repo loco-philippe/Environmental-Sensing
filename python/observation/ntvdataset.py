@@ -385,7 +385,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         row = ilc[0]
         if not isinstance(row, list):
             row = [row]
-        merged, oldname, newname = Ntvdataset._mergerecord(Ntvdataset.ext(row, ilc.lname),
+        merged, oldname, newname = Ntvdataset._mergerecord(self.ext(row, ilc.lname),
                                                       simplename=simplename)
         if oldname and not oldname in merged.lname:
             delname.append(oldname)
@@ -396,7 +396,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
             row = ilc[ind]
             if not isinstance(row, list):
                 row = [row]
-            rec, oldname, newname = Ntvdataset._mergerecord(Ntvdataset.ext(row, ilc.lname),
+            rec, oldname, newname = Ntvdataset._mergerecord(self.ext(row, ilc.lname),
                                                        simplename=simplename)
             if oldname and newname != [oldname]:
                 delname.append(oldname)
@@ -477,6 +477,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
 
     @staticmethod
     def _mergerecord(rec, mergeidx=True, updateidx=True, simplename=False):
+        #row = rec[0] if isinstance(rec, list) else rec
         row = rec[0]
         if not isinstance(row, list):
             row = [row]

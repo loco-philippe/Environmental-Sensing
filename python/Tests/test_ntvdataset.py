@@ -500,20 +500,30 @@ class Test_Ntvdataset(unittest.TestCase):
                          'course': ['math', 'english', 'software']})
         il2 = Sdataset.ntv({'notes': [15, 14, 11],
                          'course': ['physic', 'english', 'software'],
-                         'group': ['gr1', 'gr1', 'gr2']})
+                         'group': ['gr1', 'gr1', 'gr2']})   
+        il3 = Sdataset.ext([[il1, il2],
+                            ['philippe white', 'anne white'], 
+                            ['philippe', 'anne'],
+                            ['gr1', 'gr2']],
+                           ['student', 'name', 'firstname', 'student_group'])
+            
+        self.assertEqual(il3.merge()[4], [
+                         14, 'english', 'anne white', 'anne', 'gr1'])
+
         il3 = Sdataset([Sfield([il1, il2], 'student'),
                         Sfield(['philippe white', 'anne white'], 'name'),
                         Sfield(['philippe', 'anne'], 'firstname'),
                         Sfield(['gr1', 'gr2'], 'student_group')])
         self.assertEqual(il3.merge()[4], [
                          14, 'english', 'anne white', 'anne', 'gr1'])
-        il3s = Dataset.dic({'student': [il1, il2],
-                          'name': ['philippe white', 'anne white'],
-                          'firstname': ['philippe', 'anne'],
-                          'group': ['gr1', 'gr2']})
+        il3s = Sdataset([Sfield([il1, il2], 'student'),
+                        Sfield(['philippe white', 'anne white'], 'name'),
+                        Sfield(['philippe', 'anne'], 'firstname'),
+                        Sfield(['gr1', 'gr2'], 'group')])
         self.assertEqual(il3s.merge(simplename=True)[4], [
                          14, 'english', 'anne white', 'anne', 'gr1'])
-        il3 = Dataset.ntv([[il1, il2]], typevalue=None)
+        il3 = Sdataset.ext([[il1, il2]])
+        #Dataset.ntv([[il1, il2]], typevalue=None)
         self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])
 
     def test_csv(self):
