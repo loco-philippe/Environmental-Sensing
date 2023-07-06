@@ -1,8 +1,7 @@
 # Python examples
 
 The examples are described for each object class :
-- [ESValue](./ESValue/README.md) : Specific classes of values 
-- [Iindex](./Iindex/README.md) : Class for structured list of values
-- [Ilist](./Ilist/README.md) : Class for indexed list of Iindex
+- [Field](./Field/README.md) : Class for structured list of values
+- [Dataset](./Dataset/README.md) : Class for tabular or multi-dimensional data
 
 The Jupyter Notebooks with map or table are available on [nbviewer](http://nbviewer.org/github/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Observation/)
