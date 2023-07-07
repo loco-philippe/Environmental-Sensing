@@ -240,7 +240,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
 
     @classmethod
     def from_csv(cls, filename='ntvdataset.csv', header=True, nrow=None, decode_str=True,
-                 optcsv={'quoting': csv.QUOTE_NONNUMERIC}):
+                 decode_json=True, optcsv={'quoting': csv.QUOTE_NONNUMERIC}):
         '''
         Ntvdataset constructor (from a csv file). Each column represents index values.
 
@@ -267,7 +267,13 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
                     idxname = row
                 else:
                     for i in range(len(row)):
-                        idxval[i].append(json.loads(row[i]))
+                        if decode_json:
+                            try:
+                                idxval[i].append(json.loads(row[i]))
+                            except:
+                                idxval[i].append(row[i])
+                        else:
+                            idxval[i].append(row[i])
                 irow += 1
         lindex = [cls.field_class.from_ntv({name:idx}, decode_str=decode_str) for idx, name in zip(idxval, idxname)]
         return cls(listidx=lindex, reindex=True)

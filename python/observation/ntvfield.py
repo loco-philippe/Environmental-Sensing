@@ -37,7 +37,7 @@ from observation.esconstante import ES
 from observation.ntvfield_interface import NtvfieldInterface, NtvfieldError
 from observation.ntvfield_structure import NtvfieldStructure
 from observation.util import util
-from json_ntv import Ntv
+from json_ntv import Ntv, NtvList
 
 
 
@@ -225,6 +225,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         if isinstance(ntv_value, Ntvfield):
             return copy(ntv_value)
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
+        #ntv = NtvList(ntv_value)
         if ntv_value is None:
             return cls()
         name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv, format='json')
