@@ -62,6 +62,9 @@ class Analysis:
         '''
         if iobj.__class__.__name__ in ('Ntvdataset', 'Observation', 'Ndataset', 'Sdataset'):
             self.iobj = iobj
+        elif iobj.__class__.__name__ == 'DataFrame':
+            from observation import Sdataset
+            self.iobj = Sdataset(iobj)
         else:
             from ntvdataset import Ntvdataset
             self.iobj = Ntvdataset.obj(iobj)
