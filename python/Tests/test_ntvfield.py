@@ -382,7 +382,7 @@ class Test_Field(unittest.TestCase):
                               extkeys=parent.keys, decode_str=True)  # default format
             self.assertEqual(idx.values, idx2.values)
 
-    def test_to_from_obj(self):
+    def test_to_from_ntv(self):
         if Field != Sfield:
             listobj = [Field(),
                        Field(1),

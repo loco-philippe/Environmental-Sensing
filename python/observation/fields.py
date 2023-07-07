@@ -135,9 +135,12 @@ class Sfield(Ntvfield):
     
     @staticmethod
     def n_to_i(ntv_lis):
-        ''' converting a NTV value to an internal value'''
-        #return [ntv.val for ntv in ntv_lis]
-        return [Sfield.s_to_i(ntv.val) for ntv in ntv_lis]
+        ''' converting a NtvList value to an internal value'''
+        if isinstance(ntv_lis, list) and len(ntv_lis) == 0:
+            return []
+        if isinstance(ntv_lis, list) and ntv_lis[0].__class__.__name__ in ('NtvSingle', 'NtvList'):
+            return [Sfield.n_to_i(ntv.val) for ntv in ntv_lis]
+        return  Sfield.s_to_i(ntv_lis)
     
     @staticmethod
     def l_to_e(lis, fast=False):

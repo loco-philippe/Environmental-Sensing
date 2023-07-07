@@ -155,6 +155,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
             codec = []
         if not isinstance(codec, list):
             codec = [codec]
+        codec = list(codec)
         leng = lendefault
         if codec and len(codec) > 0 and not leng:
             leng = len(codec)
@@ -222,7 +223,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
     @classmethod 
     def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
         '''Generate an Ntvfield Object from a Ntv field object'''
-        if isinstance(ntv_value, Ntvfield):
+        if isinstance(ntv_value, cls):
             return copy(ntv_value)
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         #ntv = NtvList(ntv_value)
