@@ -522,11 +522,11 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         if self.lvar:
             stri += 'variables :\n'
             for idx in self.lvar:
-                stri += str(idx)
+                stri += '    ' + str(idx) + '\n'
         if self.lidx:
             stri += 'index :\n'
             for idx in self.lidx:
-                stri += str(idx)
+                stri += '    ' + str(idx) + '\n'
         return stri
 
     def __repr__(self):

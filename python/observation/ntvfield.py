@@ -216,9 +216,9 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         return cls(codec=codec, name=name, keys=parent._keys, reindex=reindex)
 
     @classmethod 
-    def ntv(cls, ntv_value=None, extkeys=None, reindex=True):
+    def ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
         '''Generate an Ntvfield Object from a Ntv field object'''
-        return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex)
+        return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex, decode_str=decode_str)
     
     @classmethod 
     def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
@@ -335,11 +335,6 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
     def __repr__(self):
         '''return classname and number of value'''
         return self.__class__.__name__ + '[' + str(len(self)) + ']'
-
-    def __str__(self):
-        '''return json string format'''
-        return '    ' + str(self.to_ntv(modecodec='full')) + '\n'
-        #return '    ' + self.to_obj(encoded=True, modecodec='full', untyped=False) + '\n'
 
     def __eq__(self, other):
         ''' equal if class and values are equal'''

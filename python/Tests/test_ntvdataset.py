@@ -23,7 +23,7 @@ i1 = 'i1'
 field = {Ntvdataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
-#Dataset = Sdataset
+Dataset = Sdataset
 
 
 class Test_Ntvdataset(unittest.TestCase):

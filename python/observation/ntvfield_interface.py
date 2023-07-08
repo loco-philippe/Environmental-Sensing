@@ -196,6 +196,7 @@ class NtvfieldInterface:
         *Returns* : Ntv object'''
         leng = len(self)
         codec = self.i_to_n(self.codec)
+        def_type = codec[0].ntv_type if not def_type else def_type
         idxname = None if self.name == '$default' or not name else self.name       
         '''if len(self.codec) == 1:
             return NtvSingle(self.codec[0].ntv_value, idxname, self.codec[0].ntv_type)
@@ -213,7 +214,7 @@ class NtvfieldInterface:
         if codecval:
             return NtvList(codec, idxname, ntv_type=def_type)
         if len(codec) == leng or modecodec == 'full':
-            return NtvList(self.values, idxname, ntv_type=def_type)
+            return NtvList(self.l_to_e(self.values), idxname, ntv_type=def_type)
         if modecodec == 'default':
             return NtvList([NtvList(codec, ntv_type=def_type), 
                             NtvList(self.keys, ntv_type='json')], idxname, ntv_type='json')

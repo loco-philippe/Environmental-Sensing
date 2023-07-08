@@ -37,6 +37,11 @@ class Nfield(Ntvfield):
         super().__init__(codec=codec, name=name, keys=keys,
                      lendefault=lendefault, reindex=reindex, fast=fast)
 
+    def __str__(self):
+        '''return json string format'''
+        return str(self.to_ntv(modecodec='full'))
+        #return '    ' + self.to_obj(encoded=True, modecodec='full', untyped=False) + '\n'
+        
     @staticmethod
     def l_to_i(lis, fast=False):
         ''' converting a list of external values to a list of internal values
@@ -114,6 +119,11 @@ class Sfield(Ntvfield):
                  lendefault=0, reindex=False, fast=False):
         super().__init__(codec=codec, name=name, keys=keys,
                      lendefault=lendefault, reindex=reindex, fast=fast)
+
+    def __str__(self):
+        '''return json string format'''
+        return str({self.name: self.l_to_e(self.values)})
+        #return '    ' + self.to_obj(encoded=True, modecodec='full', untyped=False) + '\n'
         
     @staticmethod
     def l_to_i(lis, fast=False):
