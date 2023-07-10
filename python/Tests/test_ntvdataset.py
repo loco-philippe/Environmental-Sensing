@@ -23,7 +23,7 @@ i1 = 'i1'
 field = {Ntvdataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
-#Dataset = Sdataset
+Dataset = Sdataset
 
 
 class Test_Ntvdataset(unittest.TestCase):
@@ -500,8 +500,8 @@ class Test_Ntvdataset(unittest.TestCase):
                            'temp': [ 12,      14,     21,          16,      21      ]})
         il2 = Dataset.ntv({'country':     ['france', 'france', 'france'],
                             'city':        ['paris', 'lyon', 'strasbourg']})
-        self.assertEqual(il.mix(il2).nindex('country').val[:5], [None]*5)
-        self.assertEqual(il.mix(il2).nindex('temp').val[5:], [None]*3)
+        self.assertEqual(il.mix(il2).nindex('country').val[:5], field[Dataset](['null']*5).val)
+        self.assertEqual(il.mix(il2).nindex('temp').val[5:], field[Dataset](['null']*3).val)
         
     def test_merge(self):
         il1 = Sdataset.ntv({'notes': [10, 11, 12],

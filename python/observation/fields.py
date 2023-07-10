@@ -137,6 +137,12 @@ class Sfield(Ntvfield):
         '''converting an external value to an internal value'''
         if fast:
             return val
+        if val == 'null':
+            return None
+        if val == 'false':
+            return False
+        if val == 'true':
+            return True
         if isinstance(val, list):
             return Sfield._tupled(val)
         if isinstance(val, dict):
@@ -164,6 +170,12 @@ class Sfield(Ntvfield):
         '''converting an internal value to an external value'''
         if fast:
             return val
+        if val is None:
+            return 'null'
+        if val == False:
+            return 'false'
+        if val == True:
+            return 'true'
         if isinstance(val, tuple):
             return Sfield._listed(val)
         if isinstance(val, str) and len(val) > 0 and val[0] == '{':
