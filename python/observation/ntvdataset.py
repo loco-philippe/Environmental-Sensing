@@ -470,6 +470,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
             return
         if coef:  #primary
             lidx[ind][4] = [ (ikey % (coef * len(codec))) // coef for ikey in range(leng)]
+            lidx[ind][3] = None
             return  
         if parent is None:
             raise NtvdatasetError('keys not referenced')          
@@ -477,8 +478,10 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
             Ntvdataset._init_ntv_keys(parent, lidx, leng)
         if not keys and len(codec) == len(lidx[parent][2]):    # implicit
             lidx[ind][4] = lidx[parent][4]
+            lidx[ind][3] = None
             return
         lidx[ind][4] = Nfield.keysfromderkeys(lidx[parent][4], keys)  # relative
+        lidx[ind][3] = None
         return
 
     @staticmethod
