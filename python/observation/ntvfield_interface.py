@@ -180,7 +180,8 @@ class NtvfieldInterface:
         *Returns* : Numpy Array'''
         return self.to_pandas(func=func, codec=codec, npdtype=npdtype, numpy=True, **kwargs)
 
-    def to_ntv(self, modecodec='optimize', codecval=False, def_type=None, keys=None, parent=None, name=True):
+    def to_ntv(self, modecodec='optimize', codecval=False, def_type=None, 
+               keys=None, parent=None, name=True):
         '''Return a Ntv field value
 
         *Parameters (kwargs)*

@@ -221,7 +221,8 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex, decode_str=decode_str)
     
     @classmethod 
-    def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
+    def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False,
+                 add_type=True):
         '''Generate an Ntvfield Object from a Ntv field object'''
         if isinstance(ntv_value, cls):
             return copy(ntv_value)
@@ -236,8 +237,8 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
             keys = cls.keysfromderkeys(extkeys, keys)
         elif extkeys and not parent:
             keys = extkeys
-        if keys is None:
-            keys = list(range(len(codec)))
+        keys = list(range(len(codec))) if keys is None else keys
+        name = ntv.json_name(string=True) if add_type else name
         return cls(codec=codec, name=name, keys=keys, reindex=reindex)
 
     """@classmethod

@@ -23,7 +23,7 @@ i1 = 'i1'
 field = {Ntvdataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
-Dataset = Sdataset
+#Dataset = Sdataset
 
 
 class Test_Ntvdataset(unittest.TestCase):
@@ -333,6 +333,20 @@ class Test_Ntvdataset(unittest.TestCase):
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertEqual(ilm.primary, [0, 2])
 
+    def test_to_ntv_optimize(self):
+        irve = {
+            "nom_amenageur": [["ARCACHON", "ELECTRA"], 2, [0, 0, 0, 1, 0]], 
+            "id_station": [["FROTHPOTHR18121", "FROTHPOTHR18011", "FROTHPOTHR17951",
+                            "FRELCPAUBVM", "FROTHPOTHR18131", "FROTHPOTHR18051", 
+                            "FROTHPOTHR18111", "FROTHPOTHR18151", "FROTHPOTHR18141"], 
+                           [3, 3, 1, 2, 7, 8, 4, 0, 6, 5]], 
+            "nom_station": [["ARCACHON - MOULLEAU", "ARCACHON - PEREIRE", "ARCACHON - GARE", 
+                             "Aubervilliers - Lab Village", "ARCACHON - MOULLEAU"],
+                            1, [4, 1, 2, 3, 0, 1, 4, 4, 4]]}
+        test = Sdataset.ntv(irve)
+        test2 = Sdataset.ntv(test.to_ntv(modecodec='optimize'))
+        self.assertEqual(test2, test)
+        
     def test_to_ntv(self):
         ilm = Dataset.ntv([[ 0,   0,   2,   3,   4,   4,   6,
                            7,   8,   9,   9,  11,  12],
