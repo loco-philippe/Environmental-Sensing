@@ -153,7 +153,7 @@ class Analysis:
             self.actualize()
         if keys == 'struct':
             keys = ['num', 'name', 'cat', 'child', 'crossed', 'distparent',
-                    'diffdistparent', 'parent', 'pparent', 'linkrate']
+                    'diffdistparent', 'parent', 'pparent', 'rateder', 'ratecpl']
         if not keys or keys == 'all':
             return self.infos
         return [{k: v for k, v in inf.items() if k in keys} for inf in self.infos]
@@ -271,7 +271,7 @@ class Analysis:
         '''set and return attribute 'infos'. 
         Infos is an array with infos of each index :
             - num, name, cat, child, crossed, distparent, diffdistparent, 
-            parent, pparent, linkrate'''
+            parent, pparent, rateder'''
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         self.infos = [{} for i in range(lenindex)]
@@ -285,8 +285,8 @@ class Analysis:
             self.infos[i]['pparent'] = -2
             self.infos[i]['diffdistparent'] = -1
             self.infos[i]['distance'] = leniobj * leniobj
-            self.infos[i]['rate'] = 1
-            self.infos[i]['linkrate'] = 1
+            self.infos[i]['ratecpl'] = 1
+            self.infos[i]['rateder'] = 1
             self.infos[i]['child'] = []
             self.infos[i]['crossed'] = []
             self.infos[i] |= self.iobj.lindex[i].infos
@@ -294,7 +294,7 @@ class Analysis:
                 self.infos[i]['pparent'] = -1
                 self.infos[i]['cat'] = 'unique'
                 self.infos[i]['diffdistparent'] = leniobj - 1
-                self.infos[i]['linkrate'] = 0
+                self.infos[i]['rateder'] = 0
         for i in range(lenindex):
             for j in range(i+1, lenindex):
                 if self.matrix[i][j]['typecoupl'] == 'coupled' and \
@@ -302,7 +302,7 @@ class Analysis:
                     self.infos[j]['parent'] = i
                     self.infos[j]['distparent'] = i
                     self.infos[j]['diffdistparent'] = 0
-                    self.infos[j]['linkrate'] = 0
+                    self.infos[j]['rateder'] = 0
                     self.infos[j]['cat'] = 'coupled'
                     self.infos[i]['child'].append(j)
         return
@@ -333,13 +333,13 @@ class Analysis:
     def _setparent(self):
         '''set parent (Ntvfield with minimal diff) for each Ntvfield'''
         # parent : min(diff) -> child
-        # distparent : min(distrate) -> diffdistparent, linkrate(rateA)
+        # distparent : min(rateder) -> diffdistparent, rateder(rateA)
         # minparent : min(distance) -> rate(rateB), distance
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         for i in range(lenindex):
             mindiff = leniobj
-            distratemin = 1
+            ratedermin = 1
             distancemin = leniobj * leniobj
             distparent = None
             minparent = None
@@ -358,8 +358,8 @@ class Analysis:
                         infoi['crossed'].append(j)
                     if i != j and not i in self._listparent(j, 'distparent') and \
                         matij['typecoupl'] in ('coupled', 'derived', 'linked', 'crossed') and \
-                       matij['distrate'] < distratemin:
-                        distratemin = matij['distrate']
+                       matij['rateder'] < ratedermin:
+                        ratedermin = matij['rateder']
                         distparent = j
                 if i != j and not i in self._listparent(j, 'minparent') and \
                     matij['distance'] < distancemin and \
@@ -374,11 +374,11 @@ class Analysis:
                 if not distparent is None:
                     infoi['distparent'] = distparent
                     infoi['diffdistparent'] = self.matrix[i][distparent]['diff']
-                    infoi['linkrate'] = self.matrix[i][distparent]['distrate']
+                    infoi['rateder'] = self.matrix[i][distparent]['rateder']
             if not minparent is None:
                 infoi['minparent'] = minparent
                 infoi['distance'] = self.matrix[i][minparent]['distance']
-                infoi['rate'] = self.matrix[i][minparent]['rate']
+                infoi['ratecpl'] = self.matrix[i][minparent]['ratecpl']
             else:
                 infoi['distance'] = leniobj - infoi['lencodec']
         return
@@ -401,7 +401,7 @@ class Analysis:
             if mode == 'distance':
                 adding = str(self.infos[n]['distance']) + ' - '
             elif mode == 'diff':
-                adding = str(format(self.infos[n]['linkrate'], '.2e')) + ' - '
+                adding = str(format(self.infos[n]['rateder'], '.2e')) + ' - '
             adding += str(self.infos[n]['lencodec'])
             name = self.infos[n]['name'] + ' (' + adding + ')'
             lis = [name.replace(' ', '*').replace("'", '*')]

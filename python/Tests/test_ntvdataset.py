@@ -14,7 +14,7 @@ from math import nan
 from itertools import product
 import json
 from observation import Ntvdataset
-from json_ntv import Ntv
+from json_ntv import Ntv, NtvSingle, NtvList
 from observation.fields import Nfield, Sfield
 from observation.datasets import Sdataset, Ndataset
 
@@ -23,7 +23,7 @@ i1 = 'i1'
 field = {Ntvdataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
-#Dataset = Sdataset
+Dataset = Sdataset
 
 
 class Test_Ntvdataset(unittest.TestCase):
@@ -638,8 +638,8 @@ class Test_Ntvdataset(unittest.TestCase):
     def test_to_numpy(self):
         '''à faire'''  # !!!
 
-    """def test_to_xarray(self):
-        ilm = Dataset.ntv({'plants': ['fruit', 'fruit', 'fruit', 'fruit',
+    def test_to_xarray(self):
+        ilm = Sdataset.ntv({'plants': ['fruit', 'fruit', 'fruit', 'fruit',
                                     'vegetable', 'vegetable', 'vegetable', 'fruit'],
                          'quantity': ['kg', '10 kg', 'kg', '10 kg',
                                       'kg', '10 kg', 'kg', '10 kg'],
@@ -653,40 +653,32 @@ class Test_Ntvdataset(unittest.TestCase):
                          float(ilm.loc(['10 kg', 'apple', 'fruit'])[0][3]))
         self.assertTrue(str(ilm.loc(['10 kg', 'banana', 'fruit'])[0][3]) in
                         str(ilx.sel(quantity='10 kg', product='banana').values))
-        '''fruit = Dataset.obj([['product', ['apple', 'apple', 'orange', 'orange', 'banana', 'banana']],
-                           ['quantity', ['kg', '10 kg', 'kg', '10 kg', 'kg', '10 kg']],
-                           ['price', [1, 10, 2, 20, 0.5, 5]]])
-        vege = Dataset.obj([['product', ['peppers', 'peppers']],
-                          ['quantity', ['kg', '10 kg']],
-                          ['price', [1.5, 15]]])
-        total = Dataset.obj([['plants', ['fruit', 'vegetable']],
-                           ['total', [fruit, vege]]])
+        fruit = Sdataset.ntv({'product': ['apple', 'apple', 'orange', 'orange', 'banana', 'banana'],
+                           'quantity': ['kg', '10 kg', 'kg', '10 kg', 'kg', '10 kg'],
+                           'price': [1, 10, 2, 20, 0.5, 5]})
+        vege = Sdataset.ntv({'product': ['peppers', 'peppers'],
+                           'quantity': ['kg', '10 kg'],
+                           'price': [1.5, 15]})
+        total = Sdataset.ext([['fruit', 'vegetable'],
+                              [fruit, vege]], ['plants', 'total'])
         ilx2 = total.merge().to_xarray()
         self.assertEqual(float(ilx2.sel(total_quantity='10 kg', total_product='apple').values),
                          float(ilm.loc(['10 kg', 'apple', 'fruit'])[0][3]))
         self.assertTrue(str(ilm.loc(['10 kg', 'banana', 'fruit'])[0][3]) in
-                        str(ilx2.sel(total_quantity='10 kg', total_product='banana').values))'''
-        il = Dataset.ntv({'locatio': [0, [4.83, 45.76], [5.38, 43.3]],
+                        str(ilx2.sel(total_quantity='10 kg', total_product='banana').values))
+        '''il = Sdataset.ntv({'locatio': [[[4.83, 45.76], [5.38, 43.3]], 2],
                          'datatio': [[{'date1': '2021-02-04T11:05:00+00:00'},
                                       '2021-07-04T10:05:00+00:00',
-                                      '2021-05-04T10:05:00+00:00'],
-                                     0],
-                         'propert': [{'prp': 'PM25', 'unit': 'kg/m3'},
-                                     {'prp': 'PM10', 'unit': 'kg/m3'}],
-                         'result': [[{'ert': 0}, 1, 2, 3, 4, 5], -1]})
-        '''il = Dataset.obj([['locatio', [0, [4.83, 45.76], [5.38, 43.3]]],
-                        ['datatio', [{'date1': '2021-02-04T11:05:00+00:00'},
-                                     '2021-07-04T10:05:00+00:00',
-                                     '2021-05-04T10:05:00+00:00'], 0],
-                        ['propert', [{'prp': 'PM25', 'unit': 'kg/m3'},
-                         {'prp': 'PM10', 'unit': 'kg/m3'}]],
-                        ['result', [{'ert': 0}, 1, 2, 3, 4, 5]]])'''
-        ilx1 = il.to_xarray(lisfunc=[None, None, None, ESValue.to_float])
-        ilx2 = il.to_xarray(
-            lisfunc=[None, None, None, util.cast], dtype='float')
+                                      '2021-05-04T10:05:00+00:00'], [1]],
+                         'propert': [[{'prp': 'PM25', 'unit': 'kg/m3'},
+                                     {'prp': 'PM10', 'unit': 'kg/m3'}], [2]],
+                         'result': [{'ert': 0}, 1, 2, 3, 4, 5]})
+        ilx1 = il.to_xarray(lisfunc=[None, None, None, NtvSingle.obj_value])
+        #ilx2 = il.to_xarray(
+        #    lisfunc=[None, None, None, util.cast], dtype='float')
         ilx3 = il.to_xarray(numeric=True)
-        self.assertTrue(list(ilx1.values[0]) == list(
-            ilx2.values[0]) == list(ilx3.values[0]))"""
+        self.assertTrue(list(ilx1.values[0]) #== list(ilx2.values[0]) 
+                        == list(ilx3.values[0]))'''
 
     def test_example(self):
         '''à faire'''  # !!!

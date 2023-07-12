@@ -136,7 +136,7 @@ class util:
     def couplinginfos(l1, l2):
         '''return a dict with the coupling info between two list'''
         if not l1 or not l2:
-            return {'dist': 0, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': 0, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null'}
         ls = len(util.tocodec(l1))
         lo = len(util.tocodec(l2))
@@ -148,19 +148,19 @@ class util:
                 typec = 'derived'
             else:
                 typec = 'derive'
-            return {'dist': x0, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': x0, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': x0, 'distmax': x1, 'diff': diff, 'typecoupl': typec}
         x = len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
-        dic = {'dist': x, 'distrate': (x - x0) / (x1 - x0),
+        dic = {'dist': x, 'rateder': (x - x0) / (x1 - x0),
                'disttomin': x - x0,  'disttomax': x1 - x,
                'distmin': x0, 'distmax': x1, 'diff': diff}
-        if dic['distrate'] == 0 and dic['diff'] == 0:
+        if dic['rateder'] == 0 and dic['diff'] == 0:
             dic['typecoupl'] = 'coupled'
-        elif dic['distrate'] == 0 and ls < lo:
+        elif dic['rateder'] == 0 and ls < lo:
             dic['typecoupl'] = 'derived'
-        elif dic['distrate'] == 0 and ls > lo:
+        elif dic['rateder'] == 0 and ls > lo:
             dic['typecoupl'] = 'derive'
-        elif dic['distrate'] == 1:
+        elif dic['rateder'] == 1:
             dic['typecoupl'] = 'crossed'
         elif ls < lo:
             dic['typecoupl'] = 'linked'

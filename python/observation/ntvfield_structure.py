@@ -108,8 +108,8 @@ class NtvfieldStructure:
         return
 
     def couplinginfos(self, other, default=False):
-        '''return a dict with the coupling info between other (distance, rate,
-        dist, disttomin, disttomax, distmin, distmax, diff, typecoupl)
+        '''return a dict with the coupling info between other (distance, ratecpl,
+        rateder, dist, disttomin, disttomax, distmin, distmax, diff, typecoupl)
 
         *Parameters*
 
@@ -120,41 +120,42 @@ class NtvfieldStructure:
         if default:
             return util.couplinginfos(self.values, other.values)
         if min(len(self), len(other)) == 0:
-            return {'dist': 0, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
+            return {'dist': 0, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null',
-                    'distance': 0, 'rate': 0}
-        lens = len(self._codec)
-        leno = len(other._codec)
-        xmin = max(lens, leno)
-        xmax = lens * leno
-        diff = abs(lens - leno)
-        if min(lens, leno) == 1:
-            rate = 0
-            if xmax - xmin + diff != 0:
-                rate = diff / (xmax - xmin + diff)
-            if lens == 1:
+                    'distance': 0, 'ratecpl': 0}
+        xs = len(self._codec)         # xs
+        xo = len(other._codec)        # xo
+        dmin = max(xs, xo)          # dmin
+        dmax = xs * xo              # dmax
+        diff = abs(xs - xo)         # diff
+        if min(xs, xo) == 1:
+            ratecpl = 0
+            if dmax - dmin + diff != 0:
+                ratecpl = diff / (dmax - dmin + diff)  # 
+            if xs == 1:
                 typec = 'derived'
             else:
                 typec = 'derive'
-            return {'dist': xmin, 'distrate': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': xmin, 'distmax': xmax, 'diff': diff,
-                    'typecoupl': typec, 'distance': diff, 'rate': rate}
-        xso = len(util.tocodec([tuple((v1, v2))
+            return {'dist': dmin, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
+                    'distmin': dmin, 'distmax': dmax, 'diff': diff,
+                    'typecoupl': typec, 'distance': diff, 'ratecpl': ratecpl}
+        xso = len(util.tocodec([tuple((v1, v2))     # xab
                   for v1, v2 in zip(self._keys, other._keys)]))
-        dic = {'dist': xso, 'distrate': (xso - xmin) / (xmax - xmin),
-               'disttomin': xso - xmin,  'disttomax': xmax - xso,
-               'distmin': xmin, 'distmax': xmax, 'diff': diff,
-               'distance': xso - xmin + diff,
-               'rate': (xso - xmin + diff) / (xmax - xmin + diff)}
-        if dic['distrate'] == 0 and dic['diff'] == 0:
+        dic = {'dist': xso, 'distmin': dmin, 'distmax': dmax, 'diff': diff,
+               'rateder': (xso - dmin) / (dmax - dmin),            # rateDer
+               'disttomin': xso - dmin,  
+               'disttomax': dmax - xso,        
+               'distance': xso - dmin + diff,
+               'ratecpl': (xso - dmin + diff) / (dmax - dmin + diff)}  #rateCpl
+        if dic['rateder'] == 0 and dic['diff'] == 0:
             dic['typecoupl'] = 'coupled'
-        elif dic['distrate'] == 0 and lens < leno:
+        elif dic['rateder'] == 0 and xs < xo:
             dic['typecoupl'] = 'derived'
-        elif dic['distrate'] == 0 and lens > leno:
+        elif dic['rateder'] == 0 and xs > xo:
             dic['typecoupl'] = 'derive'
-        elif dic['distrate'] == 1:
+        elif dic['rateder'] == 1:
             dic['typecoupl'] = 'crossed'
-        elif lens < leno:
+        elif xs < xo:
             dic['typecoupl'] = 'linked'
         else:
             dic['typecoupl'] = 'link'
@@ -232,17 +233,17 @@ class NtvfieldStructure:
 
     def iscrossed(self, other):
         '''return True if self is crossed to other'''
-        return self.couplinginfos(other)['distrate'] == 1.0
+        return self.couplinginfos(other)['rateder'] == 1.0
 
     def iscoupled(self, other):
         '''return True if self is coupled to other'''
         info = self.couplinginfos(other)
-        return info['diff'] == 0 and info['distrate'] == 0
+        return info['diff'] == 0 and info['rateder'] == 0
 
     def isderived(self, other):
         '''return True if self is derived from other'''
         info = self.couplinginfos(other)
-        return info['diff'] != 0 and info['distrate'] == 0.0
+        return info['diff'] != 0 and info['rateder'] == 0.0
 
     def iskeysfromderkeys(self, other):
         '''return True if self._keys is relative from other._keys'''
@@ -254,7 +255,7 @@ class NtvfieldStructure:
 
     def islinked(self, other):
         '''return True if self is linked to other'''
-        rate = self.couplinginfos(other)['distrate']
+        rate = self.couplinginfos(other)['rateder']
         return 0.0 < rate < 1.0
 
     def isvalue(self, value, extern=True):

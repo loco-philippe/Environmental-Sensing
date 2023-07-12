@@ -18,7 +18,7 @@ from observation.fields import Nfield, Sfield
 from observation.datasets import Ndataset, Sdataset
 
 type_test = 'ntv'
-#type_test = 'simple'
+type_test = 'simple'
 
 if type_test == 'ntv':
     Field = Nfield
@@ -215,18 +215,18 @@ class Test_Field(unittest.TestCase):
         ia = Field()
         ib = Field.ntv([25, 25, 12, 12, 25])
         self.assertEqual(ia.couplinginfos(ib),
-                         {'dist': 0, 'distrate': 0, 'distance': 0, 'rate': 0,
+                         {'dist': 0, 'rateder': 0, 'distance': 0, 'ratecpl': 0,
                           'disttomin': 0, 'disttomax': 0, 'distmin': 0, 'distmax': 0,
                           'diff': 0, 'typecoupl': 'null'})
         ia = Field.ntv(['anne', 'paul', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
-                         {'dist': 4, 'distrate': 0.3333333333333333, 'distance': 2,
+                         {'dist': 4, 'rateder': 0.3333333333333333, 'distance': 2,
                           'disttomin': 1, 'disttomax': 2, 'distmin': 3, 'distmax': 6,
-                          'rate': 0.5, 'diff': 1, 'typecoupl': 'link'})
+                          'ratecpl': 0.5, 'diff': 1, 'typecoupl': 'link'})
         self.assertTrue(ia.islinked(ib))
         ia = Field.ntv(['anne', 'lea', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
-                         {'dist': 4, 'distrate': 1.0, 'distance': 2, 'rate': 1.0,
+                         {'dist': 4, 'rateder': 1.0, 'distance': 2, 'ratecpl': 1.0,
                           'disttomin': 2, 'disttomax': 0, 'distmin': 2, 'distmax': 4,
                           'diff': 0, 'typecoupl': 'crossed'})
         self.assertTrue(ia.iscrossed(ib))

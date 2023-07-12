@@ -388,7 +388,7 @@ class Es:
         self.parent = "parent"
         self.root = "root"
         self.typecodec = "typecodec"
-        self.linkrate = "linkrate"
+        self.rateder = "rateder"
         self.disttomin = "disttomin"
         self.disttomax = "disttomax"
 

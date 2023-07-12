@@ -180,7 +180,7 @@ class NtvdatasetStructure:
         ilis.reindex()
         return ilis
 
-    def couplingmatrix(self, default=False, filename=None, att='rate'):
+    def couplingmatrix(self, default=False, filename=None, att='ratecpl'):
         '''return a matrix with coupling infos between each idx.
         One info can be stored in a file (csv format).
 
@@ -193,21 +193,21 @@ class NtvdatasetStructure:
         *Returns* : array of array of dict'''
         return self.analysis.getmatrix()
 
-    def coupling(self, derived=True, param='linkrate', level=0.1):
+    def coupling(self, derived=True, param='rateder', level=0.1):
         '''Transform idx with low rate in coupled or derived indexes (codec extension).
 
         *Parameters*
 
-        - **param** : string (default 'linkrate') - coupling measurement 
-        ('linkrate', 'diffdistparent', 'rate', 'distance')
+        - **param** : string (default 'rateder') - coupling measurement 
+        ('rateder', 'diffdistparent', 'ratecpl', 'distance')
         - **level** : float (default 0.1) - param threshold to apply coupling.
         - **derived** : boolean (default : True). If True, indexes are derived, 
         else coupled.
 
         *Returns* : None'''
         infos = self.indexinfos()
-        parent = {'linkrate': 'distparent', 'diffdistparent': 'distparent',
-                  'rate': 'minparent', 'distance': 'minparent'}
+        parent = {'rateder': 'distparent', 'diffdistparent': 'distparent',
+                  'ratecpl': 'minparent', 'distance': 'minparent'}
         child = [None] * len(infos)
         for idx in range(len(infos)):
             iparent = infos[idx][parent[param]]
@@ -398,7 +398,7 @@ class NtvdatasetStructure:
     def indexinfos(self, keys=None):
         '''return a dict with infos of each index :
             - num, name, cat, diffdistparent, child, parent, distparent, 
-            crossed, pparent, linkrate (struct info)
+            crossed, pparent, rateder (struct info)
             - lencodec, mincodec, maxcodec, typecodec, ratecodec (base info)
 
         *Parameters*
