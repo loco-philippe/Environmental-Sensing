@@ -136,21 +136,25 @@ class NtvfieldInterface:
         return (nam, typ, val, None, None, None, len(ntv))
 
     @staticmethod 
-    def encodecoef(lis):
+    def encode_coef(lis):
         '''Generate a repetition coefficient for periodic list'''
         if len(lis) < 2:
             return 0
         coef = 0
-        period = max(lis) + 1
         for i in range(1,len(lis)):
             coef = i
             if lis[i-1] != lis[i]:
                 break
-        periodic_lis = [ (ikey % (coef * period)) // coef for ikey in range(len(lis))]
-        if lis == periodic_lis:
+        if lis == NtvfieldInterface._periodic_keys(coef, max(lis) + 1, len(lis)):
             return coef
         return 0
 
+    @staticmethod 
+    def _periodic_keys(coef, period, leng):
+        ''' return a list of keys with periodic structure'''
+        return None if not coef or not period else [ (ikey % (coef * period)) // coef 
+                                                    for ikey in range(leng)]
+    
     def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
         option = {'encoded': False, 'format': 'json', 'untyped': False,
                   'codif': {}, 'geojson': False} | kwargs

@@ -216,7 +216,7 @@ class NtvdatasetInterface:
             lis = []
             indexinfos = self.indexinfos()
             for idx, inf, iname in zip(self.lindex, indexinfos, idxname):
-                coef = Ntvfield.encodecoef(idx.keys)
+                coef = Ntvfield.encode_coef(idx.keys)
                 if inf['cat'] == 'unique':
                     lis.append(idx.to_ntv(name=iname))
                 elif inf['cat'] == 'coupled':
