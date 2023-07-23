@@ -758,6 +758,12 @@ class Test_Ntvdataset(unittest.TestCase):
         il = Dataset.from_ntv(ntv)
         self.assertEqual(il.primaryname, ['annee', 'pays', 'age'])
         self.assertEqual(il.lvarname, ['result'])
+
+        ntv = Ntv.obj({'matrix': [{"annee": [[0, 1],        [1]]}, 
+                                  {"pays":  [[0, 1],        [2]]}, 
+                                  {"age":   [[0, 1, 2],     [4]]}, 
+                                  {"sexe":  [[0, 1],        [12]]}, {"result":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}]})    
+        il = Sdataset.from_ntv(ntv)
     
     """
     '''for forma in ['json', 'cbor']:
