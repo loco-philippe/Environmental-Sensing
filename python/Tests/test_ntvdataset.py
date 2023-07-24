@@ -14,7 +14,7 @@ from math import nan
 from itertools import product
 import json
 from observation import Ntvdataset, Ntvfield
-from json_ntv import Ntv, NtvSingle, NtvList
+from json_ntv import Ntv
 from observation.fields import Nfield, Sfield
 from observation.datasets import Sdataset, Ndataset
 
