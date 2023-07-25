@@ -4,7 +4,7 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvdataset_analysis` module contains the `Analysis` class.
+The `python.observation.dataset_analysis` module contains the `Analysis` class.
 
 """
 
@@ -18,16 +18,16 @@ from observation.util import util
 
 class Analysis:
     '''This class analyses relationships included in a tabular object 
-    (Pandas DataFrame, Ntvdataset, Observation, list of list).
+    (Pandas DataFrame, Dataset, Observation, list of list).
 
     The Analysis class includes the following functions:
-    - identification and qualification of the relationships between Ntvfield,
+    - identification and qualification of the relationships between Field,
     - generation of the global properties of the structure
     - data actualization based on structure updates
 
     *Attributes* :
 
-    - **iobj** : Ntvdataset or Observation associated to the Analysis object
+    - **iobj** : Dataset or Observation associated to the Analysis object
     - **hashi** : internal Id of the iobj
     - **matrix** : square matrix with relationship properties between two fields
     - **infos** : list of characteristics (matrix synthesis)
@@ -54,20 +54,20 @@ class Analysis:
 
          *Parameters*
 
-        - **iobj** : object - tabular object (Pandas DataFrame, Ntvdataset, Observation, 
+        - **iobj** : object - tabular object (Pandas DataFrame, Dataset, Observation, 
         list of list)
 
-        Note: The Analysis data can be update only if tabular object is Ntvdataset or 
+        Note: The Analysis data can be update only if tabular object is Dataset or 
         Observation.
         '''
-        if iobj.__class__.__name__ in ('Ntvdataset', 'Observation', 'Ndataset', 'Sdataset'):
+        if iobj.__class__.__name__ in ('Dataset', 'Observation', 'Ndataset', 'Sdataset'):
             self.iobj = iobj
         elif iobj.__class__.__name__ == 'DataFrame':
             from observation import Sdataset
             self.iobj = Sdataset(iobj)
         else:
-            from ntvdataset import Ntvdataset
-            self.iobj = Ntvdataset.obj(iobj)
+            from dataset import Dataset
+            self.iobj = Dataset.obj(iobj)
         self.hashi = None
         self.matrix = None
         self.infos = None
@@ -178,7 +178,7 @@ class Analysis:
         return None
 
     def getvarname(self):
-        '''return variable Ntvfield name'''
+        '''return variable Field name'''
         if self.hashi != self.iobj._hashi():
             self.actualize()
         return self.lvarname
@@ -208,7 +208,7 @@ class Analysis:
         return self.groups
 
     def tree(self, mode='derived', width=5, lname=20, string=True):
-        '''return a string with a tree of derived Ntvfield.
+        '''return a string with a tree of derived Field.
 
          *Parameters*
 
@@ -331,7 +331,7 @@ class Analysis:
                 infosp[i]['pparent'] = infosp[infosp[i]['parent']]['pparent']
 
     def _setparent(self):
-        '''set parent (Ntvfield with minimal diff) for each Ntvfield'''
+        '''set parent (Field with minimal diff) for each Field'''
         # parent : min(diff) -> child
         # distparent : min(rateder) -> diffdistparent, rateder(rateA)
         # minparent : min(distance) -> rate(rateB), distance
@@ -412,7 +412,7 @@ class Analysis:
         return {str(n).ljust(2, '*'): lis}
 
     def _setgroups(self):
-        '''set groups (list of crossed Ntvfield groups)'''
+        '''set groups (list of crossed Field groups)'''
         self.groups = []
         crossed = {info['num'] for info in self.infos if info['crossed']}
         remove = set()
@@ -432,7 +432,7 @@ class Analysis:
         return None
 
     def _setpartition(self):
-        '''set partition (list of Ntvfield partitions)'''
+        '''set partition (list of Field partitions)'''
         brother = {idx['num']: idx['crossed']
                    for idx in self.infos if idx['crossed']}
         self.partition = []

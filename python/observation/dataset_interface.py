@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvdataset_interface` module contains the `NtvdatasetInterface` class
-(`python.observation.ntvdataset.Ntvdataset` methods).
+The `python.observation.dataset_interface` module contains the `DatasetInterface` class
+(`python.observation.dataset.Dataset` methods).
 """
 
 # %% declarations
@@ -18,32 +18,32 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 
 from json_ntv.ntv import NtvList, NtvJsonEncoder
-from observation.ntvfield import Ntvfield
+from observation.field import Field
 from observation.util import util
 
 #import sys
-#print("In module ntvdataset_interface sys.path[0], __package__ ==", sys.path[0], __package__)
-#print("In module ntvdataset_interface __package__, __name__ ==", __package__, __name__)
+#print("In module dataset_interface sys.path[0], __package__ ==", sys.path[0], __package__)
+#print("In module dataset_interface __package__, __name__ ==", __package__, __name__)
 
 
-class NtvdatasetError(Exception):
-    ''' Ntvdataset Exception'''
+class DatasetError(Exception):
+    ''' Dataset Exception'''
     # pass
 
 
-class NtvdatasetInterface:
-    '''this class includes Ntvdataset methods :
+class DatasetInterface:
+    '''this class includes Dataset methods :
 
-    - `NtvdatasetInterface.json`
-    - `NtvdatasetInterface.plot`
-    - `NtvdatasetInterface.to_obj`
-    - `NtvdatasetInterface.to_csv`
-    - `NtvdatasetInterface.to_file`
-    - `NtvdatasetInterface.to_xarray`
-    - `NtvdatasetInterface.to_dataframe`
-    - `NtvdatasetInterface.view`
-    - `NtvdatasetInterface.vlist`
-    - `NtvdatasetInterface.voxel`
+    - `DatasetInterface.json`
+    - `DatasetInterface.plot`
+    - `DatasetInterface.to_obj`
+    - `DatasetInterface.to_csv`
+    - `DatasetInterface.to_file`
+    - `DatasetInterface.to_xarray`
+    - `DatasetInterface.to_dataframe`
+    - `DatasetInterface.view`
+    - `DatasetInterface.vlist`
+    - `DatasetInterface.voxel`
     '''
 
     def json(self, **kwargs):
@@ -216,7 +216,7 @@ class NtvdatasetInterface:
             lis = []
             indexinfos = self.indexinfos()
             for idx, inf, iname in zip(self.lindex, indexinfos, idxname):
-                coef = Ntvfield.encode_coef(idx.keys)
+                coef = Field.encode_coef(idx.keys)
                 if inf['cat'] == 'unique':
                     lis.append(idx.to_ntv(name=iname))
                 elif inf['cat'] == 'coupled':
@@ -233,7 +233,7 @@ class NtvdatasetInterface:
                     if len(self.lindex[inf['parent']].codec) == len(self):
                         lis.append(idx.to_ntv(modecodec='default', name=iname))             
                     #elif idx.iskeysfromderkeys(self.lindex[inf['parent']]): # periodic derived
-                    #    lis.append(Ntvfield.to_ntv(idx, parent=inf['parent'], name=iname))
+                    #    lis.append(Field.to_ntv(idx, parent=inf['parent'], name=iname))
                     else: #derived
                         keys = idx.derkeys(self.lindex[inf['parent']])
                         lis.append(idx.to_ntv(keys=keys, parent=inf['parent'], name=iname))            
@@ -255,7 +255,7 @@ class NtvdatasetInterface:
         - **fullvar** : boolean (default True) - if True and modecodec='optimize, 
         variable index is with a full codec
         - **geojson** : boolean (default False) - geojson for LocationValue if True
-        - **id** : integer (default None) - Observation.id if Ntvdataset is attached to an Observation
+        - **id** : integer (default None) - Observation.id if Dataset is attached to an Observation
 
         *Returns* : string, bytes or dict'''
         option = {'modecodec': 'optimize', 'encoded': False,
@@ -273,7 +273,7 @@ class NtvdatasetInterface:
                 lis[name] = dicval
         elif option['modecodec'] == 'ndjson':
             if not option['id']:
-                raise NtvdatasetError("an  id is necessary for 'ndjson'")                
+                raise DatasetError("an  id is necessary for 'ndjson'")                
             lis = []
             for rec in self:
                 lis.append({ES.id: option[ES.id]} | 
@@ -292,7 +292,7 @@ class NtvdatasetInterface:
                 lis = self._optimize_obj(indexname, **option2)
 
         if option['encoded'] and option['format'] == 'json':
-            return json.dumps(lis, cls=NtvfieldEncoder)
+            return json.dumps(lis, cls=FieldEncoder)
         if option['encoded'] and option['format'] == 'cbor':
             return cbor2.dumps(lis, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
@@ -325,7 +325,7 @@ class NtvdatasetInterface:
         *Returns* : DataArray '''
         option = {'dtype': None} | kwargs
         if not self.consistent:
-            raise NtvdatasetError("Ntvdataset not consistent")
+            raise DatasetError("Dataset not consistent")
         if idxname is None or idxname == []:
             idxname = self.primaryname
         ilf = self.full(idxname=idxname, varname=varname, fillvalue=fillvalue,
@@ -393,7 +393,7 @@ class NtvdatasetInterface:
         if varname is None and self.lvarname:
             varname = self.lvarname[0]
         if len(idxname) > 3:
-            raise NtvdatasetError('number of idx > 3')
+            raise DatasetError('number of idx > 3')
         if len(idxname) == 2:
             self.addindex(self.field('null', ' ', keys=[0]*len(self)))
             idxname += [' ']

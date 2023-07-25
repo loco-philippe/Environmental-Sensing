@@ -5,11 +5,11 @@ Created on Mon May 29 21:48:33 2023
 @author: a lab in the Air
 """
 
-from observation.ntvdataset import Ntvdataset
+from observation.dataset import Dataset
 from observation.fields import Nfield, Sfield
 from json_ntv import NtvConnector
 
-class Ndataset(Ntvdataset):
+class Ndataset(Dataset):
     
     field_class = Nfield
     
@@ -17,7 +17,7 @@ class Ndataset(Ntvdataset):
         super().__init__(listidx=listidx, reindex=reindex)
         
     
-class Sdataset(Ntvdataset):
+class Sdataset(Dataset):
     
     field_class = Sfield
 

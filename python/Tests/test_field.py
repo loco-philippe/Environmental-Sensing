@@ -5,14 +5,14 @@ Created on Sat Jan 29 22:44:05 2022
 @author: Philippe@loco-labs.io
 
 The `observation.test_iindex` module contains the unit tests (class unittest) for the
-`Ntvfield` class.
+`Field` class.
 """
 import unittest
 from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 
 from itertools import product
-from observation import Ntvdataset, Ntvfield, ES, util
+from observation import Dataset, Field, ES, util
 from json_ntv import Ntv, NtvSingle, NtvList
 from observation.fields import Nfield, Sfield
 from observation.datasets import Ndataset, Sdataset

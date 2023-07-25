@@ -4,56 +4,56 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvfield_structure` module contains the `NtvfieldStructure` class
-(`python.observation.ntvfield.Ntvfield` methods).
+The `python.observation.field_structure` module contains the `FieldStructure` class
+(`python.observation.field.Field` methods).
 """
 from collections import defaultdict, Counter
 
 from observation.util import util
 from observation.esconstante import ES
-from observation.ntvfield_interface import NtvfieldError
+from observation.field_interface import FieldError
 
-class NtvfieldStructure:
-    '''this class includes Ntvfield methods :
+class FieldStructure:
+    '''this class includes Field methods :
 
     *add - update methods*
 
-    - `NtvfieldStructure.append`
-    - `NtvfieldStructure.setcodecvalue`
-    - `NtvfieldStructure.setcodeclist`
-    - `NtvfieldStructure.setname`
-    - `NtvfieldStructure.setkeys`
-    - `NtvfieldStructure.setlistvalue`
-    - `NtvfieldStructure.setvalue`
+    - `FieldStructure.append`
+    - `FieldStructure.setcodecvalue`
+    - `FieldStructure.setcodeclist`
+    - `FieldStructure.setname`
+    - `FieldStructure.setkeys`
+    - `FieldStructure.setlistvalue`
+    - `FieldStructure.setvalue`
 
     *transform methods*
 
-    - `NtvfieldStructure.coupling`
-    - `NtvfieldStructure.extendkeys`
-    - `NtvfieldStructure.full`
-    - `NtvfieldStructure.reindex`
-    - `NtvfieldStructure.reorder`
-    - `NtvfieldStructure.sort`
-    - `NtvfieldStructure.tocoupled`
-    - `NtvfieldStructure.tostdcodec`
+    - `FieldStructure.coupling`
+    - `FieldStructure.extendkeys`
+    - `FieldStructure.full`
+    - `FieldStructure.reindex`
+    - `FieldStructure.reorder`
+    - `FieldStructure.sort`
+    - `FieldStructure.tocoupled`
+    - `FieldStructure.tostdcodec`
 
     *getters methods*
 
-    - `NtvfieldStructure.couplinginfos`
-    - `NtvfieldStructure.derkeys`
-    - `NtvfieldStructure.getduplicates`
-    - `NtvfieldStructure.iscrossed`
-    - `NtvfieldStructure.iscoupled`
-    - `NtvfieldStructure.isderived`
-    - `NtvfieldStructure.islinked`
-    - `NtvfieldStructure.isvalue`
-    - `NtvfieldStructure.iskeysfromderkeys`
-    - `NtvfieldStructure.keysfromderkeys`
-    - `NtvfieldStructure.keytoval`
-    - `NtvfieldStructure.loc`
-    - `NtvfieldStructure.recordfromkeys`
-    - `NtvfieldStructure.recordfromvalue`
-    - `NtvfieldStructure.valtokey`  '''
+    - `FieldStructure.couplinginfos`
+    - `FieldStructure.derkeys`
+    - `FieldStructure.getduplicates`
+    - `FieldStructure.iscrossed`
+    - `FieldStructure.iscoupled`
+    - `FieldStructure.isderived`
+    - `FieldStructure.islinked`
+    - `FieldStructure.isvalue`
+    - `FieldStructure.iskeysfromderkeys`
+    - `FieldStructure.keysfromderkeys`
+    - `FieldStructure.keytoval`
+    - `FieldStructure.loc`
+    - `FieldStructure.recordfromkeys`
+    - `FieldStructure.recordfromvalue`
+    - `FieldStructure.valtokey`  '''
 
     def append(self, value, unique=True):
         '''add a new value
@@ -82,7 +82,7 @@ class NtvfieldStructure:
 
         *Parameters*
 
-        - **idx** : single Ntvfield or list of Ntvfield to be coupled or derived.
+        - **idx** : single Field or list of Field to be coupled or derived.
         - **derived** : boolean (default : True) - if True result is derived,
         if False coupled
         - **duplicate** : boolean (default: True) - if True, return duplicate records 
@@ -166,18 +166,18 @@ class NtvfieldStructure:
 
         *Parameters*
 
-        - **parent** : Ntvfield - parent
+        - **parent** : Field - parent
 
         *Returns* : list of keys'''
         derkey = [ES.nullparent] * len(parent._codec)
         for i in range(len(self)):
             derkey[parent._keys[i]] = self._keys[i]
         if min(derkey) < 0:
-            raise NtvfieldError("parent is not a derive Ntvfield")
+            raise FieldError("parent is not a derive Field")
         return derkey
 
     def extendkeys(self, keys):
-        '''add keys to the Ntvfield
+        '''add keys to the Field
 
         *Parameters*
 
@@ -185,7 +185,7 @@ class NtvfieldStructure:
 
         *Returns* : None '''
         if min(keys) < 0 or max(keys) > len(self._codec) - 1:
-            raise NtvfieldError('keys not consistent with codec')
+            raise FieldError('keys not consistent with codec')
         self._keys += keys
 
     @staticmethod
@@ -194,7 +194,7 @@ class NtvfieldStructure:
 
         *Parameters*
 
-        - **listidx** : list of Ntvfield to transform
+        - **listidx** : list of Field to transform
 
         *Returns* : tuple of records added '''
         idx1 = listidx[0]
@@ -363,17 +363,17 @@ class NtvfieldStructure:
         return self
 
     def reorder(self, sort=None, inplace=True):
-        '''Change the Ntvfield order with a new order define by sort and reset the codec.
+        '''Change the Field order with a new order define by sort and reset the codec.
 
         *Parameters*
 
         - **sort** : int list (default None)- new record order to apply. If None, no change.
         - **inplace** : boolean (default True) - if True, new order is apply to self,
-        if False a new Ntvfield is created.
+        if False a new Field is created.
 
         *Returns*
 
-        - **Ntvfield** : self if inplace, new Ntvfield if not inplace'''
+        - **Field** : self if inplace, new Field if not inplace'''
         values = util.reorder(self.values, sort)
         codec, keys = util.resetidx(values)
         if inplace:
@@ -439,9 +439,9 @@ class NtvfieldStructure:
         *Parameters*
 
         - **keys** : list of keys to apply
-        - **inplace** : if True, update self data, else create a new Ntvfield
+        - **inplace** : if True, update self data, else create a new Field
 
-        *Returns* : self or new Ntvfield'''
+        *Returns* : self or new Field'''
         codec = util.tocodec(self.values, keys)
         if inplace:
             self._codec = codec
@@ -450,7 +450,7 @@ class NtvfieldStructure:
         return self.__class__(codec=codec, name=self.name, keys=keys)
 
     def setname(self, name):
-        '''update the Ntvfield name
+        '''update the Field name
 
         *Parameters*
 
@@ -515,12 +515,12 @@ class NtvfieldStructure:
 
         - **reverse** : boolean (defaut False) - codec is sorted with reverse order
         - **inplace** : boolean (default True) - if True, new order is apply to self,
-        if False a new Ntvfield is created.
+        if False a new Field is created.
         - **func**    : function (default str) - key used in the sorted function
 
         *Return*
 
-        - **Ntvfield** : self if inplace, new Ntvfield if not inplace'''
+        - **Field** : self if inplace, new Field if not inplace'''
         if inplace:
             self.reindex(codec=sorted(self._codec, reverse=reverse, key=func))
             self._keys.sort()
@@ -543,7 +543,7 @@ class NtvfieldStructure:
         *Returns* : None'''
         dic = util.idxlink(other._keys, self._keys)
         if not dic:
-            raise NtvfieldError("Ntvfield is not coupled or derived from other")
+            raise FieldError("Field is not coupled or derived from other")
         self._codec = [self._codec[dic[i]] for i in range(len(dic))]
         self._keys = other._keys
         if not coupling:
@@ -560,7 +560,7 @@ class NtvfieldStructure:
 
         *Return*
 
-        - **Ntvfield** : self if inplace, new Ntvfield if not inplace'''
+        - **Field** : self if inplace, new Field if not inplace'''
         if full:
             codec = self.values
             keys = list(range(len(codec)))

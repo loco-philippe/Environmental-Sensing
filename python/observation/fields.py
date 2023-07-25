@@ -4,11 +4,11 @@ Created on Sun May 28 19:34:03 2023
 
 @author: a lab in the Air
 """
-from observation.ntvfield import Ntvfield
+from observation.field import Field
 from json_ntv import Ntv, NtvSingle, NtvJsonEncoder
 import json
     
-class Nfield(Ntvfield):
+class Nfield(Field):
     ''' Nfield is a child class of NtvField where values are NTV objects
 
     The methods defined in this class are conversion methods:
@@ -91,7 +91,7 @@ class Nfield(Ntvfield):
         ''' return the name of the internal value'''
         return val.name   
     
-class Sfield(Ntvfield):
+class Sfield(Field):
     ''' Sfield is a child class of NtvField where inner and outer values are same
 
     The methods defined in this class are conversion methods:

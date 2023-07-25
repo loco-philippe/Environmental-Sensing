@@ -27,7 +27,7 @@ def identity(*args, **kwargs):
 
 
 class util:
-    ''' common functions for Ntvfield and Ntvdataset class'''
+    ''' common functions for Field and Dataset class'''
 # %% util
     c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
     c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
@@ -181,7 +181,7 @@ class util:
         if func in (None, []):
             return value
         lis = []
-        if not (isinstance(value, list) or value.__class__.__name__ in ['Ntvfield', 'Ntvdataset', 'Observation']):
+        if not (isinstance(value, list) or value.__class__.__name__ in ['Field', 'Dataset', 'Observation']):
             listval = [value]
         else:
             listval = value
@@ -267,9 +267,9 @@ class util:
                 return val.json(**option)
             else:
                 return {ES.valname[val.__class__.__name__]: val.json(**option)}
-        if val.__class__.__name__ == 'Ntvdataset':
+        if val.__class__.__name__ == 'Dataset':
             return {ES.ili_valName: val.json(**option)}
-        if val.__class__.__name__ == 'Ntvfield':
+        if val.__class__.__name__ == 'Field':
             return {ES.iin_valName: val.json(**option)}
         if val.__class__.__name__ == 'Observation':
             return {ES.obs_valName: val.to_obj(**option)}

@@ -10,7 +10,7 @@ spatial and temporal characteristics associated with measurable or observable
 
 The `Observation` Object is built around three main bricks :
 
-- Ntvdataset Object which deal with indexing,
+- Dataset Object which deal with indexing,
 - ESValue Object which integrate the specificities of environmental data,
 - Tools dedicated to particular domains
 ([Shapely](https://shapely.readthedocs.io/en/stable/manual.html)
@@ -35,18 +35,18 @@ from copy import copy
 import folium
 import cbor2
 
-from observation.ntvdataset import Ntvdataset
+from observation.dataset import Dataset
 from observation.util import util
-from observation.ntvfield_interface import NtvfieldEncoder, CborDecoder
+from observation.field_interface import FieldEncoder, CborDecoder
 from observation.esconstante import ES
 from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue, ESValueEncoder
-from observation.ntvdataset_analysis import Analysis
+from observation.dataset_analysis import Analysis
 
 
-class Observation(Ntvdataset):
+class Observation(Dataset):
     """
-    An `Observation` is derived from `observation.Ntvdataset` object.
+    An `Observation` is derived from `observation.Dataset` object.
 
     *Additional attributes (for @property see methods)* :
 
@@ -59,9 +59,9 @@ class Observation(Ntvdataset):
 
     - `Observation.dic`
     - `Observation.std`
-    - `python.observation.ntvdataset.Ntvdataset.obj`
+    - `python.observation.dataset.Dataset.obj`
     - `Observation.from_obj`
-    - `python.observation.ntvdataset.Ntvdataset.from_file`
+    - `python.observation.dataset.Dataset.from_file`
 
     *dynamic value (getters @property)*
 
@@ -75,88 +75,88 @@ class Observation(Ntvdataset):
 
     *dynamic value inherited (getters @property)*
 
-    - `python.observation.ntvdataset.Ntvdataset.extidx`
-    - `python.observation.ntvdataset.Ntvdataset.extidxext`
-    - `python.observation.ntvdataset.Ntvdataset.idxname`
-    - `python.observation.ntvdataset.Ntvdataset.idxlen`
-    - `python.observation.ntvdataset.Ntvdataset.iidx`
-    - `python.observation.ntvdataset.Ntvdataset.keys`
-    - `python.observation.ntvdataset.Ntvdataset.lenindex`
-    - `python.observation.ntvdataset.Ntvdataset.lenidx`
-    - `python.observation.ntvdataset.Ntvdataset.lidx`
-    - `python.observation.ntvdataset.Ntvdataset.lidxrow`
-    - `python.observation.ntvdataset.Ntvdataset.lvar`
-    - `python.observation.ntvdataset.Ntvdataset.lvarrow`
-    - `python.observation.ntvdataset.Ntvdataset.lname`
-    - `python.observation.ntvdataset.Ntvdataset.lunicname`
-    - `python.observation.ntvdataset.Ntvdataset.lunicrow`
-    - `python.observation.ntvdataset.Ntvdataset.setidx`
+    - `python.observation.dataset.Dataset.extidx`
+    - `python.observation.dataset.Dataset.extidxext`
+    - `python.observation.dataset.Dataset.idxname`
+    - `python.observation.dataset.Dataset.idxlen`
+    - `python.observation.dataset.Dataset.iidx`
+    - `python.observation.dataset.Dataset.keys`
+    - `python.observation.dataset.Dataset.lenindex`
+    - `python.observation.dataset.Dataset.lenidx`
+    - `python.observation.dataset.Dataset.lidx`
+    - `python.observation.dataset.Dataset.lidxrow`
+    - `python.observation.dataset.Dataset.lvar`
+    - `python.observation.dataset.Dataset.lvarrow`
+    - `python.observation.dataset.Dataset.lname`
+    - `python.observation.dataset.Dataset.lunicname`
+    - `python.observation.dataset.Dataset.lunicrow`
+    - `python.observation.dataset.Dataset.setidx`
 
     *global value (getters @property)*
 
-    - `python.observation.ntvdataset.Ntvdataset.complete`
-    - `python.observation.ntvdataset.Ntvdataset.consistent`
-    - `python.observation.ntvdataset.Ntvdataset.dimension`
-    - `python.observation.ntvdataset.Ntvdataset.lencomplete`
-    - `python.observation.ntvdataset.Ntvdataset.primary`
-    - `python.observation.ntvdataset.Ntvdataset.zip`
+    - `python.observation.dataset.Dataset.complete`
+    - `python.observation.dataset.Dataset.consistent`
+    - `python.observation.dataset.Dataset.dimension`
+    - `python.observation.dataset.Dataset.lencomplete`
+    - `python.observation.dataset.Dataset.primary`
+    - `python.observation.dataset.Dataset.zip`
 
     *selecting - infos methods*
 
-    - `python.observation.ntvdataset.Ntvdataset.couplingmatrix`
-    - `python.observation.ntvdataset.Ntvdataset.idxrecord`
-    - `python.observation.ntvdataset.Ntvdataset.indexinfos`
-    - `python.observation.ntvdataset.Ntvdataset.indicator`
-    - `python.observation.ntvdataset.Ntvdataset.iscanonorder`
-    - `python.observation.ntvdataset.Ntvdataset.isinrecord`
-    - `python.observation.ntvdataset.Ntvdataset.keytoval`
-    - `python.observation.ntvdataset.Ntvdataset.loc`
-    - `python.observation.ntvdataset.Ntvdataset.nindex`
-    - `python.observation.ntvdataset.Ntvdataset.record`
-    - `python.observation.ntvdataset.Ntvdataset.recidx`
-    - `python.observation.ntvdataset.Ntvdataset.recvar`
-    - `python.observation.ntvdataset.Ntvdataset.valtokey`
+    - `python.observation.dataset.Dataset.couplingmatrix`
+    - `python.observation.dataset.Dataset.idxrecord`
+    - `python.observation.dataset.Dataset.indexinfos`
+    - `python.observation.dataset.Dataset.indicator`
+    - `python.observation.dataset.Dataset.iscanonorder`
+    - `python.observation.dataset.Dataset.isinrecord`
+    - `python.observation.dataset.Dataset.keytoval`
+    - `python.observation.dataset.Dataset.loc`
+    - `python.observation.dataset.Dataset.nindex`
+    - `python.observation.dataset.Dataset.record`
+    - `python.observation.dataset.Dataset.recidx`
+    - `python.observation.dataset.Dataset.recvar`
+    - `python.observation.dataset.Dataset.valtokey`
 
     *add - update methods*
 
-    - `python.observation.ntvdataset.Ntvdataset.add`
-    - `python.observation.ntvdataset.Ntvdataset.addindex`
-    - `python.observation.ntvdataset.Ntvdataset.append`
+    - `python.observation.dataset.Dataset.add`
+    - `python.observation.dataset.Dataset.addindex`
+    - `python.observation.dataset.Dataset.append`
     - `Observation.appendObs`
-    - `python.observation.ntvdataset.Ntvdataset.delindex`
-    - `python.observation.ntvdataset.Ntvdataset.delrecord`
-    - `python.observation.ntvdataset.Ntvdataset.renameindex`
-    - `python.observation.ntvdataset.Ntvdataset.setname`
-    - `python.observation.ntvdataset.Ntvdataset.updateindex`
+    - `python.observation.dataset.Dataset.delindex`
+    - `python.observation.dataset.Dataset.delrecord`
+    - `python.observation.dataset.Dataset.renameindex`
+    - `python.observation.dataset.Dataset.setname`
+    - `python.observation.dataset.Dataset.updateindex`
 
     *structure management - methods*
 
-    - `python.observation.ntvdataset.Ntvdataset.applyfilter`
-    - `python.observation.ntvdataset.Ntvdataset.coupling`
-    - `python.observation.ntvdataset.Ntvdataset.full`
-    - `python.observation.ntvdataset.Ntvdataset.getduplicates`
-    - `python.observation.ntvdataset.Ntvdataset.merge`
-    - `python.observation.ntvdataset.Ntvdataset.reindex`
-    - `python.observation.ntvdataset.Ntvdataset.reorder`
-    - `python.observation.ntvdataset.Ntvdataset.setfilter`
-    - `python.observation.ntvdataset.Ntvdataset.sort`
-    - `python.observation.ntvdataset.Ntvdataset.swapindex`
-    - `python.observation.ntvdataset.Ntvdataset.setcanonorder`
-    - `python.observation.ntvdataset.Ntvdataset.tostdcodec`
+    - `python.observation.dataset.Dataset.applyfilter`
+    - `python.observation.dataset.Dataset.coupling`
+    - `python.observation.dataset.Dataset.full`
+    - `python.observation.dataset.Dataset.getduplicates`
+    - `python.observation.dataset.Dataset.merge`
+    - `python.observation.dataset.Dataset.reindex`
+    - `python.observation.dataset.Dataset.reorder`
+    - `python.observation.dataset.Dataset.setfilter`
+    - `python.observation.dataset.Dataset.sort`
+    - `python.observation.dataset.Dataset.swapindex`
+    - `python.observation.dataset.Dataset.setcanonorder`
+    - `python.observation.dataset.Dataset.tostdcodec`
 
     *exports methods*
 
     - `Observation.choropleth`
-    - `python.observation.ntvdataset.Ntvdataset.json`
-    - `python.observation.ntvdataset.Ntvdataset.plot`
-    - `python.observation.ntvdataset.Ntvdataset.to_csv`
-    - `python.observation.ntvdataset.Ntvdataset.to_file`
+    - `python.observation.dataset.Dataset.json`
+    - `python.observation.dataset.Dataset.plot`
+    - `python.observation.dataset.Dataset.to_csv`
+    - `python.observation.dataset.Dataset.to_file`
     - `Observation.to_obj`
     - `Observation.to_xarray`
-    - `python.observation.ntvdataset.Ntvdataset.to_dataframe`
-    - `python.observation.ntvdataset.Ntvdataset.view`
-    - `python.observation.ntvdataset.Ntvdataset.vlist`
-    - `python.observation.ntvdataset.Ntvdataset.voxel`
+    - `python.observation.dataset.Dataset.to_dataframe`
+    - `python.observation.dataset.Dataset.view`
+    - `python.observation.dataset.Dataset.vlist`
+    - `python.observation.dataset.Dataset.voxel`
     """
 
 # %% constructor
@@ -165,7 +165,7 @@ class Observation(Ntvdataset):
 
         *Parameters*
 
-        - **listidx**  : object (default None) - list of Ntvfield data or Ntvdataset or Observation
+        - **listidx**  : object (default None) - list of Field data or Dataset or Observation
         - **name**     : string (default None) - Obs name
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
 
@@ -179,7 +179,7 @@ class Observation(Ntvdataset):
             self.analysis = Analysis(self)
             return
 
-        if isinstance(listidx, Ntvdataset):
+        if isinstance(listidx, Dataset):
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.param = param
             self.name = name
@@ -187,9 +187,9 @@ class Observation(Ntvdataset):
             return
 
         if not listidx:
-            Ntvdataset.__init__(self)
+            Dataset.__init__(self)
         else:
-            Ntvdataset.__init__(self, listidx=listidx, reindex=reindex)
+            Dataset.__init__(self, listidx=listidx, reindex=reindex)
         self.name = name
         self.param = param
         return
@@ -201,13 +201,13 @@ class Observation(Ntvdataset):
 
         *Parameters*
 
-        - **idxdic** : dict (default None) - dict of Ntvfield element (Ntvfield name :
-        list of Ntvfield values)
+        - **idxdic** : dict (default None) - dict of Field element (Field name :
+        list of Field values)
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable
         - **name**     : string (default None) - Observation name
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
-        listidx = Ntvdataset.dic(idxdic, typevalue=typevalue)
+        listidx = Dataset.dic(idxdic, typevalue=typevalue)
         return cls(listidx=listidx, name=name, param=param)
 
     @classmethod
@@ -218,10 +218,10 @@ class Observation(Ntvdataset):
 
         *Parameters*
 
-        - **datation** : compatible Ntvfield (default None) - index for DatationValue
-        - **location** : compatible Ntvfield (default None) - index for LocationValue
-        - **property** : compatible Ntvfield (default None) - index for PropertyValue
-        - **result  ** : compatible Ntvfield (default None) - index for Variable(NamedValue)
+        - **datation** : compatible Field (default None) - index for DatationValue
+        - **location** : compatible Field (default None) - index for LocationValue
+        - **property** : compatible Field (default None) - index for PropertyValue
+        - **result  ** : compatible Field (default None) - index for Variable(NamedValue)
         - **name**     : string (default None) - Observation name
         - **param**    : dict (default None) - Dict with parameter data or user's data'''
         idxdic = {}
@@ -250,7 +250,7 @@ class Observation(Ntvdataset):
         *Parameters*
 
         - **bs** : bytes, string or dict data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
+        - **reindex** : boolean (default True) - if True, default codec for each Field
         - **context** : boolean (default True) - if False, only codec and keys are included'''
         if not bs:
             bs = {}
@@ -281,7 +281,7 @@ class Observation(Ntvdataset):
         if data and not isinstance(data, (list, dict)):
             raise ObsError('data is not a list and not a dict')
 
-        return cls(listidx=Ntvdataset.obj(data, reindex=reindex, context=context),
+        return cls(listidx=Dataset.obj(data, reindex=reindex, context=context),
                    name=name, param=param)
 
 # %% special
@@ -294,7 +294,7 @@ class Observation(Ntvdataset):
         stro = ''
         if self.name:
             stro = ES.name + ': ' + self.name + '\n'
-        stri = Ntvdataset.__str__(self)
+        stri = Dataset.__str__(self)
         if not stri == '':
             stro += ES.data + ':\n' + stri
         if self.param:
@@ -302,8 +302,8 @@ class Observation(Ntvdataset):
         return stro
 
     def __hash__(self):
-        '''return sum of all hash(Ntvfield)'''
-        return hash(json.dumps(self.param)) + hash(self.name) + Ntvdataset.__hash__(self)
+        '''return sum of all hash(Field)'''
+        return hash(json.dumps(self.param)) + hash(self.name) + Dataset.__hash__(self)
 
 # %% properties
     @property
@@ -482,7 +482,7 @@ class Observation(Ntvdataset):
                 lisobs[ES.param] = self.param
             if self.name:
                 lisobs[ES.name] = self.name
-            return [lisobs] + Ntvdataset.to_obj(self, modecodec='ndjson', id=self.id)
+            return [lisobs] + Dataset.to_obj(self, modecodec='ndjson', id=self.id)
         option2 = option | {'encoded': False, 'encode_format': 'json'}
         dic = {ES.type: ES.obs_classES}
 
@@ -490,7 +490,7 @@ class Observation(Ntvdataset):
             dic[ES.obs_name] = self.name
         if self.param:
             dic[ES.obs_param] = self.param
-        dic[ES.obs_data] = Ntvdataset.to_obj(self, **option2)
+        dic[ES.obs_data] = Dataset.to_obj(self, **option2)
         if option["json_param"] and self.param:
             dic[ES.obs_param] = self.param
         dic |= self._info(**option)
@@ -505,7 +505,7 @@ class Observation(Ntvdataset):
             js2 = dic
 
         if option['encoded'] and option['encode_format'] == 'json':
-            return json.dumps(js2, cls=NtvfieldEncoder)
+            return json.dumps(js2, cls=FieldEncoder)
         if option['encoded'] and option['encode_format'] == 'cbor':
             return cbor2.dumps(js2, datetime_as_timestamp=True,
                                timezone=datetime.timezone.utc, canonical=True)
@@ -532,7 +532,7 @@ class Observation(Ntvdataset):
         - **kwargs** : parameter for lisfunc
 
         *Returns* : DataArray '''
-        return Ntvdataset.to_xarray(self, info=info, idxname=idxname, varname=varname,
+        return Dataset.to_xarray(self, info=info, idxname=idxname, varname=varname,
                                fillvalue=fillvalue, fillextern=fillextern,
                                lisfunc=lisfunc, name=self.name, numeric=numeric,
                                npdtype=npdtype, attrs=self.param, **kwargs)
@@ -544,9 +544,9 @@ class Observation(Ntvdataset):
         *Parameters*
 
         - **json_info** : boolean (default False) - if True, add main information
-        about Observation and Ntvfield
+        about Observation and Field
         - **json_info_detail** : boolean (default False) - if True, add complemantary
-        information about Ntvfield
+        information about Field
         '''
         option = {"json_info": False, "json_info_detail": False} | kwargs
         dcobs = {}

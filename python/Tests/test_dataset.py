@@ -4,8 +4,8 @@ Created on Sat Jan 29 22:44:05 2022
 
 @author: Philippe@loco-labs.io
 
-The `observation.test_ntvdataset` module contains the unit tests (class unittest) for the
-`Ntvdataset` functions.
+The `observation.test_dataset` module contains the unit tests (class unittest) for the
+`Dataset` functions.
 """
 import unittest
 from copy import copy
@@ -13,20 +13,20 @@ import csv
 from math import nan
 from itertools import product
 import json
-from observation import Ntvdataset, Ntvfield
+from observation import Dataset, Field
 from json_ntv import Ntv
 from observation.fields import Nfield, Sfield
 from observation.datasets import Sdataset, Ndataset
 
 defv = 'default value'
 i1 = 'i1'
-field = {Ntvdataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
+field = {Dataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
 Dataset = Sdataset
 
 
-class Test_Ntvdataset(unittest.TestCase):
+class Test_Dataset(unittest.TestCase):
 
     def test_creation_unique(self):
         self.assertEqual(Dataset().to_ntv(), Ntv.obj({}))
@@ -622,11 +622,11 @@ class Test_Ntvdataset(unittest.TestCase):
         ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, 
                          order=['property', 'datation', 'location'])
         ob.majList(ES.dat_classES, ['name1', 'autre name', 'encore autre name3'], name=True)
-        self.assertEqual(ob.ntvdataset._idxfilter('isName', 'setidx', 0, 'name[1-9]'), [0,2])
-        self.assertEqual(Dataset._filter(ESValue.isName, ob.ntvdataset.setidx[0], True, 'name[1-9]'), [0,2])
-        self.assertEqual(Dataset._filter(LocationValue.link, ob.ntvdataset.setidx[1], 'within',
+        self.assertEqual(ob.dataset._idxfilter('isName', 'setidx', 0, 'name[1-9]'), [0,2])
+        self.assertEqual(Dataset._filter(ESValue.isName, ob.dataset.setidx[0], True, 'name[1-9]'), [0,2])
+        self.assertEqual(Dataset._filter(LocationValue.link, ob.dataset.setidx[1], 'within',
                                        LocationValue([[[6,41], [6,44], [4,44], [4,41], [6,41]]])), [2])
-        self.assertEqual(Dataset._filter(LocationValue.link, ob.ntvdataset.setidx[1], 'within',
+        self.assertEqual(Dataset._filter(LocationValue.link, ob.dataset.setidx[1], 'within',
                                        LocationValue.Box((4, 41, 6, 44))), [2])
         self.assertEqual(Dataset._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}), ESValue.getName), 'date1')
         self.assertTrue(Dataset._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}),
@@ -747,7 +747,7 @@ class Test_Ntvdataset(unittest.TestCase):
             for data in lis:
                 il = Dataset.from_ntv(data, decode_str=True)
                 for mode in ['full', 'default', 'optimize']:
-                    #print(to_ntv_ntvdataset(il, mode))
+                    #print(to_ntv_dataset(il, mode))
                     self.assertEqual(il, Dataset.from_ntv(il.to_ntv(mode)))
 
     def test_matrix(self):
@@ -766,7 +766,7 @@ class Test_Ntvdataset(unittest.TestCase):
                                   {"result":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 
                                              13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}]})    
         il = Dataset.from_ntv(ntv)
-        self.assertEqual(Ntvfield._periodic_keys(4,3,24), il.lindex[2].keys)
+        self.assertEqual(Field._periodic_keys(4,3,24), il.lindex[2].keys)
     """
     '''for forma in ['json', 'cbor']:
         #for forma in ['json', 'cbor']:

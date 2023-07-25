@@ -4,28 +4,28 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvfield` module contains the `Ntvfield` class.
+The `python.observation.field` module contains the `Field` class.
 
 Documentation is available in other pages :
 
-- The Json Standard for Ntvfield is defined [here](https://github.com/loco-philippe/
-Environmental-Sensing/tree/main/documentation/NtvdatasetJSON-Standard.pdf)
+- The Json Standard for Field is defined [here](https://github.com/loco-philippe/
+Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf)
 - The concept of 'indexed list' is described in
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 - The non-regression tests are at [this page](https://github.com/loco-philippe/
 Environmental-Sensing/blob/main/python/Tests/test_iindex.py)
 - The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/
-python/Examples/Ntvfield) are :
+python/Examples/Field) are :
     - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Ntvfield/Ntvfield_creation.ipynb)
+    python/Examples/Field/Field_creation.ipynb)
     - [value](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Ntvfield/Ntvfield_value.ipynb)
+    python/Examples/Field/Field_value.ipynb)
     - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Ntvfield/Ntvfield_update.ipynb)
+    python/Examples/Field/Field_update.ipynb)
     - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/
-    python/Examples/Ntvfield/Ntvfield_structure.ipynb)
+    python/Examples/Field/Field_structure.ipynb)
     - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/
-    blob/main/python/Examples/Ntvfield/Ntvfield_structure-analysis.ipynb)
+    blob/main/python/Examples/Field/Field_structure-analysis.ipynb)
 
 ---
 """
@@ -34,21 +34,21 @@ from copy import copy, deepcopy
 from abc import ABC, abstractmethod
 
 from observation.esconstante import ES
-from observation.ntvfield_interface import NtvfieldInterface, NtvfieldError
-from observation.ntvfield_structure import NtvfieldStructure
+from observation.field_interface import FieldInterface, FieldError
+from observation.field_structure import FieldStructure
 from observation.util import util
 from json_ntv import Ntv, NtvList
 
 
 
-class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
+class Field(FieldStructure, FieldInterface, ABC):
     # %% intro
     '''
-    An `Ntvfield` is a representation of an index list .
+    An `Field` is a representation of an index list .
 
     *Attributes (for dynamic attributes see @property methods)* :
 
-    - **name** : name of the Ntvfield
+    - **name** : name of the Field
     - **codec** : list of values for each key
     - **keys** : list of code values
 
@@ -56,86 +56,86 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
 
     *constructor (@classmethod)*
 
-    - `Ntvfield.bol`
-    - `Ntvfield.ntv`
-    - `Ntvfield.from_parent`
-    - `Ntvfield.from_ntv`
-    - `Ntvfield.merging`
+    - `Field.bol`
+    - `Field.ntv`
+    - `Field.from_parent`
+    - `Field.from_ntv`
+    - `Field.merging`
 
     *conversion abstract static methods (@abstractmethod, @staticmethod)*
 
-    - `Ntvfield.l_to_i`
-    - `Ntvfield.s_to_i`
-    - `Ntvfield.l_to_e`
-    - `Ntvfield.s_to_e`
-    - `Ntvfield.i_to_n`
-    - `Ntvfield.n_to_i`
-    - `Ntvfield.i_to_name`
+    - `Field.l_to_i`
+    - `Field.s_to_i`
+    - `Field.l_to_e`
+    - `Field.s_to_e`
+    - `Field.i_to_n`
+    - `Field.n_to_i`
+    - `Field.i_to_name`
 
     *dynamic value (getters @property)*
 
-    - `Ntvfield.values`
-    - `Ntvfield.val`
-    - `Ntvfield.cod`
-    - `Ntvfield.codec`
-    - `Ntvfield.infos`
-    - `Ntvfield.keys`
+    - `Field.values`
+    - `Field.val`
+    - `Field.cod`
+    - `Field.codec`
+    - `Field.infos`
+    - `Field.keys`
 
-    *add - update methods (`observation.ntvfield_structure.NtvfieldStructure`)*
+    *add - update methods (`observation.field_structure.FieldStructure`)*
 
-    - `Ntvfield.append`
-    - `Ntvfield.setcodecvalue`
-    - `Ntvfield.setcodeclist`
-    - `Ntvfield.setname`
-    - `Ntvfield.setkeys`
-    - `Ntvfield.setlistvalue`
-    - `Ntvfield.setvalue`
+    - `Field.append`
+    - `Field.setcodecvalue`
+    - `Field.setcodeclist`
+    - `Field.setname`
+    - `Field.setkeys`
+    - `Field.setlistvalue`
+    - `Field.setvalue`
 
-    *transform methods (`observation.ntvfield_structure.NtvfieldStructure`)*
+    *transform methods (`observation.field_structure.FieldStructure`)*
 
-    - `Ntvfield.coupling`
-    - `Ntvfield.extendkeys`
-    - `Ntvfield.full`
-    - `Ntvfield.reindex`
-    - `Ntvfield.reorder`
-    - `Ntvfield.sort`
-    - `Ntvfield.tocoupled`
-    - `Ntvfield.tostdcodec`
+    - `Field.coupling`
+    - `Field.extendkeys`
+    - `Field.full`
+    - `Field.reindex`
+    - `Field.reorder`
+    - `Field.sort`
+    - `Field.tocoupled`
+    - `Field.tostdcodec`
 
-    *getters methods (`observation.ntvfield_structure.NtvfieldStructure`)*
+    *getters methods (`observation.field_structure.FieldStructure`)*
 
-    - `Ntvfield.couplinginfos`
-    - `Ntvfield.derkeys`
-    - `Ntvfield.getduplicates`
-    - `Ntvfield.iscrossed`
-    - `Ntvfield.iscoupled`
-    - `Ntvfield.isderived`
-    - `Ntvfield.islinked`
-    - `Ntvfield.isvalue`
-    - `Ntvfield.iskeysfromderkeys`
-    - `Ntvfield.keysfromderkeys`
-    - `Ntvfield.keytoval`
-    - `Ntvfield.loc`
-    - `Ntvfield.recordfromkeys`
-    - `Ntvfield.recordfromvalue`
-    - `Ntvfield.valtokey`
+    - `Field.couplinginfos`
+    - `Field.derkeys`
+    - `Field.getduplicates`
+    - `Field.iscrossed`
+    - `Field.iscoupled`
+    - `Field.isderived`
+    - `Field.islinked`
+    - `Field.isvalue`
+    - `Field.iskeysfromderkeys`
+    - `Field.keysfromderkeys`
+    - `Field.keytoval`
+    - `Field.loc`
+    - `Field.recordfromkeys`
+    - `Field.recordfromvalue`
+    - `Field.valtokey`
 
-    *export methods (`observation.ntvfield_interface.NtvfieldInterface`)*
+    *export methods (`observation.field_interface.FieldInterface`)*
 
-    - `Ntvfield.json`
-    - `Ntvfield.to_obj`
-    - `Ntvfield.to_dict_obj`
-    - `Ntvfield.to_numpy`
-    - `Ntvfield.to_pandas`
-    - `Ntvfield.vlist`
-    - `Ntvfield.vName`
-    - `Ntvfield.vSimple`
+    - `Field.json`
+    - `Field.to_obj`
+    - `Field.to_dict_obj`
+    - `Field.to_numpy`
+    - `Field.to_pandas`
+    - `Field.vlist`
+    - `Field.vName`
+    - `Field.vSimple`
     '''
 
     def __init__(self, codec=None, name=None, keys=None,
                  lendefault=0, reindex=False, fast=False):
         '''
-        Ntvfield constructor.
+        Field constructor.
 
         *Parameters*
 
@@ -146,7 +146,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         - **reindex** : boolean (default True) - if True, default codec is apply
         - **fast**: boolean (default False) - codec is created with a list of json values 
         without control'''
-        if isinstance(codec, Ntvfield):
+        if isinstance(codec, Field):
             self._keys = copy(codec._keys)
             self._codec = deepcopy(codec._codec)
             self.name = copy(codec.name)
@@ -164,13 +164,13 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         if not name:
             name = ES.defaultindex
         if not (keys is None or isinstance(keys, list)):
-            raise NtvfieldError("keys not list")
+            raise FieldError("keys not list")
         if keys is None and leng == 0:
             keys = []
         elif keys is None:
             keys = [(i*len(codec))//leng for i in range(leng)]
         if not isinstance(codec, list):
-            raise NtvfieldError("codec not list")
+            raise FieldError("codec not list")
         if codec == []:
             keysset = util.tocodec(keys)
             #codec = [Ntv.obj(key) for key in keysset]
@@ -185,14 +185,14 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
     @classmethod
     def bol(cls, leng, notdef=None, name=None, default=True):
         '''
-        Ntvfield constructor (boolean value).
+        Field constructor (boolean value).
 
         *Parameters*
 
-        - **leng** : integer - length of the Ntvfield
+        - **leng** : integer - length of the Field
         - **notdef** : list (default None) - list of records without default value
         - **default** : boolean (default True) - default value
-        - **name** : string (default None) - name of Ntvfield'''
+        - **name** : string (default None) - name of Field'''
         values = [default] * leng
         if notdef:
             for item in notdef:
@@ -201,29 +201,29 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         
     @classmethod
     def from_parent(cls, codec, parent, name=None, reindex=False):
-        '''Generate an Ntvfield Object from specific codec and parent keys.
+        '''Generate an Field Object from specific codec and parent keys.
 
         *Parameters*
 
         - **codec** : list of objects
         - **name** : string (default None) - name of index (see data model)
-        - **parent** : Ntvfield, parent of the new Ntvfield
+        - **parent** : Field, parent of the new Field
         - **reindex** : boolean (default True) - if True, default codec is apply
 
-        *Returns* : Ntvfield '''
-        if isinstance(codec, Ntvfield):
+        *Returns* : Field '''
+        if isinstance(codec, Field):
             return copy(codec)
         return cls(codec=codec, name=name, keys=parent._keys, reindex=reindex)
 
     @classmethod 
     def ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
-        '''Generate an Ntvfield Object from a Ntv field object'''
+        '''Generate an Field Object from a Ntv field object'''
         return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex, decode_str=decode_str)
     
     @classmethod 
     def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False,
                  add_type=True):
-        '''Generate an Ntvfield Object from a Ntv field object'''
+        '''Generate an Field Object from a Ntv field object'''
         if isinstance(ntv_value, cls):
             return copy(ntv_value)
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
@@ -243,14 +243,14 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
 
     """@classmethod
     def from_dict_obj(cls, bsd, typevalue=ES.def_clsName, reindex=False):
-        '''Generate an Ntvfield Object from a dict value'''
+        '''Generate an Field Object from a dict value'''
         var = False
         if not isinstance(bsd, dict):
-            raise NtvfieldError('data is not a dict')
+            raise FieldError('data is not a dict')
         name = list(bsd.keys())[0]
         bsdv = list(bsd.values())[0]
         if not 'value' in bsdv:
-            raise NtvfieldError('value is not present')
+            raise FieldError('value is not present')
         value = bsdv['value']
         if not isinstance(value, list):
             value = [value]
@@ -275,14 +275,14 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
 
     @classmethod
     def merging(cls, listidx, name=None):
-        '''Create a new Ntvfield with values are tuples of listidx Ntvfield values
+        '''Create a new Field with values are tuples of listidx Field values
 
         *Parameters*
 
-        - **listidx** : list of Ntvfield to be merged.
-        - **name** : string (default : None) - Name of the new Ntvfield
+        - **listidx** : list of Field to be merged.
+        - **name** : string (default : None) - Name of the new Field
 
-        *Returns* : new Ntvfield'''
+        *Returns* : new Field'''
         if not name:
             name = str(list({idx.name for idx in listidx}))
         values = util.transpose([idx.values for idx in listidx])
@@ -359,7 +359,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
     def __setitem__(self, ind, value):
         ''' modify values item'''
         if ind < 0 or ind >= len(self):
-            raise NtvfieldError("out of bounds")
+            raise FieldError("out of bounds")
         self.setvalue(ind, value, extern=True)
 
     def __delitem__(self, ind):
@@ -380,7 +380,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
         return hash(tuple(self._codec)) + hash(tuple(self._keys))
 
     def __add__(self, other):
-        ''' Add other's values to self's values in a new Ntvfield'''
+        ''' Add other's values to self's values in a new Field'''
         newiindex = self.__copy__()
         newiindex.__iadd__(other)
         return newiindex
@@ -394,7 +394,7 @@ class Ntvfield(NtvfieldStructure, NtvfieldInterface, ABC):
 
         *Parameters*
 
-        - **other** : Ntvfield object to add to self object
+        - **other** : Field object to add to self object
         - **solve** : Boolean (default True) - If True, replace None other's codec value
         with self codec value.
 

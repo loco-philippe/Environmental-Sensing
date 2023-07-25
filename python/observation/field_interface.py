@@ -4,8 +4,8 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvfield_interface` module contains the `NtvfieldInterface` class
-(`python.observation.ntvfield.Ntvfield` methods).
+The `python.observation.field_interface` module contains the `FieldInterface` class
+(`python.observation.field.Field` methods).
 """
 # %% declarations
 import json
@@ -36,19 +36,19 @@ class CborDecoder(json.JSONDecoder):
         return dic2
 
 
-class NtvfieldError(Exception):
-    ''' Ntvfield Exception'''
+class FieldError(Exception):
+    ''' Field Exception'''
     # pass
 
 
-class NtvfieldEncoder(json.JSONEncoder):
-    """new json encoder for Ntvfield and Ntvdataset"""
+class FieldEncoder(json.JSONEncoder):
+    """new json encoder for Field and Dataset"""
 
     def default(self, o):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
         option = {'encoded': False, 'format': 'json'}
-        if o.__class__.__name__ in ('Ntvdataset', 'TimeSlot', 'Ndataset', 'Sdataset'):
+        if o.__class__.__name__ in ('Dataset', 'TimeSlot', 'Ndataset', 'Sdataset'):
             return o.json(**option)
         #if issubclass(o.__class__, ESValue):
         #    return o.json(**option)
@@ -61,17 +61,17 @@ class NtvfieldEncoder(json.JSONEncoder):
                 return json.JSONEncoder.default(self, o)
 
 
-class NtvfieldInterface:
-    '''this class includes Ntvfield methods :
+class FieldInterface:
+    '''this class includes Field methods :
 
-    - `NtvfieldInterface.json`
-    - `NtvfieldInterface.to_obj`
-    - `NtvfieldInterface.to_dict_obj`
-    - `NtvfieldInterface.to_numpy`
-    - `NtvfieldInterface.to_pandas`
-    - `NtvfieldInterface.vlist`
-    - `NtvfieldInterface.vName`
-    - `NtvfieldInterface.vSimple`
+    - `FieldInterface.json`
+    - `FieldInterface.to_obj`
+    - `FieldInterface.to_dict_obj`
+    - `FieldInterface.to_numpy`
+    - `FieldInterface.to_pandas`
+    - `FieldInterface.vlist`
+    - `FieldInterface.vName`
+    - `FieldInterface.vSimple`
     '''
 
 
@@ -87,13 +87,13 @@ class NtvfieldInterface:
         *Returns* 
 
         - **tuple** : name, dtype, codec, parent, keys, coef, leng
-            name (None or string): name of the Ntvfield
+            name (None or string): name of the Field
             dtype (None or string): type of data
-            codec (list): list of Ntvfield codec values
-            parent (None or int): Ntvfield parent or None
-            keys (None or list): Ntvfield keys
-            coef (None or int): coef if primary Ntvfield else None
-            leng (int): length of the Ntvfield
+            codec (list): list of Field codec values
+            parent (None or int): Field parent or None
+            keys (None or list): Field keys
+            coef (None or int): coef if primary Field else None
+            leng (int): length of the Field
         '''
         if field is None:
             return (None, None, [], ES.nullparent, None, None, 0)
@@ -145,7 +145,7 @@ class NtvfieldInterface:
             coef = i
             if lis[i-1] != lis[i]:
                 break
-        if lis == NtvfieldInterface._periodic_keys(coef, max(lis) + 1, len(lis)):
+        if lis == FieldInterface._periodic_keys(coef, max(lis) + 1, len(lis)):
             return coef
         return 0
 
@@ -172,11 +172,11 @@ class NtvfieldInterface:
 
     def to_numpy(self, func=None, codec=False, npdtype=None, **kwargs):
         '''
-        Transform Ntvfield in a Numpy array.
+        Transform Field in a Numpy array.
 
         *Parameters*
 
-        - **func** : function (default None) - function to apply for each value of the Ntvfield.
+        - **func** : function (default None) - function to apply for each value of the Field.
         If func is the 'index' string, values are replaced by raw values.
         - **npdtype** : string (default None) - numpy dtype for the Array ('object' if None)
         - **kwargs** : parameters to apply to the func function
@@ -237,11 +237,11 @@ class NtvfieldInterface:
     def to_pandas(self, func=None, codec=False, npdtype=None,
                   series=True, index=True, numpy=False, **kwargs):
         '''
-        Transform Ntvfield in a Pandas Series, Pandas DataFrame or Numpy array.
+        Transform Field in a Pandas Series, Pandas DataFrame or Numpy array.
 
         *Parameters*
 
-        - **func** : function (default None) - function to apply for each value of the Ntvfield.
+        - **func** : function (default None) - function to apply for each value of the Field.
         If func is the 'index' string, values are replaced by raw values.
         - **npdtype** : string (default None) - numpy dtype for the Array ('object' if None)
         - **series** : boolean (default True) - if True, return a Series. 
@@ -252,7 +252,7 @@ class NtvfieldInterface:
 
         *Returns* : Pandas Series, Pandas DataFrame, Numpy Array'''
         if len(self) == 0:
-            raise NtvfieldError("Ntvdataset is empty")
+            raise FieldError("Dataset is empty")
         if npdtype:
             npdtype = np.dtype(npdtype)
         else:

@@ -4,68 +4,68 @@ Created on Sun Oct  2 22:24:59 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvdataset_structure` module contains the `NtvdatasetStructure` class
-(`python.observation.ntvdataset.Ntvdataset` methods).
+The `python.observation.dataset_structure` module contains the `DatasetStructure` class
+(`python.observation.dataset.Dataset` methods).
 """
 
 # %% declarations
 from copy import copy
 
 from observation.esconstante import ES
-from observation.ntvfield import Ntvfield
+from observation.field import Field
 from observation.util import util
-from observation.ntvdataset_interface import NtvdatasetError
+from observation.dataset_interface import DatasetError
 from observation.fields import Sfield
 
 
-class NtvdatasetStructure:
-    '''this class includes Ntvdataset methods :
+class DatasetStructure:
+    '''this class includes Dataset methods :
 
     *selecting - infos methods*
 
-    - `NtvdatasetStructure.couplingmatrix`
-    - `NtvdatasetStructure.idxrecord`
-    - `NtvdatasetStructure.indexinfos`
-    - `NtvdatasetStructure.indicator`
-    - `NtvdatasetStructure.iscanonorder`
-    - `NtvdatasetStructure.isinrecord`
-    - `NtvdatasetStructure.keytoval`
-    - `NtvdatasetStructure.loc`
-    - `NtvdatasetStructure.nindex`
-    - `NtvdatasetStructure.record`
-    - `NtvdatasetStructure.recidx`
-    - `NtvdatasetStructure.recvar`
-    - `NtvdatasetStructure.tree`
-    - `NtvdatasetStructure.valtokey`
+    - `DatasetStructure.couplingmatrix`
+    - `DatasetStructure.idxrecord`
+    - `DatasetStructure.indexinfos`
+    - `DatasetStructure.indicator`
+    - `DatasetStructure.iscanonorder`
+    - `DatasetStructure.isinrecord`
+    - `DatasetStructure.keytoval`
+    - `DatasetStructure.loc`
+    - `DatasetStructure.nindex`
+    - `DatasetStructure.record`
+    - `DatasetStructure.recidx`
+    - `DatasetStructure.recvar`
+    - `DatasetStructure.tree`
+    - `DatasetStructure.valtokey`
 
     *add - update methods*
 
-    - `NtvdatasetStructure.add`
-    - `NtvdatasetStructure.addindex`
-    - `NtvdatasetStructure.append`
-    - `NtvdatasetStructure.delindex`
-    - `NtvdatasetStructure.delrecord`
-    - `NtvdatasetStructure.orindex`
-    - `NtvdatasetStructure.renameindex`
-    - `NtvdatasetStructure.setvar`
-    - `NtvdatasetStructure.setname`
-    - `NtvdatasetStructure.updateindex`
+    - `DatasetStructure.add`
+    - `DatasetStructure.addindex`
+    - `DatasetStructure.append`
+    - `DatasetStructure.delindex`
+    - `DatasetStructure.delrecord`
+    - `DatasetStructure.orindex`
+    - `DatasetStructure.renameindex`
+    - `DatasetStructure.setvar`
+    - `DatasetStructure.setname`
+    - `DatasetStructure.updateindex`
 
     *structure management - methods*
 
-    - `NtvdatasetStructure.applyfilter`
-    - `NtvdatasetStructure.coupling`
-    - `NtvdatasetStructure.full`
-    - `NtvdatasetStructure.getduplicates`
-    - `NtvdatasetStructure.mix`
-    - `NtvdatasetStructure.merging`
-    - `NtvdatasetStructure.reindex`
-    - `NtvdatasetStructure.reorder`
-    - `NtvdatasetStructure.setfilter`
-    - `NtvdatasetStructure.sort`
-    - `NtvdatasetStructure.swapindex`
-    - `NtvdatasetStructure.setcanonorder`
-    - `NtvdatasetStructure.tostdcodec`
+    - `DatasetStructure.applyfilter`
+    - `DatasetStructure.coupling`
+    - `DatasetStructure.full`
+    - `DatasetStructure.getduplicates`
+    - `DatasetStructure.mix`
+    - `DatasetStructure.merging`
+    - `DatasetStructure.reindex`
+    - `DatasetStructure.reorder`
+    - `DatasetStructure.setfilter`
+    - `DatasetStructure.sort`
+    - `DatasetStructure.swapindex`
+    - `DatasetStructure.setcanonorder`
+    - `DatasetStructure.tostdcodec`
     '''
     # %% methods
 
@@ -74,7 +74,7 @@ class NtvdatasetStructure:
 
         *Parameters*
 
-        - **other** : Ntvdataset object to add to self object
+        - **other** : Dataset object to add to self object
         - **name** : Boolean (default False) - Add values with same index name (True) or
         same index row (False)
         - **solve** : Boolean (default True) - If True, replace None other's codec value
@@ -82,9 +82,9 @@ class NtvdatasetStructure:
 
         *Returns* : self '''
         if self.lenindex != other.lenindex:
-            raise NtvdatasetError('length are not identical')
+            raise DatasetError('length are not identical')
         if name and sorted(self.lname) != sorted(other.lname):
-            raise NtvdatasetError('name are not identical')
+            raise DatasetError('name are not identical')
         for i in range(self.lenindex):
             if name:
                 self.lindex[i].add(other.lindex[other.lname.index(self.lname[i])],
@@ -98,7 +98,7 @@ class NtvdatasetStructure:
 
         *Parameters*
 
-        - **index** : Ntvfield - index to add (can be index Ntv representation)
+        - **index** : Field - index to add (can be index Ntv representation)
         - **first** : If True insert index at the first row, else at the end
         - **merge** : create a new index if merge is False
         - **update** : if True, update actual values if index name is present (and merge is True)
@@ -107,7 +107,7 @@ class NtvdatasetStructure:
         idx = self.field.ntv(index)
         idxname = self.lname
         if len(idx) != len(self) and len(self) > 0:
-            raise NtvdatasetError('sizes are different')
+            raise DatasetError('sizes are different')
         if not idx.name in idxname:
             if first:
                 self.lindex.insert(0, idx)
@@ -128,13 +128,13 @@ class NtvdatasetStructure:
 
         *Parameters*
 
-        - **record** :  list of new index values to add to Ntvdataset
+        - **record** :  list of new index values to add to Dataset
         - **unique** :  boolean (default False) - Append isn't done if unique
         is True and record present
         
         *Returns* : list - key record'''
         if self.lenindex != len(record):
-            raise NtvdatasetError('len(record) not consistent')
+            raise DatasetError('len(record) not consistent')
         record = self.field.l_to_i(record)
         if self.isinrecord(self.idxrecord(record), False) and unique:
             return None
@@ -148,11 +148,11 @@ class NtvdatasetStructure:
 
         - **reverse** :  boolean (default False) - delete record with filter's 
         value is reverse
-        - **filtname** : string (default ES.filter) - Name of the filter Ntvfield added
-        - **delfilter** :  boolean (default True) - If True, delete filter's Ntvfield
+        - **filtname** : string (default ES.filter) - Name of the filter Field added
+        - **delfilter** :  boolean (default True) - If True, delete filter's Field
         - **inplace** : boolean (default True) - if True, filter is apply to self,
 
-        *Returns* : self or new Ntvdataset'''
+        *Returns* : self or new Dataset'''
         if not filtname in self.lname:
             return None
         if inplace:
@@ -220,7 +220,7 @@ class NtvdatasetStructure:
                               parent[param], level, infos)
 
     def _couplingidx(self, idx, child, derived, param, parentparam, level, infos):
-        ''' Ntvfield coupling (included childrens of the Ntvfield)'''
+        ''' Field coupling (included childrens of the Field)'''
         inf = infos[idx]
         if inf['cat'] in ('coupled', 'unique') or inf[parentparam] == -1\
                 or inf[param] >= level or (derived and inf['cat'] == 'derived'):
@@ -238,7 +238,7 @@ class NtvdatasetStructure:
 
         *Parameters*
 
-        - **record** :  list - index values to remove to Ntvdataset
+        - **record** :  list - index values to remove to Dataset
         - **extern** : if True, compare record values to external representation 
         of self.value, else, internal
 
@@ -253,7 +253,7 @@ class NtvdatasetStructure:
         return row
 
     def delindex(self, delname=None, savename=None):
-        '''remove an Ntvfield or a list of Ntvfield.
+        '''remove an Field or a list of Field.
 
         *Parameters*
 
@@ -317,10 +317,10 @@ class NtvdatasetStructure:
         - **fillextern** : boolean(default True) - if True, fillvalue is converted 
         to internal value
         - **inplace** : boolean (default True) - if True, filter is apply to self,
-        - **complete** : boolean (default True) - if True, Ntvfield are ordered 
+        - **complete** : boolean (default True) - if True, Field are ordered 
         in canonical order
 
-        *Returns* : self or new Ntvdataset'''
+        *Returns* : self or new Dataset'''
         ilis = self if inplace else copy(self)
         if not idxname:
             idxname = ilis.primaryname
@@ -349,7 +349,7 @@ class NtvdatasetStructure:
         *Parameters*
 
         - **indexname** : list of string (default none) - name of indexes to check 
-        (if None, all Ntvfield)
+        (if None, all Field)
         - **resindex** : string (default None) - Add a new index named resindex 
         with check result (False if duplicate)
         - **indexview** : list of str (default None) - list of fields to return
@@ -382,7 +382,7 @@ class NtvdatasetStructure:
 
         *Parameters*
 
-        - **record** : list - value for each Ntvfield
+        - **record** : list - value for each Field
         - **extern** : if True, compare record values to external representation
         of self.value, else, internal
 
@@ -488,7 +488,7 @@ class NtvdatasetStructure:
         return [self.record(locr, extern=extern) for locr in locrow]
 
     def mix(self, other, fillvalue=None):
-        '''add other Ntvfield not included in self and add other's values'''
+        '''add other Field not included in self and add other's values'''
         sname = set(self.lname)
         oname = set(other.lname)
         newself = copy(self)
@@ -500,9 +500,9 @@ class NtvdatasetStructure:
         return newself.add(copother, name=True, solve=False)
 
     def merging(self, listname=None):
-        ''' add a new Ntvfield build with Ntvfield define in listname.
-        Values of the new Ntvfield are set of values in listname Ntvfield'''
-        self.addindex(Ntvfield.merging([self.nindex(name) for name in listname]))
+        ''' add a new Field build with Field define in listname.
+        Values of the new Field are set of values in listname Field'''
+        self.addindex(Field.merging([self.nindex(name) for name in listname]))
 
     def nindex(self, name):
         ''' index with name equal to attribute name'''
@@ -525,7 +525,7 @@ class NtvdatasetStructure:
 
         *Returns* : none '''
         if len(self) != 0 and len(self) != len(other) and len(other) != 0:
-            raise NtvdatasetError("the sizes are not equal")
+            raise DatasetError("the sizes are not equal")
         otherc = copy(other)
         for idx in otherc.lindex:
             self.addindex(idx, first=first, merge=merge, update=update)
@@ -632,7 +632,7 @@ class NtvdatasetStructure:
         - **filt** : list of boolean - values of the filter idx to add
         - **first** : boolean (default False) - If True insert index at the first row,
         else at the end
-        - **filtname** : string (default ES.filter) - Name of the filter Ntvfield added
+        - **filtname** : string (default ES.filter) - Name of the filter Field added
 
         *Returns* : self'''
         if not filt:
@@ -640,7 +640,7 @@ class NtvdatasetStructure:
         idx = self.field(filt, name=filtname)
         idx.reindex()
         if not idx.cod in ([True, False], [False, True], [True], [False]):
-            raise NtvdatasetError('filt is not consistent')
+            raise DatasetError('filt is not consistent')
         if unique:
             for name in self.lname:
                 if name[:len(ES.filter)] == ES.filter:
@@ -649,7 +649,7 @@ class NtvdatasetStructure:
         return self
 
     def setname(self, listname=None):
-        '''Update Ntvfield name by the name in listname'''
+        '''Update Field name by the name in listname'''
         for i in range(min(self.lenindex, len(listname))):
             self.lindex[i].name = listname[i]
         self.analysis.actualize()
@@ -691,7 +691,7 @@ class NtvdatasetStructure:
 
         *Returns* : self '''
         if self.lenindex != len(order):
-            raise NtvdatasetError('length of order and Ntvdataset different')
+            raise DatasetError('length of order and Dataset different')
         if not order or isinstance(order[0], int):
             self.lindex = [self.lindex[ind] for ind in order]
         elif isinstance(order[0], str):
@@ -704,11 +704,11 @@ class NtvdatasetStructure:
         *Parameters*
 
         - **inplace** : boolean  (default False) - if True apply transformation
-        to self, else to a new Ntvdataset
+        to self, else to a new Dataset
         - **full** : boolean (default True)- full codec if True, default if False
 
 
-        *Return Ntvdataset* : self or new Ntvdataset'''
+        *Return Dataset* : self or new Dataset'''
         lindex = [idx.tostdcodec(inplace=False, full=full)
                   for idx in self.lindex]
         if inplace:
@@ -717,7 +717,7 @@ class NtvdatasetStructure:
         return self.__class__(lindex, self.lvarname)
 
     def tree(self, mode='derived', width=5, lname=20, string=True):
-        '''return a string with a tree of derived Ntvfield.
+        '''return a string with a tree of derived Field.
 
          *Parameters*
 

@@ -60,13 +60,13 @@ Documentation is available in other pages :
 
 - The concepts of 'observation', 'indexed list' and 'ES value' are describe in
 [the wiki](https://github.com/loco-philippe/Environmental-Sensing/wiki) and in
-[the presentation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/Ntvdataset_principles.pdf).
+[the presentation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/Ilist_principles.pdf).
 - The non-regression tests are at
 [this page](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Tests)
 - Examples are
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples)
 - data exchange standard for [observation](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ObsJSON-Standard.pdf),
-[indexed list](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/NtvdatasetJSON-Standard.pdf) and
+[indexed list](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/IlistJSON-Standard.pdf) and
 [values](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ESJSON-Standard.pdf)
 
 Modules contain the following classes:
@@ -82,14 +82,14 @@ Modules contain the following classes:
     `python.observation.esvalue.PropertyValue`, `python.observation.esvalue.NamedValue`,
     `python.observation.esvalue.ExternValue`, `python.observation.esvalue_base.ESValue`)
 
-- Ntvdataset :
+- Dataset :
 
-    - `python.observation.ntvdataset`, `python.observation.ntvdataset_structure`, `python.observation.ntvdataset_interface`
+    - `python.observation.dataset`, `python.observation.dataset_structure`, `python.observation.dataset_interface`
 
-- Ntvfield :
+- Field :
 
-    - `python.observation.ntvfield`, `python.observation.ntvfield_structure`, 
-    `python.observation.ntvfield_interface`
+    - `python.observation.field`, `python.observation.ntvfieldructure`, 
+    `python.observation.field_interface`
 
 - TimeSlot :
 
@@ -102,17 +102,17 @@ Modules contain the following classes:
 from observation.esobservation import Observation
 from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue
-from observation.ntvdataset import Ntvdataset
-from observation.ntvdataset_interface import NtvdatasetInterface, NtvdatasetError
-from observation.ntvdataset_structure import NtvdatasetStructure
-from observation.ntvfield import Ntvfield
-from observation.ntvfield_structure import NtvfieldStructure
-from observation.ntvfield_interface import CborDecoder, NtvfieldError, NtvfieldEncoder, NtvfieldInterface
+from observation.dataset import Dataset
+from observation.dataset_interface import DatasetInterface, DatasetError
+from observation.dataset_structure import DatasetStructure
+from observation.field import Field
+from observation.field_structure import FieldStructure
+from observation.field_interface import CborDecoder, FieldError, FieldEncoder, FieldInterface
 from observation.fields import Nfield, Sfield
 from observation.datasets import Ndataset, Sdataset
 #from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
 from observation.util import util
 from observation.timeslot import TimeSlot
-from observation.ntvdataset_analysis import Analysis
+from observation.dataset_analysis import Analysis
 #print('package :', __package__)

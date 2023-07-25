@@ -4,23 +4,23 @@ Created on Thu May 26 20:30:00 2022
 
 @author: philippe@loco-labs.io
 
-The `python.observation.ntvdataset` module contains the `Ntvdataset` class.
+The `python.observation.dataset` module contains the `Dataset` class.
 
 Documentation is available in other pages :
 
-- The Json Standard for Ntvdataset is define
-[here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/NtvdatasetJSON-Standard.pdf)
+- The Json Standard for Dataset is define
+[here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/DatasetJSON-Standard.pdf)
 - The concept of 'indexed list' is describe in
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/Indexed-list).
 - The non-regression test are at
-[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_ntvdataset.py)
-- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Ntvdataset)
+[this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_dataset.py)
+- The [examples](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Dataset)
  are :
-    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_creation.ipynb)
-    - [variable](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_variable.ipynb)
-    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_update.ipynb)
-    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_structure.ipynb)
-    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Ntvdataset/Ntvdataset_structure-analysis.ipynb)
+    - [creation](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Dataset/Dataset_creation.ipynb)
+    - [variable](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Dataset/Dataset_variable.ipynb)
+    - [update](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Dataset/Dataset_update.ipynb)
+    - [structure](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Dataset/Dataset_structure.ipynb)
+    - [structure-analysis](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Examples/Dataset/Dataset_structure-analysis.ipynb)
 
 ---
 """
@@ -34,153 +34,153 @@ import csv
 
 from observation.fields import Nfield
 from observation.util import util
-from observation.ntvdataset_interface import NtvdatasetInterface, NtvdatasetError
-from observation.ntvdataset_structure import NtvdatasetStructure
-from observation.ntvdataset_analysis import Analysis
+from observation.dataset_interface import DatasetInterface, DatasetError
+from observation.dataset_structure import DatasetStructure
+from observation.dataset_analysis import Analysis
 from json_ntv.ntv import Ntv
 
-class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
+class Dataset(DatasetStructure, DatasetInterface, ABC):
     # %% intro
     '''
-    An `Ntvdataset` is a representation of an indexed list.
+    An `Dataset` is a representation of an indexed list.
 
     *Attributes (for @property see methods)* :
 
-    - **lindex** : list of Ntvfield
+    - **lindex** : list of Field
     - **analysis** : Analysis object (data structure)
 
     The methods defined in this class are :
 
     *constructor (@classmethod))*
 
-    - `Ntvdataset.ntv`
-    - `Ntvdataset.from_csv`
-    - `Ntvdataset.from_ntv`
-    - `Ntvdataset.from_file`
-    - `Ntvdataset.merge`
+    - `Dataset.ntv`
+    - `Dataset.from_csv`
+    - `Dataset.from_ntv`
+    - `Dataset.from_file`
+    - `Dataset.merge`
 
     *abstract static methods (@abstractmethod, @staticmethod)*
 
-    - `Ntvdataset.field_class`
+    - `Dataset.field_class`
     
     *dynamic value - module analysis (getters @property)*
 
-    - `Ntvdataset.extidx`
-    - `Ntvdataset.extidxext`
-    - `Ntvdataset.groups`
-    - `Ntvdataset.idxname`
-    - `Ntvdataset.idxlen`
-    - `Ntvdataset.iidx`
-    - `Ntvdataset.lenidx`
-    - `Ntvdataset.lidx`
-    - `Ntvdataset.lidxrow`
-    - `Ntvdataset.lisvar`
-    - `Ntvdataset.lvar`
-    - `Ntvdataset.lvarname`
-    - `Ntvdataset.lvarrow`
-    - `Ntvdataset.lunicname`
-    - `Ntvdataset.lunicrow`
-    - `Ntvdataset.primaryname`
-    - `Ntvdataset.setidx`
-    - `Ntvdataset.zip`
+    - `Dataset.extidx`
+    - `Dataset.extidxext`
+    - `Dataset.groups`
+    - `Dataset.idxname`
+    - `Dataset.idxlen`
+    - `Dataset.iidx`
+    - `Dataset.lenidx`
+    - `Dataset.lidx`
+    - `Dataset.lidxrow`
+    - `Dataset.lisvar`
+    - `Dataset.lvar`
+    - `Dataset.lvarname`
+    - `Dataset.lvarrow`
+    - `Dataset.lunicname`
+    - `Dataset.lunicrow`
+    - `Dataset.primaryname`
+    - `Dataset.setidx`
+    - `Dataset.zip`
 
     *dynamic value (getters @property)*
 
-    - `Ntvdataset.keys`
-    - `Ntvdataset.iindex`
-    - `Ntvdataset.indexlen`
-    - `Ntvdataset.lenindex`
-    - `Ntvdataset.lname`
-    - `Ntvdataset.tiindex`
+    - `Dataset.keys`
+    - `Dataset.iindex`
+    - `Dataset.indexlen`
+    - `Dataset.lenindex`
+    - `Dataset.lname`
+    - `Dataset.tiindex`
 
     *global value (getters @property)*
 
-    - `Ntvdataset.category`
-    - `Ntvdataset.complete`
-    - `Ntvdataset.consistent`
-    - `Ntvdataset.dimension`
-    - `Ntvdataset.lencomplete`
-    - `Ntvdataset.primary`
-    - `Ntvdataset.secondary`
+    - `Dataset.category`
+    - `Dataset.complete`
+    - `Dataset.consistent`
+    - `Dataset.dimension`
+    - `Dataset.lencomplete`
+    - `Dataset.primary`
+    - `Dataset.secondary`
 
-    *selecting - infos methods (`observation.ntvdataset_structure.NtvdatasetStructure`)*
+    *selecting - infos methods (`observation.dataset_structure.DatasetStructure`)*
 
-    - `Ntvdataset.couplingmatrix`
-    - `Ntvdataset.idxrecord`
-    - `Ntvdataset.indexinfos`
-    - `Ntvdataset.indicator`
-    - `Ntvdataset.iscanonorder`
-    - `Ntvdataset.isinrecord`
-    - `Ntvdataset.keytoval`
-    - `Ntvdataset.loc`
-    - `Ntvdataset.nindex`
-    - `Ntvdataset.record`
-    - `Ntvdataset.recidx`
-    - `Ntvdataset.recvar`
-    - `Ntvdataset.tree`
-    - `Ntvdataset.valtokey`
+    - `Dataset.couplingmatrix`
+    - `Dataset.idxrecord`
+    - `Dataset.indexinfos`
+    - `Dataset.indicator`
+    - `Dataset.iscanonorder`
+    - `Dataset.isinrecord`
+    - `Dataset.keytoval`
+    - `Dataset.loc`
+    - `Dataset.nindex`
+    - `Dataset.record`
+    - `Dataset.recidx`
+    - `Dataset.recvar`
+    - `Dataset.tree`
+    - `Dataset.valtokey`
 
-    *add - update methods (`observation.ntvdataset_structure.NtvdatasetStructure`)*
+    *add - update methods (`observation.dataset_structure.DatasetStructure`)*
 
-    - `Ntvdataset.add`
-    - `Ntvdataset.addindex`
-    - `Ntvdataset.append`
-    - `Ntvdataset.delindex`
-    - `Ntvdataset.delrecord`
-    - `Ntvdataset.orindex`
-    - `Ntvdataset.renameindex`
-    - `Ntvdataset.setvar`
-    - `Ntvdataset.setname`
-    - `Ntvdataset.updateindex`
+    - `Dataset.add`
+    - `Dataset.addindex`
+    - `Dataset.append`
+    - `Dataset.delindex`
+    - `Dataset.delrecord`
+    - `Dataset.orindex`
+    - `Dataset.renameindex`
+    - `Dataset.setvar`
+    - `Dataset.setname`
+    - `Dataset.updateindex`
 
-    *structure management - methods (`observation.ntvdataset_structure.NtvdatasetStructure`)*
+    *structure management - methods (`observation.dataset_structure.DatasetStructure`)*
 
-    - `Ntvdataset.applyfilter`
-    - `Ntvdataset.coupling`
-    - `Ntvdataset.full`
-    - `Ntvdataset.getduplicates`
-    - `Ntvdataset.mix`
-    - `Ntvdataset.merging`
-    - `Ntvdataset.reindex`
-    - `Ntvdataset.reorder`
-    - `Ntvdataset.setfilter`
-    - `Ntvdataset.sort`
-    - `Ntvdataset.swapindex`
-    - `Ntvdataset.setcanonorder`
-    - `Ntvdataset.tostdcodec`
+    - `Dataset.applyfilter`
+    - `Dataset.coupling`
+    - `Dataset.full`
+    - `Dataset.getduplicates`
+    - `Dataset.mix`
+    - `Dataset.merging`
+    - `Dataset.reindex`
+    - `Dataset.reorder`
+    - `Dataset.setfilter`
+    - `Dataset.sort`
+    - `Dataset.swapindex`
+    - `Dataset.setcanonorder`
+    - `Dataset.tostdcodec`
 
-    *exports methods (`observation.ntvdataset_interface.NtvdatasetInterface`)*
+    *exports methods (`observation.dataset_interface.DatasetInterface`)*
 
-    - `Ntvdataset.json`
-    - `Ntvdataset.plot`
-    - `Ntvdataset.to_obj`
-    - `Ntvdataset.to_csv`
-    - `Ntvdataset.to_dataframe`
-    - `Ntvdataset.to_file`
-    - `Ntvdataset.to_ntv`
-    - `Ntvdataset.to_obj`
-    - `Ntvdataset.to_xarray`
-    - `Ntvdataset.view`
-    - `Ntvdataset.vlist`
-    - `Ntvdataset.voxel`
+    - `Dataset.json`
+    - `Dataset.plot`
+    - `Dataset.to_obj`
+    - `Dataset.to_csv`
+    - `Dataset.to_dataframe`
+    - `Dataset.to_file`
+    - `Dataset.to_ntv`
+    - `Dataset.to_obj`
+    - `Dataset.to_xarray`
+    - `Dataset.view`
+    - `Dataset.vlist`
+    - `Dataset.voxel`
     '''
 
     field_class = None
     
     def __init__(self, listidx=None, reindex=True):
         '''
-        Ntvdataset constructor.
+        Dataset constructor.
 
         *Parameters*
 
-        - **listidx** :  list (default None) - list of Ntvfield data
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
+        - **listidx** :  list (default None) - list of Field data
+        - **reindex** : boolean (default True) - if True, default codec for each Field'''
 
         self.name     = self.__class__.__name__
         self.field    = self.field_class
         self.analysis = Analysis(self)
         self.lindex   = []
-        if listidx.__class__.__name__ in ['Ntvdataset', 'Observation', 'Ndataset', 'Sdataset']:
+        if listidx.__class__.__name__ in ['Dataset', 'Observation', 'Ndataset', 'Sdataset']:
             self.lindex = [copy(idx) for idx in listidx.lindex]
             return
         if not listidx:
@@ -194,29 +194,29 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
     """@classmethod
     def dic(cls, idxdic=None, reindex=True):
         '''
-        Ntvdataset constructor (external dictionnary).
+        Dataset constructor (external dictionnary).
 
         *Parameters*
 
         - **idxdic** : {name : values}  (see data model)
         if not idxdic:
             return cls.ext(idxval=None, idxname=None, reindex=reindex)
-        if isinstance(idxdic, Ntvdataset):
+        if isinstance(idxdic, Dataset):
             return idxdic
         if not isinstance(idxdic, dict):
-            raise NtvdatasetError("idxdic not dict")
+            raise DatasetError("idxdic not dict")
         return cls.ext(idxval=list(idxdic.values()), idxname=list(idxdic.keys()),
                        reindex=reindex)"""
 
     """@classmethod
     def ext(cls, idxval=None, idxname=None, reindex=True):
         '''
-        Ntvdataset constructor (external index).
+        Dataset constructor (external index).
 
         *Parameters*
 
-        - **idxval** : list of Ntvfield or list of values (see data model)
-        - **idxname** : list of string (default None) - list of Ntvfield name (see data model)
+        - **idxval** : list of Field or list of values (see data model)
+        - **idxname** : list of string (default None) - list of Field name (see data model)
         if idxval is None:
             idxval = []
         if not isinstance(idxval, list):
@@ -224,29 +224,29 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         val = [ [idx] if not isinstance(idx, list) else idx for idx in idxval]
         lenval = [len(idx) for idx in val]
         if lenval and max(lenval) != min(lenval):
-            raise NtvdatasetError('the length of Ntvfield are different')
+            raise DatasetError('the length of Field are different')
         length = lenval[0] if lenval else 0
         if idxname is None:
             idxname = [None] * len(val)
         for ind, name in enumerate(idxname):
             if name is None or name == ES.defaultindex:
                 idxname[ind] = 'i'+str(ind)
-        lidx = [list(NtvfieldInterface.decodeobj(
+        lidx = [list(FieldInterface.decodeobj(
             idx, typevalue, context=False)) for idx in val]
-        lindex = [Ntvfield(idx[2], name, list(range(length)), idx[1],
+        lindex = [Field(idx[2], name, list(range(length)), idx[1],
                          lendefault=length, reindex=reindex)
                   for idx, name in zip(lidx, idxname)]
         return cls(lindex, reindex=False)"""
 
     @classmethod
-    def from_csv(cls, filename='ntvdataset.csv', header=True, nrow=None, decode_str=True,
+    def from_csv(cls, filename='dataset.csv', header=True, nrow=None, decode_str=True,
                  decode_json=True, optcsv={'quoting': csv.QUOTE_NONNUMERIC}):
         '''
-        Ntvdataset constructor (from a csv file). Each column represents index values.
+        Dataset constructor (from a csv file). Each column represents index values.
 
         *Parameters*
 
-        - **filename** : string (default 'ntvdataset.csv'), name of the file to read
+        - **filename** : string (default 'dataset.csv'), name of the file to read
         - **header** : boolean (default True). If True, the first raw is dedicated to names
         - **nrow** : integer (default None). Number of row. If None, all the row else nrow
         - **optcsv** : dict (default : quoting) - see csv.reader options'''
@@ -288,7 +288,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         - **filename** : string - file name (with path)
         - **forcestring** : boolean (default False) - if True,
         forces the UTF-8 data format, else the format is calculated
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
+        - **reindex** : boolean (default True) - if True, default codec for each Field
         - **decode_str**: boolean (default False) - if True, string are loaded in json data
 
         *Returns* : new Object'''
@@ -310,42 +310,42 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         *Parameters*
 
         - **bsd** : bytes, string or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
+        - **reindex** : boolean (default True) - if True, default codec for each Field
         - **context** : boolean (default True) - if False, only codec and keys are included'''
         return cls.from_obj(bsd, reindex=reindex, context=context)"""
 
     @classmethod
     def ntv(cls, ntv_value, reindex=True):
-        '''Generate an Ntvdataset Object from a ntv_value
+        '''Generate an Dataset Object from a ntv_value
 
         *Parameters*
 
         - **ntv_value** : bytes, string, Ntv object to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield'''
+        - **reindex** : boolean (default True) - if True, default codec for each Field'''
         return cls.from_ntv(ntv_value, reindex=reindex)
     
     @classmethod
     def from_ntv(cls, ntv_value, reindex=True, decode_str=False):
-        '''Generate an Ntvdataset Object from a ntv_value
+        '''Generate an Dataset Object from a ntv_value
 
         *Parameters*
 
         - **ntv_value** : bytes, string, Ntv object to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
+        - **reindex** : boolean (default True) - if True, default codec for each Field
         - **decode_str**: boolean (default False) - if True, string are loaded in json data'''
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         if len(ntv) == 0:
             return cls()
         #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
         # decode: name, type, codec, parent, keys, coef, leng
-        #lidx = [list(Ntvfield.decode_ntv(ntvf)) for ntvf in ntv]
+        #lidx = [list(Field.decode_ntv(ntvf)) for ntvf in ntv]
         lidx = [list(cls.field_class.decode_ntv(ntvf)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
-            Ntvdataset._init_ntv_keys(ind, lidx, leng)
-        #lindex = [Ntvfield(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+            Dataset._init_ntv_keys(ind, lidx, leng)
+        #lindex = [Field(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
         lindex = [cls.field_class(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
@@ -353,12 +353,12 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
     """@classmethod
     def from_obj(cls, bsd=None, reindex=True, context=True):
         '''
-        Generate an Ntvdataset Object from a bytes, string or list value
+        Generate an Dataset Object from a bytes, string or list value
 
         *Parameters*
 
         - **bsd** : bytes, string, DataFrame or list data to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Ntvfield
+        - **reindex** : boolean (default True) - if True, default codec for each Field
         - **context** : boolean (default True) - if False, only codec and keys are included'''
         if isinstance(bsd, cls):
             return bsd
@@ -371,27 +371,27 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         elif isinstance(bsd, (list, dict)) or bsd.__class__.__name__ == 'DataFrame':
             lis = bsd
         else:
-            raise NtvdatasetError("the type of parameter is not available")
+            raise DatasetError("the type of parameter is not available")
         return cls._init_obj(lis, reindex=reindex, context=context)"""
 
     def merge(self, fillvalue=math.nan, reindex=False, simplename=False):
         '''
-        Merge method replaces Ntvdataset objects included into its constituents.
+        Merge method replaces Dataset objects included into its constituents.
 
         *Parameters*
 
         - **fillvalue** : object (default nan) - value used for the additional data
         - **reindex** : boolean (default False) - if True, set default codec after transformation
-        - **simplename** : boolean (default False) - if True, new Ntvfield name are
-        the same as merged Ntvfield name else it is a composed name.
+        - **simplename** : boolean (default False) - if True, new Field name are
+        the same as merged Field name else it is a composed name.
 
-        *Returns*: merged Ntvdataset '''
+        *Returns*: merged Dataset '''
         ilc = copy(self)
         delname = []
         row = ilc[0]
         if not isinstance(row, list):
             row = [row]
-        merged, oldname, newname = Ntvdataset._mergerecord(self.ext(row, ilc.lname),
+        merged, oldname, newname = Dataset._mergerecord(self.ext(row, ilc.lname),
                                                       simplename=simplename)
         if oldname and not oldname in merged.lname:
             delname.append(oldname)
@@ -402,7 +402,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
             row = ilc[ind]
             if not isinstance(row, list):
                 row = [row]
-            rec, oldname, newname = Ntvdataset._mergerecord(self.ext(row, ilc.lname),
+            rec, oldname, newname = Dataset._mergerecord(self.ext(row, ilc.lname),
                                                        simplename=simplename)
             if oldname and newname != [oldname]:
                 delname.append(oldname)
@@ -441,7 +441,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
                 val.append(idx)
         lenval = [len(idx) for idx in val]
         if lenval and max(lenval) != min(lenval):
-            raise NtvdatasetError('the length of Iindex are different')
+            raise DatasetError('the length of Iindex are different')
         length = lenval[0] if lenval else 0
         idxname = [None] * len(val) if idxname is None else idxname
         for ind, name in enumerate(idxname):
@@ -464,7 +464,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
             elif len(codec) == leng:    # full
                 lidx[ind][4] = list(range(leng))
             else:
-                raise NtvdatasetError('impossible to generate keys')
+                raise DatasetError('impossible to generate keys')
             return
         if keys and len(keys) > 1 and parent is None:  #complete
             return
@@ -473,9 +473,9 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
             lidx[ind][3] = None
             return  
         if parent is None:
-            raise NtvdatasetError('keys not referenced')          
+            raise DatasetError('keys not referenced')          
         if not lidx[parent][4] or len(lidx[parent][4]) != leng:
-            Ntvdataset._init_ntv_keys(parent, lidx, leng)
+            Dataset._init_ntv_keys(parent, lidx, leng)
         if not keys and len(codec) == len(lidx[parent][2]):    # implicit
             lidx[ind][4] = lidx[parent][4]
             lidx[ind][3] = None
@@ -554,23 +554,23 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         return res
 
     def __setitem__(self, ind, item):
-        ''' modify the Ntvfield values for each Ntvfield at the row ind'''
+        ''' modify the Field values for each Field at the row ind'''
         if not isinstance(item, list):
             item = [item]
         for val, idx in zip(item, self.lindex):
             idx[ind] = val
 
     def __delitem__(self, ind):
-        ''' remove all Ntvfield item at the row ind'''
+        ''' remove all Field item at the row ind'''
         for idx in self.lindex:
             del idx[ind]
 
     def __hash__(self):
-        '''return sum of all hash(Ntvfield)'''
+        '''return sum of all hash(Field)'''
         return sum([hash(idx) for idx in self.lindex])
 
     def _hashi(self):
-        '''return sum of all hashi(Ntvfield)'''
+        '''return sum of all hashi(Field)'''
         return sum([idx._hashi() for idx in self.lindex])
 
     def __eq__(self, other):
@@ -578,7 +578,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         return hash(self) == hash(other)
 
     def __add__(self, other):
-        ''' Add other's values to self's values in a new Ntvdataset'''
+        ''' Add other's values to self's values in a new Dataset'''
         newil = copy(self)
         newil.__iadd__(other)
         return newil
@@ -588,7 +588,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
         return self.add(other, name=True, solve=False)
 
     def __or__(self, other):
-        ''' Add other's index to self's index in a new Ntvdataset'''
+        ''' Add other's index to self's index in a new Dataset'''
         newil = copy(self)
         newil.__ior__(other)
         return newil
@@ -604,7 +604,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
 # %% property
     @property
     def complete(self):
-        '''return a boolean (True if Ntvdataset is complete and consistent)'''
+        '''return a boolean (True if Dataset is complete and consistent)'''
         return self.lencomplete == len(self) and self.consistent
 
     @property
@@ -616,12 +616,12 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
 
     @property
     def category(self):
-        ''' dict with category for each Ntvfield'''
+        ''' dict with category for each Field'''
         return {field['name']: field['cat'] for field in self.indexinfos()}
 
     @property
     def dimension(self):
-        ''' integer : number of primary Ntvfield'''
+        ''' integer : number of primary Field'''
         return len(self.primary)
 
     @property
@@ -636,7 +636,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
 
     @property
     def groups(self):
-        ''' list with crossed Ntvfield groups'''
+        ''' list with crossed Field groups'''
         return self.analysis.getgroups()
 
     @property
@@ -692,7 +692,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
 
     @property
     def lisvar(self):
-        '''list of boolean : True if Ntvfield is var'''
+        '''list of boolean : True if Field is var'''
         return [name in self.lvarname for name in self.lname]
 
     @property
@@ -702,7 +702,7 @@ class Ntvdataset(NtvdatasetStructure, NtvdatasetInterface, ABC):
 
     @property
     def lvarname(self):
-        ''' list of variable Ntvfield name'''
+        ''' list of variable Field name'''
         return self.analysis.getvarname()
 
     @property
