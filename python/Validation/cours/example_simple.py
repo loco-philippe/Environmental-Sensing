@@ -4,11 +4,11 @@ Created on Mon Apr  4 10:49:19 2022
 
 @author: philippe@loco-labs.io
 
-objet : exemple sur l'analyse des index
+objet : exemple sur l'analyse des Field
 points identifiés :
-    - type d'index : unique, dérivé, couplé, indépendant
+    - type de Field : unique, dérivé, couplé, indépendant
     - ratio de couplage : max 1 crossed, min 0 coupled ou derived
-    - regroupement d'index
+    - regroupement de Field
     - analyse de matrice de couplage
     - complémentation de données
     - génération de xarray
@@ -17,20 +17,20 @@ points identifiés :
 """
 
 import os, math
-os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from ilist import Ilist
+#os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
+from observation import Sdataset
 from pprint import pprint
 
-chemin = 'C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/validation/cours/'
-file    = chemin + 'example simple.csv'
-filebin = chemin + 'example simple.il'
+#chemin = 'C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/validation/cours/'
+#file    = chemin + 'example simple.csv'
+#filebin = chemin + 'example simple.il'
 
 #%% introduction
-simple = Ilist.Iedic(dicidx={'name' : ['saul', 'gus', 'skyler', 'saul'],
-                             'year' : [ 2000 ,  2020,   2021  ,  2000 ]})
-print(simple._dict()['coupled axes'])        # name and year are coupled (link 1 to 1)
+simple = Sdataset.ntv({'name' : ['saul', 'gus', 'skyler', 'saul'],
+                       'year' : [ 2000 ,  2020,   2021  ,  2000 ]})
+print(simple.couplingmatrix()[0][1]['typecoupl'])  # name and year are coupled (link 1 to 1)
 
-simple = Ilist.Iedic(dicidx={'name' : ['saul', 'gus', 'skyler', 'saul'],
+'''simple = Ilist.Iedic(dicidx={'name' : ['saul', 'gus', 'skyler', 'saul'],
                              'year' : [ 2000 ,  2021,   2021  ,  2000 ]})
 print(simple._dict()['derived axes'])        # year is derived from name (link 1 to n)
 
@@ -93,3 +93,4 @@ annew.swapindex([0,1,2,3,4,5])          # remove the new index 6
 #%% export xarray
 print('\n', annew.to_xarray(dimmax=2, name='dim 2', fillvalue=math.nan))   # choice to have two dimensions
 print('\n', annew.to_xarray(dimmax=3, name='dim 3', fillvalue=math.nan))   # choice to have three dimensions
+'''

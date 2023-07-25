@@ -120,7 +120,7 @@ class ESValue:
     - `ESValue.vSimple`
     """
 # %% constructor
-    @staticmethod
+    """@staticmethod
     # def from_obj(bs, classname=ES.nam_clsName):
     def from_obj(bs, classname=None, simple=True):
         '''Generate an ESValue Object from a bytes, json or dict object
@@ -581,7 +581,7 @@ class ESValue:
             name = str(list(bs2.keys())[0])
             val = list(bs2.values())[0]
         return (classname, name, val)
-
+    """
 
 class ESValueError(Exception):
     # %% ES except

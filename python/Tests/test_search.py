@@ -210,8 +210,8 @@ if __name__ == '__main__':
 """
 Insertion dans MongoDB :
 
-Chaque élément de chaque colonne forme un document qui n'est lié qu'aux index de son Iindex.
--> Les numéros de colonne sont remplacés par les noms des Iindex.
+Chaque élément de chaque colonne forme un document qui n'est lié qu'aux index de son Ntvfield.
+-> Les numéros de colonne sont remplacés par les noms des Ntvfield.
 
 OU BIEN
 

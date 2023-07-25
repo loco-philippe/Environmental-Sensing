@@ -61,7 +61,7 @@ from pymongo.command_cursor import CommandCursor
 import bson
 
 from observation.esobservation import Observation
-from observation.iindex import Iindex
+from observation.ntvfield import Ntvfield
 from observation.util import util
 from observation.timeslot import TimeSlot
 
@@ -438,7 +438,7 @@ class ESSearch:
 
         *Parameters*
 
-        - **path** :  str (required argument) - name of an IIndex, which corresponds to an Ilist column name, or name of a metadata element.
+        - **path** :  str (required argument) - name of an IIndex, which corresponds to an Ntvdataset column name, or name of a metadata element.
                     (ex: 'datation', 'location', 'property')
 
         - **operand** :  - (default None) - Object used for the comparison.
@@ -1060,11 +1060,11 @@ class ESSearch:
                     if new_lname[i] in obs.lname: values += obs.lindex[obs.lname.index(new_lname[i])].values # values of the column are added to the new column
                     else: values += [fillvalue] * len(obs) # when there is no value, filled with fillvalue
                 codec = util.tocodec(values)
-                lidx.append(Iindex(codec, new_lname[i], util.tokeys(values, codec)))
+                lidx.append(Ntvfield(codec, new_lname[i], util.tokeys(values, codec)))
 
         ## ESSearch._fusion() 3: Build the actual Observation
 
             return Observation(lidx)
-            # Il y aurait peut-être moyen d'optimiser un peu en remplaçant Iindex, util.tokeys et l'appel final d'Observation par des manipulations directes sur les objets.
+            # Il y aurait peut-être moyen d'optimiser un peu en remplaçant Ntvfield, util.tokeys et l'appel final d'Observation par des manipulations directes sur les objets.
             # faire la fusion directement sur les keys au lieu de la faire sur les codec ?
             # Avec la méthode actuelle, certaines opérations sont faites plusieurs fois.
