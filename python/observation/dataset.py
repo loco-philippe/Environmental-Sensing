@@ -336,16 +336,12 @@ class Dataset(DatasetStructure, DatasetInterface, ABC):
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         if len(ntv) == 0:
             return cls()
-        #leng = max([len(ntvi) for ntvi in ntv.ntv_value])
-        # decode: name, type, codec, parent, keys, coef, leng
-        #lidx = [list(Field.decode_ntv(ntvf)) for ntvf in ntv]
         lidx = [list(cls.field_class.decode_ntv(ntvf)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
             Dataset._init_ntv_keys(ind, lidx, leng)
-        #lindex = [Field(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
         lindex = [cls.field_class(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)

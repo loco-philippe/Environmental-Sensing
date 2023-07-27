@@ -95,7 +95,7 @@ class FieldInterface:
             coef (None or int): coef if primary Field else None
             leng (int): length of the Field
         '''
-        if field is None:
+        '''if field is None:
             return (None, None, [], ES.nullparent, None, None, 0)
         if isinstance(field, bytes):
             lis = cbor2.loads(field)
@@ -104,7 +104,8 @@ class FieldInterface:
         else:
             lis = field
 
-        ntv = Ntv.obj(lis)
+        ntv = Ntv.obj(lis)'''
+        ntv = Ntv.obj(field)
         typ = ntv.type_str if ntv.ntv_type else None
         nam = ntv.name
         val = ntv.val
