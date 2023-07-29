@@ -234,7 +234,7 @@ class Field(FieldStructure, FieldInterface, ABC):
         if parent and not extkeys:
             return None
         if coef:
-            keys = FieldInterface.keysfromcoef(coef, leng, lengkeys)
+            keys = FieldInterface.keysfromcoef(coef, leng//coef, lengkeys)
         elif extkeys and parent:
             keys = cls.keysfromderkeys(extkeys, keys)
         elif extkeys and not parent:

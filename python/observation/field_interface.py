@@ -221,6 +221,7 @@ class FieldInterface:
         if codecval or modecodec == 'nokeys':
             return NtvList(codec, idxname, ntv_type=def_type)
         if len(codec) == leng or modecodec == 'full':
+            #if (len(codec) == leng and not self.keys) or modecodec == 'full':
             #return NtvList(self.l_to_e(self.values), idxname, ntv_type=def_type)
             return NtvList(self.values, idxname, ntv_type=def_type)
         if modecodec == 'default':
