@@ -470,7 +470,7 @@ class Test_Field(unittest.TestCase):
             #print(idx, type(idx.values[0]))
             if idx:
                 for mode in ['full', 'default', 'optimize']:
-                    #print(Field.to_ntv(idx, mode))
+                    print(Field.to_ntv(idx, mode))
                     self.assertEqual(idx, Field.from_ntv(idx.to_ntv(mode)))
 
 if __name__ == '__main__':

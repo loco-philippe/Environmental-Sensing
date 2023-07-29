@@ -145,13 +145,15 @@ class FieldInterface:
             coef = i
             if lis[i-1] != lis[i]:
                 break
-        if lis == FieldInterface._periodic_keys(coef, max(lis) + 1, len(lis)):
+        if lis == FieldInterface.keysfromcoef(coef, max(lis) + 1, len(lis)):
             return coef
         return 0
 
     @staticmethod 
-    def _periodic_keys(coef, period, leng):
+    def keysfromcoef(coef, period, leng=None):
         ''' return a list of keys with periodic structure'''
+        if not leng:
+            leng = coef * period
         return None if not coef or not period else [ (ikey % (coef * period)) // coef 
                                                     for ikey in range(leng)]
     
@@ -185,7 +187,7 @@ class FieldInterface:
         return self.to_pandas(func=func, codec=codec, npdtype=npdtype, numpy=True, **kwargs)
 
     def to_ntv(self, modecodec='optimize', codecval=False, def_type=None, 
-               keys=None, parent=None, name=True):
+               keys=None, parent=None, name=True, coef=None):
         '''Return a Ntv field value
 
         *Parameters (kwargs)*
@@ -224,6 +226,9 @@ class FieldInterface:
         if modecodec == 'default':
             return NtvList([NtvList(codec, ntv_type=def_type), 
                             NtvList(self.keys, ntv_type='json')], idxname, ntv_type='json')
+        if coef:
+            return NtvList([NtvList(codec, ntv_type=def_type),
+                         NtvList([coef], ntv_type='json')], idxname, ntv_type='json')                        
         if modecodec == 'optimize':
             ntv_value = [NtvList(codec, ntv_type=def_type)]
             if not parent is None:
