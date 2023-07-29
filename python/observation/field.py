@@ -222,7 +222,7 @@ class Field(FieldStructure, FieldInterface, ABC):
     
     @classmethod 
     def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False,
-                 add_type=True):
+                 add_type=True, lengkeys=None):
         '''Generate an Field Object from a Ntv field object'''
         if isinstance(ntv_value, cls):
             return copy(ntv_value)
@@ -231,9 +231,11 @@ class Field(FieldStructure, FieldInterface, ABC):
         if ntv_value is None:
             return cls()
         name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv, format='json')
-        if (parent and not extkeys) or coef:
+        if parent and not extkeys:
             return None
-        if extkeys and parent:
+        if coef:
+            keys = FieldInterface.keysfromcoef(coef, leng//coef, lengkeys)
+        elif extkeys and parent:
             keys = cls.keysfromderkeys(extkeys, keys)
         elif extkeys and not parent:
             keys = extkeys

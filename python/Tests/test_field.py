@@ -18,7 +18,7 @@ from observation.fields import Nfield, Sfield
 from observation.datasets import Ndataset, Sdataset
 
 type_test = 'ntv'
-type_test = 'simple'
+#type_test = 'simple'
 
 if type_test == 'ntv':
     Field = Nfield
@@ -467,8 +467,9 @@ class Test_Field(unittest.TestCase):
             fields += [{'full_coord::point':    [[1,2], [3,4], [5,6]]}]
         for field in fields:
             idx = Field.from_ntv(field, reindex=False)
-            #print(idx, type(idx.values[0]))
+            #print('idx : ', idx)
             if idx:
+                #print('idx, field : ', idx, type(idx.values[0]), field)
                 for mode in ['full', 'default', 'optimize']:
                     #print(Field.to_ntv(idx, mode))
                     self.assertEqual(idx, Field.from_ntv(idx.to_ntv(mode)))
