@@ -67,7 +67,7 @@ class Nfield(Field):
         return Ntv.from_obj(val)
 
     @staticmethod
-    def n_to_i(ntv):
+    def n_to_i(ntv, fast=False):
         ''' converting a NTV value to an internal value'''
         return ntv
 
@@ -130,7 +130,7 @@ class Sfield(Field):
         ''' converting a list of external values to a list of internal values'''
         if fast:
             return lis
-        return [Sfield.s_to_i(val) for val in lis]
+        return [Sfield.s_to_i(val, fast) for val in lis]
     
     @staticmethod
     def s_to_i(val, fast=False):
@@ -148,13 +148,13 @@ class Sfield(Field):
         return val    
     
     @staticmethod
-    def n_to_i(ntv_lis):
+    def n_to_i(ntv_lis, fast=False):
         ''' converting a NtvList value to an internal value'''
         if isinstance(ntv_lis, list) and len(ntv_lis) == 0:
             return []
         if isinstance(ntv_lis, list) and ntv_lis[0].__class__.__name__ in ('NtvSingle', 'NtvList'):
-            return [Sfield.n_to_i(ntv.val) for ntv in ntv_lis]
-        return  Sfield.s_to_i(ntv_lis)
+            return [Sfield.n_to_i(ntv.val, fast) for ntv in ntv_lis]
+        return  Sfield.s_to_i(ntv_lis, fast)
     
     @staticmethod
     def l_to_e(lis, fast=False):

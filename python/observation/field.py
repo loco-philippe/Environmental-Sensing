@@ -144,8 +144,7 @@ class Field(FieldStructure, FieldInterface, ABC):
         - **name** : string (default None) - name of index (see data model)
         - **lendefault** : integer (default 0) - default len if no keys is defined
         - **reindex** : boolean (default True) - if True, default codec is apply
-        - **fast**: boolean (default False) - codec is created with a list of json values 
-        without control'''
+        - **fast**: boolean (default False) - if True, codec is created without conversion'''
         if isinstance(codec, Field):
             self._keys = copy(codec._keys)
             self._codec = deepcopy(codec._codec)
@@ -230,7 +229,7 @@ class Field(FieldStructure, FieldInterface, ABC):
         #ntv = NtvList(ntv_value)
         if ntv_value is None:
             return cls()
-        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv, format='json')
+        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv)
         if parent and not extkeys:
             return None
         if coef:

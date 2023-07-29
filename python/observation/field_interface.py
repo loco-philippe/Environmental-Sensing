@@ -76,13 +76,15 @@ class FieldInterface:
 
 
     @classmethod 
-    def decode_ntv(cls, field, format='json'):
+    def decode_ntv(cls, field, fast=False):
         '''Generate a tuple data from a Ntv value(bytes, string, json, Ntv object)
 
         *Parameters*
 
         - **field** : bytes, string json or Ntv object to convert
         - **format** : string (default 'json') - format to convert ntv_value
+        - **fast**: boolean (default False) - if True, codec is created without 
+        conversion, else codec is created with json structure
 
         *Returns* 
 
@@ -110,13 +112,13 @@ class FieldInterface:
         nam = ntv.name
         val = ntv.val
         if isinstance(ntv, NtvSingle):
-            return (nam, typ, [cls.s_to_i(val)], None, None, None, 1)
+            return (nam, typ, [cls.s_to_i(val, fast)], None, None, None, 1)
         if len(ntv) == 0:
-            return (nam, typ, cls.n_to_i(val), None, None, None, 0)
+            return (nam, typ, cls.n_to_i(val, fast), None, None, None, 0)
         if len(ntv) > 3 or isinstance(ntv[0], NtvSingle):
-            return (nam, typ, cls.n_to_i(val), None, None, None, len(ntv))
+            return (nam, typ, cls.n_to_i(val, fast), None, None, None, len(ntv))
         if len(ntv) == 1:
-            return (nam, typ, [cls.s_to_i(val)[0]], None, None, None, 1)
+            return (nam, typ, [cls.s_to_i(val, fast)[0]], None, None, None, 1)
 
         ntvc = ntv[0]
         leng = max(len(ind) for ind in ntv)
@@ -125,16 +127,17 @@ class FieldInterface:
         if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and \
             isinstance(ntv[1].val, (int, str)) and not isinstance(ntv[2], NtvSingle) and \
             isinstance(ntv[2][0].val, int):
-            return (nam, typc, cls.n_to_i(valc), ntv[1].val, ntv[2].to_obj(), None, leng)
+            return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, ntv[2].to_obj(), None, leng)
         if len(ntv) == 2 and len(ntv[1]) == 1 and \
             isinstance(ntv[1].val, (int, str)):
-            return (nam, typc, cls.n_to_i(valc), ntv[1].val, None, None, leng) 
+            return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, None, None, leng) 
         if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, list):
             leng = leng * ntv[1][0].val
-            return (nam, typc, cls.n_to_i(valc), None, None, ntv[1][0].val, leng) 
+            return (nam, typc, cls.n_to_i(valc, fast), None, None, ntv[1][0].val, leng) 
         if len(ntv) == 2 and len(ntv[1]) > 1  and isinstance(ntv[1][0].val, int):
-            return (nam, typc, cls.n_to_i(valc), None, ntv[1].to_obj(), None, leng)
-        return (nam, typ, val, None, None, None, len(ntv))
+            return (nam, typc, cls.n_to_i(valc, fast), None, ntv[1].to_obj(), None, leng)
+        #return (nam, typ, val, None, None, None, len(ntv))
+        return (nam, typ, cls.n_to_i(val, fast), None, None, None, len(ntv))
 
     @staticmethod 
     def encode_coef(lis):
