@@ -153,7 +153,8 @@ class Sfield(Field):
         if isinstance(ntv_lis, list) and len(ntv_lis) == 0:
             return []
         if isinstance(ntv_lis, list) and ntv_lis[0].__class__.__name__ in ('NtvSingle', 'NtvList'):
-            return [Sfield.n_to_i(ntv.val, fast) for ntv in ntv_lis]
+            #return [Sfield.n_to_i(ntv.val, fast) for ntv in ntv_lis]
+            return [Sfield.n_to_i(ntv.to_obj(), fast) for ntv in ntv_lis]
         return  Sfield.s_to_i(ntv_lis, fast)
     
     @staticmethod
