@@ -128,8 +128,7 @@ class FieldInterface:
             isinstance(ntv[1].val, (int, str)) and not isinstance(ntv[2], NtvSingle) and \
             isinstance(ntv[2][0].val, int):
             return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, ntv[2].to_obj(), None, leng)
-        if len(ntv) == 2 and len(ntv[1]) == 1 and \
-            isinstance(ntv[1].val, (int, str)):
+        if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, (int, str)):
             return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, None, None, leng) 
         if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, list):
             leng = leng * ntv[1][0].val
@@ -144,11 +143,17 @@ class FieldInterface:
         '''Generate a repetition coefficient for periodic list'''
         if len(lis) < 2:
             return 0
-        coef = 0
+        coef = 1
+        while coef != len(lis):
+            if lis[coef-1] != lis[coef]:
+                break
+            coef += 1
+        #print('coef : ', coef)
+        '''coef = 0
         for i in range(1,len(lis)):
             coef = i
             if lis[i-1] != lis[i]:
-                break
+                break'''
         if (not len(lis) % (coef * (max(lis) + 1)) and 
             lis == FieldInterface.keysfromcoef(coef, max(lis) + 1, len(lis))):
             return coef
