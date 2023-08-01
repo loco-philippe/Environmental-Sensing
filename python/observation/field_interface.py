@@ -168,6 +168,7 @@ class FieldInterface:
                                                     for ikey in range(leng)]
     
     def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
+        '''deprecated method'''
         option = {'encoded': False, 'format': 'json', 'untyped': False,
                   'codif': {}, 'geojson': False} | kwargs
         dic = {}
