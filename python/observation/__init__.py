@@ -78,13 +78,21 @@ Modules contain the following classes:
 - ESValue :
 
     - `python.observation.esvalue`(`python.observation.esvalue.DatationValue`,
-    `python.observation.esvalue.LocationValue`,
-    `python.observation.esvalue.PropertyValue`, `python.observation.esvalue.NamedValue`,
-    `python.observation.esvalue.ExternValue`, `python.observation.esvalue_base.ESValue`)
+    - `python.observation.esvalue.LocationValue`,
+    - `python.observation.esvalue.PropertyValue`, `python.observation.esvalue.NamedValue`,
+    - `python.observation.esvalue.ExternValue`, `python.observation.esvalue_base.ESValue`)
 
-- Dataset :
+- Datasets :
 
-    - `python.observation.dataset`, `python.observation.dataset_structure`, `python.observation.dataset_interface`
+    - `python.observation.datasets.Sdataset`, 
+    - `python.observation.datasets.Ndataset`, 
+
+- Dataset (abstract classes):
+
+    - `python.observation.dataset` , 
+    - `python.observation.dataset_structure`, 
+    - `python.observation.dataset_interface`
+    - `python.observation.dataset_analysis`
 
 - Field :
 

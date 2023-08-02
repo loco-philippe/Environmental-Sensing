@@ -97,16 +97,6 @@ class FieldInterface:
             coef (None or int): coef if primary Field else None
             leng (int): length of the Field
         '''
-        '''if field is None:
-            return (None, None, [], ES.nullparent, None, None, 0)
-        if isinstance(field, bytes):
-            lis = cbor2.loads(field)
-        elif isinstance(field, str) and field[0] in ['{', '[', '"']:
-            lis = json.loads(field) 
-        else:
-            lis = field
-
-        ntv = Ntv.obj(lis)'''
         ntv = Ntv.obj(field)
         typ = ntv.type_str if ntv.ntv_type else None
         nam = ntv.name
@@ -135,7 +125,6 @@ class FieldInterface:
             return (nam, typc, cls.n_to_i(valc, fast), None, None, ntv[1][0].val, leng) 
         if len(ntv) == 2 and len(ntv[1]) > 1  and isinstance(ntv[1][0].val, int):
             return (nam, typc, cls.n_to_i(valc, fast), None, ntv[1].to_obj(), None, leng)
-        #return (nam, typ, val, None, None, None, len(ntv))
         return (nam, typ, cls.n_to_i(val, fast), None, None, None, len(ntv))
 
     @staticmethod 

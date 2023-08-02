@@ -297,7 +297,8 @@ class FieldStructure:
         - **derkeys** : list of derived keys
 
         *Returns* : list of keys'''
-        return [derkeys[parentkeys[i]] for i in range(len(parentkeys))]
+        #return [derkeys[parentkeys[i]] for i in range(len(parentkeys))]
+        return [derkeys[pkey] for pkey in parentkeys]
 
     def loc(self, value, extern=True):
         '''return a list of record number with value

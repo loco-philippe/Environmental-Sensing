@@ -37,7 +37,7 @@ from observation.util import util
 from observation.dataset_interface import DatasetInterface, DatasetError
 from observation.dataset_structure import DatasetStructure
 from observation.dataset_analysis import Analysis
-from json_ntv.ntv import Ntv
+from json_ntv.ntv import Ntv, NtvConnector
 
 class Dataset(DatasetStructure, DatasetInterface, ABC):
     # %% intro
@@ -341,7 +341,8 @@ class Dataset(DatasetStructure, DatasetInterface, ABC):
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
-            Dataset._init_ntv_keys(ind, lidx, leng)
+            NtvConnector.init_ntv_keys(ind, lidx, leng)
+            #Dataset._init_ntv_keys(ind, lidx, leng)
         lindex = [cls.field_class(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)
@@ -449,7 +450,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC):
     
 # %% internal
 
-    @staticmethod
+    """@staticmethod
     def _init_ntv_keys(ind, lidx, leng):
         ''' initialization of explicit keys data in lidx object'''
         # name: 0, type: 1, codec: 2, parent: 3, keys: 4, coef: 5, leng: 6
@@ -465,7 +466,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC):
         if keys and len(keys) > 1 and parent is None:  #complete
             return
         if coef:  #primary
-            lidx[ind][4] = [ (ikey % (coef * len(codec))) // coef for ikey in range(leng)]
+            lidx[ind][4] = [(ikey % (coef * len(codec))) // coef for ikey in range(leng)]
             lidx[ind][3] = None
             return  
         if parent is None:
@@ -478,7 +479,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC):
             return
         lidx[ind][4] = Nfield.keysfromderkeys(lidx[parent][4], keys)  # relative
         lidx[ind][3] = None
-        return
+        return"""
 
     @staticmethod
     def _mergerecord(rec, mergeidx=True, updateidx=True, simplename=False):
