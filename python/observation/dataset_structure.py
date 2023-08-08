@@ -160,12 +160,11 @@ class DatasetStructure:
         else:
             ilis = copy(self)
         ifilt = ilis.lname.index(filtname)       
-        ilis.sort([ifilt], reverse= not reverse, func=None)
-        '''if self.field.__name__ == 'Sfield':
+        #ilis.sort([ifilt], reverse= not reverse, func=None)
+        if self.field.__name__ == 'Sfield':
             ilis.sort([ifilt], reverse= not reverse, func=None)
         else:
-            #ilis.sort([ifilt], reverse=reverse, func=None)
-            ilis.sort([ifilt], reverse= not reverse, func=None)'''
+            ilis.sort([ifilt], reverse=reverse, func=None)
         lisind = ilis.lindex[ifilt].recordfromvalue(reverse)
         if lisind:
             minind = min(lisind)

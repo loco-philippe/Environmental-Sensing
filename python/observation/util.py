@@ -386,8 +386,8 @@ class util:
     def tocodec(values, keys=None):
         '''extract a list of unique values'''
         if not keys:
-            return list(set(values))
-            #return list(dict.fromkeys(values))
+            #return list(set(values))
+            return list(dict.fromkeys(values))
         ind, codec = zip(*sorted(set(zip(keys, values))))
         return list(codec)
 
