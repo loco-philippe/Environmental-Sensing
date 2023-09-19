@@ -137,12 +137,6 @@ class FieldInterface:
             if lis[coef-1] != lis[coef]:
                 break
             coef += 1
-        #print('coef : ', coef)
-        '''coef = 0
-        for i in range(1,len(lis)):
-            coef = i
-            if lis[i-1] != lis[i]:
-                break'''
         if (not len(lis) % (coef * (max(lis) + 1)) and 
             lis == FieldInterface.keysfromcoef(coef, max(lis) + 1, len(lis))):
             return coef
