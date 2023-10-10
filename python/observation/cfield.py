@@ -1,62 +1,149 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Oct  2 22:24:59 2022
+Created on Tue Oct 10 22:26:38 2023
 
-@author: philippe@loco-labs.io
-
-The `python.observation.field_structure` module contains the `FieldStructure` class
-(`python.observation.field.Field` methods).
+@author: a lab in the Air
 """
-#from collections import defaultdict, Counter
 
-#from observation.util import util
-#from observation.esconstante import ES
-#from observation.field_interface import FieldError
+from copy import copy, deepcopy
+from collections import defaultdict, Counter
 
-from observation.cfield import Cfield
+from observation.util import util
+from observation.esconstante import ES
+from observation.field_interface import FieldError
 
-class FieldStructure(Cfield):
-    '''this class includes Field methods :
 
-    *add - update methods*
+class Cfield:
+    '''
+    '''
+    def __init__(self, codec, name, keys):
+        self._keys = keys
+        self._codec = codec
+        self.name = name
+        
+    def __repr__(self):
+        '''return classname and number of value'''
+        return self.__class__.__name__ + '[' + str(len(self)) + ']'
+    
+    def __eq__(self, other):
+        ''' equal if class and values are equal'''
+        return self.__class__ .__name__ == other.__class__.__name__ and self.values == other.values
 
-    - `FieldStructure.append`
-    - `FieldStructure.setcodecvalue`
-    - `FieldStructure.setcodeclist`
-    - `FieldStructure.setname`
-    - `FieldStructure.setkeys`
-    - `FieldStructure.setlistvalue`
-    - `FieldStructure.setvalue`
+    def __len__(self):
+        ''' len of values'''
+        return len(self._keys)
+    
+    def __contains__(self, item):
+        ''' item of values'''
+        return item in self.values
 
-    *transform methods*
+    def __getitem__(self, ind):
+        ''' return value item (value conversion)'''
+        if isinstance(ind, tuple):
+            return [copy(self.values[i]) for i in ind]
+        #return self.values[ind]
+        return copy(self.values[ind])
+    
+    def __setitem__(self, ind, value):
+        ''' modify values item'''
+        if ind < 0 or ind >= len(self):
+            raise FieldError("out of bounds")
+        self.setvalue(ind, value, extern=True)
 
-    - `FieldStructure.coupling`
-    - `FieldStructure.extendkeys`
-    - `FieldStructure.full`
-    - `FieldStructure.reindex`
-    - `FieldStructure.reorder`
-    - `FieldStructure.sort`
-    - `FieldStructure.tocoupled`
-    - `FieldStructure.tostdcodec`
+    def __delitem__(self, ind):
+        '''remove a record (value and key).'''
+        self._keys.pop(ind)
+        self.reindex()
 
-    *getters methods*
+    def __hash__(self):
+        '''return hash(values)'''
+        return hash(tuple(self.values))
 
-    - `FieldStructure.couplinginfos`
-    - `FieldStructure.derkeys`
-    - `FieldStructure.getduplicates`
-    - `FieldStructure.iscrossed`
-    - `FieldStructure.iscoupled`
-    - `FieldStructure.isderived`
-    - `FieldStructure.islinked`
-    - `FieldStructure.isvalue`
-    - `FieldStructure.iskeysfromderkeys`
-    - `FieldStructure.keysfromderkeys`
-    - `FieldStructure.keytoval`
-    - `FieldStructure.loc`
-    - `FieldStructure.recordfromkeys`
-    - `FieldStructure.recordfromvalue`
-    - `FieldStructure.valtokey`  '''
+    def _hashe(self):
+        '''return hash(values)'''
+        return hash(tuple(self.values))
 
+    def _hashi(self):
+        '''return hash(codec) + hash(keys)'''
+        return hash(tuple(self._codec)) + hash(tuple(self._keys))
+
+    def __add__(self, other):
+        ''' Add other's values to self's values in a new Field'''
+        newiindex = self.__copy__()
+        newiindex.__iadd__(other)
+        return newiindex
+
+    def __iadd__(self, other):
+        ''' Add other's values to self's values'''
+        return self.add(other, solve=False)
+    
+    def add(self, other, solve=True):
+        ''' Add other's values to self's values
+
+        *Parameters*
+
+        - **other** : Field object to add to self object
+        - **solve** : Boolean (default True) - If True, replace None other's codec value
+        with self codec value.
+
+        *Returns* : self '''
+        if solve:
+            solved = copy(other)
+            for i in range(len(solved._codec)):
+                if not util.isNotNull(solved._codec[i]) and i in range(len(self._codec)):
+                    solved._codec[i] = self._codec[i]
+            values = self.values + solved.values
+        else:
+            values = self.values + other.values
+        codec = util.tocodec(values)
+        if set(codec) != set(self._codec):
+            self._codec = codec
+        self._keys = util.tokeys(values, self._codec)
+        return self
+
+    def __copy__(self):
+        ''' Copy all the data '''
+        return self.__class__(self)
+    
+    @property
+    def codec(self):
+        '''return codec  '''
+        return self._codec
+
+    @property
+    def infos(self):
+        '''return dict with lencodec, typecodec, ratecodec, mincodec, maxcodec'''
+        maxi = len(self)
+        mini = len(set(self._codec))
+        xlen = len(self._codec)
+        rate = 0.0
+        if maxi == 0:
+            typecodec = 'null'
+        elif xlen == 1:
+            typecodec = 'unique'
+        elif mini == maxi:
+            typecodec = 'complete'
+        elif xlen == maxi:
+            typecodec = 'full'
+        else:
+            rate = (maxi - xlen) / (maxi - mini)
+            if xlen == mini:
+                typecodec = 'default'
+            else:
+                typecodec = 'mixed'
+        return {'lencodec': xlen, 'mincodec': mini, 'maxcodec': maxi,
+                'typecodec': typecodec, 'ratecodec': rate}
+
+    @property
+    def keys(self):
+        '''return keys  '''
+        return self._keys
+
+    @property
+    def values(self):
+        '''return values (see data model)'''
+        return [self._codec[key] for key in self._keys]
+    
     def append(self, value, unique=True):
         '''add a new value
 
@@ -66,9 +153,8 @@ class FieldStructure(Cfield):
         - **unique** :  boolean (default True) - If False, duplication codec if value is present
 
         *Returns* : key of value '''
-        return super().append(self.s_to_i(value), unique)
-        """#value = Ntv.obj(value)
-        value = self.s_to_i(value)
+        #value = Ntv.obj(value)
+        #value = self.s_to_i(value)
         if value in self._codec and unique:
             key = self._codec.index(value)
         else:
@@ -108,7 +194,7 @@ class FieldStructure(Cfield):
             return self.getduplicates(reindex)
         if reindex:
             self.reindex()
-        return
+        return    
 
     def couplinginfos(self, other, default=False):
         '''return a dict with the coupling info between other (distance, ratecpl,
@@ -163,7 +249,7 @@ class FieldStructure(Cfield):
         else:
             dic['typecoupl'] = 'link'
         return dic
-
+    
     def derkeys(self, parent):
         '''return keys derived from parent keys
 
@@ -177,8 +263,8 @@ class FieldStructure(Cfield):
             derkey[parent._keys[i]] = self._keys[i]
         if min(derkey) < 0:
             raise FieldError("parent is not a derive Field")
-        return derkey
-
+        return derkey    
+    
     def extendkeys(self, keys):
         '''add keys to the Field
 
@@ -232,8 +318,8 @@ class FieldStructure(Cfield):
                 duplicates += dkeys[codecitem]
         if reindex:
             self.reindex()
-        return tuple(duplicates)
-
+        return tuple(duplicates)    
+    
     def iscrossed(self, other):
         '''return True if self is crossed to other'''
         return self.couplinginfos(other)['rateder'] == 1.0
@@ -259,23 +345,17 @@ class FieldStructure(Cfield):
     def islinked(self, other):
         '''return True if self is linked to other'''
         rate = self.couplinginfos(other)['rateder']
-        return 0.0 < rate < 1.0
-    """
+        return 0.0 < rate < 1.0    
 
-    def isvalue(self, value, extern=True):
+    def isvalue(self, value):
         ''' return True if value is in index values
 
         *Parameters*
 
-        - **value** : value to check
-        - **extern** : if True, compare value to external representation of self.value,
-        else, internal'''
-        if extern:
-            return value in self.val
-        #return value in self.values
-        return super().isvalue(value)
+        - **value** : value to check'''
+        return value in self.values
 
-    def keytoval(self, key, extern=True):
+    def keytoval(self, key):
         ''' return the value of a key
 
         *Parameters*
@@ -288,14 +368,8 @@ class FieldStructure(Cfield):
         - **int** : first key finded (None else)'''
         if key < 0 or key >= len(self._codec):
             return None
-        if extern:
-            #return self.cod[key]
-            #return self.s_to_e(self._codec[key])
-            return self.s_to_e(super().keytoval(key))
-        return super().keytoval(key)
-        #return self._codec[key]
-
-    """
+        return self._codec[key]    
+    
     @staticmethod
     def keysfromderkeys(parentkeys, derkeys):
         '''return keys from parent keys and derkeys
@@ -308,9 +382,20 @@ class FieldStructure(Cfield):
         *Returns* : list of keys'''
         #return [derkeys[parentkeys[i]] for i in range(len(parentkeys))]
         return [derkeys[pkey] for pkey in parentkeys]
-    """
+    
+    def loc(self, value):
+        '''return a list of record number with value
 
-    def loc(self, value, extern=True):
+        *Parameters*
+
+        - **value** : value to check
+
+        *Returns*
+
+        - **list of int** : list of record number finded (None else)'''
+        return self.recordfromvalue(value)    
+    
+    def recordfromvalue(self, value):
         '''return a list of record number with value
 
         *Parameters*
@@ -322,32 +407,13 @@ class FieldStructure(Cfield):
         *Returns*
 
         - **list of int** : list of record number finded (None else)'''
-        return self.recordfromvalue(value, extern=extern)
 
-    def recordfromvalue(self, value, extern=True):
-        '''return a list of record number with value
-
-        *Parameters*
-
-        - **value** : value to check
-        - **extern** : if True, compare value to external representation of self.value,
-        else, internal
-
-        *Returns*
-
-        - **list of int** : list of record number finded (None else)'''
-
-        if extern:
-            return super().recordfromvalue(self.s_to_i(value))
-            #value = self.s_to_i(value)
-        return super().recordfromvalue(value)
-        """if not value in self._codec:
+        if not value in self._codec:
             return None
         listkeys = [cod for cod, val in zip(
             range(len(self._codec)), self._codec) if val == value]
-        return self.recordfromkeys(listkeys)"""
-
-    """
+        return self.recordfromkeys(listkeys)    
+    
     def recordfromkeys(self, listkeys):
         '''return a list of record number with key in listkeys
 
@@ -395,27 +461,19 @@ class FieldStructure(Cfield):
             self._codec = codec
             return None
         return self.__class__(name=self.name, codec=codec, keys=keys)
-    """
-
-    def setcodecvalue(self, oldvalue, newvalue, extern=True,
-                      nameonly=False, valueonly=False):
+    
+    def setcodecvalue(self, oldvalue, newvalue, nameonly=False, valueonly=False):
         '''update all the oldvalue by newvalue
 
         *Parameters*
 
         - **oldvalue** : list of values to replace
         - **newvalue** : list of new value to apply
-        - **extern** : if True, the newvalue has external representation, else internal
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : int - last codec rank updated (-1 if None)'''
-        if extern:
-            return super().setcodecvalue(self.s_to_i(oldvalue), self.s_to_i(newvalue),
-                                         nameonly, valueonly)
-            #newvalue = self.s_to_i(newvalue)
-            #oldvalue = self.s_to_i(oldvalue)
-        """return super().setcodecvalue(oldvalue, newvalue, nameonly, valueonly)
+
         rank = -1
         for i in range(len(self._codec)):
             if self._codec[i] == oldvalue:
@@ -426,26 +484,20 @@ class FieldStructure(Cfield):
                 else:
                     self._codec[i] = newvalue
                 rank = i
-        return rank"""
-
-    def setcodeclist(self, listcodec, extern=True, nameonly=False, valueonly=False):
+        return rank
+    
+    def setcodeclist(self, listcodec, nameonly=False, valueonly=False):
         '''update codec with listcodec values
 
         *Parameters*
 
         - **listcodec** : list of new codec values to apply
-        - **extern** : if True, the newvalue has external representation, else internal
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : int - last codec rank updated (-1 if None)'''
-        if extern:
-            super().setcodeclist(self.l_to_i(listcodec), nameonly, valueonly)
-            #listcodec = self.l_to_i(listcodec)
-        super().setcodeclist(listcodec, nameonly, valueonly)
-        #self._codec = listcodec
+        self._codec = listcodec
 
-    """
     def set_keys(self, keys):
         ''' _keys setters '''
         self._keys = keys
@@ -481,52 +533,39 @@ class FieldStructure(Cfield):
         if isinstance(name, str):
             self.name = name
             return True
-        return False
-    """
-
-    def setvalue(self, ind, value, extern=True, nameonly=False, valueonly=False):
+        return False    
+    
+    def setvalue(self, ind, value, nameonly=False, valueonly=False):
         '''update a value at the rank ind (and update codec and keys)
 
         *Parameters*
 
         - **ind** : rank of the value
         - **value** : new value
-        - **extern** : if True, the value has external representation, else internal
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : None'''
-        if extern:
-            super().setvalue(ind, self.s_to_i(value), nameonly, valueonly)
-            #value = self.s_to_i(value)
-        else:
-            super().setvalue(ind, value, nameonly, valueonly)
-        """values = self.values
+        values = self.values
         if nameonly:
             values[ind].setName(values.ntv_name)
         elif valueonly:
             values[ind].setValue(values.ntv_value)
         else:
             values[ind] = value
-        self._codec, self._keys = util.resetidx(values)"""
+        self._codec, self._keys = util.resetidx(values)
 
-    def setlistvalue(self, listvalue, extern=True, nameonly=False, valueonly=False):
+    def setlistvalue(self, listvalue, nameonly=False, valueonly=False):
         '''update the values (and update codec and keys)
 
         *Parameters*
 
         - **listvalue** : list - list of new values
-        - **extern** : if True, the value has external representation, else internal
         - **nameonly** : if True, only the name of ESValue is changed
         - **valueonly** : if True, only the value of ESValue is changed
 
         *Returns* : None'''
-        if extern:
-            super().setlistvalue(self.l_to_i(listvalue), nameonly, valueonly)
-            #listvalue = self.l_to_i(listvalue)
-        else:
-            super().setlistvalue(listvalue, nameonly, valueonly)
-        """values = self.values
+        values = self.values
         for i, value_i in enumerate(listvalue):
             if nameonly:
                 values[i].setName(value_i.ntv_name)
@@ -534,9 +573,8 @@ class FieldStructure(Cfield):
                 values[i].setValue(value_i.ntv_value)
             else:
                 values[i] = value_i
-        self._codec, self._keys = util.resetidx(values)"""
-
-    """
+        self._codec, self._keys = util.resetidx(values)
+    
     def sort(self, reverse=False, inplace=True, func=str):
         '''Define sorted index with ordered codec.
 
@@ -601,23 +639,20 @@ class FieldStructure(Cfield):
             self._keys = keys
             return self
         return self.__class__(codec=codec, name=self.name, keys=keys)
-    """
-
-    def valtokey(self, value, extern=True):
+    
+    def valtokey(self, value):
         '''convert a value to a key
 
         *Parameters*
 
         - **value** : value to convert
-        - **extern** : if True, the value has external representation, else internal
 
         *Returns*
 
         - **int** : first key finded (None else)'''
-        if extern:
-            return super().valtokey(self.s_to_i(value))
-            #value = self.s_to_i(value)
-        return super().valtokey(value)
-        """if value in self._codec:
+        if value in self._codec:
             return self._codec.index(value)
-        return None"""
+        return None    
+    
+    
+    

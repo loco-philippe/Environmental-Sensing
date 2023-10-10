@@ -39,9 +39,11 @@ from observation.field_structure import FieldStructure
 from observation.util import util
 from json_ntv import Ntv, NtvList
 
+from observation.cfield import Cfield
 
 
-class Field(FieldStructure, FieldInterface, ABC):
+
+class Field(FieldStructure, FieldInterface, ABC, Cfield):
     # %% intro
     '''
     An `Field` is a representation of an index list .
@@ -146,9 +148,10 @@ class Field(FieldStructure, FieldInterface, ABC):
         - **reindex** : boolean (default True) - if True, default codec is apply
         - **fast**: boolean (default False) - if True, codec is created without conversion'''
         if isinstance(codec, Field):
-            self._keys = copy(codec._keys)
-            self._codec = deepcopy(codec._codec)
-            self.name = copy(codec.name)
+            Cfield.__init__(self, deepcopy(codec._codec), copy(codec.name), copy(codec._keys))
+            #self._keys = copy(codec._keys)
+            #self._codec = deepcopy(codec._codec)
+            #self.name = copy(codec.name)
             return
         if codec is None:
             codec = []
@@ -175,9 +178,10 @@ class Field(FieldStructure, FieldInterface, ABC):
             #codec = [Ntv.obj(key) for key in keysset]
             codec = self.l_to_i(keysset, fast=True)
         codec = self.l_to_i(codec, fast=fast)
-        self._keys = keys
-        self._codec = codec
-        self.name = name
+        Cfield.__init__(self, codec, name, keys)
+        #self._keys = keys
+        #self._codec = codec
+        #self.name = name
         if reindex:
             self.reindex()
 
@@ -334,7 +338,7 @@ class Field(FieldStructure, FieldInterface, ABC):
         pass 
 # %% special
 
-    def __repr__(self):
+    """def __repr__(self):
         '''return classname and number of value'''
         return self.__class__.__name__ + '[' + str(len(self)) + ']'
 
@@ -417,6 +421,7 @@ class Field(FieldStructure, FieldInterface, ABC):
     def __copy__(self):
         ''' Copy all the data '''
         return self.__class__(self)
+    """
 
 # %% property
     @property
@@ -428,6 +433,7 @@ class Field(FieldStructure, FieldInterface, ABC):
         #return self.to_ntv(codecval=True).ntv_value
         #return self.to_obj(modecodec='optimize', codecval=True, encoded=False, listunic=True)
 
+    """
     @property
     def codec(self):
         '''return codec  '''
@@ -466,6 +472,7 @@ class Field(FieldStructure, FieldInterface, ABC):
     def values(self):
         '''return values (see data model)'''
         return [self._codec[key] for key in self._keys]
+    """
 
     @property
     def val(self):
