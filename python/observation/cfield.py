@@ -22,7 +22,6 @@ class Cfield:
             codec = []
         if not isinstance(codec, list):
             codec = [codec]
-        #codec = list(codec)
         if not name:
             name = ''
         if keys is None:
