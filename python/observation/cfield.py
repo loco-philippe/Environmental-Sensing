@@ -17,7 +17,16 @@ class Cfield:
     # %% intro
     '''
     '''
-    def __init__(self, codec, name, keys):
+    def __init__(self, codec, name=None, keys=None):
+        if codec is None:
+            codec = []
+        if not isinstance(codec, list):
+            codec = [codec]
+        #codec = list(codec)
+        if not name:
+            name = ''
+        if keys is None:
+            keys = list(range(len(codec)))
         self._keys = keys
         self._codec = codec
         self.name = name

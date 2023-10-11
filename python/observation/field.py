@@ -154,7 +154,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
             codec = []
         if not isinstance(codec, list):
             codec = [codec]
-        codec = list(codec)
+        """codec = list(codec)"""
         leng = lendefault
         if codec and len(codec) > 0 and not leng:
             leng = len(codec)
@@ -168,8 +168,8 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
             keys = []
         elif keys is None:
             keys = [(i*len(codec))//leng for i in range(leng)]
-        if not isinstance(codec, list):
-            raise FieldError("codec not list")
+        """if not isinstance(codec, list):
+            raise FieldError("codec not list")"""
         if codec == []:
             keysset = util.tocodec(keys)
             #codec = [Ntv.obj(key) for key in keysset]
