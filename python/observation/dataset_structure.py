@@ -94,7 +94,6 @@ class DatasetStructure:
                 self.lindex[i].add(other.lindex[i], solve=solve)
         return self
     """
-    
     def addindex(self, index, first=False, merge=False, update=False):
         '''add a new index.
 
@@ -252,6 +251,7 @@ class DatasetStructure:
             del idx[row]
         return row
 
+    """
     def delindex(self, delname=None, savename=None):
         '''remove an Field or a list of Field.
 
@@ -274,7 +274,8 @@ class DatasetStructure:
         for idxname in delname:
             if idxname in self.lname:
                 self.lindex.pop(self.lname.index(idxname))
-
+    """
+    
     def _fullindex(self, ind, keysadd, indexname, varname, leng, fillvalue, fillextern):
         if not varname:
             varname = []
@@ -504,12 +505,14 @@ class DatasetStructure:
         Values of the new Field are set of values in listname Field'''
         self.addindex(Field.merging([self.nindex(name) for name in listname]))
 
+    """
     def nindex(self, name):
         ''' index with name equal to attribute name'''
         if name in self.lname:
             return self.lindex[self.lname.index(name)]
         return None
-
+    """
+    
     def orindex(self, other, first=False, merge=False, update=False):
         ''' Add other's index to self's index (with same length)
 
@@ -585,12 +588,13 @@ class DatasetStructure:
             #return [idx.valrow(row) for idx in self.lvar]
         return [idx.values[row] for idx in self.lvar]
 
+    """
     def reindex(self):
         '''Calculate a new default codec for each index (Return self)'''
         for idx in self.lindex:
             idx.reindex()
         return self
-
+    
     def renameindex(self, oldname, newname):
         '''replace an index name 'oldname' by a new one 'newname'. '''
         for i in range(self.lenindex):
@@ -607,6 +611,7 @@ class DatasetStructure:
         for idx in self.lindex:
             idx.set_keys([idx.keys[i] for i in recorder])
         return None
+    """
 
     def setcanonorder(self, reindex=False):
         '''Set the canonical index order : primary - secondary/unique - variable.
@@ -650,8 +655,9 @@ class DatasetStructure:
 
     def setname(self, listname=None):
         '''Update Field name by the name in listname'''
-        for i in range(min(self.lenindex, len(listname))):
-            self.lindex[i].name = listname[i]
+        super().setname(listname)
+        #for i in range(min(self.lenindex, len(listname))):
+        #    self.lindex[i].name = listname[i]
         self.analysis.actualize()
 
     def sort(self, order=None, reverse=False, func=str, reindex=True):
@@ -681,6 +687,7 @@ class DatasetStructure:
             self.lindex[orderfull[i]].set_keys(newidx[i])
         return self
 
+    """
     def swapindex(self, order):
         '''
         Change the order of the index .
@@ -697,7 +704,8 @@ class DatasetStructure:
         elif isinstance(order[0], str):
             self.lindex = [self.nindex(name) for name in order]
         return self
-
+    """
+    
     def tostdcodec(self, inplace=False, full=True):
         '''Transform all codec in full or default codec.
 
