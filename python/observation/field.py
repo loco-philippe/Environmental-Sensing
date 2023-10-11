@@ -149,9 +149,6 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
         - **fast**: boolean (default False) - if True, codec is created without conversion'''
         if isinstance(codec, Field):
             Cfield.__init__(self, deepcopy(codec._codec), copy(codec.name), copy(codec._keys))
-            #self._keys = copy(codec._keys)
-            #self._codec = deepcopy(codec._codec)
-            #self.name = copy(codec.name)
             return
         if codec is None:
             codec = []
@@ -179,9 +176,6 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
             codec = self.l_to_i(keysset, fast=True)
         codec = self.l_to_i(codec, fast=fast)
         Cfield.__init__(self, codec, name, keys)
-        #self._keys = keys
-        #self._codec = codec
-        #self.name = name
         if reindex:
             self.reindex()
 
@@ -246,38 +240,6 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
         name = ntv.json_name(string=True) if add_type else name
         return cls(codec=codec, name=name, keys=keys, reindex=reindex)
 
-    """@classmethod
-    def from_dict_obj(cls, bsd, typevalue=ES.def_clsName, reindex=False):
-        '''Generate an Field Object from a dict value'''
-        var = False
-        if not isinstance(bsd, dict):
-            raise FieldError('data is not a dict')
-        name = list(bsd.keys())[0]
-        bsdv = list(bsd.values())[0]
-        if not 'value' in bsdv:
-            raise FieldError('value is not present')
-        value = bsdv['value']
-        if not isinstance(value, list):
-            value = [value]
-        if 'type' in bsdv and isinstance(bsdv['type'], str):
-            typevalue = bsdv['type']
-        if 'var' in bsdv and isinstance(bsdv['var'], bool):
-            var = bsdv['var']
-        codec = [util.castval(val['codec'], typevalue) for val in value]
-        pairs = []
-        for i, rec in enumerate(value):
-            record = rec['record']
-            if not isinstance(record, list):
-                record = [record]
-            for j in record:
-                pairs.append((j, i))
-        if not pairs:
-            return (var, cls())
-        keys = list(list(zip(*sorted(pairs)))[1])
-
-        idx = cls(name=name, codec=codec, keys=keys, typevalue=None)
-        return (var, idx)"""
-
     @classmethod
     def merging(cls, listidx, name=None):
         '''Create a new Field with values are tuples of listidx Field values
@@ -336,147 +298,16 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
     def i_to_name(val):
         ''' return the name of the internal value'''
         pass 
-# %% special
-
-    """def __repr__(self):
-        '''return classname and number of value'''
-        return self.__class__.__name__ + '[' + str(len(self)) + ']'
-
-    def __eq__(self, other):
-        ''' equal if class and values are equal'''
-        return self.__class__ .__name__ == other.__class__.__name__ and self.values == other.values
-
-    def __len__(self):
-        ''' len of values'''
-        return len(self._keys)
-
-    def __contains__(self, item):
-        ''' item of values'''
-        return item in self.values
-
-    def __getitem__(self, ind):
-        ''' return value item (value conversion)'''
-        if isinstance(ind, tuple):
-            return [copy(self.values[i]) for i in ind]
-        #return self.values[ind]
-        return copy(self.values[ind])
-
-    def __setitem__(self, ind, value):
-        ''' modify values item'''
-        if ind < 0 or ind >= len(self):
-            raise FieldError("out of bounds")
-        self.setvalue(ind, value, extern=True)
-
-    def __delitem__(self, ind):
-        '''remove a record (value and key).'''
-        self._keys.pop(ind)
-        self.reindex()
-
-    def __hash__(self):
-        '''return hash(values)'''
-        return hash(tuple(self.values))
-
-    def _hashe(self):
-        '''return hash(values)'''
-        return hash(tuple(self.values))
-
-    def _hashi(self):
-        '''return hash(codec) + hash(keys)'''
-        return hash(tuple(self._codec)) + hash(tuple(self._keys))
-
-    def __add__(self, other):
-        ''' Add other's values to self's values in a new Field'''
-        newiindex = self.__copy__()
-        newiindex.__iadd__(other)
-        return newiindex
-
-    def __iadd__(self, other):
-        ''' Add other's values to self's values'''
-        return self.add(other, solve=False)
-
-    def add(self, other, solve=True):
-        ''' Add other's values to self's values
-
-        *Parameters*
-
-        - **other** : Field object to add to self object
-        - **solve** : Boolean (default True) - If True, replace None other's codec value
-        with self codec value.
-
-        *Returns* : self '''
-        if solve:
-            solved = copy(other)
-            for i in range(len(solved._codec)):
-                if not util.isNotNull(solved._codec[i]) and i in range(len(self._codec)):
-                    solved._codec[i] = self._codec[i]
-            values = self.values + solved.values
-        else:
-            values = self.values + other.values
-        codec = util.tocodec(values)
-        if set(codec) != set(self._codec):
-            self._codec = codec
-        self._keys = util.tokeys(values, self._codec)
-        return self
-
-    def __copy__(self):
-        ''' Copy all the data '''
-        return self.__class__(self)
-    """
 
 # %% property
     @property
     def cod(self):
         '''return codec conversion to json value '''
         return self.l_to_e(self._codec)
-        #return [codec.to_obj() for codec in self._codec]
-        #return [codec.ntv_value for codec in self._codec]
-        #return self.to_ntv(codecval=True).ntv_value
-        #return self.to_obj(modecodec='optimize', codecval=True, encoded=False, listunic=True)
 
-    """
-    @property
-    def codec(self):
-        '''return codec  '''
-        return self._codec
-
-    @property
-    def infos(self):
-        '''return dict with lencodec, typecodec, ratecodec, mincodec, maxcodec'''
-        maxi = len(self)
-        mini = len(set(self._codec))
-        xlen = len(self._codec)
-        rate = 0.0
-        if maxi == 0:
-            typecodec = 'null'
-        elif xlen == 1:
-            typecodec = 'unique'
-        elif mini == maxi:
-            typecodec = 'complete'
-        elif xlen == maxi:
-            typecodec = 'full'
-        else:
-            rate = (maxi - xlen) / (maxi - mini)
-            if xlen == mini:
-                typecodec = 'default'
-            else:
-                typecodec = 'mixed'
-        return {'lencodec': xlen, 'mincodec': mini, 'maxcodec': maxi,
-                'typecodec': typecodec, 'ratecodec': rate}
-
-    @property
-    def keys(self):
-        '''return keys  '''
-        return self._keys
-
-    @property
-    def values(self):
-        '''return values (see data model)'''
-        return [self._codec[key] for key in self._keys]
-    """
 
     @property
     def val(self):
         '''return values conversion to string '''
         return [self.s_to_e(self._codec[key]) for key in self._keys]
-        #return [self._codec[key].to_obj() for key in self._keys]
-        #return self.to_obj(modecodec='full', codecval=True, encoded=False)
+

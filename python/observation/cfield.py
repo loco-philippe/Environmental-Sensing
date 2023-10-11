@@ -14,6 +14,7 @@ from observation.field_interface import FieldError
 
 
 class Cfield:
+    # %% intro
     '''
     '''
     def __init__(self, codec, name, keys):
@@ -77,34 +78,11 @@ class Cfield:
         ''' Add other's values to self's values'''
         return self.add(other, solve=False)
     
-    def add(self, other, solve=True):
-        ''' Add other's values to self's values
-
-        *Parameters*
-
-        - **other** : Field object to add to self object
-        - **solve** : Boolean (default True) - If True, replace None other's codec value
-        with self codec value.
-
-        *Returns* : self '''
-        if solve:
-            solved = copy(other)
-            for i in range(len(solved._codec)):
-                if not util.isNotNull(solved._codec[i]) and i in range(len(self._codec)):
-                    solved._codec[i] = self._codec[i]
-            values = self.values + solved.values
-        else:
-            values = self.values + other.values
-        codec = util.tocodec(values)
-        if set(codec) != set(self._codec):
-            self._codec = codec
-        self._keys = util.tokeys(values, self._codec)
-        return self
-
     def __copy__(self):
         ''' Copy all the data '''
         return self.__class__(self)
     
+    # %% property
     @property
     def codec(self):
         '''return codec  '''
@@ -144,6 +122,31 @@ class Cfield:
         '''return values (see data model)'''
         return [self._codec[key] for key in self._keys]
     
+    # %% methods
+    def add(self, other, solve=True):
+        ''' Add other's values to self's values
+
+        *Parameters*
+
+        - **other** : Field object to add to self object
+        - **solve** : Boolean (default True) - If True, replace None other's codec value
+        with self codec value.
+
+        *Returns* : self '''
+        if solve:
+            solved = copy(other)
+            for i in range(len(solved._codec)):
+                if not util.isNotNull(solved._codec[i]) and i in range(len(self._codec)):
+                    solved._codec[i] = self._codec[i]
+            values = self.values + solved.values
+        else:
+            values = self.values + other.values
+        codec = util.tocodec(values)
+        if set(codec) != set(self._codec):
+            self._codec = codec
+        self._keys = util.tokeys(values, self._codec)
+        return self
+
     def append(self, value, unique=True):
         '''add a new value
 

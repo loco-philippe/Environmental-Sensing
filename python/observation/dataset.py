@@ -39,7 +39,9 @@ from observation.dataset_structure import DatasetStructure
 from observation.dataset_analysis import Analysis
 from json_ntv.ntv import Ntv, NtvConnector
 
-class Dataset(DatasetStructure, DatasetInterface, ABC):
+from observation.cdataset import Cdataset
+
+class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     # %% intro
     '''
     An `Dataset` is a representation of an indexed list.
