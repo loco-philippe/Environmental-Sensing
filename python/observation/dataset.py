@@ -535,6 +535,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
                 stri += '    ' + str(idx) + '\n'
         return stri
 
+    """
     def __repr__(self):
         '''return classname, number of value and number of indexes'''
         return self.__class__.__name__ + '[' + str(len(self)) + ', ' + str(self.lenindex) + ']'
@@ -579,6 +580,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     def __eq__(self, other):
         ''' equal if hash values are equal'''
         return hash(self) == hash(other)
+    """
 
     def __add__(self, other):
         ''' Add other's values to self's values in a new Dataset'''
@@ -589,7 +591,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     def __iadd__(self, other):
         ''' Add other's values to self's values'''
         return self.add(other, name=True, solve=False)
-
+    
     def __or__(self, other):
         ''' Add other's index to self's index in a new Dataset'''
         newil = copy(self)
@@ -600,9 +602,11 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         ''' Add other's index to self's index'''
         return self.orindex(other, first=False, merge=True, update=False)
 
+    """
     def __copy__(self):
         ''' Copy all the data '''
         return self.__class__(self)
+    """
 
 # %% property
     @property
@@ -652,16 +656,19 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         ''' list of idx codec length'''
         return [len(idx.codec) for idx in self.lidx]
 
+    """
     @property
     def indexlen(self):
         ''' list of index codec length'''
         return [len(idx.codec) for idx in self.lindex]
+    """
 
     @property
     def iidx(self):
         ''' list of keys for each idx'''
         return [idx.keys for idx in self.lidx]
 
+    """
     @property
     def iindex(self):
         ''' list of keys for each index'''
@@ -671,6 +678,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     def keys(self):
         ''' list of keys for each index'''
         return [idx.keys for idx in self.lindex]
+    """
 
     @property
     def lencomplete(self):
@@ -678,10 +686,12 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         primary = self.primary
         return util.mul([self.idxlen[i] for i in primary])
 
+    """
     @property
     def lenindex(self):
         ''' number of indexes'''
         return len(self.lindex)
+    """
 
     @property
     def lenidx(self):
@@ -709,11 +719,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         return self.analysis.getvarname()
 
     @property
-    def lunicrow(self):
-        '''list of unic idx row'''
-        return [self.lname.index(name) for name in self.lunicname]
-
-    @property
     def lvarrow(self):
         '''list of var row'''
         return [self.lname.index(name) for name in self.lvarname]
@@ -722,6 +727,12 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     def lidxrow(self):
         '''list of idx row'''
         return [i for i in range(self.lenindex) if i not in self.lvarrow]
+
+    """
+    @property
+    def lunicrow(self):
+        '''list of unic idx row'''
+        return [self.lname.index(name) for name in self.lunicname]
 
     @property
     def lunicname(self):
@@ -732,6 +743,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     def lname(self):
         ''' list of index name'''
         return [idx.name for idx in self.lindex]
+    """
 
     @property
     def primary(self):
@@ -758,10 +770,12 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         '''list of codec for each idx'''
         return [idx.codec for idx in self.lidx]
 
+    """
     @property
     def tiindex(self):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
+    """
 
     @property
     def zip(self):

@@ -15,7 +15,7 @@ from observation.esconstante import ES
 from observation.field import Field
 from observation.util import util
 from observation.dataset_interface import DatasetError
-from observation.fields import Sfield
+#from observation.fields import Sfield
 
 
 class DatasetStructure:
@@ -69,6 +69,7 @@ class DatasetStructure:
     '''
     # %% methods
 
+    """
     def add(self, other, name=False, solve=True):
         ''' Add other's values to self's values for each index
 
@@ -92,7 +93,8 @@ class DatasetStructure:
             else:
                 self.lindex[i].add(other.lindex[i], solve=solve)
         return self
-
+    """
+    
     def addindex(self, index, first=False, merge=False, update=False):
         '''add a new index.
 
