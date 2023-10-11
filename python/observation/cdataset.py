@@ -6,7 +6,7 @@ Created on Wed Oct 11 11:54:18 2023
 """
 class Cdataset:
 
-    def __init__(self, listidx=None, reindex=True):
+    def __init__(self, listidx=None, name=None):
         '''
         Dataset constructor.
 
@@ -15,15 +15,5 @@ class Cdataset:
         - **listidx** :  list (default None) - list of Field data
         '''
 
-        self.name     = self.__class__.__name__
-        self.lindex   = []
-        if listidx.__class__.__name__ in ['Dataset', 'Observation', 'Ndataset', 'Sdataset']:
-            self.lindex = [copy(idx) for idx in listidx.lindex]
-            return
-        if not listidx:
-            return
-        self.lindex   = listidx
-        if reindex:
-            self.reindex()
-        self.analysis.actualize()
-        return
+        self.name     = name
+        self.lindex   = [] if listidx is None else listidx

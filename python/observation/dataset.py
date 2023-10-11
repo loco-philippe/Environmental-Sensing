@@ -178,16 +178,20 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         - **listidx** :  list (default None) - list of Field data
         - **reindex** : boolean (default True) - if True, default codec for each Field'''
 
-        self.name     = self.__class__.__name__
         self.field    = self.field_class
         self.analysis = Analysis(self)
-        self.lindex   = []
+        name = self.__class__.__name__
+        #self.name     = self.__class__.__name__
+        #self.lindex   = []
         if listidx.__class__.__name__ in ['Dataset', 'Observation', 'Ndataset', 'Sdataset']:
-            self.lindex = [copy(idx) for idx in listidx.lindex]
+            #self.lindex = [copy(idx) for idx in listidx.lindex]
+            Cdataset.__init__(self, [copy(idx) for idx in listidx.lindex], name)
             return
         if not listidx:
+            Cdataset.__init__(self, None, name)
             return
-        self.lindex   = listidx
+        #self.lindex   = listidx
+        Cdataset.__init__(self, listidx, name)
         if reindex:
             self.reindex()
         self.analysis.actualize()
