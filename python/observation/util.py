@@ -133,6 +133,13 @@ class util:
         return val"""
 
     @staticmethod
+    def dist(l1, l2):
+        '''return default coupling codec between two list'''
+        if not l1 or not l2:
+            return 0
+        return len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
+
+    @staticmethod
     def couplinginfos(l1, l2):
         '''return a dict with the coupling info between two list'''
         if not l1 or not l2:
@@ -150,7 +157,8 @@ class util:
                 typec = 'derive'
             return {'dist': x0, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
                     'distmin': x0, 'distmax': x1, 'diff': diff, 'typecoupl': typec}
-        x = len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
+        #x = len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
+        x = util.dist(l1, l2)
         dic = {'dist': x, 'rateder': (x - x0) / (x1 - x0),
                'disttomin': x - x0,  'disttomax': x1 - x,
                'distmin': x0, 'distmax': x1, 'diff': diff}

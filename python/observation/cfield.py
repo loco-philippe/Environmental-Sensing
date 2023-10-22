@@ -12,23 +12,31 @@ from observation.util import util
 from observation.esconstante import ES
 from observation.field_interface import FieldError
 
-
+@staticmethod 
+def root(leng):
+    return Cfield(Cutil.identity(leng), 'root')
+    
+class Cutil:
+    
+    @staticmethod
+    def identity(leng):
+        return list(range(leng))
+    
 class Cfield:
     # %% intro
     '''
     '''
     def __init__(self, codec, name=None, keys=None):
-        if codec is None:
-            codec = []
-        if not isinstance(codec, list):
-            codec = [codec]
-        if not name:
-            name = ''
-        if keys is None:
-            keys = list(range(len(codec)))
-        self._keys = keys
-        self._codec = codec
-        self.name = name
+        '''Two modes:
+            - a single attributes : Cfield object to copy
+            - multiple attributes : set codec, name and keys attributes'''
+        if isinstance(codec, Cfield):
+            self._keys = codec._keys
+            self._codec = codec._codec
+            self.name = codec.name
+        self._keys = keys if keys else list(range(len(codec)))
+        self._codec = codec if codec else list(range(len(keys)))
+        self.name = name if name else 'field'
         
     def __repr__(self):
         '''return classname and number of value'''
@@ -36,7 +44,8 @@ class Cfield:
     
     def __eq__(self, other):
         ''' equal if class and values are equal'''
-        return self.__class__ .__name__ == other.__class__.__name__ and self.values == other.values
+        return self.__class__ .__name__ == other.__class__.__name__ and \
+               self.values == other.values
 
     def __len__(self):
         ''' len of values'''
@@ -261,6 +270,10 @@ class Cfield:
             dic['typecoupl'] = 'link'
         return dic
     
+    def dist(self, other):
+        '''return default coupling codec between two Cfield'''
+        return util.dist(self._keys, other._keys)
+
     def derkeys(self, parent):
         '''return keys derived from parent keys
 
