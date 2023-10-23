@@ -71,6 +71,16 @@ class Cdataset:
         return self.__class__(self)
 
 # %% property
+    @property 
+    def analys(self):
+        return {'name': self.name, 'fields': [fld.analysis for fld in self.lindex],
+                'length': len(self), 'relations': {
+                   self.lindex[i].name: 
+                       {self.lindex[j].name: 
+                          util.dist(self.lindex[i].keys, self.lindex[j].keys) 
+                        for j in range(i+1, len(self.lindex))} 
+                   for i in range(len(self.lindex)-1)}}
+            
     @property
     def indexlen(self):
         ''' list of index codec length'''

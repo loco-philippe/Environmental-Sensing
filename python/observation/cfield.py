@@ -21,12 +21,23 @@ class Cutil:
     @staticmethod
     def identity(leng):
         return list(range(leng))
-    
+
+    @staticmethod 
+    def default(values):
+        codec = list(dict.fromkeys(values))
+        dic = {codec[i]: i for i in range(len(codec))}
+        keys = [dic[val] for val in values]
+        return (codec, keys)
+
+    @staticmethod
+    def dist(key1, key2):
+        return len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(key1, key2)]))
+
 class Cfield:
     # %% intro
     '''
     '''
-    def __init__(self, codec, name=None, keys=None):
+    def __init__(self, codec, name=None, keys=None, default=False):
         '''Two modes:
             - a single attributes : Cfield object to copy
             - multiple attributes : set codec, name and keys attributes'''
@@ -34,8 +45,13 @@ class Cfield:
             self._keys = codec._keys
             self._codec = codec._codec
             self.name = codec.name
-        self._keys = keys if keys else list(range(len(codec)))
-        self._codec = codec if codec else list(range(len(keys)))
+        if not default: 
+            self._keys = keys if keys else Cutil.identity(len(codec))
+            #self._keys = keys if keys else list(range(len(codec)))
+            self._codec = codec if codec else Cutil.identity(len(keys))
+            #self._codec = codec if codec else list(range(len(keys)))
+        else:
+            self._codec, self._keys = Cutil.default(codec)
         self.name = name if name else 'field'
         
     def __repr__(self):
@@ -100,6 +116,12 @@ class Cfield:
         return self.__class__(self)
     
     # %% property
+    @property 
+    def analysis(self):
+        return { 'id': self.name, 'lencodec': len(self.codec), 
+                 'mincodec': len(set(self.codec)), 'maxcodec': len(self),
+                 'hashf': hash(self)}
+    
     @property
     def codec(self):
         '''return codec  '''
