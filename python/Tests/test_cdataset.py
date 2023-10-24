@@ -32,7 +32,9 @@ class Test_Cfield(unittest.TestCase):
         idx = Cfield(['er', 2, (1, 2), 2], 'test', default=True)
         self.assertTrue(idx.keys == [0, 1, 2, 1] and
                         idx.values == ['er', 2, (1, 2), 2])
-
+        idx2 = Cfield.from_ntv({'test': ['er', 2, (1, 2), 2]})
+        self.assertEqual(idx, idx2)
+        
     def test_ntv(self):
         idx = Cfield(codec=['er', 2, (1, 2), 2], name='test', keys=[0, 1, 2, 1])
         idx2 = Cfield.from_ntv({'test': ['er', 2, (1, 2), 2]})
@@ -43,7 +45,7 @@ class Test_Cfield(unittest.TestCase):
     def test_analysis(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
         self.assertEqual(idx.analysis, {'id': 'test', 'lencodec': 4,
-         'mincodec': 3, 'maxcodec': 4, 'hashf': 3646226025507127397})
+         'mincodec': 3, 'maxcodec': 4, 'hashf': -1379596020291439067})
         
 class Test_Cdataset(unittest.TestCase):
     

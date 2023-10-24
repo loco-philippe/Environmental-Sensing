@@ -139,8 +139,6 @@ class Sfield(Field):
             return val
         if val is None or isinstance(val, bool):
             return json.dumps(val)
-        #if val in ('null', 'false' 'true'):
-        #    return json.loads(val)
         if isinstance(val, list):
             return Sfield._tupled(val)
         if isinstance(val, dict):

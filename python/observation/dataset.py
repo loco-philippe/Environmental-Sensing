@@ -342,7 +342,7 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         if len(ntv) == 0:
             return cls()
-        lidx = [list(cls.field_class.decode_ntv(ntvf)) for ntvf in ntv]
+        lidx = [list(cls.field_class.decode_ntv(ntvf, cls.field_class.ntv_to_val)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':

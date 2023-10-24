@@ -171,9 +171,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
             keysset = util.tocodec(keys)
             codec = self.l_to_i(keysset, fast=True)
         codec = self.l_to_i(codec, fast=fast)
-        Cfield.__init__(self, codec, name, keys)
-        if reindex:
-            self.reindex()
+        Cfield.__init__(self, codec, name, keys, reindex=reindex)
 
     @classmethod
     def bol(cls, leng, notdef=None, name=None, default=True):
@@ -212,29 +210,11 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
     def ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
         '''Generate an Field Object from a Ntv field object'''
         return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex, decode_str=decode_str)
-    
-    """@classmethod 
-    def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False,
-                 add_type=True, lengkeys=None):
-        '''Generate an Field Object from a Ntv field object'''
-        if isinstance(ntv_value, cls):
-            return copy(ntv_value)
-        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
-        #ntv = NtvList(ntv_value)
-        if ntv_value is None:
-            return cls()
-        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv)
-        if parent and not extkeys:
-            return None
-        if coef:
-            keys = util.keysfromcoef(coef, leng//coef, lengkeys)
-        elif extkeys and parent:
-            keys = cls.keysfromderkeys(extkeys, keys)
-        elif extkeys and not parent:
-            keys = extkeys
-        keys = list(range(len(codec))) if keys is None else keys
-        name = ntv.json_name(string=True) if add_type else name
-        return cls(codec=codec, name=name, keys=keys, reindex=reindex)"""
+
+    @classmethod 
+    def ntv_to_val(cls, ntv):
+        '''conversion in decode_ntv'''
+        return cls.n_to_i(ntv.val)    
 
     @classmethod
     def merging(cls, listidx, name=None):

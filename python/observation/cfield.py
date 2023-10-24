@@ -8,7 +8,7 @@ Created on Tue Oct 10 22:26:38 2023
 from copy import copy
 from collections import defaultdict, Counter
 
-from json_ntv import Ntv
+from json_ntv import Ntv, NtvSingle
 
 from observation.util import util
 from observation.esconstante import ES
@@ -39,7 +39,7 @@ class Cfield:
     # %% intro
     '''
     '''
-    def __init__(self, codec=None, name=None, keys=None, default=False):
+    def __init__(self, codec=None, name=None, keys=None, default=False, reindex=False):
         '''Two modes:
             - a single attributes : Cfield object to copy
             - multiple attributes : set codec, name and keys attributes'''
@@ -52,12 +52,12 @@ class Cfield:
             self.name = codec.name
         elif not default: 
             self._keys = keys if keys else Cutil.identity(len(codec))
-            #self._keys = keys if keys else list(range(len(codec)))
             self._codec = codec if codec else Cutil.identity(len(keys))
-            #self._codec = codec if codec else list(range(len(keys)))
         else:
             self._codec, self._keys = Cutil.default(codec)
         self.name = name if name else 'field'
+        if reindex:
+            self.reindex()
         
     def __repr__(self):
         '''return classname and number of value'''
@@ -177,7 +177,7 @@ class Cfield:
         #ntv = NtvList(ntv_value)
         if ntv_value is None:
             return cls()
-        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv)
+        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv, cls.ntv_to_val)
         if parent and not extkeys:
             return None
         if coef:
@@ -189,6 +189,70 @@ class Cfield:
         keys = list(range(len(codec))) if keys is None else keys
         name = ntv.json_name(string=True) if add_type else name
         return cls(codec=codec, name=name, keys=keys, reindex=reindex)
+
+    @classmethod 
+    def decode_ntv(cls, field, ntv_to_val):
+        '''Generate a tuple data from a Ntv value(bytes, string, json, Ntv object)
+
+        *Parameters*
+
+        - **field** : bytes, string json or Ntv object to convert
+        - **fast**: boolean (default False) - if True, codec is created without 
+        conversion, else codec is created with json structure
+
+        *Returns* 
+
+        - **tuple** : name, dtype, codec, parent, keys, coef, leng
+            name (None or string): name of the Field
+            dtype (None or string): type of data
+            codec (list): list of Field codec values
+            parent (None or int): Field parent or None
+            keys (None or list): Field keys
+            coef (None or int): coef if primary Field else None
+            leng (int): length of the Field
+        '''
+        ntv = Ntv.obj(field)
+        typ = ntv.type_str if ntv.ntv_type else None
+        nam = ntv.name
+        #val = cls.n_to_i(ntv.val)
+        val = ntv_to_val(ntv)
+        if isinstance(ntv, NtvSingle):
+            return (nam, typ, [val], None, None, None, 1)
+        if len(ntv) < 2 or len(ntv) > 3 or isinstance(ntv[0], NtvSingle):
+            return (nam, typ, val, None, None, None, len(ntv))        
+
+        ntvc = ntv[0]
+        leng = max(len(ind) for ind in ntv)
+        typc = ntvc.type_str if ntvc.ntv_type else None
+        #valc = cls.n_to_i(ntvc.val)
+        valc = ntv_to_val(ntvc)
+        if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and \
+            isinstance(ntv[1].val, (int, str)) and not isinstance(ntv[2], NtvSingle) and \
+            isinstance(ntv[2][0].val, int):
+            return (nam, typc, valc, ntv[1].val, ntv[2].to_obj(), None, leng)
+        if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, (int, str)):
+            return (nam, typc, valc, ntv[1].val, None, None, leng) 
+        if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, list):
+            leng = leng * ntv[1][0].val
+            return (nam, typc, valc, None, None, ntv[1][0].val, leng) 
+        if len(ntv) == 2 and len(ntv[1]) > 1  and isinstance(ntv[1][0].val, int):
+            return (nam, typc, valc, None, ntv[1].to_obj(), None, leng)
+        return (nam, typ, val, None, None, None, len(ntv))
+
+
+    @classmethod 
+    def ntv_to_val(cls, ntv):
+        '''conversion in decode_ntv'''
+        return cls.n_to_i(ntv.val)        
+    
+    @staticmethod
+    def n_to_i(ntv_lis):
+        ''' converting a NtvList value to an internal value'''
+        if isinstance(ntv_lis, list) and len(ntv_lis) == 0:
+            return []
+        if isinstance(ntv_lis, list) and ntv_lis[0].__class__.__name__ in ('NtvSingle', 'NtvList'):
+            return [Cfield.n_to_i(ntv.to_obj()) for ntv in ntv_lis]
+        return  ntv_lis
 
     def add(self, other, solve=True):
         ''' Add other's values to self's values
