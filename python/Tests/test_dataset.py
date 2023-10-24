@@ -13,7 +13,7 @@ import csv
 from math import nan
 from itertools import product
 import json
-from observation import Dataset, Field
+from observation import Dataset, util
 from json_ntv import Ntv
 from observation.fields import Nfield, Sfield
 from observation.datasets import Sdataset, Ndataset
@@ -23,7 +23,7 @@ i1 = 'i1'
 field = {Dataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
-Dataset = Sdataset
+#Dataset = Sdataset
 
 
 class Test_Dataset(unittest.TestCase):
@@ -768,7 +768,7 @@ class Test_Dataset(unittest.TestCase):
                                   {"result":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 
                                              13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}]})    
         il = Dataset.from_ntv(ntv)
-        self.assertEqual(Field.keysfromcoef(4,3,24), il.lindex[2].keys)
+        self.assertEqual(util.keysfromcoef(4,3,24), il.lindex[2].keys)
     """
     '''for forma in ['json', 'cbor']:
         #for forma in ['json', 'cbor']:

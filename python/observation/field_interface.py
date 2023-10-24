@@ -82,7 +82,6 @@ class FieldInterface:
         *Parameters*
 
         - **field** : bytes, string json or Ntv object to convert
-        - **format** : string (default 'json') - format to convert ntv_value
         - **fast**: boolean (default False) - if True, codec is created without 
         conversion, else codec is created with json structure
 
@@ -100,55 +99,48 @@ class FieldInterface:
         ntv = Ntv.obj(field)
         typ = ntv.type_str if ntv.ntv_type else None
         nam = ntv.name
-        val = ntv.val
+        #val = ntv.val
+        val = cls.n_to_i(ntv.val,fast)
         if isinstance(ntv, NtvSingle):
-            return (nam, typ, [cls.s_to_i(val, fast)], None, None, None, 1)
+            #return (nam, typ, [cls.s_to_i(val, fast)], None, None, None, 1)
+            #return (nam, typ, [cls.n_to_i(ntv.to_obj(simpleval=True), fast)], None, None, None, 1)
+            #return (nam, typ, [cls.n_to_i(val,fast)], None, None, None, 1)
+            return (nam, typ, [val], None, None, None, 1)
+
         if len(ntv) == 0:
-            return (nam, typ, cls.n_to_i(val, fast), None, None, None, 0)
+            #return (nam, typ, cls.n_to_i(val, fast), None, None, None, 0)
+            return (nam, typ, val, None, None, None, 0)
         if len(ntv) > 3 or isinstance(ntv[0], NtvSingle):
-            return (nam, typ, cls.n_to_i(val, fast), None, None, None, len(ntv))
+            #return (nam, typ, cls.n_to_i(val, fast), None, None, None, len(ntv))
+            return (nam, typ, val, None, None, None, len(ntv))
         if len(ntv) == 1:
-            return (nam, typ, [cls.s_to_i(val, fast)[0]], None, None, None, 1)
+            #return (nam, typ, [cls.s_to_i(val, fast)[0]], None, None, None, 1)
+            #return (nam, typ, cls.n_to_i(val, fast), None, None, None, 1)
+            return (nam, typ, val, None, None, None, 1)
 
         ntvc = ntv[0]
         leng = max(len(ind) for ind in ntv)
         typc = ntvc.type_str if ntvc.ntv_type else None
-        valc = ntvc.val
+        #valc = ntvc.val
+        valc = cls.n_to_i(ntvc.val, fast)
         if len(ntv) == 3 and isinstance(ntv[1], NtvSingle) and \
             isinstance(ntv[1].val, (int, str)) and not isinstance(ntv[2], NtvSingle) and \
             isinstance(ntv[2][0].val, int):
-            return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, ntv[2].to_obj(), None, leng)
+            #return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, ntv[2].to_obj(), None, leng)
+            return (nam, typc, valc, ntv[1].val, ntv[2].to_obj(), None, leng)
         if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, (int, str)):
-            return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, None, None, leng) 
+            #return (nam, typc, cls.n_to_i(valc, fast), ntv[1].val, None, None, leng) 
+            return (nam, typc, valc, ntv[1].val, None, None, leng) 
         if len(ntv) == 2 and len(ntv[1]) == 1 and isinstance(ntv[1].val, list):
             leng = leng * ntv[1][0].val
-            return (nam, typc, cls.n_to_i(valc, fast), None, None, ntv[1][0].val, leng) 
+            #return (nam, typc, cls.n_to_i(valc, fast), None, None, ntv[1][0].val, leng) 
+            return (nam, typc, valc, None, None, ntv[1][0].val, leng) 
         if len(ntv) == 2 and len(ntv[1]) > 1  and isinstance(ntv[1][0].val, int):
-            return (nam, typc, cls.n_to_i(valc, fast), None, ntv[1].to_obj(), None, leng)
-        return (nam, typ, cls.n_to_i(val, fast), None, None, None, len(ntv))
+            #return (nam, typc, cls.n_to_i(valc, fast), None, ntv[1].to_obj(), None, leng)
+            return (nam, typc, valc, None, ntv[1].to_obj(), None, leng)
+        #return (nam, typ, cls.n_to_i(val, fast), None, None, None, len(ntv))
+        return (nam, typ, val, None, None, None, len(ntv))
 
-    @staticmethod 
-    def encode_coef(lis):
-        '''Generate a repetition coefficient for periodic list'''
-        if len(lis) < 2:
-            return 0
-        coef = 1
-        while coef != len(lis):
-            if lis[coef-1] != lis[coef]:
-                break
-            coef += 1
-        if (not len(lis) % (coef * (max(lis) + 1)) and 
-            lis == FieldInterface.keysfromcoef(coef, max(lis) + 1, len(lis))):
-            return coef
-        return 0
-
-    @staticmethod 
-    def keysfromcoef(coef, period, leng=None):
-        ''' return a list of keys with periodic structure'''
-        if not leng:
-            leng = coef * period
-        return None if not coef or not period else [ (ikey % (coef * period)) // coef 
-                                                    for ikey in range(leng)]
     
     def to_dict_obj(self, typevalue=None, simpleval=False, modecodec='optimize', **kwargs):
         '''deprecated method'''

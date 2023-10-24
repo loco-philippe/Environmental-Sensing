@@ -28,7 +28,6 @@ def identity(*args, **kwargs):
 
 class util:
     ''' common functions for Field and Dataset class'''
-# %% util
     c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
     c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
 
@@ -133,13 +132,6 @@ class util:
         return val"""
 
     @staticmethod
-    def dist(l1, l2):
-        '''return default coupling codec between two list'''
-        if not l1 or not l2:
-            return 0
-        return len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
-
-    @staticmethod
     def couplinginfos(l1, l2):
         '''return a dict with the coupling info between two list'''
         if not l1 or not l2:
@@ -175,6 +167,28 @@ class util:
         else:
             dic['typecoupl'] = 'link'
         return dic
+
+    @staticmethod
+    def dist(l1, l2):
+        '''return default coupling codec between two list'''
+        if not l1 or not l2:
+            return 0
+        return len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
+
+    @staticmethod 
+    def encode_coef(lis):
+        '''Generate a repetition coefficient for periodic list'''
+        if len(lis) < 2:
+            return 0
+        coef = 1
+        while coef != len(lis):
+            if lis[coef-1] != lis[coef]:
+                break
+            coef += 1
+        if (not len(lis) % (coef * (max(lis) + 1)) and 
+            lis == util.keysfromcoef(coef, max(lis) + 1, len(lis))):
+            return coef
+        return 0
 
     @staticmethod
     def filter(func, lis, res, *args, **kwargs):
@@ -281,6 +295,14 @@ class util:
             return {ES.iin_valName: val.json(**option)}
         if val.__class__.__name__ == 'Observation':
             return {ES.obs_valName: val.to_obj(**option)}
+
+    @staticmethod 
+    def keysfromcoef(coef, period, leng=None):
+        ''' return a list of keys with periodic structure'''
+        if not leng:
+            leng = coef * period
+        return None if not (coef and period) else [(ind % (coef * period)) // coef 
+                                                   for ind in range(leng)]
 
     @staticmethod
     def list(tuplelists):

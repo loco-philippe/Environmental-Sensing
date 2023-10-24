@@ -13,6 +13,15 @@ from observation.cdataset import Cdataset
 
 class Test_Cfield(unittest.TestCase):
 
+    def test_null(self):
+        fnull = Cfield()
+        self.assertTrue(fnull.keys == fnull.values == fnull.codec == [])
+        self.assertTrue(len(fnull) == 0)
+        self.assertEqual(fnull.infos, {'lencodec': 0, 'mincodec': 0,
+                         'maxcodec': 0, 'typecodec': 'null', 'ratecodec': 0.0})
+        self.assertEqual({'id': 'field', 'lencodec': 0, 'mincodec': 0, 'maxcodec': 0,
+                          'hashf': 5740354900026072187}, fnull.analysis)
+
     def test_init(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
         self.assertTrue(Cfield(idx) == idx)
@@ -24,6 +33,13 @@ class Test_Cfield(unittest.TestCase):
         self.assertTrue(idx.keys == [0, 1, 2, 1] and
                         idx.values == ['er', 2, (1, 2), 2])
 
+    def test_ntv(self):
+        idx = Cfield(codec=['er', 2, (1, 2), 2], name='test', keys=[0, 1, 2, 1])
+        idx2 = Cfield.from_ntv({'test': ['er', 2, (1, 2), 2]})
+        self.assertTrue(Cfield(idx) == idx)
+        self.assertTrue(idx == idx2)            
+
+
     def test_analysis(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
         self.assertEqual(idx.analysis, {'id': 'test', 'lencodec': 4,
@@ -31,6 +47,13 @@ class Test_Cfield(unittest.TestCase):
         
 class Test_Cdataset(unittest.TestCase):
     
+    def test_null(self):
+        dnull = Cdataset()
+        self.assertTrue(dnull.keys == dnull.indexlen == dnull.iindex == [])
+        self.assertTrue(dnull.lenindex == len(dnull) == 0) 
+        self.assertEqual(dnull.analys, {'name': None, 'fields': [], 
+                                          'length': 0, 'relations': {}})
+        
     def test_init(self):
         dts = Cdataset([Cfield([10, 20, 30, 20], 'i0', default=True), 
                         Cfield([1, 2, 3, 4], 'i1', default=True), 

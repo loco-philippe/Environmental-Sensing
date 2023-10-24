@@ -37,7 +37,7 @@ from observation.esconstante import ES
 from observation.field_interface import FieldInterface, FieldError
 from observation.field_structure import FieldStructure
 from observation.util import util
-from json_ntv import Ntv, NtvList
+#from json_ntv import Ntv, NtvList
 
 from observation.cfield import Cfield
 
@@ -213,7 +213,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
         '''Generate an Field Object from a Ntv field object'''
         return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex, decode_str=decode_str)
     
-    @classmethod 
+    """@classmethod 
     def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False,
                  add_type=True, lengkeys=None):
         '''Generate an Field Object from a Ntv field object'''
@@ -227,14 +227,14 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
         if parent and not extkeys:
             return None
         if coef:
-            keys = FieldInterface.keysfromcoef(coef, leng//coef, lengkeys)
+            keys = util.keysfromcoef(coef, leng//coef, lengkeys)
         elif extkeys and parent:
             keys = cls.keysfromderkeys(extkeys, keys)
         elif extkeys and not parent:
             keys = extkeys
         keys = list(range(len(codec))) if keys is None else keys
         name = ntv.json_name(string=True) if add_type else name
-        return cls(codec=codec, name=name, keys=keys, reindex=reindex)
+        return cls(codec=codec, name=name, keys=keys, reindex=reindex)"""
 
     @classmethod
     def merging(cls, listidx, name=None):

@@ -160,7 +160,8 @@ class DatasetStructure:
             ilis = self
         else:
             ilis = copy(self)
-        ifilt = ilis.lname.index(filtname)       
+        ifilt = ilis.lname.index(filtname)
+        #print(self.field.__name__, 'firledname')
         if self.field.__name__ == 'Sfield':
             ilis.sort([ifilt], reverse= not reverse, func=None)
         else:

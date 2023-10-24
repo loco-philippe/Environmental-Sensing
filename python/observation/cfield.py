@@ -5,8 +5,10 @@ Created on Tue Oct 10 22:26:38 2023
 @author: a lab in the Air
 """
 
-from copy import copy, deepcopy
+from copy import copy
 from collections import defaultdict, Counter
+
+from json_ntv import Ntv
 
 from observation.util import util
 from observation.esconstante import ES
@@ -37,15 +39,18 @@ class Cfield:
     # %% intro
     '''
     '''
-    def __init__(self, codec, name=None, keys=None, default=False):
+    def __init__(self, codec=None, name=None, keys=None, default=False):
         '''Two modes:
             - a single attributes : Cfield object to copy
             - multiple attributes : set codec, name and keys attributes'''
-        if isinstance(codec, Cfield):
+        if not codec and not keys:
+            self._codec = []
+            self._keys = []
+        elif isinstance(codec, Cfield):
             self._keys = codec._keys
             self._codec = codec._codec
             self.name = codec.name
-        if not default: 
+        elif not default: 
             self._keys = keys if keys else Cutil.identity(len(codec))
             #self._keys = keys if keys else list(range(len(codec)))
             self._codec = codec if codec else Cutil.identity(len(keys))
@@ -162,6 +167,29 @@ class Cfield:
         return [self._codec[key] for key in self._keys]
     
     # %% methods
+    @classmethod 
+    def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False,
+                 add_type=True, lengkeys=None):
+        '''Generate an Field Object from a Ntv field object'''
+        if isinstance(ntv_value, cls):
+            return copy(ntv_value)
+        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
+        #ntv = NtvList(ntv_value)
+        if ntv_value is None:
+            return cls()
+        name, typ, codec, parent, keys, coef, leng = cls.decode_ntv(ntv)
+        if parent and not extkeys:
+            return None
+        if coef:
+            keys = util.keysfromcoef(coef, leng//coef, lengkeys)
+        elif extkeys and parent:
+            keys = cls.keysfromderkeys(extkeys, keys)
+        elif extkeys and not parent:
+            keys = extkeys
+        keys = list(range(len(codec))) if keys is None else keys
+        name = ntv.json_name(string=True) if add_type else name
+        return cls(codec=codec, name=name, keys=keys, reindex=reindex)
+
     def add(self, other, solve=True):
         ''' Add other's values to self's values
 

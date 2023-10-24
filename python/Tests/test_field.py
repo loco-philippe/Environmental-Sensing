@@ -440,11 +440,11 @@ class Test_Field(unittest.TestCase):
         self.assertEqual(idx2, idx)
 
     def test_periodic_coef(self):
-        self.assertEqual(Field.encode_coef([0,0,1,1,2,2,3,3]), 2)
-        self.assertEqual(Field.encode_coef([0,0,1,1,2,2,4,4]), 0)
-        self.assertEqual(Field.encode_coef([0,1,2,3,4,5,6,7]), 1)
-        self.assertEqual(Field.encode_coef([0,0,0,0,1,1,1,1]), 4)
-        self.assertEqual(Field.encode_coef([1,1,1,1,0,0,0,0]), 0)
+        self.assertEqual(util.encode_coef([0,0,1,1,2,2,3,3]), 2)
+        self.assertEqual(util.encode_coef([0,0,1,1,2,2,4,4]), 0)
+        self.assertEqual(util.encode_coef([0,1,2,3,4,5,6,7]), 1)
+        self.assertEqual(util.encode_coef([0,0,0,0,1,1,1,1]), 4)
+        self.assertEqual(util.encode_coef([1,1,1,1,0,0,0,0]), 0)
 
     def test_ntv(self):
         fields = [{'full_dates::datetime': ['1964-01-01', '1985-02-05', '2022-01-21']},
