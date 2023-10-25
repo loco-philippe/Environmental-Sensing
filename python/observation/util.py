@@ -169,11 +169,19 @@ class util:
         return dic
 
     @staticmethod
-    def dist(l1, l2):
-        '''return default coupling codec between two list'''
-        if not l1 or not l2:
+    def dist(k1, k2, distr=False):
+        '''return default coupling codec between two keys list and optionaly if 
+        the relationship is distributed'''
+        if not k1 or not k2:
             return 0
-        return len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
+        k1k2 = [tuple((v1, v2)) for v1, v2 in zip(k1, k2)]
+        dist = len(util.tocodec(k1k2))
+        if not distr:
+            return dist
+        distrib = False
+        if dist == (max(k1) + 1) * (max(k2) + 1):
+            distrib = max(Counter(k1k2).values()) == len(k1) // dist
+        return [dist, distrib]
 
     @staticmethod 
     def encode_coef(lis):
@@ -265,6 +273,10 @@ class util:
             return value != value.__class__(nullvalue)
         return not value is None
 
+    @staticmethod 
+    def is_setcrossed(list_keys):
+        return max(Counter(zip(*[keys for keys in list_keys])).values()) == 1
+    
     @staticmethod
     def idxlink(ref, l2):
         ''' return a dict for each different tuple (ref value, l2 value)'''

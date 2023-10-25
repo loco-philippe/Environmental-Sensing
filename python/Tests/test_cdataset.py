@@ -9,7 +9,7 @@ import unittest
 from itertools import product
 from observation.cfield import Cfield
 from observation.cdataset import Cdataset
-
+from observation.util import util
 
 class Test_Cfield(unittest.TestCase):
 
@@ -68,7 +68,12 @@ class Test_Cdataset(unittest.TestCase):
         self.assertEqual(dts.analys['fields'][0], dts.lindex[0].analysis)
         self.assertEqual(dts.analys['relations'], {'i0': {'i1': 4, 'i2': 3}, 
                                                      'i1': {'i2': 4}})
-                 
+
+    def test_distrib(self):
+        self.assertTrue(util.dist([1,0,1,0,1,0,1,0], [1,1,0,0,1,1,0,0], True)[1])
+        self.assertTrue(util.dist([1,0,1,0,1,0,1,0], [1,1,1,0,0,0,0,1], True)[1])
+        self.assertFalse(util.dist([0,0,0,0,1,1,1,1], [1,1,1,0,0,0,0,1], True)[1])                 
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
         
