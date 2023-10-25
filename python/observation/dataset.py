@@ -38,6 +38,7 @@ from observation.dataset_interface import DatasetInterface, DatasetError
 from observation.dataset_structure import DatasetStructure
 from observation.dataset_analysis import Analysis
 from json_ntv.ntv import Ntv, NtvConnector
+from json_ntv.ntv_util import NtvUtil
 
 from observation.cdataset import Cdataset
 
@@ -342,13 +343,12 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         ntv = Ntv.obj(ntv_value, decode_str=decode_str)
         if len(ntv) == 0:
             return cls()
-        lidx = [list(cls.field_class.decode_ntv(ntvf, cls.field_class.ntv_to_val)) for ntvf in ntv]
+        lidx = [list(NtvUtil.decode_ntv_tab(ntvf, cls.field_class.ntv_to_val)) for ntvf in ntv]
         leng = max([idx[6] for idx in lidx])
         for ind in range(len(lidx)):
             if lidx[ind][0] == '':
                 lidx[ind][0] = 'i'+str(ind)
             NtvConnector.init_ntv_keys(ind, lidx, leng)
-            #Dataset._init_ntv_keys(ind, lidx, leng)
         lindex = [cls.field_class(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
                      reindex=reindex) for idx in lidx]
         return cls(lindex, reindex=reindex)

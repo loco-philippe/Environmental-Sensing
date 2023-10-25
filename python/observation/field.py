@@ -61,7 +61,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
     - `Field.bol`
     - `Field.ntv`
     - `Field.from_parent`
-    - `Field.from_ntv`
+    - `Field.ntv_to_val`
     - `Field.merging`
 
     *conversion abstract static methods (@abstractmethod, @staticmethod)*
@@ -213,7 +213,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
 
     @classmethod 
     def ntv_to_val(cls, ntv):
-        '''conversion in decode_ntv'''
+        '''conversion in decode_ntv_tab'''
         return cls.n_to_i(ntv.val)    
 
     @classmethod
