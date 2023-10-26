@@ -51,6 +51,7 @@ class Cfield:
             self._keys = codec._keys
             self._codec = codec._codec
             self.name = codec.name
+            return
         elif not default: 
             self._keys = keys if keys else Cutil.identity(len(codec))
             self._codec = codec if codec else Cutil.identity(len(keys))
@@ -59,6 +60,7 @@ class Cfield:
         self.name = name if name else 'field'
         if reindex:
             self.reindex()
+        return
         
     def __repr__(self):
         '''return classname and number of value'''

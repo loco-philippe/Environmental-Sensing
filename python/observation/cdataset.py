@@ -4,12 +4,19 @@ Created on Wed Oct 11 11:54:18 2023
 
 @author: phili
 """
+from copy import copy
 from observation.dataset_interface import DatasetError
 from observation.util import util
+from observation.cfield import Cfield
+
+from json_ntv import Ntv
+from json_ntv.ntv_util import NtvUtil, NtvConnector
 
 class Cdataset:
 
-    def __init__(self, listidx=None, name=None):
+    field_class = Cfield
+
+    def __init__(self, listidx=None, name=None, reindex=True):
         '''
         Dataset constructor.
 
@@ -17,9 +24,15 @@ class Cdataset:
 
         - **listidx** :  list (default None) - list of Field data
         '''
-
+        if isinstance(listidx, Cdataset):
+            self.lindex = [copy(idx) for idx in listidx.lindex]
+            self.name = listidx.name
+            return
         self.name     = name
         self.lindex   = [] if listidx is None else listidx
+        if reindex:
+            self.reindex()
+        return
 
     def __repr__(self):
         '''return classname, number of value and number of indexes'''
@@ -71,16 +84,6 @@ class Cdataset:
         return self.__class__(self)
 
 # %% property
-    @property 
-    def analys(self):
-        return {'name': self.name, 'fields': [fld.analysis for fld in self.lindex],
-                'length': len(self), 'relations': {
-                   self.lindex[i].name: 
-                       {self.lindex[j].name: 
-                          util.dist(self.lindex[i].keys, self.lindex[j].keys) 
-                        for j in range(i+1, len(self.lindex))} 
-                   for i in range(len(self.lindex)-1)}}
-            
     @property
     def indexlen(self):
         ''' list of index codec length'''
@@ -123,6 +126,28 @@ class Cdataset:
 
 # %%methods
 
+    @classmethod
+    def from_ntv(cls, ntv_value, reindex=True, decode_str=False):
+        '''Generate an Dataset Object from a ntv_value
+
+        *Parameters*
+
+        - **ntv_value** : bytes, string, Ntv object to convert
+        - **reindex** : boolean (default True) - if True, default codec for each Field
+        - **decode_str**: boolean (default False) - if True, string are loaded in json data'''
+        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
+        if len(ntv) == 0:
+            return cls()
+        lidx = [list(NtvUtil.decode_ntv_tab(ntvf, cls.field_class.ntv_to_val)) for ntvf in ntv]
+        leng = max([idx[6] for idx in lidx])
+        for ind in range(len(lidx)):
+            if lidx[ind][0] == '':
+                lidx[ind][0] = 'i'+str(ind)
+            NtvConnector.init_ntv_keys(ind, lidx, leng)
+        lindex = [cls.field_class(idx[2], idx[0], idx[4], None, # idx[1] pour le type,
+                     reindex=reindex) for idx in lidx]
+        return cls(lindex, reindex=reindex, name=ntv.name)
+    
     def add(self, other, name=False, solve=True):
         ''' Add other's values to self's values for each index
 
@@ -147,6 +172,15 @@ class Cdataset:
                 self.lindex[i].add(other.lindex[i], solve=solve)
         return self
 
+    def analys(self, distr=False):
+        return {'name': self.name, 'fields': [fld.analysis for fld in self.lindex],
+                'length': len(self), 'relations': {
+                   self.lindex[i].name: 
+                       {self.lindex[j].name: 
+                          util.dist(self.lindex[i].keys, self.lindex[j].keys, distr) 
+                        for j in range(i+1, len(self.lindex))} 
+                   for i in range(len(self.lindex)-1)}}
+            
     def reindex(self):
         '''Calculate a new default codec for each index (Return self)'''
         for idx in self.lindex:

@@ -53,27 +53,38 @@ class Test_Cdataset(unittest.TestCase):
         dnull = Cdataset()
         self.assertTrue(dnull.keys == dnull.indexlen == dnull.iindex == [])
         self.assertTrue(dnull.lenindex == len(dnull) == 0) 
-        self.assertEqual(dnull.analys, {'name': None, 'fields': [], 
+        self.assertEqual(dnull.analys(), {'name': None, 'fields': [], 
                                           'length': 0, 'relations': {}})
         
     def test_init(self):
         dts = Cdataset([Cfield([10, 20, 30, 20], 'i0', default=True), 
                         Cfield([1, 2, 3, 4], 'i1', default=True), 
                         Cfield([1, 2, 3, 2], 'i2', default=True)])
+        dts2 = Cdataset.from_ntv({'i0': [10, 20, 30, 20], 
+                        'i1': [1, 2, 3, 4],
+                        'i2': [1, 2, 3, 2]})        
+        self.assertEqual(dts, dts2)
+        self.assertTrue(Cdataset(dts) == dts)
 
     def test_analysis(self):
         dts = Cdataset([Cfield([10, 20, 30, 20], 'i0', default=True), 
                         Cfield([1, 2, 3, 4], 'i1', default=True), 
                         Cfield([1, 2, 3, 2], 'i2', default=True)], 'test')
-        self.assertEqual(dts.analys['fields'][0], dts.lindex[0].analysis)
-        self.assertEqual(dts.analys['relations'], {'i0': {'i1': 4, 'i2': 3}, 
+        self.assertEqual(dts.analys()['fields'][0], dts.lindex[0].analysis)
+        self.assertEqual(dts.analys()['relations'], {'i0': {'i1': 4, 'i2': 3}, 
                                                      'i1': {'i2': 4}})
 
     def test_distrib(self):
         self.assertTrue(util.dist([1,0,1,0,1,0,1,0], [1,1,0,0,1,1,0,0], True)[1])
         self.assertTrue(util.dist([1,0,1,0,1,0,1,0], [1,1,1,0,0,0,0,1], True)[1])
         self.assertFalse(util.dist([0,0,0,0,1,1,1,1], [1,1,1,0,0,0,0,1], True)[1])                 
-
+        dts = Cdataset.from_ntv({'i0': [1,0,1,0,1,0,1,0], 
+                                'i1': [1,1,0,0,1,1,0,0],
+                                'i2':[1,1,1,0,0,0,0,1],
+                                'i3':[1,1,1,1,0,0,0,0]})
+        self.assertTrue(dts.analys(True)['relations']['i1']['i3'][1])
+        self.assertFalse(dts.analys(True)['relations']['i2']['i3'][1])
+        
 if __name__ == '__main__':
     unittest.main(verbosity=2)
         
