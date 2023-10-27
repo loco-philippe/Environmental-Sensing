@@ -8,6 +8,7 @@ from copy import copy
 from observation.dataset_interface import DatasetError
 from observation.util import util
 from observation.cfield import Cfield
+from tab_analysis import AnaDataset
 
 from json_ntv import Ntv
 from json_ntv.ntv_util import NtvUtil, NtvConnector
@@ -132,6 +133,13 @@ class Cdataset:
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
 
+    @property 
+    def partition(self):
+        return AnaDataset(self.analys(True)).partition('index')         
+
+    @property 
+    def dimension(self):
+        return AnaDataset(self.analys(True)).dimension    
 # %%methods
 
     @classmethod
@@ -187,8 +195,8 @@ class Cdataset:
                        {self.lindex[j].name: 
                           util.dist(self.lindex[i].keys, self.lindex[j].keys, distr) 
                         for j in range(i+1, len(self.lindex))} 
-                   for i in range(len(self.lindex)-1)}}
-            
+                   for i in range(len(self.lindex)-1)}}  
+    
     def reindex(self):
         '''Calculate a new default codec for each index (Return self)'''
         for idx in self.lindex:

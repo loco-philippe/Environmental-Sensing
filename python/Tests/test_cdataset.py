@@ -45,7 +45,7 @@ class Test_Cfield(unittest.TestCase):
     def test_analysis(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
         self.assertEqual(idx.analysis, {'id': 'test', 'lencodec': 4,
-         'mincodec': 3, 'maxcodec': 4, 'hashf': -1379596020291439067})
+         'mincodec': 3, 'maxcodec': 4, 'hashf': -4309427714582209460})
         
 class Test_Cdataset(unittest.TestCase):
     
@@ -84,6 +84,18 @@ class Test_Cdataset(unittest.TestCase):
                                 'i3':[1,1,1,1,0,0,0,0]})
         self.assertTrue(dts.analys(True)['relations']['i1']['i3'][1])
         self.assertFalse(dts.analys(True)['relations']['i2']['i3'][1])
+
+class Test_Cdataset(unittest.TestCase):
+    
+    def test_analysis(self):
+        ilm = Cdataset.from_ntv([['math', 'english', 'software', 'math', 'english', 'software'],
+                          ['philippe', 'philippe', 'philippe', 'anne', 'anne', 'anne'],
+                          [None, None, None, 'gr1', 'gr1', 'gr2'],
+                          ['philippe white', 'philippe white', 'philippe white',
+                           'anne white', 'anne white', 'anne white']])
+        self.assertEqual(ilm.partition[0], [0, 1])
+        self.assertEqual(ilm.dimension, 2)
+        
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)
