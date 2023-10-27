@@ -38,6 +38,14 @@ class Cdataset:
         '''return classname, number of value and number of indexes'''
         return self.__class__.__name__ + '[' + str(len(self)) + ', ' + str(self.lenindex) + ']'
 
+    def __str__(self):
+        '''return string format for var and lidx'''
+        stri = ''
+        stri += 'fields :\n'
+        for idx in self.lindex:
+            stri += '    ' + str(idx) + '\n'
+        return stri
+    
     def __len__(self):
         ''' len of values'''
         if not self.lindex:

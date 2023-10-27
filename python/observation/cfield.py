@@ -65,6 +65,10 @@ class Cfield:
     def __repr__(self):
         '''return classname and number of value'''
         return self.__class__.__name__ + '[' + str(len(self)) + ']'
+
+    def __str__(self):
+        '''return json string format'''
+        return str({self.name: self.values})
     
     def __eq__(self, other):
         ''' equal if class and values are equal'''
