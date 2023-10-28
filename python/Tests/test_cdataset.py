@@ -93,7 +93,7 @@ class Test_Cdataset(unittest.TestCase):
                           [None, None, None, 'gr1', 'gr1', 'gr2'],
                           ['philippe white', 'philippe white', 'philippe white',
                            'anne white', 'anne white', 'anne white']])
-        self.assertEqual(ilm.partition[0], [0, 1])
+        self.assertEqual(ilm.partitions[0], [0, 1])
         self.assertEqual(ilm.dimension, 2)
         
         

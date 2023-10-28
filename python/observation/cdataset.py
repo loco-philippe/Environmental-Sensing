@@ -134,8 +134,8 @@ class Cdataset:
         return util.list(list(zip(*self.iindex)))
 
     @property 
-    def partition(self):
-        return AnaDataset(self.analys(True)).partition('index')         
+    def partitions(self):
+        return AnaDataset(self.analys(True)).partitions('index')         
 
     @property 
     def dimension(self):
