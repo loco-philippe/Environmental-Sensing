@@ -66,7 +66,7 @@ class Test_Cdataset(unittest.TestCase):
         self.assertEqual(dts, dts2)
         self.assertTrue(Cdataset(dts) == dts)
 
-    def test_analysis(self):
+    def test_analys(self):
         dts = Cdataset([Cfield([10, 20, 30, 20], 'i0', default=True), 
                         Cfield([1, 2, 3, 4], 'i1', default=True), 
                         Cfield([1, 2, 3, 2], 'i2', default=True)], 'test')
@@ -85,16 +85,14 @@ class Test_Cdataset(unittest.TestCase):
         self.assertTrue(dts.analys(True)['relations']['i1']['i3'][1])
         self.assertFalse(dts.analys(True)['relations']['i2']['i3'][1])
 
-class Test_Cdataset(unittest.TestCase):
-    
     def test_analysis(self):
         ilm = Cdataset.from_ntv([['math', 'english', 'software', 'math', 'english', 'software'],
                           ['philippe', 'philippe', 'philippe', 'anne', 'anne', 'anne'],
                           [None, None, None, 'gr1', 'gr1', 'gr2'],
                           ['philippe white', 'philippe white', 'philippe white',
                            'anne white', 'anne white', 'anne white']])
-        self.assertEqual(ilm.partitions[0], [0, 1])
-        self.assertEqual(ilm.dimension, 2)
+        self.assertTrue(ilm.partitions[0] == ilm.analysis.partitions('index')[0] == [0, 1])
+        self.assertTrue(ilm.dimension == ilm.analysis.dimension == 2)
         
         
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ from observation.dataset_interface import DatasetError
 from observation.util import util
 from observation.cfield import Cfield
 from tab_analysis import AnaDataset
+from tab_analysis.analysis import Util
 
 from json_ntv import Ntv
 from json_ntv.ntv_util import NtvUtil, NtvConnector
@@ -129,17 +130,27 @@ class Cdataset:
         return [idx.name for idx in self.lindex]
 
     @property
+    def lvarname(self):
+        ''' list of variable Field name'''
+        return Util.view(self._analysis.variable, mode='id')
+    
+    @property
     def tiindex(self):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
 
     @property 
+    def _analysis(self):
+        return AnaDataset(self.analys(True))         
+
+    @property 
     def partitions(self):
-        return AnaDataset(self.analys(True)).partitions('index')         
+        return self._analysis.partitions('index')         
 
     @property 
     def dimension(self):
-        return AnaDataset(self.analys(True)).dimension    
+        return self._analysis.dimension    
+    
 # %%methods
 
     @classmethod

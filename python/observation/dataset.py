@@ -614,10 +614,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         ''' dict with category for each Field'''
         return {field['name']: field['cat'] for field in self.indexinfos()}
 
-    @property
-    def dimension(self):
-        ''' integer : number of primary Field'''
-        return len(self.primary)
 
     @property
     def extidx(self):
