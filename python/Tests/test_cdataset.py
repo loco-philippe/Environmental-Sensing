@@ -45,7 +45,7 @@ class Test_Cfield(unittest.TestCase):
     def test_analysis(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
         self.assertEqual(idx.analysis, {'id': 'test', 'lencodec': 4,
-         'mincodec': 3, 'maxcodec': 4, 'hashf': -4309427714582209460})
+         'mincodec': 3, 'maxcodec': 4, 'hashf': 3209846043030599533})
         
 class Test_Cdataset(unittest.TestCase):
     
@@ -91,8 +91,8 @@ class Test_Cdataset(unittest.TestCase):
                           [None, None, None, 'gr1', 'gr1', 'gr2'],
                           ['philippe white', 'philippe white', 'philippe white',
                            'anne white', 'anne white', 'anne white']])
-        self.assertTrue(ilm.partitions[0] == ilm.analysis.partitions('index')[0] == [0, 1])
-        self.assertTrue(ilm.dimension == ilm.analysis.dimension == 2)
+        self.assertTrue(ilm.partitions[0] == ilm._analysis.partitions('index')[0] == [0, 1])
+        self.assertTrue(ilm.dimension == ilm._analysis.dimension == 2)
         
         
 if __name__ == '__main__':
