@@ -23,7 +23,6 @@ class DatasetStructure:
 
     *selecting - infos methods*
 
-    - `DatasetStructure.couplingmatrix`
     - `DatasetStructure.idxrecord`
     - `DatasetStructure.indexinfos`
     - `DatasetStructure.indicator`
@@ -179,19 +178,6 @@ class DatasetStructure:
                 self.delindex(filtname)
         ilis.reindex()
         return ilis
-
-    def couplingmatrix(self, default=False, filename=None, att='ratecpl'):
-        '''return a matrix with coupling infos between each idx.
-        One info can be stored in a file (csv format).
-
-        *Parameters*
-
-        - **default** : comparison with default codec
-        - **filename** : string (default None) - name of the file to write the matrix
-        - **att** : string - name of the info to store in the file
-
-        *Returns* : array of array of dict'''
-        return self.analysis.getmatrix()
 
     def coupling(self, derived=True, param='rateder', level=0.1):
         '''Transform idx with low rate in coupled or derived indexes (codec extension).

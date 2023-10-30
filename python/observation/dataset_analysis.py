@@ -332,9 +332,9 @@ class Analysis:
 
     def _setparent(self):
         '''set parent (Field with minimal diff) for each Field'''
-        # parent : min(diff) -> child
-        # distparent : min(rateder) -> diffdistparent, rateder(rateA)
-        # minparent : min(distance) -> rate(rateB), distance
+        # parent : min(diff) -> child (derived et coupled)
+        # distparent : min(rateder) -> diffdistparent, rateder(rateA) (tous les liens)
+        # minparent : min(distance) -> ratecpl(rateB), distance
         lenindex = self.iobj.lenindex
         leniobj = len(self.iobj)
         for i in range(lenindex):

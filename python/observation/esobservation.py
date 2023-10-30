@@ -103,7 +103,6 @@ class Observation(Dataset):
 
     *selecting - infos methods*
 
-    - `python.observation.dataset.Dataset.couplingmatrix`
     - `python.observation.dataset.Dataset.idxrecord`
     - `python.observation.dataset.Dataset.indexinfos`
     - `python.observation.dataset.Dataset.indicator`

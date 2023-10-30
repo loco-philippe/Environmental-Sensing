@@ -109,7 +109,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
 
     *selecting - infos methods (`observation.dataset_structure.DatasetStructure`)*
 
-    - `Dataset.couplingmatrix`
     - `Dataset.idxrecord`
     - `Dataset.indexinfos`
     - `Dataset.indicator`
@@ -625,11 +624,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     def extidxext(self):
         '''idx val (see data model)'''
         return [idx.val for idx in self.lidx]
-
-    """@property
-    def groups(self):
-        ''' list with crossed Field groups'''
-        return self.analysis.getgroups()"""
 
     @property
     def idxname(self):

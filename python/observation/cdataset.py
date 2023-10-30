@@ -129,6 +129,16 @@ class Cdataset:
         return [idx.name for idx in self.lindex]
 
     @property
+    def tiindex(self):
+        ''' list of keys for each record'''
+        return util.list(list(zip(*self.iindex)))
+
+# %%methods a bouger
+    @property 
+    def _analysis(self):
+        return AnaDataset(self.analys(True))         
+
+    @property
     def lvarname(self):
         ''' list of variable Field name'''
         return Util.view(self._analysis.variable, mode='id')
@@ -138,15 +148,6 @@ class Cdataset:
         '''list of var row'''
         return [self.lname.index(name) for name in self.lvarname]
     
-    @property
-    def tiindex(self):
-        ''' list of keys for each record'''
-        return util.list(list(zip(*self.iindex)))
-
-    @property 
-    def _analysis(self):
-        return AnaDataset(self.analys(True))         
-
     @property 
     def partitions(self):
         return self._analysis.partitions('index')         
