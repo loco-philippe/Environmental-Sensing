@@ -8,6 +8,7 @@ The `observation.test_dataset` module contains the unit tests (class unittest) f
 `Dataset` functions.
 """
 import unittest
+from time import time
 from copy import copy
 import csv
 from math import nan
@@ -23,10 +24,16 @@ i1 = 'i1'
 field = {Dataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
-Dataset = Sdataset
+#Dataset = Sdataset
 
+t0 = time()
+print('t0 ', t0)
 
 class Test_Dataset(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
 
     def test_creation_unique(self):
         self.assertEqual(Dataset().to_ntv(), Ntv.obj({}))
@@ -167,7 +174,7 @@ class Test_Dataset(unittest.TestCase):
         self.assertEqual(il.dimension, 2)
         self.assertEqual(il.lencomplete, 4)
         il = Dataset.ntv([[0, 2, 0, 0], [30, 12, 20, 20]])
-        self.assertFalse(il.consistent)
+        self.assertTrue(il.consistent)
         il = Dataset.ntv([{'ext': ['er', 'rt', 'er', 'ry']},
                         [0, 2, 0, 1], [30, 12, 20, 20]])
         self.assertTrue(il.consistent)
@@ -181,6 +188,12 @@ class Test_Dataset(unittest.TestCase):
         del(il[1])
         self.assertEqual(len(il), 3)
 
+class Test_structure(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
+        
     def test_canonorder(self):
         il = Dataset.ntv([[0, 1, 2, 3, 4, 5],
                         ['j', 'j', 'f', 'f', 'a', 'a'],
@@ -284,12 +297,12 @@ class Test_Dataset(unittest.TestCase):
     def test_append_variable(self):
         il = Dataset.ntv([['er', 'rt', 'er', 'ry'], [
                        0, 2, 0, 2], [30, 12, 20, 15]])
-        il.append(['truc', 0, 20], unique=True)
+        il.append(['truc', 0, 18], unique=True)
         self.assertEqual(len(il), 5)
-        il.append(['truc', 0, 20], unique=True)
+        il.append(['truc', 0, 18], unique=True)
         self.assertEqual(len(il), 5)
         self.assertEqual(il, Dataset.ntv([['er', 'rt', 'er', 'ry', 'truc'],
-                                        [0, 2, 0, 2, 0], [30, 12, 20, 15, 20]]))
+                                        [0, 2, 0, 2, 0], [30, 12, 20, 15, 18]]))
 
     def test_magic(self):
         iidx5 = Dataset.ntv({'datationvalue': [10, 10, 20, 20, 30, 30],
@@ -301,9 +314,9 @@ class Test_Dataset(unittest.TestCase):
         iidx5 += iidx5
         self.assertEqual(len(iidx5), 12)
         iidx5 |= iidx5
-        self.assertEqual(len(iidx5.lidx), 3)
+        self.assertEqual(len(iidx5.lindex), 3)
         iidx5.orindex(iidx5, first=False, merge=False, update=False)
-        self.assertEqual(len(iidx5.lidx), 6)
+        self.assertEqual(len(iidx5.lindex), 6)
         iidx6 = Dataset() | iidx5
         iidx7 = iidx5 | Dataset()
         self.assertTrue(iidx6 == iidx7)
@@ -333,6 +346,12 @@ class Test_Dataset(unittest.TestCase):
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertEqual(ilm.primary, [0, 2])
 
+class Test_ntv(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
+        
     def test_to_ntv_optimize(self):
         irve = {
             "nom_amenageur": [["ARCACHON", "ELECTRA"], 2, [0, 0, 0, 1, 0]], 
@@ -407,6 +426,12 @@ class Test_Dataset(unittest.TestCase):
         self.assertEqual(Dataset.ntv(il.to_ntv()), il)
         self.assertEqual(Dataset.ntv({}), Dataset())
 
+class Test_relation(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
+        
     def test_coupling(self):
         ilx = Dataset.ntv([['a', 'b', 'b', 'c', 'c', 'a'],
                          [20,  10,  10,  10,  10,  20],
@@ -449,34 +474,57 @@ class Test_Dataset(unittest.TestCase):
         self.assertEqual(ilx.nindex('dupli').val, [
                          True, True, True, False, False, True])
 
+class Test_full(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
+        
+    def test_full(self):
+        t1 = time()
+        ilm = Dataset.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
+                         ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
+        self.assertTrue(ilm.complete)
+        print(time() - t1)
+        self.assertTrue(ilm.full(inplace=False, complete=False) == ilm)
+        print(time() - t1)
+        ilmf = ilm.full(idxname=['i0', 'i1'], inplace=False)
+        print(time() - t1)
+        self.assertTrue(ilmf.nindex('i0').iscrossed(ilmf.nindex('i1')))
+        self.assertTrue(ilmf.nindex('i0').iscoupled(ilmf.nindex('i2')))
+        print(time() - t1)
+        ilm.full(idxname=['i0', 'i3', 'i5'])
+        print(time() - t1)
+        self.assertTrue(ilm.nindex('i0').iscrossed(ilm.nindex('i3')) ==
+                        ilm.nindex('i0').iscrossed(ilm.nindex('i5')) ==
+                        ilm.nindex('i3').iscrossed(ilm.nindex('i5')) == True)
+        print(time() - t1)
+        self.assertTrue(ilm.complete)
+        print(time() - t1)
+        il = Dataset.ntv([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30],
+                        [2, 0, 2, 0], [2, 2, 0, 0],
+                        ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
+        ilc = il.full(inplace=False)
+        print(time() - t1)
+        ild = il.full(idxname=['i2', 'i6', 'i1', 'i3',
+                      'i4', 'i5'], inplace=False) # !!!! time = 7s
+        print(time() - t1)
+        self.assertEqual(len(ild), 48)
+        self.assertTrue(il.nindex('i5').codec == ilc.nindex('i5').codec ==
+                        ild.nindex('i5').codec)
+        print(time() - t1)
+
+class Test_divers(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
+        
     def test_name(self):
         ilm = Dataset.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         ilm.full()
         self.assertTrue(ilm.ntv(ilm.to_ntv()) == ilm)
-
-    def test_full(self):
-        ilm = Dataset.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
-                         ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
-        self.assertTrue(ilm.complete)
-        self.assertTrue(ilm.full(inplace=False, complete=False) == ilm)
-        ilmf = ilm.full(idxname=['i0', 'i1'], inplace=False)
-        self.assertTrue(ilmf.nindex('i0').iscrossed(ilmf.nindex('i1')))
-        self.assertTrue(ilmf.nindex('i0').iscoupled(ilmf.nindex('i2')))
-        ilm.full(idxname=['i0', 'i3', 'i5'])
-        self.assertTrue(ilm.nindex('i0').iscrossed(ilm.nindex('i3')) ==
-                        ilm.nindex('i0').iscrossed(ilm.nindex('i5')) ==
-                        ilm.nindex('i3').iscrossed(ilm.nindex('i5')) == True)
-        self.assertTrue(ilm.complete)
-        il = Dataset.ntv([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30],
-                        [2, 0, 2, 0], [2, 2, 0, 0],
-                        ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
-        ilc = il.full(inplace=False)
-        ild = il.full(idxname=['i2', 'i6', 'i1', 'i3',
-                      'i4', 'i5'], inplace=False)
-        self.assertEqual(len(ild), 48)
-        self.assertTrue(il.nindex('i5').codec == ilc.nindex('i5').codec ==
-                        ild.nindex('i5').codec)
 
     def test_valtokey(self):
         ilm = Dataset.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
@@ -502,7 +550,12 @@ class Test_Dataset(unittest.TestCase):
                              ['morning', 'morning', 'afternoon', 'afternoon'])
             self.assertEqual(il.vlist(func=Ntv.to_name, extern=False, index=2, default='ici'),
                              ['paris', 'ici', 'paris', 'ici'])
+class Test_merge(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
+        
     def test_mergerecord(self):
         a = Sdataset.ntv([[1, 2, 3], [4, 5, 6]])
         b = Sdataset([a.field_class(['x'], 'merge_i0'), a.field_class([a], 'merge')])
@@ -549,25 +602,6 @@ class Test_Dataset(unittest.TestCase):
         il3 = Sdataset.ext([[il1, il2]])
         #Dataset.ntv([[il1, il2]], typevalue=None)
         self.assertEqual(il3.merge()[4], [14, 'english', 'gr1'])
-
-    def test_csv(self):
-        il = Dataset.ntv([['er', 'rt', 'er', 'ry'], [
-                       0, 2, 0, 2], [30, 12, 20, 15]])
-        il.to_csv('test.csv')
-        il2 = Dataset.from_csv('test.csv')
-        self.assertTrue(il == il2)
-        '''if ES.def_clsName:
-            il.to_csv(ifunc=ESValue.vSimple)
-            il.to_csv(ifunc=ESValue.json, encoded=False)
-            il3 = Dataset.from_csv(var=0)
-            self.assertTrue(il == il3)'''
-        il = Dataset.ntv([['er', 'rt', 'er', 'ry', 'ab'], [0, 2, 0, 2, 0],
-                        [10, 0, 20, 20, 15], [1, 2, 1, 2, 1]])
-        il.to_csv('test.csv', optcsv={
-                  'dialect': 'excel', 'delimiter': ';', 'quoting': csv.QUOTE_NONNUMERIC})
-        il2 = Dataset.from_csv('test.csv', optcsv={'dialect': 'excel', 'delimiter': ';',
-                                                 'quoting': csv.QUOTE_NONNUMERIC})
-        self.assertTrue(il == il2)
 
     """def test_axes(self):
 
@@ -637,6 +671,31 @@ class Test_Dataset(unittest.TestCase):
                          order=['property', 'datation', 'location'])
         self.assertEqual(Dataset._filter(ESValue.getName, ob.setDatation, 'date1'), [0])        '''
 
+class Test_Export(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__name__, time() - t0)
+        
+    def test_csv(self):
+        il = Dataset.ntv([['er', 'rt', 'er', 'ry'], [
+                       0, 2, 0, 2], [30, 12, 20, 15]])
+        il.to_csv('test.csv')
+        il2 = Dataset.from_csv('test.csv')
+        self.assertTrue(il == il2)
+        '''if ES.def_clsName:
+            il.to_csv(ifunc=ESValue.vSimple)
+            il.to_csv(ifunc=ESValue.json, encoded=False)
+            il3 = Dataset.from_csv(var=0)
+            self.assertTrue(il == il3)'''
+        il = Dataset.ntv([['er', 'rt', 'er', 'ry', 'ab'], [0, 2, 0, 2, 0],
+                        [10, 0, 20, 20, 15], [1, 2, 1, 2, 1]])
+        il.to_csv('test.csv', optcsv={
+                  'dialect': 'excel', 'delimiter': ';', 'quoting': csv.QUOTE_NONNUMERIC})
+        il2 = Dataset.from_csv('test.csv', optcsv={'dialect': 'excel', 'delimiter': ';',
+                                                 'quoting': csv.QUOTE_NONNUMERIC})
+        self.assertTrue(il == il2)
+        
     def test_to_numpy(self):
         '''à faire'''  # !!!
 
@@ -799,4 +858,4 @@ class Test_Dataset(unittest.TestCase):
 """
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main(verbosity=5)

@@ -39,6 +39,7 @@ from observation.dataset_structure import DatasetStructure
 from observation.dataset_analysis import Analysis
 from json_ntv.ntv import Ntv, NtvConnector
 from json_ntv.ntv_util import NtvUtil
+from tab_analysis import Util
 
 from observation.cdataset import Cdataset
 
@@ -625,10 +626,10 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         '''idx val (see data model)'''
         return [idx.val for idx in self.lidx]
 
-    @property
+    """@property
     def groups(self):
         ''' list with crossed Field groups'''
-        return self.analysis.getgroups()
+        return self.analysis.getgroups()"""
 
     @property
     def idxname(self):
@@ -700,7 +701,8 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     @property
     def lvarname(self):
         ''' list of variable Field name'''
-        return self.analysis.getvarname()
+        #return self.analysis.getvarname()
+        return Util.view(self._analysis.variable, mode='id')
 
     @property
     def lvarrow(self):
@@ -732,22 +734,26 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     @property
     def primary(self):
         ''' list of primary idx'''
-        return self.analysis.getprimary()
+        #return self.analysis.getprimary()
+        return [self.lidxrow.index(self.lname.index(name)) for name in self.primaryname]
 
     @property
     def primaryname(self):
         ''' list of primary name'''
-        return [self.lidx[idx].name for idx in self.primary]
+        #return [self.lidx[idx].name for idx in self.primary]
+        return Util.view(self._analysis.primary, mode='id')
 
     @property
     def secondary(self):
         ''' list of secondary idx'''
-        return self.analysis.getsecondary()
+        #return self.analysis.getsecondary()
+        return [self.lidxrow.index(self.lname.index(name)) for name in self.secondaryname]
 
     @property
     def secondaryname(self):
         ''' list of secondary name'''
-        return [self.lindex[idx].name for idx in self.secondary]
+        #return [self.lindex[idx].name for idx in self.secondary]
+        return Util.view(self._analysis.secondary, mode='id')
 
     @property
     def setidx(self):

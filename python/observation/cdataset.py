@@ -8,8 +8,7 @@ from copy import copy
 from observation.dataset_interface import DatasetError
 from observation.util import util
 from observation.cfield import Cfield
-from tab_analysis import AnaDataset
-from tab_analysis.analysis import Util
+from tab_analysis import AnaDataset, Util
 
 from json_ntv import Ntv
 from json_ntv.ntv_util import NtvUtil, NtvConnector
@@ -133,6 +132,11 @@ class Cdataset:
     def lvarname(self):
         ''' list of variable Field name'''
         return Util.view(self._analysis.variable, mode='id')
+
+    @property
+    def lvarrow(self):
+        '''list of var row'''
+        return [self.lname.index(name) for name in self.lvarname]
     
     @property
     def tiindex(self):

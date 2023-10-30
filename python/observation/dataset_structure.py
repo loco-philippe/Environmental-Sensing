@@ -330,16 +330,10 @@ class DatasetStructure:
             ilis.reindex()
         keysadd = util.idxfull([ilis.nindex(name) for name in idxname])
         if keysadd and len(keysadd) != 0:
-            lenadd = len(keysadd[0])
+            newlen = len(keysadd[0]) + len(ilis)
             for ind in range(ilis.lenindex):
-                ilis._fullindex(ind, keysadd, idxname, varname, len(ilis) + lenadd,
+                ilis._fullindex(ind, keysadd, idxname, varname, newlen,
                                 fillvalue, fillextern)
-        '''if not keysadd or len(keysadd) == 0:
-            return ilis
-        lenadd = len(keysadd[0])
-        for ind in range(ilis.lenindex):
-            ilis._fullindex(ind, keysadd, idxname, varname, len(ilis) + lenadd,
-                            fillvalue, fillextern)   '''     
         if complete:
             ilis.setcanonorder()
         return ilis
