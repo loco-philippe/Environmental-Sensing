@@ -94,7 +94,7 @@ class Cfield:
         ''' modify values item'''
         if ind < 0 or ind >= len(self):
             raise FieldError("out of bounds")
-        self.setvalue(ind, value, extern=True)
+        self.setvalue(ind, value)
 
     def __delitem__(self, ind):
         '''remove a record (value and key).'''

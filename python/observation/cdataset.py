@@ -133,29 +133,6 @@ class Cdataset(DatasetAnalysis):
         ''' list of keys for each record'''
         return util.list(list(zip(*self.iindex)))
 
-# %%methods a bouger
-    """@property 
-    def _analysis(self):
-        return AnaDataset(self.analys(True))         
-
-    @property
-    def lvarname(self):
-        ''' list of variable Field name'''
-        return Util.view(self._analysis.variable, mode='id')
-
-    @property
-    def lvarrow(self):
-        '''list of var row'''
-        return [self.lname.index(name) for name in self.lvarname]
-    
-    @property 
-    def partitions(self):
-        return self._analysis.partitions('index')         
-
-    @property 
-    def dimension(self):
-        return self._analysis.dimension """   
-    
 # %%methods
 
     @classmethod
@@ -287,6 +264,40 @@ class Cdataset(DatasetAnalysis):
             self.lindex = [self.nindex(name) for name in order]
         return self
 
+    def check_relationship(self, relations):
+        '''get the list of inconsistent records for each relationship defined in relations
+
+         *Parameters*
+
+        - **relations** : list of dict - list of fields with relationship property
+        
+        *Returns* : dict with for each relationship: key = pair of name, 
+        and value = list of inconsistent records'''
+        if not isinstance(relations, (list, dict)):
+            raise DatasetError("relations is not correct")
+        if isinstance(relations, dict):
+            relations = [relations]
+        dic_res = {}
+        for field in relations:
+            if not 'relationship' in field or not 'name' in field:
+                continue
+            if not 'parent' in field['relationship'] or not 'link' in field['relationship']:
+                raise DatasetError("relationship is not correct")
+            rel = field['relationship']['link']
+            f_parent = self.nindex(field['relationship']['parent'])
+            f_field = self.nindex(field['name'])
+            name_rel = field['name'] + ' - ' + field['relationship']['parent']
+            if f_parent is None or f_field is None:
+                raise DatasetError("field's name is not present in data")
+            match rel:
+                case 'derived':
+                    dic_res[name_rel] = f_parent.coupling(f_field, reindex=True)                
+                case 'coupled':
+                    dic_res[name_rel] = f_parent.coupling(f_field, derived=False, reindex=True)    
+                case _:
+                    raise DatasetError(rel + "is not a valid relationship")
+        return dic_res          
+    
 class DatasetError(Exception):
     ''' Dataset Exception'''
     # pass

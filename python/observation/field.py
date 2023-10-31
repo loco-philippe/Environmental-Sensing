@@ -173,6 +173,12 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
         codec = self.l_to_i(codec, fast=fast)
         Cfield.__init__(self, codec, name, keys, reindex=reindex)
 
+    def __setitem__(self, ind, value):
+        ''' modify values item'''
+        if ind < 0 or ind >= len(self):
+            raise FieldError("out of bounds")
+        self.setvalue(ind, value, extern=True)
+        
     @classmethod
     def bol(cls, leng, notdef=None, name=None, default=True):
         '''

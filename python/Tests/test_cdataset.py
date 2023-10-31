@@ -45,7 +45,7 @@ class Test_Cfield(unittest.TestCase):
     def test_analysis(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
         self.assertEqual(idx.analysis, {'id': 'test', 'lencodec': 4,
-         'mincodec': 3, 'maxcodec': 4, 'hashf': 3209846043030599533})
+         'mincodec': 3, 'maxcodec': 4, 'hashf': -2777891699512243233})
         
 class Test_Cdataset(unittest.TestCase):
     
@@ -94,6 +94,13 @@ class Test_Cdataset(unittest.TestCase):
         self.assertTrue(ilm.partitions[0] == ilm._analysis.partitions('index')[0] == [0, 1])
         self.assertTrue(ilm.dimension == ilm._analysis.dimension == 2)
         
+    def test_checkrelation(self):
+        ilm = Cdataset.from_ntv({'month':   ['jan', 'feb', 'apr', 'jan', 'sep', 'dec', 'apr', 'may', 'jan'],
+                                 'quarter': ['q1',  'q1',  'q2',  'q1',  'q3',  'q4',  'q2',  'q2',  'q1']})      
+        self.assertEqual(ilm._analysis.get_relation('month', 'quarter').distomin, 0)
+        ilm[2] = ['apr', 'q1']
+        self.assertEqual(ilm._analysis.get_relation('month', 'quarter').distomin, 1)
+        self.assertEqual(ilm.nindex('month').coupling(ilm.nindex('quarter')), (2,6))
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)
