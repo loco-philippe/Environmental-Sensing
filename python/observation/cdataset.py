@@ -5,15 +5,15 @@ Created on Wed Oct 11 11:54:18 2023
 @author: phili
 """
 from copy import copy
-from observation.dataset_interface import DatasetError
+
+from observation.dataset__analysis import DatasetAnalysis
 from observation.util import util
 from observation.cfield import Cfield
-from tab_analysis import AnaDataset, Util
 
 from json_ntv import Ntv
 from json_ntv.ntv_util import NtvUtil, NtvConnector
 
-class Cdataset:
+class Cdataset(DatasetAnalysis):
 
     field_class = Cfield
 
@@ -134,7 +134,7 @@ class Cdataset:
         return util.list(list(zip(*self.iindex)))
 
 # %%methods a bouger
-    @property 
+    """@property 
     def _analysis(self):
         return AnaDataset(self.analys(True))         
 
@@ -154,7 +154,7 @@ class Cdataset:
 
     @property 
     def dimension(self):
-        return self._analysis.dimension    
+        return self._analysis.dimension """   
     
 # %%methods
 
@@ -286,3 +286,7 @@ class Cdataset:
         elif isinstance(order[0], str):
             self.lindex = [self.nindex(name) for name in order]
         return self
+
+class DatasetError(Exception):
+    ''' Dataset Exception'''
+    # pass

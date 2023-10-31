@@ -14,7 +14,7 @@ from copy import copy
 from observation.esconstante import ES
 from observation.field import Field
 from observation.util import util
-from observation.dataset_interface import DatasetError
+from observation.cdataset import DatasetError
 #from observation.fields import Sfield
 
 
@@ -393,37 +393,6 @@ class DatasetStructure:
         *Returns* : dict'''
         return self.analysis.getinfos(keys)
 
-    def indicator(self, fullsize=None, size=None):
-        '''generate size indicators: ol (object lightness), ul (unicity level), 
-        gain (sizegain)
-
-        *Parameters*
-
-        - **fullsize** : int (default none) - size with full codec
-        - **size** : int (default none) - size with existing codec
-        - **indexinfos** : list (default None) - indexinfos data
-
-        *Returns* : dict'''
-        if not fullsize:
-            fullsize = len(self.to_obj(encoded=True, modecodec='full'))
-        if not size:
-            size = len(self.to_obj(encoded=True))
-        nval = len(self) * (self.lenindex + 1)
-        sval = fullsize / nval
-        ncod = sum(self.indexlen) + self.lenindex
-        if nval != ncod:
-            scod = (size - ncod * sval) / (nval - ncod)
-            olight = scod / sval
-        else:
-            olight = None
-        return {'total values': nval, 'mean size': round(sval, 3),
-                'unique values': ncod, 'mean coding size': round(scod, 3),
-                'unicity level': round(ncod / nval, 3),
-                'optimize level': round(size / fullsize, 3),
-                'object lightness': round(olight, 3),
-                'maxgain': round((nval - ncod) / nval, 3),
-                'gain': round((fullsize - size) / fullsize, 3)}
-
     def keytoval(self, listkey, extern=True):
         '''
         convert a keys list (key for each index) to a values list (value for each index).
@@ -704,20 +673,6 @@ class DatasetStructure:
             self.lindex = lindex
             return self
         return self.__class__(lindex, self.lvarname)
-
-    def tree(self, mode='derived', width=5, lname=20, string=True):
-        '''return a string with a tree of derived Field.
-
-         *Parameters*
-
-        - **lname** : integer (default 20) - length of the names        
-        - **width** : integer (default 5) - length of the lines        
-        - **mode** : string (default 'derived') - kind of tree :
-            'derived' : derived tree
-            'distance': min distance tree
-            'diff': min dist rate tree
-        '''
-        return self.analysis.tree(width=width, lname=lname, mode=mode, string=string)
 
     def updateindex(self, listvalue, index, extern=True):
         '''update values of an index.

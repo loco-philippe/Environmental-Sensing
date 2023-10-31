@@ -24,7 +24,7 @@ i1 = 'i1'
 field = {Dataset: Nfield, Ndataset: Nfield, Sdataset: Sfield}
 
 Dataset = Ndataset
-#Dataset = Sdataset
+Dataset = Sdataset
 
 t0 = time()
 print('t0 ', t0)
@@ -485,34 +485,26 @@ class Test_full(unittest.TestCase):
         ilm = Dataset.ntv([[0, 2, 0, 2], [30, 12, 20, 30], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         self.assertTrue(ilm.complete)
-        print(time() - t1)
+        print(time() - t1) # !!! time 1s
         self.assertTrue(ilm.full(inplace=False, complete=False) == ilm)
-        print(time() - t1)
         ilmf = ilm.full(idxname=['i0', 'i1'], inplace=False)
-        print(time() - t1)
         self.assertTrue(ilmf.nindex('i0').iscrossed(ilmf.nindex('i1')))
         self.assertTrue(ilmf.nindex('i0').iscoupled(ilmf.nindex('i2')))
-        print(time() - t1)
         ilm.full(idxname=['i0', 'i3', 'i5'])
-        print(time() - t1)
         self.assertTrue(ilm.nindex('i0').iscrossed(ilm.nindex('i3')) ==
                         ilm.nindex('i0').iscrossed(ilm.nindex('i5')) ==
                         ilm.nindex('i3').iscrossed(ilm.nindex('i5')) == True)
-        print(time() - t1)
         self.assertTrue(ilm.complete)
-        print(time() - t1)
+        print(time() - t1) #!!! time 1.3
         il = Dataset.ntv([['er', 'rt', 'er', 'ry'], [0, 2, 0, 2], [30, 12, 20, 30],
                         [2, 0, 2, 0], [2, 2, 0, 0],
                         ['info', 'info', 'info', 'info'], [12, 20, 20, 12]])
         ilc = il.full(inplace=False)
-        print(time() - t1)
         ild = il.full(idxname=['i2', 'i6', 'i1', 'i3',
-                      'i4', 'i5'], inplace=False) # !!!! time = 7s
-        print(time() - t1)
+                      'i4', 'i5'], inplace=False)
         self.assertEqual(len(ild), 48)
         self.assertTrue(il.nindex('i5').codec == ilc.nindex('i5').codec ==
                         ild.nindex('i5').codec)
-        print(time() - t1)
 
 class Test_divers(unittest.TestCase):
 

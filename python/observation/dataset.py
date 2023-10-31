@@ -32,16 +32,17 @@ import math
 import json
 import csv
 
-from observation.fields import Nfield
+
 from observation.util import util
-from observation.dataset_interface import DatasetInterface, DatasetError
+from observation.dataset_interface import DatasetInterface
 from observation.dataset_structure import DatasetStructure
 from observation.dataset_analysis import Analysis
+
 from json_ntv.ntv import Ntv, NtvConnector
 from json_ntv.ntv_util import NtvUtil
 from tab_analysis import Util
 
-from observation.cdataset import Cdataset
+from observation.cdataset import Cdataset, DatasetError
 
 class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     # %% intro
@@ -443,38 +444,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         return cls(lindex, reindex=False)
     
 # %% internal
-
-    """@staticmethod
-    def _init_ntv_keys(ind, lidx, leng):
-        ''' initialization of explicit keys data in lidx object'''
-        # name: 0, type: 1, codec: 2, parent: 3, keys: 4, coef: 5, leng: 6
-        name, typ, codec, parent, keys, coef, length = lidx[ind]
-        if (keys, parent, coef) == (None, None, None):  # full or unique
-            if len(codec) == 1: # unique
-                lidx[ind][4] = [0] * leng
-            elif len(codec) == leng:    # full
-                lidx[ind][4] = list(range(leng))
-            else:
-                raise DatasetError('impossible to generate keys')
-            return
-        if keys and len(keys) > 1 and parent is None:  #complete
-            return
-        if coef:  #primary
-            lidx[ind][4] = [(ikey % (coef * len(codec))) // coef for ikey in range(leng)]
-            lidx[ind][3] = None
-            return  
-        if parent is None:
-            raise DatasetError('keys not referenced')          
-        if not lidx[parent][4] or len(lidx[parent][4]) != leng:
-            Dataset._init_ntv_keys(parent, lidx, leng)
-        if not keys and len(codec) == len(lidx[parent][2]):    # implicit
-            lidx[ind][4] = lidx[parent][4]
-            lidx[ind][3] = None
-            return
-        lidx[ind][4] = Nfield.keysfromderkeys(lidx[parent][4], keys)  # relative
-        lidx[ind][3] = None
-        return"""
-
     @staticmethod
     def _mergerecord(rec, mergeidx=True, updateidx=True, simplename=False):
         #row = rec[0] if isinstance(rec, list) else rec
@@ -523,53 +492,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
                 stri += '    ' + str(idx) + '\n'
         return stri
 
-    """
-    def __repr__(self):
-        '''return classname, number of value and number of indexes'''
-        return self.__class__.__name__ + '[' + str(len(self)) + ', ' + str(self.lenindex) + ']'
-
-    def __len__(self):
-        ''' len of values'''
-        if not self.lindex:
-            return 0
-        return len(self.lindex[0])
-
-    def __contains__(self, item):
-        ''' list of lindex values'''
-        return item in self.lindex
-
-    def __getitem__(self, ind):
-        ''' return value record (value conversion)'''
-        res = [idx[ind] for idx in self.lindex]
-        if len(res) == 1:
-            return res[0]
-        return res
-
-    def __setitem__(self, ind, item):
-        ''' modify the Field values for each Field at the row ind'''
-        if not isinstance(item, list):
-            item = [item]
-        for val, idx in zip(item, self.lindex):
-            idx[ind] = val
-
-    def __delitem__(self, ind):
-        ''' remove all Field item at the row ind'''
-        for idx in self.lindex:
-            del idx[ind]
-
-    def __hash__(self):
-        '''return sum of all hash(Field)'''
-        return sum([hash(idx) for idx in self.lindex])
-
-    def _hashi(self):
-        '''return sum of all hashi(Field)'''
-        return sum([idx._hashi() for idx in self.lindex])
-
-    def __eq__(self, other):
-        ''' equal if hash values are equal'''
-        return hash(self) == hash(other)
-    """
-
     def __add__(self, other):
         ''' Add other's values to self's values in a new Dataset'''
         newil = copy(self)
@@ -589,12 +511,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     def __ior__(self, other):
         ''' Add other's index to self's index'''
         return self.orindex(other, first=False, merge=True, update=False)
-
-    """
-    def __copy__(self):
-        ''' Copy all the data '''
-        return self.__class__(self)
-    """
 
 # %% property
     @property
@@ -635,43 +551,17 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         ''' list of idx codec length'''
         return [len(idx.codec) for idx in self.lidx]
 
-    """
-    @property
-    def indexlen(self):
-        ''' list of index codec length'''
-        return [len(idx.codec) for idx in self.lindex]
-    """
-
     @property
     def iidx(self):
         ''' list of keys for each idx'''
         return [idx.keys for idx in self.lidx]
-
-    """
-    @property
-    def iindex(self):
-        ''' list of keys for each index'''
-        return [idx.keys for idx in self.lindex]
-
-    @property
-    def keys(self):
-        ''' list of keys for each index'''
-        return [idx.keys for idx in self.lindex]
-    """
 
     @property
     def lencomplete(self):
         '''number of values if complete (prod(idxlen primary))'''
         primary = self.primary
         return util.mul([self.idxlen[i] for i in primary])
-
-    """
-    @property
-    def lenindex(self):
-        ''' number of indexes'''
-        return len(self.lindex)
-    """
-
+    
     @property
     def lenidx(self):
         ''' number of idx'''
@@ -693,12 +583,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         return [self.lindex[i] for i in self.lvarrow]
 
     @property
-    def lvarname(self):
-        ''' list of variable Field name'''
-        #return self.analysis.getvarname()
-        return Util.view(self._analysis.variable, mode='id')
-
-    @property
     def lvarrow(self):
         '''list of var row'''
         return [self.lname.index(name) for name in self.lvarname]
@@ -708,58 +592,30 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         '''list of idx row'''
         return [i for i in range(self.lenindex) if i not in self.lvarrow]
 
-    """
-    @property
-    def lunicrow(self):
-        '''list of unic idx row'''
-        return [self.lname.index(name) for name in self.lunicname]
-
-    @property
-    def lunicname(self):
-        ''' list of unique index name'''
-        return [idx.name for idx in self.lindex if len(idx.codec) == 1]
-
-    @property
-    def lname(self):
-        ''' list of index name'''
-        return [idx.name for idx in self.lindex]
-    """
-
     @property
     def primary(self):
         ''' list of primary idx'''
-        #return self.analysis.getprimary()
         return [self.lidxrow.index(self.lname.index(name)) for name in self.primaryname]
 
     @property
     def primaryname(self):
         ''' list of primary name'''
-        #return [self.lidx[idx].name for idx in self.primary]
         return Util.view(self._analysis.primary, mode='id')
 
     @property
     def secondary(self):
         ''' list of secondary idx'''
-        #return self.analysis.getsecondary()
         return [self.lidxrow.index(self.lname.index(name)) for name in self.secondaryname]
 
     @property
     def secondaryname(self):
         ''' list of secondary name'''
-        #return [self.lindex[idx].name for idx in self.secondary]
         return Util.view(self._analysis.secondary, mode='id')
 
     @property
     def setidx(self):
         '''list of codec for each idx'''
         return [idx.codec for idx in self.lidx]
-
-    """
-    @property
-    def tiindex(self):
-        ''' list of keys for each record'''
-        return util.list(list(zip(*self.iindex)))
-    """
 
     @property
     def zip(self):

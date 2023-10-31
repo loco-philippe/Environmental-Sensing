@@ -20,16 +20,10 @@ from tabulate import tabulate
 from json_ntv.ntv import NtvList, NtvJsonEncoder
 from observation.field import Field
 from observation.util import util
-
+from observation.cdataset import DatasetError
 #import sys
 #print("In module dataset_interface sys.path[0], __package__ ==", sys.path[0], __package__)
 #print("In module dataset_interface __package__, __name__ ==", __package__, __name__)
-
-
-class DatasetError(Exception):
-    ''' Dataset Exception'''
-    # pass
-
 
 class DatasetInterface:
     '''this class includes Dataset methods :
@@ -214,31 +208,30 @@ class DatasetInterface:
                    for index, iname in zip(self.lindex, idxname)]
         else:
             lis = []
-            indexinfos = self.indexinfos()
-            for idx, inf, iname in zip(self.lindex, indexinfos, idxname):
+            anafields = self.anafields
+            for idx, iname, anafld in zip(self.lindex, idxname, anafields):
                 coef = util.encode_coef(idx.keys)
-                if inf['cat'] == 'unique':
+                parent = anafld.p_derived.view('index')
+                if anafld.category == 'unique':
                     lis.append(idx.to_ntv(name=iname))
-                elif inf['cat'] == 'coupled':
-                    idx_coup = idx.setkeys(self.lindex[inf['parent']].keys, inplace=False)
-                    lis.append(idx_coup.to_ntv(parent=inf['parent'], name=iname))
+                elif anafld.category == 'coupled':
+                    idx_coup = idx.setkeys(self.lindex[parent].keys, inplace=False)
+                    lis.append(idx_coup.to_ntv(parent=parent, name=iname))
                 elif coef:
                     lis.append(idx.to_ntv(keys=[coef], name=iname))
-                elif inf['parent'] == -1:  # cat='variable' or 'secondary'
+                elif parent == -1:  # cat='variable' or 'secondary'
                     if idx.keys == list(range(len(self))):
                         lis.append(idx.to_ntv(modecodec='full', name=iname))
                     else:
                         lis.append(idx.to_ntv(modecodec='default', name=iname))                
                 else:  # derived
-                    if len(self.lindex[inf['parent']].codec) == len(self):
+                    if len(self.lindex[parent].codec) == len(self):
                         lis.append(idx.to_ntv(modecodec='default', name=iname))             
-                    #elif idx.iskeysfromderkeys(self.lindex[inf['parent']]): # periodic derived
-                    #    lis.append(Field.to_ntv(idx, parent=inf['parent'], name=iname))
                     else: #derived
-                        keys = idx.derkeys(self.lindex[inf['parent']])
-                        lis.append(idx.to_ntv(keys=keys, parent=inf['parent'], name=iname))            
+                        keys = idx.derkeys(self.lindex[parent])
+                        lis.append(idx.to_ntv(keys=keys, parent=parent, name=iname))            
         return NtvList(lis, None, ntv_type=def_type)
-
+    
     """def to_obj(self, **kwargs):
         '''Return a formatted object (json string, cbor bytes or json dict).
 
@@ -467,41 +460,6 @@ class DatasetInterface:
         return self.lindex[index].vlist(func, *args, **kwargs)
 
     # %%internal
-    """def _optimize_obj(self, idxname, **option2):
-        '''return list object with optimize modecodec'''
-        indexinfos = self.indexinfos()
-        notkeys = True
-        lis = []
-        if self.iscanonorder():
-            notkeys = None
-        for idx, iname, inf in zip(self.lindex, idxname, indexinfos):
-            if inf['cat'] == 'unique':
-                lis.append(idx.tostdcodec(full=False).to_obj(
-                    name=iname, **option2))
-            elif inf['cat'] == 'primary':
-                lis.append(idx.to_obj(keys=notkeys, name=iname, **option2))
-            elif inf['cat'] == 'coupled':
-                lis.append(idx.setkeys(self.lindex[inf['parent']].keys, inplace=False).
-                           to_obj(parent=inf['parent'], name=iname, **option2))
-            elif inf['parent'] == -1:  # cat='variable' or 'secondary'
-                if option2['fullvar'] and inf['cat'] == 'variable' and not(inf['child']):
-                    opt = option2 | {'modecodec': 'full'}
-                    lis.append(idx.to_obj(name=iname, **opt))
-                elif idx.keys == list(range(len(self))):
-                    lis.append(idx.to_obj(name=iname, **option2))
-                else:
-                    lis.append(idx.to_obj(keys=True, name=iname, **option2))
-            else:  # derived
-                if len(self.lindex[inf['parent']].codec) == len(self):
-                    lis.append(idx.to_obj(keys=True, name=iname, **option2))
-                elif idx.iskeysfromderkeys(self.lindex[inf['parent']]):
-                    lis.append(idx.to_obj(parent=inf['parent'],
-                                          name=iname, **option2))
-                else: # periodic derived
-                    keys = idx.derkeys(self.lindex[inf['parent']])
-                    lis.append(idx.to_obj(keys=keys, parent=inf['parent'],
-                                          name=iname, **option2))
-        return lis"""
 
     def _to_tab(self, **kwargs):
         ''' data preparation (dict of dict) for view or csv export.
