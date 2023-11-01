@@ -129,7 +129,7 @@ class Cfield:
     
     # %% property
     @property 
-    def analysis(self):
+    def to_analysis(self):
         return { 'id': self.name, 'lencodec': len(self.codec), 
                  'mincodec': len(set(self.codec)), 'maxcodec': len(self),
                  'hashf': hash(self)}

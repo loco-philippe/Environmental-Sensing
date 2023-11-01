@@ -20,7 +20,7 @@ class Test_Cfield(unittest.TestCase):
         self.assertEqual(fnull.infos, {'lencodec': 0, 'mincodec': 0,
                          'maxcodec': 0, 'typecodec': 'null', 'ratecodec': 0.0})
         self.assertEqual({'id': 'field', 'lencodec': 0, 'mincodec': 0, 'maxcodec': 0,
-                          'hashf': 5740354900026072187}, fnull.analysis)
+                          'hashf': hash(fnull)}, fnull.to_analysis)
 
     def test_init(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
@@ -44,8 +44,8 @@ class Test_Cfield(unittest.TestCase):
 
     def test_analysis(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
-        self.assertEqual(idx.analysis, {'id': 'test', 'lencodec': 4,
-         'mincodec': 3, 'maxcodec': 4, 'hashf': -2777891699512243233})
+        self.assertEqual(idx.to_analysis, {'id': 'test', 'lencodec': 4,
+         'mincodec': 3, 'maxcodec': 4, 'hashf': hash(idx)})
         
 class Test_Cdataset(unittest.TestCase):
     
@@ -53,7 +53,7 @@ class Test_Cdataset(unittest.TestCase):
         dnull = Cdataset()
         self.assertTrue(dnull.keys == dnull.indexlen == dnull.iindex == [])
         self.assertTrue(dnull.lenindex == len(dnull) == 0) 
-        self.assertEqual(dnull.analys(), {'name': None, 'fields': [], 
+        self.assertEqual(dnull.to_analysis(), {'name': None, 'fields': [], 
                                           'length': 0, 'relations': {}})
         
     def test_init(self):
@@ -70,8 +70,8 @@ class Test_Cdataset(unittest.TestCase):
         dts = Cdataset([Cfield([10, 20, 30, 20], 'i0', default=True), 
                         Cfield([1, 2, 3, 4], 'i1', default=True), 
                         Cfield([1, 2, 3, 2], 'i2', default=True)], 'test')
-        self.assertEqual(dts.analys()['fields'][0], dts.lindex[0].analysis)
-        self.assertEqual(dts.analys()['relations'], {'i0': {'i1': 4, 'i2': 3}, 
+        self.assertEqual(dts.to_analysis()['fields'][0], dts.lindex[0].to_analysis)
+        self.assertEqual(dts.to_analysis()['relations'], {'i0': {'i1': 4, 'i2': 3}, 
                                                      'i1': {'i2': 4}})
 
     def test_distrib(self):
@@ -82,8 +82,8 @@ class Test_Cdataset(unittest.TestCase):
                                 'i1': [1,1,0,0,1,1,0,0],
                                 'i2':[1,1,1,0,0,0,0,1],
                                 'i3':[1,1,1,1,0,0,0,0]})
-        self.assertTrue(dts.analys(True)['relations']['i1']['i3'][1])
-        self.assertFalse(dts.analys(True)['relations']['i2']['i3'][1])
+        self.assertTrue(dts.to_analysis(True)['relations']['i1']['i3'][1])
+        self.assertFalse(dts.to_analysis(True)['relations']['i2']['i3'][1])
 
     def test_analysis(self):
         ilm = Cdataset.from_ntv([['math', 'english', 'software', 'math', 'english', 'software'],
@@ -101,6 +101,8 @@ class Test_Cdataset(unittest.TestCase):
         ilm[2] = ['apr', 'q1']
         self.assertEqual(ilm._analysis.get_relation('month', 'quarter').distomin, 1)
         self.assertEqual(ilm.nindex('month').coupling(ilm.nindex('quarter')), (2,6))
+        field = { "name": "quarter",  "relationship" : { "parent" : "month", "link" : "derived" }}
+        self.assertEqual(ilm.check_relationship(field), (2,6))
         
 if __name__ == '__main__':
     unittest.main(verbosity=2)

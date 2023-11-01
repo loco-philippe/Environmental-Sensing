@@ -23,7 +23,7 @@ class DatasetAnalysis:
     
     @property 
     def _analysis(self):
-        return AnaDataset(self.analys(True))         
+        return AnaDataset(self.to_analysis(True))         
 
     @property
     def lvarname(self):

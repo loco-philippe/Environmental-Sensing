@@ -29,6 +29,10 @@ class Cdataset(DatasetAnalysis):
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.name = listidx.name
             return
+        if listidx.__class__.__name__ == 'DataFrame':
+            lindex, leng = NtvConnector.connector()['DataFrameConnec'].to_listidx(listidx)
+            listidx = [Cfield(field['codec'], field['name'], field['keys'])
+                       for field in lindex]
         self.name     = name
         self.lindex   = [] if listidx is None else listidx
         if reindex:
@@ -181,8 +185,8 @@ class Cdataset(DatasetAnalysis):
                 self.lindex[i].add(other.lindex[i], solve=solve)
         return self
 
-    def analys(self, distr=False):
-        return {'name': self.name, 'fields': [fld.analysis for fld in self.lindex],
+    def to_analysis(self, distr=False):
+        return {'name': self.name, 'fields': [fld.to_analysis for fld in self.lindex],
                 'length': len(self), 'relations': {
                    self.lindex[i].name: 
                        {self.lindex[j].name: 
@@ -265,14 +269,17 @@ class Cdataset(DatasetAnalysis):
         return self
 
     def check_relationship(self, relations):
-        '''get the list of inconsistent records for each relationship defined in relations
+        '''get the inconsistent records for each relationship defined in relations
 
          *Parameters*
 
-        - **relations** : list of dict - list of fields with relationship property
+        - **relations** : list of dict or single dict - list of fields with relationship property
         
-        *Returns* : dict with for each relationship: key = pair of name, 
-        and value = list of inconsistent records'''
+        *Returns* : 
+        
+        - dict with for each relationship: key = pair of name, 
+        and value = list of inconsistent records
+        - or if single relationship : value'''
         if not isinstance(relations, (list, dict)):
             raise DatasetError("relations is not correct")
         if isinstance(relations, dict):
@@ -296,6 +303,8 @@ class Cdataset(DatasetAnalysis):
                     dic_res[name_rel] = f_parent.coupling(f_field, derived=False, reindex=True)    
                 case _:
                     raise DatasetError(rel + "is not a valid relationship")
+        if len(dic_res) == 1: 
+            return list(dic_res.values())[0]
         return dic_res          
     
 class DatasetError(Exception):
