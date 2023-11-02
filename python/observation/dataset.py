@@ -521,9 +521,10 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     @property
     def consistent(self):
         ''' True if all the record are different'''
-        if not self.iidx:
+        selfiidx = self.iidx
+        if not selfiidx:
             return True
-        return max(Counter(zip(*self.iidx)).values()) == 1
+        return max(Counter(zip(*selfiidx)).values()) == 1
 
     @property
     def category(self):

@@ -300,14 +300,15 @@ class Cfield:
         if default:
             return util.couplinginfos(self.values, other.values)
         if min(len(self), len(other)) == 0:
-            return {'dist': 0, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null',
-                    'distance': 0, 'ratecpl': 0}
-        xs = len(self._codec)         # xs
-        xo = len(other._codec)        # xo
-        dmin = max(xs, xo)          # dmin
-        dmax = xs * xo              # dmax
-        diff = abs(xs - xo)         # diff
+            return {'dist': 0, 'rateder': 0, 'distomin': 0, 'distomax': 0,
+                    'dmin': 0, 'dmax': 0, 'diff': 0, 'typecoupl': 'null',
+                    'dran': 0, 'distance': 0, 'ratecpl': 0}
+        xs = len(self._codec)
+        xo = len(other._codec)
+        dmin = max(xs, xo)
+        dmax = xs * xo
+        dran = dmax - dmin
+        diff = abs(xs - xo)
         if min(xs, xo) == 1:
             ratecpl = 0
             if dmax - dmin + diff != 0:
@@ -316,17 +317,17 @@ class Cfield:
                 typec = 'derived'
             else:
                 typec = 'derive'
-            return {'dist': dmin, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': dmin, 'distmax': dmax, 'diff': diff,
+            return {'dist': dmin, 'rateder': 0, 'distomin': 0, 'distomax': 0,
+                    'dmin': dmin, 'dmax': dmax, 'diff': diff, 'dran': dran,
                     'typecoupl': typec, 'distance': diff, 'ratecpl': ratecpl}
         xso = len(util.tocodec([tuple((v1, v2))     # xab
                   for v1, v2 in zip(self._keys, other._keys)]))
-        dic = {'dist': xso, 'distmin': dmin, 'distmax': dmax, 'diff': diff,
-               'rateder': (xso - dmin) / (dmax - dmin),            # rateDer
-               'disttomin': xso - dmin,  
-               'disttomax': dmax - xso,        
+        dic = {'dist': xso, 'dmin': dmin, 'dmax': dmax, 'diff': diff, 'dran': dran,
+               'rateder': (xso - dmin) / (dmax - dmin),
+               'distomin': xso - dmin,  
+               'distomax': dmax - xso,        
                'distance': xso - dmin + diff,
-               'ratecpl': (xso - dmin + diff) / (dmax - dmin + diff)}  #rateCpl
+               'ratecpl': (xso - dmin + diff) / (dmax - dmin + diff)}
         if dic['rateder'] == 0 and dic['diff'] == 0:
             dic['typecoupl'] = 'coupled'
         elif dic['rateder'] == 0 and xs < xo:
