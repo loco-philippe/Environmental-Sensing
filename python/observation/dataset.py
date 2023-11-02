@@ -100,7 +100,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
 
     *global value (getters @property)*
 
-    - `Dataset.category`
     - `Dataset.complete`
     - `Dataset.consistent`
     - `Dataset.dimension`
@@ -525,12 +524,6 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         if not selfiidx:
             return True
         return max(Counter(zip(*selfiidx)).values()) == 1
-
-    @property
-    def category(self):
-        ''' dict with category for each Field'''
-        return {field['name']: field['cat'] for field in self.indexinfos()}
-
 
     @property
     def extidx(self):

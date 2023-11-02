@@ -47,7 +47,43 @@ class DatasetAnalysis:
     def lvarname(self):
         ''' list of variable Field name'''
         return Util.view(self._analysis.variable, mode='id')
-    
+
+    def indexinfos(self, keys=None):
+        '''return a dict with infos of each index :
+            - num, name, cat, diffdistparent, child, parent, distparent, 
+            crossed, pparent, rateder (struct info)
+            - lencodec, mincodec, maxcodec, typecodec, ratecodec (base info)
+
+        *Parameters*
+
+        - **keys** : string, list or tuple (default None) - list of attributes 
+        to returned.
+        if 'all' or None, all attributes are returned.
+        if 'struct', only structural attributes are returned.
+
+        *Returns* : dict'''
+        return self.analysis.getinfos(keys)
+        #return self._analysis.to_dict(mode='index', keys=keys)    
+
+    def field_partition(self, partition=None):
+        '''return a partition dict with the list of primary, secondary, unique
+        and variable fields (index).
+
+         *Parameters*
+
+        - **partition** : list (default None) - if None, partition is the first
+        '''
+        fields = self._analysis.fields
+        part = []
+        for fld in partition:
+            if isinstance(fld, int):
+                part.append(fields[fld])
+            else:
+                part.append(fields[self.lname.index(fld)]) 
+        part = None if not partition else part
+        return self._analysis.field_partition(mode='index', partition=part, 
+                                              distributed=True)    
+        
     def tree(self, mode='derived', width=5, lname=20, string=True):
         '''return a string with a tree of derived Field.
 

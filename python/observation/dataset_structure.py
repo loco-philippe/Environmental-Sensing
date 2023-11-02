@@ -68,31 +68,6 @@ class DatasetStructure:
     '''
     # %% methods
 
-    """
-    def add(self, other, name=False, solve=True):
-        ''' Add other's values to self's values for each index
-
-        *Parameters*
-
-        - **other** : Dataset object to add to self object
-        - **name** : Boolean (default False) - Add values with same index name (True) or
-        same index row (False)
-        - **solve** : Boolean (default True) - If True, replace None other's codec value
-        with self codec value.
-
-        *Returns* : self '''
-        if self.lenindex != other.lenindex:
-            raise DatasetError('length are not identical')
-        if name and sorted(self.lname) != sorted(other.lname):
-            raise DatasetError('name are not identical')
-        for i in range(self.lenindex):
-            if name:
-                self.lindex[i].add(other.lindex[other.lname.index(self.lname[i])],
-                                   solve=solve)
-            else:
-                self.lindex[i].add(other.lindex[i], solve=solve)
-        return self
-    """
     def addindex(self, index, first=False, merge=False, update=False):
         '''add a new index.
 
@@ -160,11 +135,7 @@ class DatasetStructure:
         else:
             ilis = copy(self)
         ifilt = ilis.lname.index(filtname)
-        #print(self.field.__name__, 'firledname')
-        if self.field.__name__ == 'Sfield':
-            ilis.sort([ifilt], reverse= not reverse, func=None)
-        else:
-            ilis.sort([ifilt], reverse=reverse, func=None)
+        ilis.sort([ifilt], reverse= not reverse, func=None)       
         lisind = ilis.lindex[ifilt].recordfromvalue(reverse)
         if lisind:
             minind = min(lisind)
@@ -238,30 +209,6 @@ class DatasetStructure:
             del idx[row]
         return row
 
-    """
-    def delindex(self, delname=None, savename=None):
-        '''remove an Field or a list of Field.
-
-        *Parameters*
-
-        - **delname** : string or list of string - name of index to remove
-        - **savename** : string or list of string - name of index to keep
-
-        *Returns* : none '''
-        if not delname and not savename :
-            return
-        if isinstance(delname, str):
-            delname = [delname]
-        if isinstance(savename, str):
-            savename = [savename]
-        if delname and savename:
-            delname = [name for name in delname if not name in savename]
-        if not delname:
-            delname = [name for name in self.lname if not name in savename]
-        for idxname in delname:
-            if idxname in self.lname:
-                self.lindex.pop(self.lname.index(idxname))
-    """
     
     def _fullindex(self, ind, keysadd, indexname, varname, leng, fillvalue, fillextern):
         if not varname:
@@ -270,23 +217,28 @@ class DatasetStructure:
         lenadd = len(keysadd[0])
         if len(idx) == leng:
             return
-        inf = self.indexinfos()
-        if inf[ind]['cat'] == 'unique':
+        #inf = self.indexinfos()
+        ana = self.anafields
+        parent = ana[ind].p_derived.view('index')
+        #if inf[ind]['cat'] == 'unique':
+        if ana[ind].category == 'unique':
             idx.set_keys(idx.keys + [0] * lenadd)
         elif self.lname[ind] in indexname:
             idx.set_keys(idx.keys + keysadd[indexname.index(self.lname[ind])])
-        elif inf[ind]['parent'] == -1 or self.lname[ind] in varname:
+        #elif inf[ind]['parent'] == -1 or self.lname[ind] in varname:
+        elif parent == -1 or self.lname[ind] in varname:
             fillval = fillvalue
             if fillextern:
                 fillval = self.field.s_to_i(fillvalue)
             idx.set_keys(idx.keys + [len(idx.codec)] * len(keysadd[0]))
             idx.set_codec(idx.codec + [fillval])
         else:
-            parent = inf[ind]['parent']
+            #parent = inf[ind]['parent']
             if len(self.lindex[parent]) != leng:
                 self._fullindex(parent, keysadd, indexname, varname, leng,
                                 fillvalue, fillextern)
-            if inf[ind]['cat'] == 'coupled':
+            #if inf[ind]['cat'] == 'coupled':
+            if ana[ind].category == 'coupled':
                 idx.tocoupled(self.lindex[parent], coupling=True)
             else:
                 idx.tocoupled(self.lindex[parent], coupling=False)
@@ -377,7 +329,7 @@ class DatasetStructure:
         '''return rec array (without variable) from complete record (with variable)'''
         return [record[self.lidxrow[i]] for i in range(len(self.lidxrow))]
 
-    def indexinfos(self, keys=None):
+    """def indexinfos(self, keys=None):
         '''return a dict with infos of each index :
             - num, name, cat, diffdistparent, child, parent, distparent, 
             crossed, pparent, rateder (struct info)
@@ -391,7 +343,7 @@ class DatasetStructure:
         if 'struct', only structural attributes are returned.
 
         *Returns* : dict'''
-        return self.analysis.getinfos(keys)
+        return self.analysis.getinfos(keys)"""
 
     def keytoval(self, listkey, extern=True):
         '''

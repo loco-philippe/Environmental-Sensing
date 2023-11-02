@@ -485,14 +485,6 @@ class DatasetInterface:
         diccode = {'j': '', 'n': 'name-', 's': 'smpl-', 'f': 'func-'}
         if option['header']:
             for name in self.lname:
-                '''if name in option:
-                    for char, code in diccode.items():
-                        if char in option[name]:
-                            reslist.append(code + name)
-                elif option['all']:
-                    for char, code in diccode.items():
-                        if char in option['defcode']:
-                            reslist.append(code + name)'''
                 opt = name if name in option else 'defcode'
                 if opt != 'defcode' or option['all']:
                     for char, code in diccode.items():
@@ -520,47 +512,20 @@ class DatasetInterface:
                             elif char == 'f':
                                 reslist.append(util.funclist(
                                     val, option['ifunc'], **kwargs))                    
-                '''if name in option:
-                    for char, code in diccode.items():
-                        if char in option[name]:
-                            val = self.nindex(name).values[i]
-                            if char == 'j':
-                                #reslist.append(util.cast(val, dtype='json'))
-                                reslist.append(self.field.s_to_e(val))
-                            elif char == 'n':
-                                reslist.append(self.field.i_to_name(val))
-                            elif char == 's':
-                                reslist.append(
-                                    json.dumps(self.field.s_to_e(val)))
-                            elif char == 'f':
-                                reslist.append(util.funclist(
-                                    val, option['ifunc'], **kwargs))
-                elif option['all']:
-                    for char, code in diccode.items():
-                        if char in option['defcode']:
-                            val = self.nindex(name).values[i]
-                            if char == 'j':
-                                reslist.append(util.cast(val, dtype='json'))
-                            elif char == 'n':
-                                reslist.append(util.cast(val, dtype='name'))
-                            elif char == 's':
-                                reslist.append(
-                                    util.cast(val, dtype='json', string=True))
-                            elif char == 'f':
-                                reslist.append(util.funclist(
-                                    val, option['ifunc'], **kwargs))'''
             tab.append(reslist)
         return tab
 
     def _xcoord(self, axename, ivar, lisfuncname=None, coord=False, **kwargs):
         ''' Coords generation for Xarray'''
         #maxlen = kwargs.get('maxlen', 20)
-        info = self.indexinfos()
+        #info = self.indexinfos()
+        dic_part = self.field_partition(axename)
         coords = {}
         for i in range(self.lenindex):
-            fieldi = info[i]
+            #fieldi = info[i]
             iname = self.lname[i]
-            if fieldi['pparent'] == -1 or i == ivar:
+            #if fieldi['pparent'] == -1 or i == ivar:
+            if i in dic_part['variable'] or i in dic_part['unique'] or i == ivar:
                 continue
             if isinstance(lisfuncname, dict) and len(lisfuncname) == self.lenindex:
                 funci = lisfuncname[iname]
@@ -576,8 +541,12 @@ class DatasetInterface:
                     #                                                       codec=True, dtype='str', maxlen=maxlen))
                     coords[iname+'_str'] = (iname, self.lindex[i].to_numpy(func=str, codec=True))
             else:
-                self.lindex[i].setkeys(
+                """self.lindex[i].setkeys(
                     self.lindex[fieldi['pparent']].keys)  # !!!
                 coords[iname] = (self.lname[fieldi['pparent']],
+                                 self.lindex[i].to_numpy(func=funci, codec=True, **kwargs))"""
+                p_prim = self._analysis.fields[i].list_parents('derived', 'index')[-1]
+                self.lindex[i].setkeys(self.lindex[p_prim].keys)  # !!!
+                coords[iname] = (self.lname[p_prim],
                                  self.lindex[i].to_numpy(func=funci, codec=True, **kwargs))
         return coords
