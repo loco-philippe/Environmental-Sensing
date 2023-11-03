@@ -176,50 +176,6 @@ class DatasetStructure:
             self._couplingidx(idx, child, derived, param,
                               parent[param], level, infos)
 
-    def coupling(self, derived=True, level=0.1):
-        '''Transform idx with low dist in coupled or derived indexes (codec extension).
-    
-        *Parameters*
-    
-        - **level** : float (default 0.1) - param threshold to apply coupling.
-        - **derived** : boolean (default : True). If True, indexes are derived, 
-        else coupled.
-    
-        *Returns* : None'''
-        infos = self.indexinfos()
-        ana = self._analysis
-        parent = {'rateder': 'distparent', 'diffdistparent': 'distparent',
-                  'ratecpl': 'minparent', 'distance': 'minparent'}
-        child = [[]] * len(ana)
-        childroot = []
-        for idx in range(len(infos)):
-            if derived: 
-                iparent = ana.fields.p_distance.view('index')
-            else:
-                iparent = self._anafields.p_distomin.view('index')
-            #iparent = infos[idx][parent[param]]
-            if iparent == -1:
-                childroot.append(idx)
-            else:
-                child[iparent].append(idx)
-        #for idx in range(len(self)):
-        for idx in childroot:
-            self._couplingidx(idx, child, derived, -1, level, infos)
-
-    def _couplingidx(self, idx, child, derived, param, parentparam, level, infos):
-        ''' Field coupling (included childrens of the Field)'''
-        inf = infos[idx]
-        if inf['cat'] in ('coupled', 'unique') or inf[parentparam] == -1\
-                or inf[param] >= level or (derived and inf['cat'] == 'derived'):
-            return
-        if child[idx]:
-            for childidx in child[idx]:
-                self._couplingidx(childidx, child, derived,
-                                  param, parentparam, level, infos)
-        self.lindex[inf[parentparam]].coupling(self.lindex[idx], derived=derived,
-                                               duplicate=False)
-        return
-
     def _couplingidx_old(self, idx, child, derived, param, parentparam, level, infos):
         ''' Field coupling (included childrens of the Field)'''
         inf = infos[idx]
@@ -233,6 +189,62 @@ class DatasetStructure:
         self.lindex[inf[parentparam]].coupling(self.lindex[idx], derived=derived,
                                                duplicate=False)
         return
+    
+    def coupling(self, derived=True, level=0.1):
+        '''Transform idx with low dist in coupled or derived indexes (codec extension).
+    
+        *Parameters*
+    
+        - **level** : float (default 0.1) - param threshold to apply coupling.
+        - **derived** : boolean (default : True). If True, indexes are derived, 
+        else coupled.
+    
+        *Returns* : None'''
+        ana = self._analysis
+        child = [[]] * len(ana)
+        childroot = []
+        level = level * len(self)
+        for idx in range(self.lenindex):
+            if derived: 
+                iparent = ana.fields[idx].p_distomin.index
+            else:
+                iparent = ana.fields[idx].p_distance.index
+            if iparent == -1:
+                childroot.append(idx)
+            else:
+                child[iparent].append(idx)
+        for idx in childroot:
+            self._couplingidx(idx, child, derived, level, ana)
+
+    def _couplingidx(self, idx, child, derived, level, ana):
+        ''' Field coupling (included childrens of the Field)'''
+        fields = ana.fields
+        if derived:
+            iparent = fields[idx].p_distomin.index
+            dparent = ana.get_relation(*sorted([idx, iparent])).distomin
+        else:
+            iparent = fields[idx].p_distance.index
+            dparent = ana.get_relation(*sorted([idx, iparent])).distance
+        if fields[idx].category in ('coupled', 'unique') or iparent == -1\
+                or dparent >= level or dparent == 0:
+            return
+        if child[idx]:
+            for childidx in child[idx]:
+                self._couplingidx(childidx, child, derived, level, ana)    
+        self.lindex[iparent].coupling(self.lindex[idx], derived=derived,
+                                      duplicate=False)
+        return
+        """      
+        inf = infos[idx]
+        if inf['cat'] in ('coupled', 'unique') or inf[parentparam] == -1\
+                or inf[param] >= level or (derived and inf['cat'] == 'derived'):
+            return
+        if child[idx]:
+            for childidx in child[idx]:
+                self._couplingidx(childidx, child, derived,
+                                  param, parentparam, level, infos)
+        self.lindex[inf[parentparam]].coupling(self.lindex[idx], derived=derived,
+                                               duplicate=False)"""
 
     def delrecord(self, record, extern=True):
         '''remove a record.
