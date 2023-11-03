@@ -95,6 +95,7 @@ class DatasetAnalysis:
         - **mode** : string (default 'derived') - kind of tree :
             'derived' : derived tree
             'distance': min distance tree
+            'distomin': min distomin tree
         '''
         return self._analysis.tree(mode=mode, width=width, lname=lname, string=string)
     
