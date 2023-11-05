@@ -62,8 +62,8 @@ class DatasetAnalysis:
         if 'struct', only structural attributes are returned.
 
         *Returns* : dict'''
-        return self.analysis.getinfos(keys)
-        #return self._analysis.to_dict(mode='index', keys=keys)    
+        #return self.analysis.getinfos(keys)
+        return self._analysis.to_dict(mode='index', keys=keys)    
 
     def field_partition(self, partition=None):
         '''return a partition dict with the list of primary, secondary, unique
@@ -74,6 +74,7 @@ class DatasetAnalysis:
         - **partition** : list (default None) - if None, partition is the first
         '''
         fields = self._analysis.fields
+        partition = partition if partition else self.partitions[0] 
         part = []
         for fld in partition:
             if isinstance(fld, int):

@@ -225,7 +225,8 @@ class DatasetStructure:
         else:
             iparent = fields[idx].p_distance.index
             dparent = ana.get_relation(*sorted([idx, iparent])).distance
-        if fields[idx].category in ('coupled', 'unique') or iparent == -1\
+        #if fields[idx].category in ('coupled', 'unique') or iparent == -1\
+        if fields[idx].category in ('coupled', 'unique') \
                 or dparent >= level or dparent == 0:
             return
         if child[idx]:
