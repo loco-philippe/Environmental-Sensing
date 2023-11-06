@@ -235,17 +235,6 @@ class DatasetStructure:
         self.lindex[iparent].coupling(self.lindex[idx], derived=derived,
                                       duplicate=False)
         return
-        """      
-        inf = infos[idx]
-        if inf['cat'] in ('coupled', 'unique') or inf[parentparam] == -1\
-                or inf[param] >= level or (derived and inf['cat'] == 'derived'):
-            return
-        if child[idx]:
-            for childidx in child[idx]:
-                self._couplingidx(childidx, child, derived,
-                                  param, parentparam, level, infos)
-        self.lindex[inf[parentparam]].coupling(self.lindex[idx], derived=derived,
-                                               duplicate=False)"""
 
     def delrecord(self, record, extern=True):
         '''remove a record.
@@ -385,22 +374,6 @@ class DatasetStructure:
     def idxrecord(self, record):
         '''return rec array (without variable) from complete record (with variable)'''
         return [record[self.lidxrow[i]] for i in range(len(self.lidxrow))]
-
-    """def indexinfos(self, keys=None):
-        '''return a dict with infos of each index :
-            - num, name, cat, diffdistparent, child, parent, distparent, 
-            crossed, pparent, rateder (struct info)
-            - lencodec, mincodec, maxcodec, typecodec, ratecodec (base info)
-
-        *Parameters*
-
-        - **keys** : string, list or tuple (default None) - list of attributes 
-        to returned.
-        if 'all' or None, all attributes are returned.
-        if 'struct', only structural attributes are returned.
-
-        *Returns* : dict'''
-        return self.analysis.getinfos(keys)"""
 
     def keytoval(self, listkey, extern=True):
         '''
@@ -587,7 +560,7 @@ class DatasetStructure:
         order += self.lunicname
         self.swapindex(order)
         self.sort(reindex=reindex)
-        self.analysis.actualize()
+        #self.analysis.actualize()
         return self
 
     def setfilter(self, filt=None, first=False, filtname=ES.filter, unique=False):
@@ -611,13 +584,6 @@ class DatasetStructure:
                     self.delindex(ES.filter)
         self.addindex(idx, first=first)
         return self
-
-    def setname(self, listname=None):
-        '''Update Field name by the name in listname'''
-        super().setname(listname)
-        #for i in range(min(self.lenindex, len(listname))):
-        #    self.lindex[i].name = listname[i]
-        self.analysis.actualize()
 
     def sort(self, order=None, reverse=False, func=str, reindex=True):
         '''Sort data following the index order and apply the ascending or descending

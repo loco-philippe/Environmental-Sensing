@@ -180,10 +180,10 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         - **reindex** : boolean (default True) - if True, default codec for each Field'''
 
         self.field    = self.field_class
-        self.analysis = Analysis(self)
+        #self.analysis = Analysis(self)
         name = self.__class__.__name__
         Cdataset.__init__(self, listidx, name, reindex=reindex)
-        self.analysis.actualize()
+        #self.analysis.actualize()
         return
 
     """@classmethod
