@@ -60,7 +60,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
 
     - `Field.bol`
     - `Field.ntv`
-    - `Field.from_parent`
+    - `Field.like`
     - `Field.ntv_to_val`
     - `Field.merging`
 
@@ -179,7 +179,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
             raise FieldError("out of bounds")
         self.setvalue(ind, value, extern=True)
         
-    @classmethod
+    """@classmethod
     def bol(cls, leng, notdef=None, name=None, default=True):
         '''
         Field constructor (boolean value).
@@ -197,8 +197,8 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
         return cls.ntv({name: values})
         
     @classmethod
-    def from_parent(cls, codec, parent, name=None, reindex=False):
-        '''Generate an Field Object from specific codec and parent keys.
+    def like(cls, codec, parent, name=None, reindex=False):
+        '''Generate an Field Object from specific codec and keys from another field.
 
         *Parameters*
 
@@ -208,7 +208,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
         - **reindex** : boolean (default True) - if True, default codec is apply
 
         *Returns* : Field '''
-        if isinstance(codec, Field):
+        if isinstance(codec, Cfield):
             return copy(codec)
         return cls(codec=codec, name=name, keys=parent._keys, reindex=reindex)
 
@@ -220,7 +220,7 @@ class Field(FieldStructure, FieldInterface, ABC, Cfield):
     @classmethod 
     def ntv_to_val(cls, ntv):
         '''conversion in decode_ntv_tab'''
-        return cls.n_to_i(ntv.val)    
+        return cls.n_to_i(ntv.val)    """
 
     @classmethod
     def merging(cls, listidx, name=None):

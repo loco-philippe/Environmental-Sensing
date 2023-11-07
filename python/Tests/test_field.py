@@ -216,19 +216,19 @@ class Test_Field(unittest.TestCase):
         ib = Field.ntv([25, 25, 12, 12, 25])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 0, 'rateder': 0, 'distance': 0, 'ratecpl': 0,
-                          'disttomin': 0, 'disttomax': 0, 'distmin': 0, 'distmax': 0,
-                          'diff': 0, 'typecoupl': 'null'})
+                          'distomin': 0, 'distomax': 0, 'dmin': 0, 'dmax': 0,
+                          'dran': 0, 'diff': 0, 'typecoupl': 'null'})
         ia = Field.ntv(['anne', 'paul', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 4, 'rateder': 0.3333333333333333, 'distance': 2,
-                          'disttomin': 1, 'disttomax': 2, 'distmin': 3, 'distmax': 6,
-                          'ratecpl': 0.5, 'diff': 1, 'typecoupl': 'link'})
+                          'distomin': 1, 'distomax': 2, 'dmin': 3, 'dmax': 6,
+                          'dran': 3, 'ratecpl': 0.5, 'diff': 1, 'typecoupl': 'link'})
         self.assertTrue(ia.islinked(ib))
         ia = Field.ntv(['anne', 'lea', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 4, 'rateder': 1.0, 'distance': 2, 'ratecpl': 1.0,
-                          'disttomin': 2, 'disttomax': 0, 'distmin': 2, 'distmax': 4,
-                          'diff': 0, 'typecoupl': 'crossed'})
+                          'distomin': 2, 'distomax': 0, 'dmin': 2, 'dmax': 4,
+                          'dran': 2, 'diff': 0, 'typecoupl': 'crossed'})
         self.assertTrue(ia.iscrossed(ib))
 
     def test_vlist(self):
@@ -308,14 +308,14 @@ class Test_Field(unittest.TestCase):
         self.assertEqual(len(parent2.codec), len(papy.codec))
         self.assertEqual(len(idx2.codec), len(parent.codec))
         self.assertTrue(idx2.isderived(parent2) and parent2.iscoupled(papy))
-        idxcalc = Field.from_parent(idx2.codec, parent=parent)
+        idxcalc = Field.like(idx2.codec, parent=parent)
         self.assertTrue(idxcalc.values == idx2.values == idx.values)
         idx = Field(codec=['s', 'n', 's', 'd', 's', 'd'],
                      keys=[0, 4, 2, 1, 5, 3, 3])
         values = idx.values
         parent = Field(codec=[6, 9, 8, 11, 7, 9], keys=[0, 4, 2, 1, 5, 3, 3])
         idx.setkeys(parent.keys)
-        idxcalc = Field.from_parent(idx.codec, parent=parent)
+        idxcalc = Field.like(idx.codec, parent=parent)
         self.assertTrue(idxcalc.values == idx.values == values)
 
     def test_duplicates(self):

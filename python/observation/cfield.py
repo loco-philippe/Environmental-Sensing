@@ -197,6 +197,44 @@ class Cfield:
         name = ntv.json_name(string=True) if add_type else name
         return cls(codec=codec, name=name, keys=keys, reindex=reindex)
 
+    @classmethod
+    def bol(cls, leng, notdef=None, name=None, default=True):
+        '''
+        Field constructor (boolean value).
+
+        *Parameters*
+
+        - **leng** : integer - length of the Field
+        - **notdef** : list (default None) - list of records without default value
+        - **default** : boolean (default True) - default value
+        - **name** : string (default None) - name of Field'''
+        values = [default] * leng
+        if notdef:
+            for item in notdef:
+                values[item] = not default        
+        return cls.ntv({name: values})
+        
+    @classmethod
+    def like(cls, codec, parent, name=None, reindex=False):
+        '''Generate an Field Object from specific codec and keys from another field.
+
+        *Parameters*
+
+        - **codec** : list of objects
+        - **name** : string (default None) - name of index (see data model)
+        - **parent** : Field, parent of the new Field
+        - **reindex** : boolean (default True) - if True, default codec is apply
+
+        *Returns* : Field '''
+        if isinstance(codec, Cfield):
+            return copy(codec)
+        return cls(codec=codec, name=name, keys=parent._keys, reindex=reindex)
+
+    @classmethod 
+    def ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False):
+        '''Generate an Field Object from a Ntv field object'''
+        return cls.from_ntv(ntv_value, extkeys=extkeys, reindex=reindex, decode_str=decode_str)
+
     @classmethod 
     def ntv_to_val(cls, ntv):
         '''conversion in decode_ntv_val method'''
