@@ -5,8 +5,7 @@ Created on Tue Nov  7 10:55:54 2023
 @author: a lab in the Air
 """
 
-wdir = 'D:/philippe/python ESstandard/Environmental-Sensing/python/Tests/'
-file = 'test_field.py'
+wdir = './'
 
 exec(open(wdir + 'test_cdataset.py').read())
 
