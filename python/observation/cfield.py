@@ -180,10 +180,10 @@ class Cfield:
         '''Generate an Field Object from a Ntv field object'''
         if isinstance(ntv_value, cls):
             return copy(ntv_value)
-        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
-        #ntv = NtvList(ntv_value)
         if ntv_value is None:
             return cls()
+        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
+        #ntv = NtvList(ntv_value)
         name, typ, codec, parent, keys, coef, leng = NtvUtil.decode_ntv_tab(ntv, cls.ntv_to_val)
         if parent and not extkeys:
             return None

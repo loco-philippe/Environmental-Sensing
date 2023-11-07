@@ -32,10 +32,10 @@ class Nfield(Field):
 
     - `Nfield.i_to_name`
     '''
-    def __init__(self, codec=None, name=None, keys=None,
+    """def __init__(self, codec=None, name=None, keys=None,
                  lendefault=0, reindex=False, fast=False):
         super().__init__(codec=codec, name=name, keys=keys,
-                     lendefault=lendefault, reindex=reindex, fast=fast)
+                     lendefault=lendefault, reindex=reindex, fast=fast)"""
 
     def __str__(self):
         '''return json string format'''
@@ -115,10 +115,10 @@ class Sfield(Field):
 
     - `Nfield.i_to_name`
     '''    
-    def __init__(self, codec=None, name=None, keys=None,
+    """def __init__(self, codec=None, name=None, keys=None,
                  lendefault=0, reindex=False, fast=False):
         super().__init__(codec=codec, name=name, keys=keys,
-                     lendefault=lendefault, reindex=reindex, fast=fast)
+                     lendefault=lendefault, reindex=reindex, fast=fast)"""
 
     def __str__(self):
         '''return json string format'''

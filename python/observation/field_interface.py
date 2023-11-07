@@ -12,11 +12,11 @@ import json
 import datetime
 import numpy as np
 import pandas as pd
-import cbor2
 
 from observation.esconstante import ES
 from observation.util import util, identity
-from json_ntv.ntv import Ntv, NtvSingle, NtvList
+from json_ntv.ntv import NtvSingle, NtvList
+from json_ntv.ntv_util import NtvUtil
 
 
 class CborDecoder(json.JSONDecoder):
@@ -114,15 +114,18 @@ class FieldInterface:
         if 'default' index has keys, if 'optimize' keys are optimized, 
         - **codecval** : boolean (default False) - if True, only list of codec values is included
         - **def_type** : string (default 'json') - default ntv_type for NtvList or NtvSet
-        - **name** : boolean (default False) - if False, default index name are not included
+        - **name** : boolean (default True) - if False, index name are not included
         - **keys** : list (default None) - used only with 'optimize' mode
         - **parent** : int or str (default None) - used only with 'optimize' mode
 
         *Returns* : Ntv object'''
         leng = len(self)
         codec = self.i_to_n(self.codec)
+        decode_name, decode_type, sep = NtvUtil.from_obj_name(self.name)
+        decode_name = decode_name if sep == '::' else self.name
+        def_type = decode_type if sep == '::' and decode_type else def_type 
         def_type = codec[0].ntv_type if not def_type and codec else def_type
-        idxname = None if self.name == '$default' or not name else self.name       
+        idxname = None if decode_name == '$default' or not name else decode_name       
         '''if len(self.codec) == 1:
             return NtvSingle(self.codec[0].ntv_value, idxname, self.codec[0].ntv_type)
         if codecval:
