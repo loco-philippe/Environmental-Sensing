@@ -310,25 +310,27 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         return cls.from_obj(bsd, reindex=reindex, context=context)"""
 
     @classmethod
-    def ntv(cls, ntv_value, reindex=True):
-        '''Generate an Dataset Object from a ntv_value
-
-        *Parameters*
-
-        - **ntv_value** : bytes, string, Ntv object to convert
-        - **reindex** : boolean (default True) - if True, default codec for each Field'''
-        return cls.from_ntv(ntv_value, reindex=reindex)
-    
-    @classmethod
-    def from_ntv(cls, ntv_value, reindex=True, decode_str=False):
+    def ntv(cls, ntv_value, reindex=True, fast=False):
         '''Generate an Dataset Object from a ntv_value
 
         *Parameters*
 
         - **ntv_value** : bytes, string, Ntv object to convert
         - **reindex** : boolean (default True) - if True, default codec for each Field
-        - **decode_str**: boolean (default False) - if True, string are loaded in json data'''
-        ntv = Ntv.obj(ntv_value, decode_str=decode_str)
+        - **fast** : boolean (default False) - if True, ntv_value are not converted in json-value'''
+        return cls.from_ntv(ntv_value, reindex=reindex, fast=fast)
+    
+    @classmethod
+    def from_ntv(cls, ntv_value, reindex=True, decode_str=False, fast=False):
+        '''Generate an Dataset Object from a ntv_value
+
+        *Parameters*
+
+        - **ntv_value** : bytes, string, Ntv object to convert
+        - **reindex** : boolean (default True) - if True, default codec for each Field
+        - **decode_str**: boolean (default False) - if True, string are loaded in json data
+        - **fast** : boolean (default False) - if True, ntv_value are not converted in json-value'''
+        ntv = Ntv.obj(ntv_value, decode_str=decode_str, fast=fast)
         if len(ntv) == 0:
             return cls()
         lidx = [list(NtvUtil.decode_ntv_tab(ntvf, cls.field_class.ntv_to_val)) for ntvf in ntv]
