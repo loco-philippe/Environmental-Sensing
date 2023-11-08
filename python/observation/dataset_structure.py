@@ -200,7 +200,7 @@ class DatasetStructure:
         else coupled.
     
         *Returns* : None'''
-        ana = self._analysis
+        ana = self.analysis
         child = [[]] * len(ana)
         childroot = []
         level = level * len(self)

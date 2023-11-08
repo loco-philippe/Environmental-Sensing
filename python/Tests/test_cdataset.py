@@ -91,15 +91,15 @@ class Test_Cdataset(unittest.TestCase):
                           [None, None, None, 'gr1', 'gr1', 'gr2'],
                           ['philippe white', 'philippe white', 'philippe white',
                            'anne white', 'anne white', 'anne white']])
-        self.assertTrue(ilm.partitions[0] == ilm._analysis.partitions('index')[0] == [0, 1])
-        self.assertTrue(ilm.dimension == ilm._analysis.dimension == 2)
+        self.assertTrue(ilm.partitions[0] == ilm.analysis.partitions('index')[0] == [0, 1])
+        self.assertTrue(ilm.dimension == ilm.analysis.dimension == 2)
         
     def test_checkrelation(self):
         ilm = Cdataset.from_ntv({'month':   ['jan', 'feb', 'apr', 'jan', 'sep', 'dec', 'apr', 'may', 'jan'],
                                  'quarter': ['q1',  'q1',  'q2',  'q1',  'q3',  'q4',  'q2',  'q2',  'q1']})      
-        self.assertEqual(ilm._analysis.get_relation('month', 'quarter').distomin, 0)
+        self.assertEqual(ilm.analysis.get_relation('month', 'quarter').distomin, 0)
         ilm[2] = ['apr', 'q1']
-        self.assertEqual(ilm._analysis.get_relation('month', 'quarter').distomin, 1)
+        self.assertEqual(ilm.analysis.get_relation('month', 'quarter').distomin, 1)
         self.assertEqual(ilm.nindex('month').coupling(ilm.nindex('quarter')), (2,6))
         field = { "name": "quarter",  "relationship" : { "parent" : "month", "link" : "derived" }}
         self.assertEqual(ilm.check_relationship(field), (2,6))

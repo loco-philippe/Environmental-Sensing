@@ -545,7 +545,7 @@ class DatasetInterface:
                     self.lindex[fieldi['pparent']].keys)  # !!!
                 coords[iname] = (self.lname[fieldi['pparent']],
                                  self.lindex[i].to_numpy(func=funci, codec=True, **kwargs))"""
-                p_prim = self._analysis.fields[i].list_parents('derived', 'index')[-1]
+                p_prim = self.analysis.fields[i].list_parents('derived', 'index')[-1]
                 self.lindex[i].setkeys(self.lindex[p_prim].keys)  # !!!
                 coords[iname] = (self.lname[p_prim],
                                  self.lindex[i].to_numpy(func=funci, codec=True, **kwargs))

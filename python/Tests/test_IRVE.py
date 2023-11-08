@@ -17,7 +17,7 @@ il.delindex(il.lname[0])
 print(time()-t0)
 
 t0 = time()
-ila = il._analysis
+ila = il.analysis
 print(time()-t0)
 
 t0 = time()

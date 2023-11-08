@@ -594,19 +594,9 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         return [self.lidxrow.index(self.lname.index(name)) for name in self.primaryname]
 
     @property
-    def primaryname(self):
-        ''' list of primary name'''
-        return Util.view(self._analysis.primary, mode='id')
-
-    @property
     def secondary(self):
         ''' list of secondary idx'''
         return [self.lidxrow.index(self.lname.index(name)) for name in self.secondaryname]
-
-    @property
-    def secondaryname(self):
-        ''' list of secondary name'''
-        return Util.view(self._analysis.secondary, mode='id')
 
     @property
     def setidx(self):

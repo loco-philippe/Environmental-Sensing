@@ -22,31 +22,42 @@ class DatasetAnalysis:
     '''This class is the interface class with the tab_analysis module.'''
     
     @property 
-    def _analysis(self):
+    def analysis(self):
         return AnaDataset(self.to_analysis(True))         
 
     @property
     def lvarname(self):
         ''' list of variable Field name'''
-        return Util.view(self._analysis.variable, mode='id')
+        return Util.view(self.analysis.variable, mode='id')
     
     @property
     def anafields(self):
         ''' list of AnaField'''
-        return self._analysis.fields
+        return self.analysis.fields
     
     @property 
     def partitions(self):
-        return self._analysis.partitions('index')         
+        return self.analysis.partitions('index')         
 
     @property 
     def dimension(self):
-        return self._analysis.dimension    
+        return self.analysis.dimension    
     
     @property
     def lvarname(self):
         ''' list of variable Field name'''
-        return Util.view(self._analysis.variable, mode='id')
+        return Util.view(self.analysis.variable, mode='id')
+
+    @property
+    def primaryname(self):
+        ''' list of primary name'''
+        return Util.view(self.analysis.primary, mode='id')
+
+    @property
+    def secondaryname(self):
+        ''' list of secondary name'''
+        return Util.view(self.analysis.secondary, mode='id')
+
 
     def indexinfos(self, keys=None):
         '''return a dict with infos of each index :
@@ -63,7 +74,7 @@ class DatasetAnalysis:
 
         *Returns* : dict'''
         #return self.analysis.getinfos(keys)
-        return self._analysis.to_dict(mode='index', keys=keys)    
+        return self.analysis.to_dict(mode='index', keys=keys)    
 
     def field_partition(self, partition=None):
         '''return a partition dict with the list of primary, secondary, unique
@@ -73,16 +84,11 @@ class DatasetAnalysis:
 
         - **partition** : list (default None) - if None, partition is the first
         '''
-        fields = self._analysis.fields
-        partition = partition if partition else self.partitions[0] 
-        part = []
-        for fld in partition:
-            if isinstance(fld, int):
-                part.append(fields[fld])
-            else:
-                part.append(fields[self.lname.index(fld)]) 
-        part = None if not partition else part
-        return self._analysis.field_partition(mode='index', partition=part, 
+        #partition = partition if partition else self.partitions[0] 
+        if not partition and len(self.partitions) > 0: 
+            partition = self.partitions[0]
+        part = [self.analysis.dfield(fld) for fld in partition] if partition else None 
+        return self.analysis.field_partition(mode='index', partition=part, 
                                               distributed=True)    
         
     def tree(self, mode='derived', width=5, lname=20, string=True):
@@ -98,7 +104,7 @@ class DatasetAnalysis:
             'distance': min distance tree
             'distomin': min distomin tree
         '''
-        return self._analysis.tree(mode=mode, width=width, lname=lname, string=string)
+        return self.analysis.tree(mode=mode, width=width, lname=lname, string=string)
     
     def indicator(self, fullsize=None, size=None):
         '''generate size indicators: ol (object lightness), ul (unicity level), 
@@ -114,5 +120,5 @@ class DatasetAnalysis:
             fullsize = len(self.to_obj(encoded=True, modecodec='full'))
         if not size:
             size = len(self.to_obj(encoded=True))
-        return self._analysis.indicator(fullsize, size)
+        return self.analysis.indicator(fullsize, size)
 
