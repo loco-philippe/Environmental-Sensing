@@ -76,19 +76,19 @@ class DatasetAnalysis:
         #return self.analysis.getinfos(keys)
         return self.analysis.to_dict(mode='index', keys=keys)    
 
-    def field_partition(self, partition=None):
+    def field_partition(self, partition=None, mode='index'):
         '''return a partition dict with the list of primary, secondary, unique
         and variable fields (index).
 
          *Parameters*
 
         - **partition** : list (default None) - if None, partition is the first
+        - **mode** : str (default 'index') - Field representation ('id', 'index')
         '''
-        #partition = partition if partition else self.partitions[0] 
         if not partition and len(self.partitions) > 0: 
             partition = self.partitions[0]
         part = [self.analysis.dfield(fld) for fld in partition] if partition else None 
-        return self.analysis.field_partition(mode='index', partition=part, 
+        return self.analysis.field_partition(mode=mode, partition=part, 
                                               distributed=True)    
         
     def tree(self, mode='derived', width=5, lname=20, string=True):
