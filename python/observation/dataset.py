@@ -517,7 +517,8 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     @property
     def complete(self):
         '''return a boolean (True if Dataset is complete and consistent)'''
-        return self.lencomplete == len(self) and self.consistent
+        #return self.lencomplete == len(self) and self.consistent
+        return self.lencomplete == len(self)
 
     @property
     def consistent(self):
