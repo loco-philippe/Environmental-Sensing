@@ -9,13 +9,7 @@ The `python.observation.dataset__analysis` module contains the `DatasetAnalysis`
 """
 
 # %% declarations
-import csv
-import math
-import json
 
-from json_ntv.ntv import NtvList, NtvJsonEncoder
-from observation.field import Field
-from observation.util import util
 from tab_analysis import AnaDataset, Util
 
 class DatasetAnalysis:
@@ -23,7 +17,9 @@ class DatasetAnalysis:
     
     @property 
     def analysis(self):
-        return AnaDataset(self.to_analysis(True))         
+        if self._analysis is None or self._analysis.hashd != self._hashd:
+            self._analysis = AnaDataset(self.to_analysis(True))
+        return self._analysis         
 
     @property
     def lvarname(self):

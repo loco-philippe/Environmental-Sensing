@@ -28,6 +28,7 @@ class Cdataset(DatasetAnalysis):
         if isinstance(listidx, Cdataset):
             self.lindex = [copy(idx) for idx in listidx.lindex]
             self.name = listidx.name
+            self._analysis = listidx._analysis
             return
         if listidx.__class__.__name__ == 'DataFrame':
             lindex, leng = NtvConnector.connector()['DataFrameConnec'].to_listidx(listidx)
@@ -37,6 +38,7 @@ class Cdataset(DatasetAnalysis):
         self.lindex   = [] if listidx is None else listidx
         if reindex:
             self.reindex()
+        self._analysis = None
         return
 
     def __repr__(self):
