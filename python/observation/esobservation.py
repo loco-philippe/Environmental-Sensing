@@ -41,7 +41,7 @@ from observation.field_interface import FieldEncoder, CborDecoder
 from observation.esconstante import ES
 from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue, ESValueEncoder
-from observation.dataset_analysis import Analysis
+#from observation.dataset_analysis import Analysis
 
 
 class Observation(Dataset):

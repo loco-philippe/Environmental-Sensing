@@ -14,10 +14,9 @@ import csv
 from math import nan
 from itertools import product
 import json
-from observation import Dataset, util
+from observation import Dataset, util, Sdataset, Ndataset
 from json_ntv import Ntv
 from observation.fields import Nfield, Sfield
-from observation.datasets import Sdataset, Ndataset
 
 defv = 'default value'
 i1 = 'i1'

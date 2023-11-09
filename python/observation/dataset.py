@@ -36,13 +36,12 @@ import csv
 from observation.util import util
 from observation.dataset_interface import DatasetInterface
 from observation.dataset_structure import DatasetStructure
-from observation.dataset_analysis import Analysis
+from observation.fields import Nfield, Sfield
+from observation.cdataset import Cdataset, DatasetError
 
 from json_ntv.ntv import Ntv, NtvConnector
 from json_ntv.ntv_util import NtvUtil
-from tab_analysis import Util
 
-from observation.cdataset import Cdataset, DatasetError
 
 class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
     # %% intro
@@ -611,3 +610,12 @@ class Dataset(DatasetStructure, DatasetInterface, ABC, Cdataset):
         if not textidx:
             return None
         return tuple(tuple(idx) for idx in textidx)
+
+class Ndataset(Dataset):
+    
+    field_class = Nfield
+        
+    
+class Sdataset(Dataset):
+    
+    field_class = Sfield

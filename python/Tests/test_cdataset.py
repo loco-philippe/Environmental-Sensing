@@ -18,7 +18,8 @@ class Test_Cfield(unittest.TestCase):
         self.assertTrue(fnull.keys == fnull.values == fnull.codec == [])
         self.assertTrue(len(fnull) == 0)
         self.assertEqual(fnull.infos, {'lencodec': 0, 'mincodec': 0,
-                         'maxcodec': 0, 'typecodec': 'null', 'ratecodec': 0.0})
+                         'maxcodec': 0, 'id': 'field', 'dmincodec': 0,
+                         'dmaxcodec': 0, 'rancodec': 0, 'typecodec': 'null'})
         self.assertEqual({'id': 'field', 'lencodec': 0, 'mincodec': 0, 'maxcodec': 0,
                           'hashf': fnull._hashf}, fnull.to_analysis)
 

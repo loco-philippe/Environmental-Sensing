@@ -6,7 +6,7 @@ Created on Wed Oct 11 11:54:18 2023
 """
 from copy import copy
 
-from observation.dataset__analysis import DatasetAnalysis
+from observation.dataset_analysis import DatasetAnalysis
 from observation.util import util
 from observation.cfield import Cfield
 
@@ -281,7 +281,7 @@ class Cdataset(DatasetAnalysis):
         
         *Returns* : 
         
-        - dict with for each relationship: key = pair of name, 
+        - dict with for each relationship: key = string with the two fields name, 
         and value = list of inconsistent records
         - or if single relationship : value'''
         if not isinstance(relations, (list, dict)):

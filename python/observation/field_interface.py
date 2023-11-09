@@ -17,7 +17,7 @@ from observation.esconstante import ES
 from observation.util import util, identity
 from json_ntv.ntv import NtvSingle, NtvList
 from json_ntv.ntv_util import NtvUtil
-
+from observation.cfield import FieldError
 
 class CborDecoder(json.JSONDecoder):
     ''' Cbor extension for integer keys (codification keys)'''
@@ -34,12 +34,6 @@ class CborDecoder(json.JSONDecoder):
                 k2 = k
             dic2[k2] = v
         return dic2
-
-
-class FieldError(Exception):
-    ''' Field Exception'''
-    # pass
-
 
 class FieldEncoder(json.JSONEncoder):
     """new json encoder for Field and Dataset"""

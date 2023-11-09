@@ -7,13 +7,13 @@ Created on Tue Oct 10 22:26:38 2023
 
 from copy import copy
 from collections import defaultdict, Counter
+from itertools import product
 
 from json_ntv import Ntv
 from json_ntv.ntv_util import NtvUtil
 
-from observation.util import util
-from observation.esconstante import ES
-from observation.field_interface import FieldError
+from tab_analysis import AnaRelation, AnaField
+
 
 @staticmethod 
 def root(leng):
@@ -33,9 +33,130 @@ class Cutil:
         return (codec, keys)
 
     @staticmethod
-    def dist(key1, key2):
-        return len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(key1, key2)]))
+    def dist(k1, k2, distr=False):
+        '''return default coupling codec between two keys list and optionaly if 
+        the relationship is distributed'''
+        if not k1 or not k2:
+            return 0
+        k1k2 = [tuple((v1, v2)) for v1, v2 in zip(k1, k2)]
+        dist = len(Cutil.tocodec(k1k2))
+        if not distr:
+            return dist
+        distrib = False
+        if dist == (max(k1) + 1) * (max(k2) + 1):
+            distrib = max(Counter(k1k2).values()) == len(k1) // dist
+        return [dist, distrib]
 
+
+
+    @staticmethod
+    def idxfull(setidx):
+        '''return additional keys for each index in the setidx list to have crossed setidx'''
+        setcodec = [set(idx.keys) for idx in setidx]
+        lenfull = Cutil.mul([len(codec) for codec in setcodec])
+        if lenfull <= len(setidx[0]):
+            return []
+        complet = Counter(list(product(*setcodec)))
+        complet.subtract(
+            Counter(Cutil.tuple(Cutil.transpose([idx.keys for idx in setidx]))))
+        keysadd = Cutil.transpose(Cutil.list(list(complet.elements())))
+        if not keysadd:
+            return []
+        return keysadd
+    
+    @staticmethod
+    def idxlink(ref, l2):
+        ''' return a dict for each different tuple (ref value, l2 value)'''
+        return dict(set(zip(ref, l2)))
+        #lis = set(util.tuple(util.transpose([ref, l2])))
+        # if not len(lis) == len(set(ref)):
+        #    return {}
+        # return dict(lis)
+    
+    @staticmethod 
+    def keysfromcoef(coef, period, leng=None):
+        ''' return a list of keys with periodic structure'''
+        if not leng:
+            leng = coef * period
+        return None if not (coef and period) else [(ind % (coef * period)) // coef 
+                                                   for ind in range(leng)]
+
+    @staticmethod
+    def keysfromderkeys(parentkeys, derkeys):
+        '''return keys from parent keys and derkeys
+
+        *Parameters*
+
+        - **parentkeys** : list of keys from parent
+        - **derkeys** : list of derived keys
+
+        *Returns* : list of keys'''
+        return [derkeys[pkey] for pkey in parentkeys]
+
+    @staticmethod
+    def list(tuplelists):
+        '''transform a list of tuples in a list of lists'''
+        return list(map(list, tuplelists))
+
+    @staticmethod
+    def mul(values):
+        '''return the product of values in a list or tuple (math.prod)'''
+        mul = 1
+        for val in values:
+            mul *= val
+        return mul
+
+    @staticmethod
+    def reindex(oldkeys, oldcodec, newcodec):
+        '''new keys with new order of codec'''
+        dic = {newcodec[i]: i for i in range(len(newcodec))}
+        return [dic[oldcodec[key]] for key in oldkeys]
+
+    @staticmethod
+    def reorder(values, sort=None):
+        '''return a new values list following the order define by sort'''
+        if not sort:
+            return values
+        return [values[ind] for ind in sort]
+
+    @staticmethod
+    def resetidx(values):
+        '''return codec and keys from a list of values'''
+        codec = Cutil.tocodec(values)
+        return (codec, Cutil.tokeys(values, codec))
+    @staticmethod
+    def tocodec(values, keys=None):
+        '''extract a list of unique values'''
+        if not keys:
+            #return list(set(values))
+            return list(dict.fromkeys(values))
+        ind, codec = zip(*sorted(set(zip(keys, values))))
+        return list(codec)
+
+    @staticmethod
+    def tokeys(values, codec=None):
+        ''' return a list of keys from a list of values'''
+        if not codec:
+            codec = Cutil.tocodec(values)
+        dic = {codec[i]: i for i in range(len(codec))}  # !!!!long
+        keys = [dic[val] for val in values]    # hyper long
+        return keys
+
+    @staticmethod
+    def transpose(idxlist):
+        '''exchange row/column in a list of list'''
+        if not isinstance(idxlist, list):
+            raise FieldError('index not transposable')
+        if not idxlist:
+            return []
+        size = min([len(ix) for ix in idxlist])
+        return [[ix[ind] for ix in idxlist] for ind in range(size)]
+
+    @staticmethod
+    def tuple(idx):
+        '''transform a list of list in a list of tuple'''
+        return [val if not isinstance(val, list) else tuple(val) for val in idx]
+    
 class Cfield:
     # %% intro
     '''
@@ -143,26 +264,7 @@ class Cfield:
     @property
     def infos(self):
         '''return dict with lencodec, typecodec, ratecodec, mincodec, maxcodec'''
-        maxi = len(self)
-        mini = len(set(self._codec))
-        xlen = len(self._codec)
-        rate = 0.0
-        if maxi == 0:
-            typecodec = 'null'
-        elif xlen == 1:
-            typecodec = 'unique'
-        elif mini == maxi:
-            typecodec = 'complete'
-        elif xlen == maxi:
-            typecodec = 'full'
-        else:
-            rate = (maxi - xlen) / (maxi - mini)
-            if xlen == mini:
-                typecodec = 'default'
-            else:
-                typecodec = 'mixed'
-        return {'lencodec': xlen, 'mincodec': mini, 'maxcodec': maxi,
-                'typecodec': typecodec, 'ratecodec': rate}
+        return AnaField(self.to_analysis).to_dict(full=True)
 
     @property
     def keys(self):
@@ -174,7 +276,7 @@ class Cfield:
         '''return values (see data model)'''
         return [self._codec[key] for key in self._keys]
     
-    # %% methods
+    # %% class methods
     @classmethod 
     def from_ntv(cls, ntv_value=None, extkeys=None, reindex=True, decode_str=False,
                  add_type=True, lengkeys=None):
@@ -189,9 +291,9 @@ class Cfield:
         if parent and not extkeys:
             return None
         if coef:
-            keys = util.keysfromcoef(coef, leng//coef, lengkeys)
+            keys = Cutil.keysfromcoef(coef, leng//coef, lengkeys)
         elif extkeys and parent:
-            keys = cls.keysfromderkeys(extkeys, keys)
+            keys = Cutil.keysfromderkeys(extkeys, keys)
         elif extkeys and not parent:
             keys = extkeys
         keys = list(range(len(codec))) if keys is None else keys
@@ -250,6 +352,7 @@ class Cfield:
             return [Cfield.n_to_i(ntv.to_obj()) for ntv in ntv_lis]
         return  ntv_lis
 
+    # %% instance methods
     def add(self, other, solve=True):
         ''' Add other's values to self's values
 
@@ -263,15 +366,15 @@ class Cfield:
         if solve:
             solved = copy(other)
             for i in range(len(solved._codec)):
-                if not util.isNotNull(solved._codec[i]) and i in range(len(self._codec)):
+                if solved._codec[i] is None and i in range(len(self._codec)):
                     solved._codec[i] = self._codec[i]
             values = self.values + solved.values
         else:
             values = self.values + other.values
-        codec = util.tocodec(values)
+        codec = Cutil.tocodec(values)
         if set(codec) != set(self._codec):
             self._codec = codec
-        self._keys = util.tokeys(values, self._codec)
+        self._keys = Cutil.tokeys(values, self._codec)
         return self
 
     def append(self, value, unique=True):
@@ -336,54 +439,18 @@ class Cfield:
         - **default** : comparison with default codec
 
         *Returns* : dict'''
-        if default:
-            return util.couplinginfos(self.values, other.values)
         if min(len(self), len(other)) == 0:
-            return {'dist': 0, 'rateder': 0, 'distomin': 0, 'distomax': 0,
-                    'dmin': 0, 'dmax': 0, 'diff': 0, 'typecoupl': 'null',
-                    'dran': 0, 'distance': 0, 'ratecpl': 0}
-        xs = len(self._codec)
-        xo = len(other._codec)
-        dmin = max(xs, xo)
-        dmax = xs * xo
-        dran = dmax - dmin
-        diff = abs(xs - xo)
-        if min(xs, xo) == 1:
-            ratecpl = 0
-            if dmax - dmin + diff != 0:
-                ratecpl = diff / (dmax - dmin + diff)  # 
-            if xs == 1:
-                typec = 'derived'
-            else:
-                typec = 'derive'
-            return {'dist': dmin, 'rateder': 0, 'distomin': 0, 'distomax': 0,
-                    'dmin': dmin, 'dmax': dmax, 'diff': diff, 'dran': dran,
-                    'typecoupl': typec, 'distance': diff, 'ratecpl': ratecpl}
-        xso = len(util.tocodec([tuple((v1, v2))     # xab
-                  for v1, v2 in zip(self._keys, other._keys)]))
-        dic = {'dist': xso, 'dmin': dmin, 'dmax': dmax, 'diff': diff, 'dran': dran,
-               'rateder': (xso - dmin) / (dmax - dmin),
-               'distomin': xso - dmin,  
-               'distomax': dmax - xso,        
-               'distance': xso - dmin + diff,
-               'ratecpl': (xso - dmin + diff) / (dmax - dmin + diff)}
-        if dic['rateder'] == 0 and dic['diff'] == 0:
-            dic['typecoupl'] = 'coupled'
-        elif dic['rateder'] == 0 and xs < xo:
-            dic['typecoupl'] = 'derived'
-        elif dic['rateder'] == 0 and xs > xo:
-            dic['typecoupl'] = 'derive'
-        elif dic['rateder'] == 1:
-            dic['typecoupl'] = 'crossed'
-        elif xs < xo:
-            dic['typecoupl'] = 'linked'
-        else:
-            dic['typecoupl'] = 'link'
-        return dic
+            null = Cfield()
+            return AnaRelation([AnaField(null.to_analysis), AnaField(null.to_analysis)], 
+                               Cutil.dist(null.keys, null.keys, True)
+                               ).to_dict(distances=True, misc=True)            
+        return AnaRelation([AnaField(self.to_analysis), AnaField(other.to_analysis)], 
+                           Cutil.dist(self.keys, other.keys, True)
+                           ).to_dict(distances=True, misc=True)
     
     def dist(self, other):
         '''return default coupling codec between two Cfield'''
-        return util.dist(self._keys, other._keys)
+        return Cutil.dist(self._keys, other._keys)
 
     def derkeys(self, parent):
         '''return keys derived from parent keys
@@ -393,7 +460,7 @@ class Cfield:
         - **parent** : Field - parent
 
         *Returns* : list of keys'''
-        derkey = [ES.nullparent] * len(parent._codec)
+        derkey = [-1] * len(parent._codec)
         for i in range(len(self)):
             derkey[parent._keys[i]] = self._keys[i]
         if min(derkey) < 0:
@@ -426,7 +493,7 @@ class Cfield:
             if len(idx) != len(idx):
                 return None
         leninit = len(idx1)
-        keysadd = util.idxfull(listidx)
+        keysadd = Cutil.idxfull(listidx)
         for idx, keys in zip(listidx, keysadd):
             idx._keys += keys
         return tuple(range(leninit, len(idx1)))
@@ -475,7 +542,7 @@ class Cfield:
         if leng % len(self._codec) != 0:
             return False
         keys = [(i*len(self._codec))//leng for i in range(leng)]
-        return self.__class__.keysfromderkeys(other._keys, keys) == self._keys
+        return Cutil.keysfromderkeys(other._keys, keys) == self._keys
 
     def islinked(self, other):
         '''return True if self is linked to other'''
@@ -504,19 +571,6 @@ class Cfield:
         if key < 0 or key >= len(self._codec):
             return None
         return self._codec[key]    
-    
-    @staticmethod
-    def keysfromderkeys(parentkeys, derkeys):
-        '''return keys from parent keys and derkeys
-
-        *Parameters*
-
-        - **parentkeys** : list of keys from parent
-        - **derkeys** : list of derived keys
-
-        *Returns* : list of keys'''
-        #return [derkeys[parentkeys[i]] for i in range(len(parentkeys))]
-        return [derkeys[pkey] for pkey in parentkeys]
     
     def loc(self, value):
         '''return a list of record number with value
@@ -572,8 +626,8 @@ class Cfield:
         *Returns* : self'''
 
         if not codec:
-            codec = util.tocodec(self.values)
-        self._keys = util.reindex(self._keys, self._codec, codec)
+            codec = Cutil.tocodec(self.values)
+        self._keys = Cutil.reindex(self._keys, self._codec, codec)
         self._codec = codec
         return self
 
@@ -589,8 +643,8 @@ class Cfield:
         *Returns*
 
         - **Field** : self if inplace, new Field if not inplace'''
-        values = util.reorder(self.values, sort)
-        codec, keys = util.resetidx(values)
+        values = Cutil.reorder(self.values, sort)
+        codec, keys = Cutil.resetidx(values)
         if inplace:
             self._keys = keys
             self._codec = codec
@@ -650,7 +704,7 @@ class Cfield:
         - **inplace** : if True, update self data, else create a new Field
 
         *Returns* : self or new Field'''
-        codec = util.tocodec(self.values, keys)
+        codec = Cutil.tocodec(self.values, keys)
         if inplace:
             self._codec = codec
             self._keys = keys
@@ -688,7 +742,7 @@ class Cfield:
             values[ind].setValue(values.ntv_value)
         else:
             values[ind] = value
-        self._codec, self._keys = util.resetidx(values)
+        self._codec, self._keys = Cutil.resetidx(values)
 
     def setlistvalue(self, listvalue, nameonly=False, valueonly=False):
         '''update the values (and update codec and keys)
@@ -708,7 +762,7 @@ class Cfield:
                 values[i].setValue(value_i.ntv_value)
             else:
                 values[i] = value_i
-        self._codec, self._keys = util.resetidx(values)
+        self._codec, self._keys = Cutil.resetidx(values)
     
     def sort(self, reverse=False, inplace=True, func=str):
         '''Define sorted index with ordered codec.
@@ -730,7 +784,7 @@ class Cfield:
         oldcodec = self._codec
         codec = sorted(oldcodec, reverse=reverse, key=str)
         return self.__class__(name=self.name, codec=codec,
-                              keys=sorted(util.reindex(self._keys, oldcodec, codec)))
+                              keys=sorted(Cutil.reindex(self._keys, oldcodec, codec)))
 
     def tocoupled(self, other, coupling=True):
         '''
@@ -743,7 +797,7 @@ class Cfield:
         - **coupling** : boolean (default True) - reindex if False
 
         *Returns* : None'''
-        dic = util.idxlink(other._keys, self._keys)
+        dic = Cutil.idxlink(other._keys, self._keys)
         if not dic:
             raise FieldError("Field is not coupled or derived from other")
         self._codec = [self._codec[dic[i]] for i in range(len(dic))]
@@ -767,8 +821,8 @@ class Cfield:
             codec = self.values
             keys = list(range(len(codec)))
         else:
-            codec = util.tocodec(self.values)
-            keys = util.reindex(self._keys, self._codec, codec)
+            codec = Cutil.tocodec(self.values)
+            keys = Cutil.reindex(self._keys, self._codec, codec)
         if inplace:
             self._codec = codec
             self._keys = keys
@@ -788,6 +842,7 @@ class Cfield:
         if value in self._codec:
             return self._codec.index(value)
         return None    
-    
-    
-    
+
+class FieldError(Exception):
+    ''' Field Exception'''
+    # pass

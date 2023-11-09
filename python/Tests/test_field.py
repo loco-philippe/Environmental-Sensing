@@ -12,10 +12,10 @@ from copy import copy
 #os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
 
 from itertools import product
-from observation import Dataset, Field, ES, util
+from observation import Dataset, Field, ES, util, Ndataset, Sdataset
 from json_ntv import Ntv, NtvSingle, NtvList
 from observation.fields import Nfield, Sfield
-from observation.datasets import Ndataset, Sdataset
+from observation.cfield import Cutil
 
 type_test = 'ntv'
 #type_test = 'simple'
@@ -114,14 +114,19 @@ class Test_Field(unittest.TestCase):
     def test_infos(self):
         idx = Field.ntv(['er', 2, arr12])
         self.assertTrue(idx.infos == {'lencodec': 3, 'mincodec': 3, 'maxcodec': 3,
-                                      'typecodec': 'complete', 'ratecodec': 0.0})
+                                      'typecodec': 'complete', 'id': '$default',
+                                      'dmincodec': 0, 'dmaxcodec': 0, 'rancodec': 0,})
         if Field != Sfield:
             idx2 = Field.ntv({'result': ['er', Dataset(), Dataset()]} )
             self.assertTrue(idx2.infos == {'lencodec': 2, 'mincodec': 2, 'maxcodec': 3,
-                                           'typecodec': 'default', 'ratecodec': 1.0})
+                                           'id': 'result', 'ratecodec': 1.0,
+                                           'dmincodec': 0, 'dmaxcodec': 1,
+                                           'rancodec': 1, 'typecodec': 'default'})
         idx2 = Field()
         self.assertTrue(idx2.infos == {'lencodec': 0, 'mincodec': 0, 'maxcodec': 0,
-                                       'typecodec': 'null', 'ratecodec': 0.0})
+                                       'id': '$default', 'dmincodec': 0,
+                                       'dmaxcodec': 0, 'rancodec': 0,
+                                       'typecodec': 'null'})
 
     def test_append(self):
         idx = Field.ntv(['er', 2, arr12])
@@ -217,18 +222,20 @@ class Test_Field(unittest.TestCase):
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 0, 'rateder': 0, 'distance': 0, 'ratecpl': 0,
                           'distomin': 0, 'distomax': 0, 'dmin': 0, 'dmax': 0,
-                          'dran': 0, 'diff': 0, 'typecoupl': 'null'})
+                          'dran': 0, 'diff': 0, 'typecoupl': 'coupled'})
         ia = Field.ntv(['anne', 'paul', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 4, 'rateder': 0.3333333333333333, 'distance': 2,
                           'distomin': 1, 'distomax': 2, 'dmin': 3, 'dmax': 6,
-                          'dran': 3, 'ratecpl': 0.5, 'diff': 1, 'typecoupl': 'link'})
+                          'dran': 3, 'ratecpl': 0.5, 'diff': 1, 
+                          'distributed': False, 'typecoupl': 'linked'})
         self.assertTrue(ia.islinked(ib))
         ia = Field.ntv(['anne', 'lea', 'anne', 'lea', 'anne'])
         self.assertEqual(ia.couplinginfos(ib),
                          {'dist': 4, 'rateder': 1.0, 'distance': 2, 'ratecpl': 1.0,
                           'distomin': 2, 'distomax': 0, 'dmin': 2, 'dmax': 4,
-                          'dran': 2, 'diff': 0, 'typecoupl': 'crossed'})
+                          'dran': 2, 'diff': 0, 
+                          'distributed': False, 'typecoupl': 'crossed'})
         self.assertTrue(ia.iscrossed(ib))
 
     def test_vlist(self):
@@ -329,7 +336,7 @@ class Test_Field(unittest.TestCase):
     def test_derkeys(self):
         parent = Field.ntv(['j', 'j', 'f', 'f', 'm', 's', 's'])
         fils = Field.ntv(['t1', 't1', 't1', 't1', 't2', 't3', 't3'])
-        idx = Field(fils.codec, keys=Field.keysfromderkeys(
+        idx = Field(fils.codec, keys=Cutil.keysfromderkeys(
             parent.keys, fils.derkeys(parent)))
         self.assertEqual(idx, fils)
         grandpere = Field.ntv(
@@ -346,13 +353,13 @@ class Test_Field(unittest.TestCase):
         self.assertTrue(petitfils.isderived(fils) == fils.isderived(pere)
                         == pere.isderived(grandpere))
         idx = Field(petitfils.codec,
-                     keys=Field.keysfromderkeys(fils.keys, petitfils.derkeys(fils)))
+                     keys=Cutil.keysfromderkeys(fils.keys, petitfils.derkeys(fils)))
         self.assertEqual(idx, petitfils)
         idx = Field(fils.codec,
-                     keys=Field.keysfromderkeys(pere.keys, fils.derkeys(pere)))
+                     keys=Cutil.keysfromderkeys(pere.keys, fils.derkeys(pere)))
         self.assertEqual(idx, fils)
         idx = Field(pere.codec,
-                     keys=Field.keysfromderkeys(grandpere.keys, pere.derkeys(grandpere)))
+                     keys=Cutil.keysfromderkeys(grandpere.keys, pere.derkeys(grandpere)))
         self.assertEqual(idx, pere)
 
     def test_json(self):

@@ -108,19 +108,18 @@ Modules contain the following classes:
     - `python.observation.esconstante`.
 """
 from observation.esobservation import Observation
-from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
-from observation.esvalue_base import ESValue
-from observation.dataset import Dataset
-from observation.dataset_interface import DatasetInterface, DatasetError
+#from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
+#from observation.esvalue_base import ESValue
+from observation.dataset import Dataset, Ndataset, Sdataset
+from observation.dataset_interface import DatasetInterface
 from observation.dataset_structure import DatasetStructure
+from observation.dataset_analysis import DatasetAnalysis
 from observation.field import Field
-from observation.field_structure import FieldStructure
-from observation.field_interface import CborDecoder, FieldError, FieldEncoder, FieldInterface
+from observation.field_interface import CborDecoder, FieldEncoder, FieldInterface
 from observation.fields import Nfield, Sfield
-from observation.datasets import Ndataset, Sdataset
 #from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
 from observation.util import util
-from observation.timeslot import TimeSlot
-from observation.dataset_analysis import Analysis
+#from observation.timeslot import TimeSlot
+#from observation.dataset_analysis import Analysis
 #print('package :', __package__)
