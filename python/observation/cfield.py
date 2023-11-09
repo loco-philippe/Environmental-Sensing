@@ -109,10 +109,6 @@ class Cfield:
         '''return hash(values)'''
         return hash(tuple(self.values))
 
-    def _hashi(self):
-        '''return hash(codec) + hash(keys)'''
-        return hash(tuple(self._codec)) + hash(tuple(self._keys))
-
     def __add__(self, other):
         ''' Add other's values to self's values in a new Field'''
         newiindex = self.__copy__()
@@ -129,10 +125,15 @@ class Cfield:
     
     # %% property
     @property 
+    def _hashf(self):
+        '''return hash(codec infos and keys)'''
+        return hash(tuple((len(self.codec), len(set(self.codec)), len(self), 
+                     self.name, tuple(self._keys))))
+
+    @property 
     def to_analysis(self):
-        return { 'id': self.name, 'lencodec': len(self.codec), 
-                 'mincodec': len(set(self.codec)), 'maxcodec': len(self),
-                 'hashf': hash(self)}
+        return {'maxcodec': len(self), 'lencodec': len(self.codec), 'id': self.name,
+                'mincodec': len(set(self.codec)), 'hashf': self._hashf}
     
     @property
     def codec(self):

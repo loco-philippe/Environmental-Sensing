@@ -81,12 +81,8 @@ class Cdataset(DatasetAnalysis):
             del idx[ind]
 
     def __hash__(self):
-        '''return sum of all hash(Field)'''
-        return sum([hash(idx) for idx in self.lindex])
-
-    def _hashi(self):
-        '''return sum of all hashi(Field)'''
-        return sum([idx._hashi() for idx in self.lindex])
+        '''return hash of all hash(Field)'''
+        return hash(tuple(hash(idx) for idx in self.lindex))
 
     def __eq__(self, other):
         ''' equal if hash values are equal'''
@@ -97,6 +93,12 @@ class Cdataset(DatasetAnalysis):
         return self.__class__(self)
 
 # %% property
+    @property
+    def _hashd(self):
+        '''return hash of all hashf(Field)'''
+        #return sum([idx._hashi() for idx in self.lindex])
+        return hash(tuple(fld._hashf for fld in self.lindex))
+    
     @property
     def indexlen(self):
         ''' list of index codec length'''
@@ -187,12 +189,12 @@ class Cdataset(DatasetAnalysis):
 
     def to_analysis(self, distr=False):
         return {'name': self.name, 'fields': [fld.to_analysis for fld in self.lindex],
-                'length': len(self), 'relations': {
-                   self.lindex[i].name: 
-                       {self.lindex[j].name: 
+                'length': len(self), 'hashd': self._hashd, 
+                'relations': {self.lindex[i].name: {self.lindex[j].name: 
                           util.dist(self.lindex[i].keys, self.lindex[j].keys, distr) 
                         for j in range(i+1, len(self.lindex))} 
-                   for i in range(len(self.lindex)-1)}}  
+                   for i in range(len(self.lindex)-1)}
+                }  
     
     def reindex(self):
         '''Calculate a new default codec for each index (Return self)'''

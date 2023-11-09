@@ -20,7 +20,7 @@ class Test_Cfield(unittest.TestCase):
         self.assertEqual(fnull.infos, {'lencodec': 0, 'mincodec': 0,
                          'maxcodec': 0, 'typecodec': 'null', 'ratecodec': 0.0})
         self.assertEqual({'id': 'field', 'lencodec': 0, 'mincodec': 0, 'maxcodec': 0,
-                          'hashf': hash(fnull)}, fnull.to_analysis)
+                          'hashf': fnull._hashf}, fnull.to_analysis)
 
     def test_init(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
@@ -45,7 +45,7 @@ class Test_Cfield(unittest.TestCase):
     def test_analysis(self):
         idx = Cfield(['er', 2, (1, 2), 2], 'test')
         self.assertEqual(idx.to_analysis, {'id': 'test', 'lencodec': 4,
-         'mincodec': 3, 'maxcodec': 4, 'hashf': hash(idx)})
+         'mincodec': 3, 'maxcodec': 4, 'hashf': idx._hashf})
         
 class Test_Cdataset(unittest.TestCase):
     
@@ -54,7 +54,8 @@ class Test_Cdataset(unittest.TestCase):
         self.assertTrue(dnull.keys == dnull.indexlen == dnull.iindex == [])
         self.assertTrue(dnull.lenindex == len(dnull) == 0) 
         self.assertEqual(dnull.to_analysis(), {'name': None, 'fields': [], 
-                                          'length': 0, 'relations': {}})
+                                          'length': 0, 'relations': {},
+                                          'hashd': dnull._hashd})
         
     def test_init(self):
         dts = Cdataset([Cfield([10, 20, 30, 20], 'i0', default=True), 
@@ -85,6 +86,25 @@ class Test_Cdataset(unittest.TestCase):
         self.assertTrue(dts.to_analysis(True)['relations']['i1']['i3'][1])
         self.assertFalse(dts.to_analysis(True)['relations']['i2']['i3'][1])
 
+    def test_hashd(self):
+        ilm1 = Cdataset.from_ntv([['math', 'english', 'software', 'math', 'english', 'software'],
+                          ['philippe', 'philippe', 'philippe', 'anne', 'anne', 'anne'],
+                          [None, None, None, 'gr1', 'gr1', 'gr2'],
+                          ['philippe white', 'philippe white', 'philippe white',
+                           'anne white', 'anne white', 'anne white']])
+        ilm2 = Cdataset.from_ntv([['math', 'english', 'software', 'math', 'english', 'software'],
+                          ['philippe', 'philippe', 'philippe', 'anne', 'anne', 'anne'],
+                          [None, None, None, 'gr1', 'gr1', 'gr3'],
+                          ['philippe white', 'philippe white', 'philippe white',
+                           'anne white', 'anne white', 'anne white']])
+        ilm3 = Cdataset.from_ntv([['math', 'english', 'software', 'math', 'english', 'software'],
+                          ['philippe', 'philippe', 'philippe', 'anne', 'anne', 'anne'],
+                          [None, None, None, 'gr1', 'gr3', 'gr2'],
+                          ['philippe white', 'philippe white', 'philippe white',
+                           'anne white', 'anne white', 'anne white']])
+        self.assertEqual(ilm1._hashd, ilm2._hashd)
+        self.assertNotEqual(ilm1._hashd, ilm3._hashd)
+        
     def test_analysis(self):
         ilm = Cdataset.from_ntv([['math', 'english', 'software', 'math', 'english', 'software'],
                           ['philippe', 'philippe', 'philippe', 'anne', 'anne', 'anne'],
