@@ -14,7 +14,7 @@ from copy import copy
 from itertools import product
 from observation import Dataset, Field, ES, util, Ndataset, Sdataset
 from json_ntv import Ntv, NtvSingle, NtvList
-from observation.fields import Nfield, Sfield
+from observation.field import Nfield, Sfield
 from observation.cfield import Cutil
 
 type_test = 'ntv'

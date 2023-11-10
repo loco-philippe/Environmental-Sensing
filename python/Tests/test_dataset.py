@@ -16,7 +16,7 @@ from itertools import product
 import json
 from observation import Dataset, util, Sdataset, Ndataset
 from json_ntv import Ntv
-from observation.fields import Nfield, Sfield
+from observation.field import Nfield, Sfield
 
 defv = 'default value'
 i1 = 'i1'

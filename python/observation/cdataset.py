@@ -7,8 +7,8 @@ Created on Wed Oct 11 11:54:18 2023
 from copy import copy
 
 from observation.dataset_analysis import DatasetAnalysis
-from observation.util import util
-from observation.cfield import Cfield
+#from observation.util import util
+from observation.cfield import Cfield, Cutil
 
 from json_ntv import Ntv
 from json_ntv.ntv_util import NtvUtil, NtvConnector
@@ -139,7 +139,7 @@ class Cdataset(DatasetAnalysis):
     @property
     def tiindex(self):
         ''' list of keys for each record'''
-        return util.list(list(zip(*self.iindex)))
+        return Cutil.list(list(zip(*self.iindex)))
 
 # %%methods
 
@@ -193,7 +193,7 @@ class Cdataset(DatasetAnalysis):
         return {'name': self.name, 'fields': [fld.to_analysis for fld in self.lindex],
                 'length': len(self), 'hashd': self._hashd, 
                 'relations': {self.lindex[i].name: {self.lindex[j].name: 
-                          util.dist(self.lindex[i].keys, self.lindex[j].keys, distr) 
+                          Cutil.dist(self.lindex[i].keys, self.lindex[j].keys, distr) 
                         for j in range(i+1, len(self.lindex))} 
                    for i in range(len(self.lindex)-1)}
                 }  

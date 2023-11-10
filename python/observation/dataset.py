@@ -36,7 +36,7 @@ import csv
 from observation.util import util
 from observation.dataset_interface import DatasetInterface
 from observation.dataset_structure import DatasetStructure
-from observation.fields import Nfield, Sfield
+from observation.field import Nfield, Sfield
 from observation.cdataset import Cdataset, DatasetError
 
 from json_ntv.ntv import Ntv, NtvConnector
