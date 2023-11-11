@@ -15,7 +15,6 @@ from observation.esconstante import ES
 from observation.field import Field
 from observation.util import util
 from observation.cdataset import DatasetError
-#from observation.fields import Sfield
 
 
 class DatasetStructure:
