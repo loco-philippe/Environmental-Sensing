@@ -113,7 +113,7 @@ from observation.esobservation import Observation
 from observation.dataset import Dataset, Ndataset, Sdataset
 from observation.dataset_interface import DatasetInterface
 from observation.dataset_structure import DatasetStructure
-from observation.dataset_analysis import DatasetAnalysis
+#from observation.dataset_analysis import DatasetAnalysis
 from observation.field import Field, Nfield, Sfield
 from observation.field_interface import CborDecoder, FieldEncoder, FieldInterface
 #from observation.essearch import ESSearch
