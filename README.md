@@ -45,7 +45,7 @@ The Environmental Sensing project aims to:
 - Bluetooth extension for Air Pollutants (available since sept-21)
   - [Environmental Sensing Service (ESS) Bluetooth](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=294797)
   - [Extension Air pollutants in ESS Bluetooth](https://www.bluetooth.com/specifications/specs/gatt-specification-supplement-6/)
-  - [ESS permitted Characteristics](https://btprodspecificationrefs.blob.core.windows.net/assigned-numbers/Assigned%20Number%20Types/permitted_characteristics.pdf)
+  - [ESS permitted Characteristics](https://bitbucket.org/bluetooth-SIG/public/src/main/assigned_numbers/profiles_and_services/ess/ess_permitted_characteristics.yaml)
 - Tools for micro-controlers
   - [C++ Implementation](https://github.com/loco-philippe/ES-sensor) (experimental)
 
