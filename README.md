@@ -85,6 +85,6 @@ The Environmental Sensing project aims to:
 - Project presentation
   - overview of [tabular structures (french)](./documentation/FR_tabular_structure.ipynb)
   - [interoperability](./documentation/interoperability.pdf) of environmental data
-  - general presentation of the Environmental Sensing project [document(french)](./documentation/ES-presentation.pdf) and [slides(french)](./documentation/presentation_projet.pdf)
+  # - general presentation of the Environmental Sensing project [document(french)](./documentation/ES-presentation.pdf) and [slides(french)](./documentation/presentation_projet.pdf)
 
 *The Environmental Sensing project is one of the six [BlueHats Semester of Code](https://communs.numerique.gouv.fr/bluehats/bsoc-contributions-2022/) projects selected among the 40 projects identified by in March 22.*
