@@ -12,14 +12,14 @@ and at the level of the life cycle of environmental data: (1) the production of 
 
 The establishment of strong interoperability is conditioned by:
 
-- The existence of a unique and shared data structure (standard)
+- The existence of semantic data structure (standard)
 - The availability of open tools for exploiting this structure (connectors),
 
 Three additional conditions are necessary for this structure to be adopted and applied:
 
 - A simple implementation adapted to each need,
-- A construction of “convergence” rather than “questioning” of the existing,
-- Compatibility with the “general interest” qualification of environmental data
+- A construction of "convergence" rather than "questioning" of the existing,
+- Compatibility with the "general interest" qualification of environmental data
 
 ## The Environmental Sensing project (ES project)
 
@@ -28,7 +28,7 @@ The Environmental Sensing project aims to:
 - Facilitate the use and sharing of environmental data
 - Standardize both data acquisition equipment (sensors) and processing applications,
 - Reduce coding/decoding operations (interfaces) by using standard connectors,
-- Converge the main existing standards
+- Integrate a semantic level into the main existing standards (convergence)
 - Optimize the volume of data exchanged
 
 ## Work currently underway
@@ -52,21 +52,24 @@ The Environmental Sensing project aims to:
 ### semantic JSON
 
 - JSON-NTV : a semantic format for interoperability
-  - [NTV repository](https://github.com/loco-philippe/NTV#readme)
   - [Internet-Draft](https://datatracker.ietf.org/doc/draft-thomy-json-ntv/)
-  - [JSON-TAB](https://github.com/loco-philippe/NTV/blob/main/documentation/JSON-TAB-standard.pdf) : A JSON-NTV format for tabular data
+  - [NTV repository](https://github.com/loco-philippe/NTV#readme)
+- NTV-TAB : NTV tabular format
+  - [Internet-Draft](https://datatracker.ietf.org/doc/draft-thomy-ntv-tab/)
+- JSON Schema extension to NTV data
+  - [Internet-Draft](https://datatracker.ietf.org/doc/draft-thomy-ntv-schema/)
 
 ### tools for structured tabular data
 
 - Tool for structuring Datasets([TAB-dataset repository](https://github.com/loco-philippe/tab-dataset#readme))
-- [NTV-pandas repository](https://github.com/loco-philippe/ntv-pandas#readme) : Semantic, compact and reversible JSON-pandas converter
+- [NTV-pandas repository](https://github.com/loco-philippe/ntv-pandas#readme) : Semantic, compact and reversible JSON-pandas converter ([pandas ecosystem](https://pandas.pydata.org/community/ecosystem.html))
 
 ### tabular data analysis
 
 - methodology
-  - [Methodology](https://github.com/loco-philippe/tab-dataset/tree/main/docs/methodology.ipynb) for taking into account relationships between fields in tabular data
+  - [Concepts and principles](https://github.com/loco-philippe/tab-analysis/blob/main/docs/tabular_analysis.pdf) for taking into account relationships between fields in tabular data
   - [a simple implementation](./property_relationship/example.ipynb) used to check the validity of relationship property
-  - Add 'relationship' property in TableSchema [issue #803](https://github.com/frictionlessdata/specs/issues/803)
+  - Add 'relationship' property in TableSchema [issue #803](https://github.com/frictionlessdata/specs/issues/803), [pattern #859](https://github.com/frictionlessdata/specs/pull/859)
 - tools
   - Tool for Dataset analysis([TAB-analysis repository](https://github.com/loco-philippe/tab-analysis#readme))
 
