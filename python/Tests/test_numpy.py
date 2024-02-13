@@ -13,7 +13,7 @@ a = np.arange(1,25).reshape((2,3,2,2))
 leng = a.size
 dim = a.ndim
 period = a.shape
-data = list(a.flatten())
+data = a.flatten().tolist()
 
 coefi = leng // period[0]
 coef = [coefi]
@@ -29,5 +29,7 @@ js = { name[i]: [list(range(period[i])), [coef[i]]] for i in range(dim)} | {'val
 keys = [Cutil.keysfromcoef(coe, per, leng) for coe, per in zip(coef, period)]
 print(coef)
 print(js)
-print(Sdataset.ntv(js))
+nt = Sdataset.ntv(js)
+
+print(nt.to_ntv())
 #print(keys)
