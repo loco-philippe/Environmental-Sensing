@@ -13,7 +13,22 @@ import ntv_pandas as npd
 from ntv_util import NtvUtil, NtvConnector
 from json_ntv import Ntv
 
-def to_json(ndarray):
+def to_json(ndarray, axes=None, name=None, ntv=None ):
+    
+    ntv_t = ':xndarray' if axes and ntv == 'ndarray' else ':ndarray' if ntv== 'ndarray' else ':tab' if ntv == 'tab' else ''
+    if ntv_t == ':tab':
+        value = to_json_tab(ndarray, axes, name)
+        name = ntv_t
+    else: 
+        name = ntv_t if not name else name + ntv_t
+        data = ndarray.tolist()
+        value = [data, axes] if axes else data
+    if name:
+        return { name: value}
+    return value
+        
+
+def to_json_tab(ndarray, axes=None, name=None):
     period = ndarray.shape
     dim = ndarray.ndim
 
@@ -22,9 +37,12 @@ def to_json(ndarray):
     for per in period[1:]:
         coefi = coefi // per
         coef.append(coefi)
-    
-    return { 'axe' + str(i) : [list(range(period[i])), [coef[i]]] 
-            for i in range(dim)} | {'val': ndarray.flatten().tolist()}    
+        
+    axes_name = list(axes) if axes else ['axe' + str(i) for i in range(dim)]
+    axes_value = list(axes.values()) if axes else [list(range(period[i])) for i in range(dim)]
+    axes = {name: [val, [coe]] for name, val, coe in zip(axes_name, axes_value, coef)}
+    name = 'val' if not name else name
+    return axes | {name: ndarray.flatten().tolist()}    
 
 def ndarray(js):
     ntv = Ntv.obj(js)
@@ -45,7 +63,7 @@ def ndarray(js):
 
 
 a = np.arange(1,25).reshape((2,3,2,2))
-js = to_json(a)
+js = to_json_tab(a)
 print(js)
 nt = Sdataset.ntv(js)
 
