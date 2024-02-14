@@ -20,9 +20,10 @@ def to_json(ndarray, axes=None, name=None, ntv=None ):
         value = to_json_tab(ndarray, axes, name)
         name = ntv_t
     else: 
-        name = ntv_t if not name else name + ntv_t
-        data = ndarray.tolist()
-        value = [data, axes] if axes else data
+        #name = ntv_t if not name else name + ntv_t
+        name = '' if not name else name
+        data = {name + ':' + ndarray.dtype.name: ndarray.tolist()}
+        value = data | axes if axes else data
     if name:
         return { name: value}
     return value
@@ -44,7 +45,7 @@ def to_json_tab(ndarray, axes=None, name=None):
     name = 'val' if not name else name
     return axes | {name: ndarray.flatten().tolist()}    
 
-def ndarray(js):
+def from_json_tab(js):
     ntv = Ntv.obj(js)
     if len(ntv) == 0:
         return
@@ -62,11 +63,11 @@ def ndarray(js):
     return np.array(decode[index][2]).reshape(shape)
 
 
-a = np.arange(1,25).reshape((2,3,2,2))
-js = to_json_tab(a)
+'''a = np.arange(1,25).reshape((2,3,2,2))
+js = to_json_tab(a, axes)
 print(js)
 nt = Sdataset.ntv(js)
 
 print(nt.to_ntv())
 print(npd.read_json(js))
-print(ndarray(js))
+print(from_json_tab(js))'''
