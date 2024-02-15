@@ -112,9 +112,9 @@ class NdarrayConnec(NtvConnector):
         - **alias** : boolean (default False) - if True, alias dtype else default dtype
         - **annotated** : boolean (default False) - if True, NTV names are not included.'''
         if isinstance(ntv_value, dict):
-            return (np.array(ntv_value['data'][0], dtype=ntv_value['data'][1]), 
+            return (np.array(ntv_value['data'][1], dtype=ntv_value['data'][0]), 
                     {name: val for name, val in zip(ntv_value['xnames'], ntv_value['xvalues'])})
-        return np.array(ntv_value[0], dtype=ntv_value[1])
+        return np.array(ntv_value[1], dtype=ntv_value[0])
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
@@ -134,6 +134,6 @@ class NdarrayConnec(NtvConnector):
         if axes: 
             axes_name = list(axes)
             axes_values = list(axes.values())
-            return ({'data': [data, dtype], 'xnames': axes_name, 
+            return ({'data': [dtype, data], 'xnames': axes_name, 
                     'xvalues': axes_values}, name, typ)
-        return ([data, dtype], name, typ) 
+        return ([dtype, data], name, typ) 
