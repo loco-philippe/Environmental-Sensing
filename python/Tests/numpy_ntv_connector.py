@@ -40,9 +40,10 @@ def to_json(ndarray, **kwargs):
 
     *parameters*
     - **axes** : list or dict (default none) - names and values of axes
+    - **dtype** : Boolean (default True) - including dtype
 
     '''
-    option = {'encoded': False, 'header': True, 'axes': None} | kwargs
+    option = {'encoded': False, 'header': True, 'axes': None, 'dtype': True} | kwargs
 
     jsn = NdarrayConnec.to_json_ntv(ndarray, **option)[0]
     head = ':ndarray'
@@ -111,10 +112,17 @@ class NdarrayConnec(NtvConnector):
         - **index** : list (default None) - list of index values,
         - **alias** : boolean (default False) - if True, alias dtype else default dtype
         - **annotated** : boolean (default False) - if True, NTV names are not included.'''
+        
+        data = ntv_value
+        axes = None
         if isinstance(ntv_value, dict):
-            return (np.array(ntv_value['data'][1], dtype=ntv_value['data'][0]), 
-                    {name: val for name, val in zip(ntv_value['xnames'], ntv_value['xvalues'])})
-        return np.array(ntv_value[1], dtype=ntv_value[0])
+            data = ntv_value['data']
+            axes = {name: val for name, val in zip(ntv_value['xnames'], 
+                                                   ntv_value['xvalues'])}            
+        dtype, data = data if (len(data) == 2 and isinstance(data[0], str) 
+                               and len(data[1]) > 1) else (None, data)
+        np_data = np.array(data, dtype=dtype)
+        return (np_data, axes) if axes else np_data
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
@@ -126,14 +134,15 @@ class NdarrayConnec(NtvConnector):
         - **name** : string (default None) - name of the NTV object
         - **value** : ndarray values
         - **axes** : list or dict (default none) - names and values of axes
+        - **dtype** : Boolean (default True) - including dtype
         '''
         axes = kwargs.get('axes')
-        data = value.tolist()
-        dtype = value.dtype.name
+        opt_dtype = kwargs.get('dtype', True)
+        data = [value.dtype.name, value.tolist()] if opt_dtype else value.tolist()
         typ = NdarrayConnec.clas_typ if not typ else typ
         if axes: 
             axes_name = list(axes)
             axes_values = list(axes.values())
-            return ({'data': [dtype, data], 'xnames': axes_name, 
-                    'xvalues': axes_values}, name, typ)
-        return ([dtype, data], name, typ) 
+            return ({'data': data, 'xnames': axes_name, 'xvalues': axes_values},
+                    name, typ)
+        return (data, name, typ) 
