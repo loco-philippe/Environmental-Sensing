@@ -63,18 +63,17 @@ def to_json_tab(ndarray, axes=None):
         coefi = coefi // per
         coef.append(coefi)
     fields = {}
-    for ind, axe in enumerate(Ntv.obj(axes)):
+    if not axes:
+        axes = [{'axe' + str(i): list(range(period[i]))} for i in range(dim)]
+    elif isinstance(axes[0], str):
+        axes = [{axes[i]: list(range(period[i]))} for i in range(dim)]
+    n_axes = Ntv.obj(axes)
+    for ind, axe in enumerate(n_axes):
         if axe.name:
             fields |= {axe.name: [axe.val, [coef[ind]]]}
         else:
             for axe2 in axe:
                 fields |= {axe2.name: [axe2.val, [coef[ind]]]}
-    
-    
-    #axes_nam = list(axes) if axes else ['axe' + str(i) for i in range(dim)]
-    #axes_val = list(axes.values()) if isinstance(axes, dict) else [
-    #    list(range(period[i])) for i in range(dim)]
-    #axes = {nam: [val, [coe]] for nam, val, coe in zip(axes_nam, axes_val, coef)}
     return fields | {'value::' + ndarray.dtype.name: ndarray.flatten().tolist()}    
 
 def read_json_tab(js):
