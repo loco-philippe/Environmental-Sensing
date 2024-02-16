@@ -62,12 +62,20 @@ def to_json_tab(ndarray, axes=None):
     for per in period:
         coefi = coefi // per
         coef.append(coefi)
-        
-    axes_nam = list(axes) if axes else ['axe' + str(i) for i in range(dim)]
-    axes_val = list(axes.values()) if isinstance(axes, dict) else [
-        list(range(period[i])) for i in range(dim)]
-    axes = {nam: [val, [coe]] for nam, val, coe in zip(axes_nam, axes_val, coef)}
-    return axes | {'value::' + ndarray.dtype.name: ndarray.flatten().tolist()}    
+    fields = {}
+    for ind, axe in enumerate(Ntv.obj(axes)):
+        if axe.name:
+            fields |= {axe.name: [axe.val, [coef[ind]]]}
+        else:
+            for axe2 in axe:
+                fields |= {axe2.name: [axe2.val, [coef[ind]]]}
+    
+    
+    #axes_nam = list(axes) if axes else ['axe' + str(i) for i in range(dim)]
+    #axes_val = list(axes.values()) if isinstance(axes, dict) else [
+    #    list(range(period[i])) for i in range(dim)]
+    #axes = {nam: [val, [coe]] for nam, val, coe in zip(axes_nam, axes_val, coef)}
+    return fields | {'value::' + ndarray.dtype.name: ndarray.flatten().tolist()}    
 
 def read_json_tab(js):
     
@@ -117,8 +125,9 @@ class NdarrayConnec(NtvConnector):
         axes = None
         if isinstance(ntv_value, dict):
             data = ntv_value['data']
-            axes = {name: val for name, val in zip(ntv_value['xnames'], 
-                                                   ntv_value['xvalues'])}            
+            axes = ntv_value['axes']
+            #axes = {name: val for name, val in zip(ntv_value['xnames'], 
+            #                                       ntv_value['xvalues'])}            
         dtype, data = data if (len(data) == 2 and isinstance(data[0], str) 
                                and len(data[1]) > 1) else (None, data)
         np_data = np.array(data, dtype=dtype)
@@ -141,8 +150,9 @@ class NdarrayConnec(NtvConnector):
         data = [value.dtype.name, value.tolist()] if opt_dtype else value.tolist()
         typ = NdarrayConnec.clas_typ if not typ else typ
         if axes: 
-            axes_name = list(axes)
-            axes_values = list(axes.values())
-            return ({'data': data, 'xnames': axes_name, 'xvalues': axes_values},
-                    name, typ)
+            return ({'data': data, 'axes': axes}, name, typ)
+            #axes_name = list(axes)
+            #axes_values = list(axes.values())
+            #return ({'data': data, 'xnames': axes_name, 'xvalues': axes_values},
+            #        name, typ)
         return (data, name, typ) 
