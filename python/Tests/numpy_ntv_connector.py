@@ -39,64 +39,58 @@ def to_json(ndarray, **kwargs):
     ''' convert pandas Series or Dataframe to JSON text or JSON Value.
 
     *parameters*
-    - **axes** : list or dict (default none) - names and values of axes
+    - **meta** : dict (default none) - names and values of axes
     - **dtype** : Boolean (default True) - including dtype
 
     '''
-    option = {'encoded': False, 'header': True, 'axes': None, 'dtype': True} | kwargs
+    option = {'encoded': False, 'header': True, 'meta': None, 'dtype': True} | kwargs
 
     jsn = NdarrayConnec.to_json_ntv(ndarray, **option)[0]
-    head = ':ndarray'
     if option['header']:
+        head = ':xndarray' if option['meta'] else ':ndarray'
         jsn = {head: jsn}
     if option['encoded']:
         return json.dumps(jsn)
     return jsn
 
-def to_json_tab(ndarray, axes=None):
+def to_json_tab(ndarray, meta=None, header=True):
     period = ndarray.shape
     dim = ndarray.ndim
-
     coefi = ndarray.size
     coef = []
     for per in period:
         coefi = coefi // per
         coef.append(coefi)
-    fields = {}
-    if not axes:
-        axes = [{'axe' + str(i): list(range(period[i]))} for i in range(dim)]
-    elif isinstance(axes[0], str):
-        axes = [{axes[i]: list(range(period[i]))} for i in range(dim)]
-    n_axes = Ntv.obj(axes)
-    for ind, axe in enumerate(n_axes):
-        if axe.name:
-            fields |= {axe.name: [axe.val, [coef[ind]]]}
-        else:
-            for axe2 in axe:
-                fields |= {axe2.name: [axe2.val, [coef[ind]]]}
-    return fields | {'value::' + ndarray.dtype.name: ndarray.flatten().tolist()}    
+    
+    meta = meta if meta else {}   
+    axe_n = meta['axes'] if 'axes' in meta else ['axe' + str(i) for i in range(dim)]
+    axe_v = meta['axevars'] if 'axevars' in meta else [
+        list(range(period[i])) for i in range(dim)]
+    jsn = {nam: [var, [coe]] for nam, var, coe in zip(axe_n, axe_v, coef)} | {
+           'data::' + ndarray.dtype.name: ndarray.flatten().tolist()}
+    if header:
+        return {':tab': jsn}
+    return jsn
 
 def read_json_tab(js):
-    
+    js = js[':tab'] if ':tab' in js else js
     shape = []
-    axes_name = []
-    axes_values = []
+    axes_n = []
+    axes_v = []
     coef = []
-    ndarray = None
-    for name, value in js.items():
-        if len(value) == 2 and isinstance(value[1], list) and len(value[1]) == 1:
-            shape.append(len(value[0]))
-            coef.append(value[1])
-            axes_values.append(value[0])
-            axes_name.append(name)            
+    nda = None
+    for name, val in js.items():
+        if len(val) == 2 and isinstance(val[1], list) and len(val[1]) == 1:
+            shape.append(len(val[0]))
+            coef.append(val[1])
+            axes_v.append(val[0])
+            axes_n.append(name)            
         else:
             spl = name.split('::')
-            ndarray = np.array(value, dtype=spl[1]
-                               ) if len(spl)==2 else np.array(value)
-    coef, shape, axes_name, axes_values = list(
-        zip(*sorted(zip(coef, shape, axes_name, axes_values), reverse=True)))
-    return (ndarray.reshape(shape), 
-            {name: val for name, val in zip(axes_name, axes_values)})
+            nda = np.array(val, dtype=spl[1]) if len(spl)==2 else np.array(val)
+    coef, shape, axes_n, axes_v = list(zip(*sorted(zip(coef, shape, axes_n, 
+                                                       axes_v), reverse=True)))
+    return (nda.reshape(shape), {'axes': list(axes_n), 'axevars': list(axes_v)})
 
 class NdarrayConnec(NtvConnector):
 
@@ -124,12 +118,10 @@ class NdarrayConnec(NtvConnector):
         axes = None
         if isinstance(ntv_value, dict):
             data = ntv_value['data']
-            axes = ntv_value['axes']
-            #axes = {name: val for name, val in zip(ntv_value['xnames'], 
-            #                                       ntv_value['xvalues'])}            
+            axes = {key:val for key, val in ntv_value.items() if key != 'data'} 
         dtype, data = data if (len(data) == 2 and isinstance(data[0], str) 
                                and len(data[1]) > 1) else (None, data)
-        np_data = np.array(data, dtype=dtype)
+        np_data = np.array(data, dtype=dtype)       
         return (np_data, axes) if axes else np_data
 
     @staticmethod
@@ -141,17 +133,13 @@ class NdarrayConnec(NtvConnector):
         - **typ** : string (default None) - type of the NTV object,
         - **name** : string (default None) - name of the NTV object
         - **value** : ndarray values
-        - **axes** : list or dict (default none) - names and values of axes
+        - **meta** : dict (default none) - names and values of axes
         - **dtype** : Boolean (default True) - including dtype
         '''
-        axes = kwargs.get('axes')
+        axes = kwargs.get('meta')
         opt_dtype = kwargs.get('dtype', True)
         data = [value.dtype.name, value.tolist()] if opt_dtype else value.tolist()
         typ = NdarrayConnec.clas_typ if not typ else typ
         if axes: 
-            return ({'data': data, 'axes': axes}, name, typ)
-            #axes_name = list(axes)
-            #axes_values = list(axes.values())
-            #return ({'data': data, 'xnames': axes_name, 'xvalues': axes_values},
-            #        name, typ)
+            return ({'data': data} | axes, name, typ)
         return (data, name, typ) 
