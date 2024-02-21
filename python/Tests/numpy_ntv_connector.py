@@ -21,7 +21,7 @@ from tab_dataset.cfield import Cfield
 
 
 def read_json(jsn, **kwargs):
-    ''' convert JSON text or JSON Value to pandas Series or Dataframe.
+    ''' convert JSON text or JSON Value to Numpy ndarray.
 
     *parameters*
 
@@ -36,7 +36,7 @@ def read_json(jsn, **kwargs):
 
 
 def to_json(ndarray, **kwargs):
-    ''' convert pandas Series or Dataframe to JSON text or JSON Value.
+    ''' convert Numpy ndarray to JSON text or JSON Value.
 
     *parameters*
     - **meta** : dict (default none) - names and values of axes
