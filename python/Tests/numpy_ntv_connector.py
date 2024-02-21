@@ -43,12 +43,15 @@ def to_json(ndarray, **kwargs):
     - **dtype** : Boolean (default True) - including dtype
 
     '''
-    option = {'encoded': False, 'header': True, 'meta': None, 'dtype': True} | kwargs
+    option = {'encoded': False, 'header': True, 'meta': None, 'dtype': True,
+              'name': None, 'extension':None} | kwargs
 
     jsn = NdarrayConnec.to_json_ntv(ndarray, **option)[0]
-    if option['header']:
+    name = '' if not option['name'] else option['name']
+    extension = '[' + option['extension'] + ']' if option['extension'] else ''
+    if option['header'] or option['name'] or option['extension']:
         head = ':xndarray' if option['meta'] else ':ndarray'
-        jsn = {head: jsn}
+        jsn = {name + head + extension: jsn}
     if option['encoded']:
         return json.dumps(jsn)
     return jsn
