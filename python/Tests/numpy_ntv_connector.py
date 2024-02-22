@@ -29,10 +29,9 @@ def read_json(jsn, **kwargs):
     '''
     option = kwargs
     jso = json.loads(jsn) if isinstance(jsn, str) else jsn
-    ntv = Ntv.from_obj(jso)
-    if ntv.type_str == 'ndarray':
-        return NdarrayConnec.to_obj_ntv(ntv.ntv_value, **option)
-    return NdarrayConnec.to_obj_ntv(ntv.ntv_value, **option)
+    if isinstance(jso, dict) and (':ndarray' in jso or ':xndarray' in jso):
+        return NdarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
+    return NdarrayConnec.to_obj_ntv(jso, **option)
 
 
 def to_json(ndarray, **kwargs):
@@ -43,15 +42,15 @@ def to_json(ndarray, **kwargs):
     - **dtype** : Boolean (default True) - including dtype
 
     '''
-    option = {'encoded': False, 'header': True, 'meta': None, 'dtype': True,
-              'name': None, 'extension':None} | kwargs
+    option = {'encoded': False, 'header': True, 
+              'name': None, 'extension':None, 'notype': False, 
+              'attrs': None, 'axes': None, 'axevars': None, 'vars': None} | kwargs
 
-    jsn = NdarrayConnec.to_json_ntv(ndarray, **option)[0]
-    name = '' if not option['name'] else option['name']
-    extension = '[' + option['extension'] + ']' if option['extension'] else ''
-    if option['header'] or option['name'] or option['extension']:
-        head = ':xndarray' if option['meta'] else ':ndarray'
-        jsn = {name + head + extension: jsn}
+    jsn, nam, typ = NdarrayConnec.to_json_ntv(ndarray, **option)
+    name = nam if nam else ''
+    if option['header'] or name:
+        typ = ':' + typ if option['header'] else '' 
+        jsn = {name + typ : jsn}
     if option['encoded']:
         return json.dumps(jsn)
     return jsn
@@ -117,15 +116,27 @@ class NdarrayConnec(NtvConnector):
         - **alias** : boolean (default False) - if True, alias dtype else default dtype
         - **annotated** : boolean (default False) - if True, NTV names are not included.'''
         
-        data = ntv_value
-        axes = None
+        dtype = None
+        shape = None
+        meta  = None
         if isinstance(ntv_value, dict):
             data = ntv_value['data']
-            axes = {key:val for key, val in ntv_value.items() if key != 'data'} 
-        dtype, data = data if (len(data) == 2 and isinstance(data[0], str) 
-                               and len(data[1]) > 1) else (None, data)
-        np_data = np.array(data, dtype=dtype)       
-        return (np_data, axes) if axes else np_data
+            shape = ntv_value.get('shape')
+            dtype = ntv_value.get('type')
+            meta = {key: val for key, val in ntv_value.items()
+                    if key in ('attrs', 'axes', 'axevars', 'vars')}
+        else:
+            data = ntv_value[-1]
+            if len(ntv_value) == 3:
+                dtype = ntv_value[0]
+                shape = ntv_value[1]           
+            elif len(ntv_value) == 2 and isinstance(ntv_value[0], str):
+                dtype = ntv_value[0]
+            elif len(ntv_value) == 2 and isinstance(ntv_value[0], list):
+                shape = ntv_value[0]
+        dtype=dtype.split('[')[0] if dtype else None
+        np_data = np.array(data, dtype=dtype).reshape(shape)
+        return (np_data, meta) if meta else np_data
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
@@ -136,13 +147,29 @@ class NdarrayConnec(NtvConnector):
         - **typ** : string (default None) - type of the NTV object,
         - **name** : string (default None) - name of the NTV object
         - **value** : ndarray values
-        - **meta** : dict (default none) - names and values of axes
-        - **dtype** : Boolean (default True) - including dtype
+        - **notype** : Boolean (default False) - including dtype if False
+        - **extension** : string (default None) - type extension
+        - **meta** : dict (default None) - additional data :
+            - **attrs** : dict (default none) - metadata
+            - **axes** : array (default none) - name of axis
+            - **axevars** : array (default none) - axis values 
+            - **vars** : array (default none) - list of 'xndarray' 
         '''
-        axes = kwargs.get('meta')
-        opt_dtype = kwargs.get('dtype', True)
-        data = [value.dtype.name, value.tolist()] if opt_dtype else value.tolist()
-        typ = NdarrayConnec.clas_typ if not typ else typ
-        if axes: 
-            return ({'data': data} | axes, name, typ)
-        return (data, name, typ) 
+        meta = kwargs.get('meta')
+        axes = meta.get('axes') if meta else None
+        attrs = meta.get('attrs') if meta else None
+        axevars = meta.get('axevars') if meta else None
+        lvars = meta.get('vars') if meta else None
+        data = value.flatten().tolist()
+        shape = list(value.shape)
+        shape = shape if len(shape) > 1 else None 
+        extension = '['+ kwargs['extension'] +']' if kwargs.get('extension') else ''
+        dtype = value.dtype.name + extension
+
+        if axes or attrs:
+            dic = {'data': data, 'type': dtype, 'shape':shape, 'axes': axes,
+                   'axevars': axevars, 'vars': lvars, 'attrs': attrs, 'name': name}
+            return ({key: val for key, val in dic.items() if not val is None},
+                    None, 'xndarray')
+        lis = [dtype if not kwargs.get('notype', False) else None, shape, data]
+        return ([val for val in lis if not val is None], name, 'ndarray')
