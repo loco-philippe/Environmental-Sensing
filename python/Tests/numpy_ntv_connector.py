@@ -76,7 +76,7 @@ def to_json_tab(ndarray, add=None, header=True):
     add = add if add else {}   
     axe_n = add['dims'] if 'dims' in add else ['dim_' + str(i) for i in range(dim)]
     axe_v = [add['coords'][axe] for axe in axe_n if axe in add['coords']] if 'coords' in add else []
-    axe_v = [list(read_json(axe)) for axe in axe_v] if len(axe_v) == len(axe_n) else [
+    axe_v = [axe[-1] for axe in axe_v] if len(axe_v) == len(axe_n) else [
                       list(range(period[i])) for i in range(dim)]
     jsn = {nam: [var, [coe]] for nam, var, coe in zip(axe_n, axe_v, coef)} | {
            'data::' + ndarray.dtype.name: ndarray.flatten().tolist()}
@@ -103,7 +103,7 @@ def read_json_tab(js):
     coef, shape, axes_n, axes_v = list(zip(*sorted(zip(coef, shape, axes_n, 
                                                        axes_v), reverse=True)))
     return (nda.reshape(shape), {'dims': list(axes_n), 
-            'coords': {axe_n: axe_v for axe_n, axe_v in zip(axes_n, axes_v)}})
+            'coords': {axe_n: [axe_v] for axe_n, axe_v in zip(axes_n, axes_v)}})
 
 class NdarrayConnec(NtvConnector):
 
