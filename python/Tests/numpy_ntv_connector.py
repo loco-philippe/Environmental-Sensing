@@ -30,11 +30,16 @@ def read_json(jsn, **kwargs):
     option = {'noadd': False, 'header': True} | kwargs
     jso = json.loads(jsn) if isinstance(jsn, str) else jsn
     if isinstance(jso, dict) and len(jso) == 1:
-        arr = NdarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
+        if 'xndarray' in list(jso)[0]:
+            arr = XndarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
+        else:
+            arr = NdarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
         if option['header']:
             return {list(jso)[0]: arr}
         return arr 
-    return NdarrayConnec.to_obj_ntv(jso, **option)
+    if isinstance(jso, list):
+        return NdarrayConnec.to_obj_ntv(jso, **option)
+    return None
 
 
 def to_json(ndarray, **kwargs):
@@ -54,8 +59,10 @@ def to_json(ndarray, **kwargs):
     option = {'encoded': False, 'header': True, 
               'name': None, 'extension':None, 'notype': False, 
               'add': None} | kwargs
-
-    jsn, nam, typ = NdarrayConnec.to_json_ntv(ndarray, **option)
+    if ndarray.__class__.__name__ == 'ndarray' and not kwargs.get('add'):
+        jsn, nam, typ = NdarrayConnec.to_json_ntv(ndarray, **option)
+    else:
+        jsn, nam, typ = XndarrayConnec.to_json_ntv(ndarray, **option)        
     name = nam if nam else ''
     if option['header'] or name:
         typ = ':' + typ if option['header'] else '' 
@@ -129,30 +136,67 @@ class NdarrayConnec(NtvConnector):
         
         dtype = None
         shape = None
-        add  = None
-        if isinstance(ntv_value, dict):
-            data = NdarrayConnec.to_obj_ntv(ntv_value['data'])
-            #ntv_value['data']
-            #shape = ntv_value.get('shape')
-            #dtype = ntv_value.get('type')
-            add = {key: val for key, val in ntv_value.items()
-                    if key in ('attrs', 'dims', 'coords')}
-        else:
-            data = ntv_value[-1]
-            if len(ntv_value) == 3:
-                dtype = ntv_value[0]
-                shape = ntv_value[1]           
-            elif len(ntv_value) == 2 and isinstance(ntv_value[0], str):
-                dtype = ntv_value[0]
-            elif len(ntv_value) == 2 and isinstance(ntv_value[0], list):
-                shape = ntv_value[0]
+        data = ntv_value[-1]
+        if len(ntv_value) == 3:
+            dtype = ntv_value[0]
+            shape = ntv_value[1]           
+        elif len(ntv_value) == 2 and isinstance(ntv_value[0], str):
+            dtype = ntv_value[0]
+        elif len(ntv_value) == 2 and isinstance(ntv_value[0], list):
+            shape = ntv_value[0]
         dtype=dtype.split('[')[0] if dtype else None
-        np_data = np.array(data, dtype=dtype).reshape(shape)
-        return (np_data, add) if add and not kwargs['noadd'] else np_data
+        return np.array(data, dtype=dtype).reshape(shape)
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
         ''' convert a ndarray (value, name, type) into NTV json (json-value, name, type).
+
+        *Parameters*
+
+        - **typ** : string (default None) - type of the NTV object,
+        - **name** : string (default None) - name of the NTV object
+        - **value** : ndarray values
+        - **notype** : Boolean (default False) - including data type if False
+        - **extension** : string (default None) - type extension
+        '''    
+        ntv_type = NpUtil.ntv_type(value.dtype.name, kwargs.get('extension'))
+        js_val   = NpUtil.ntv_val(ntv_type, value.flatten().tolist())
+        shape = list(value.shape)
+        shape = shape if len(shape) > 1 else None 
+
+        lis = [ntv_type if not kwargs.get('notype', False) else None, shape, js_val]
+        return ([val for val in lis if not val is None], name, 'ndarray')
+
+class XndarrayConnec(NtvConnector):
+
+    '''NTV connector for xndarray.
+
+    One static methods is included:
+
+    - to_listidx: convert a DataFrame in categorical data
+    '''
+
+    clas_obj = 'xndarray'
+    clas_typ = 'xndarray'
+
+    @staticmethod
+    def to_obj_ntv(ntv_value, **kwargs):  # reindex=True, decode_str=False):
+        ''' convert json ntv_value into a ndarray.
+
+        *Parameters*
+
+        - **index** : list (default None) - list of index values,
+        - **alias** : boolean (default False) - if True, alias dtype else default dtype
+        - **annotated** : boolean (default False) - if True, NTV names are not included.
+        '''        
+        np_data = NdarrayConnec.to_obj_ntv(ntv_value['data'])
+        add = {key: val for key, val in ntv_value.items()
+                if key in ('attrs', 'dims', 'coords')}
+        return (np_data, add) if add and not kwargs['noadd'] else np_data
+
+    @staticmethod
+    def to_json_ntv(value, name=None, typ=None, **kwargs):
+        ''' convert a xndarray (value, name, type) into NTV json (json-value, name, type).
 
         *Parameters*
 
@@ -171,16 +215,32 @@ class NdarrayConnec(NtvConnector):
         dims = add.get('dims') if add else None
         attrs = add.get('attrs') if add else None
         coords = add.get('coords') if add else None
-        if add:
-            dic = {'data': NdarrayConnec.to_json_ntv(value)[0], 
-                   'dims': dims, 'coords': coords, 'attrs': attrs}
-            return ({key: val for key, val in dic.items() if not val is None},
-                    name, 'xndarray')
-        
-        data = value.flatten().tolist()
-        shape = list(value.shape)
-        shape = shape if len(shape) > 1 else None 
-        extension = '['+ kwargs['extension'] +']' if kwargs.get('extension') else ''
-        dtype = value.dtype.name + extension
-        lis = [dtype if not kwargs.get('notype', False) else None, shape, data]
-        return ([val for val in lis if not val is None], name, 'ndarray')
+        dic = {'data': NdarrayConnec.to_json_ntv(value, kwargs=kwargs)[0], 
+               'dims': dims, 'coords': coords, 'attrs': attrs}
+        return ({key: val for key, val in dic.items() if not val is None},
+                name, 'xndarray')
+
+class NpUtil:
+    '''ntv-ndarray utilities.'''
+    
+    @staticmethod
+    def ntv_val(ntv_type, nda):
+        ''' convert a simple ndarray into NTV json-value.
+
+        *Parameters*
+
+        - **ntv_type** : string - NTVtype deduced from the ndarray, name_type and dtype,
+        - **nda** : ndarray to be converted.'''
+        return nda
+    
+    @staticmethod
+    def ntv_type(dtype, extension):
+        ''' return NTVtype from name_type and dtype of a Series .
+
+        *Parameters*
+
+        - **dtype** : string - dtype of the Series.
+        - **extension** : string (default None) - type extension
+        '''        
+        extension = '['+ extension +']' if extension else ''
+        return dtype + extension
