@@ -38,13 +38,19 @@ def to_json(ndarray, **kwargs):
     ''' convert Numpy ndarray to JSON text or JSON Value.
 
     *parameters*
-    - **meta** : dict (default none) - names and values of axes
-    - **dtype** : Boolean (default True) - including dtype
-
+    - **encoded** : Boolean (default False) - json value if False else json text
+    - **header** : Boolean (default True) - including ndarray or xndarray type
+    - **notype** : Boolean (default False) - including data type if True
+    - **name** : string (default None) - name of the ndarray
+    - **extension** : string (default None) - type extension
+    - **add** : dict (default None) - additional data :
+        - **attrs** : dict (default none) - metadata
+        - **dims** : array (default none) - name of axis
+        - **coords** : dict (default none) - dict of 'xndarray'
     '''
     option = {'encoded': False, 'header': True, 
               'name': None, 'extension':None, 'notype': False, 
-              'attrs': None, 'axes': None, 'axevars': None, 'vars': None} | kwargs
+              'add': None} | kwargs
 
     jsn, nam, typ = NdarrayConnec.to_json_ntv(ndarray, **option)
     name = nam if nam else ''
@@ -147,29 +153,28 @@ class NdarrayConnec(NtvConnector):
         - **typ** : string (default None) - type of the NTV object,
         - **name** : string (default None) - name of the NTV object
         - **value** : ndarray values
-        - **notype** : Boolean (default False) - including dtype if False
+        - **notype** : Boolean (default False) - including data type if False
+        - **name** : string (default None) - name of the ndarray
         - **extension** : string (default None) - type extension
-        - **meta** : dict (default None) - additional data :
+        - **add** : dict (default None) - additional data :
             - **attrs** : dict (default none) - metadata
-            - **axes** : array (default none) - name of axis
-            - **axevars** : array (default none) - axis values 
-            - **vars** : array (default none) - list of 'xndarray' 
+            - **dims** : array (default none) - name of axis
+            - **coords** : dict (default none) - dict of 'xndarray'
         '''
-        meta = kwargs.get('meta')
-        axes = meta.get('axes') if meta else None
-        attrs = meta.get('attrs') if meta else None
-        axevars = meta.get('axevars') if meta else None
-        lvars = meta.get('vars') if meta else None
+        add = kwargs.get('add')
+        dims = add.get('dims') if add else None
+        attrs = add.get('attrs') if add else None
+        coords = add.get('coords') if add else None
         data = value.flatten().tolist()
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
         extension = '['+ kwargs['extension'] +']' if kwargs.get('extension') else ''
         dtype = value.dtype.name + extension
 
-        if axes or attrs:
-            dic = {'data': data, 'type': dtype, 'shape':shape, 'axes': axes,
-                   'axevars': axevars, 'vars': lvars, 'attrs': attrs, 'name': name}
+        if add:
+            dic = {'data': NdarrayConnec.to_json_ntv(data)[0], 
+                   'dims': dims, 'coords': coords, 'attrs': attrs}
             return ({key: val for key, val in dic.items() if not val is None},
-                    None, 'xndarray')
+                    name, 'xndarray')
         lis = [dtype if not kwargs.get('notype', False) else None, shape, data]
         return ([val for val in lis if not val is None], name, 'ndarray')
