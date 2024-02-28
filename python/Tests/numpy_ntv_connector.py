@@ -27,10 +27,13 @@ def read_json(jsn, **kwargs):
 
     - **jsn** : JSON text or JSON value to convert
     '''
-    option = kwargs
+    option = {'noadd': False, 'header': True} | kwargs
     jso = json.loads(jsn) if isinstance(jsn, str) else jsn
-    if isinstance(jso, dict) and (':ndarray' in jso or ':xndarray' in jso):
-        return NdarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
+    if isinstance(jso, dict) and len(jso) == 1:
+        arr = NdarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
+        if option['header']:
+            return {list(jso)[0]: arr}
+        return arr 
     return NdarrayConnec.to_obj_ntv(jso, **option)
 
 
@@ -61,7 +64,7 @@ def to_json(ndarray, **kwargs):
         return json.dumps(jsn)
     return jsn
 
-def to_json_tab(ndarray, meta=None, header=True):
+def to_json_tab(ndarray, add=None, header=True):
     period = ndarray.shape
     dim = ndarray.ndim
     coefi = ndarray.size
@@ -70,10 +73,11 @@ def to_json_tab(ndarray, meta=None, header=True):
         coefi = coefi // per
         coef.append(coefi)
     
-    meta = meta if meta else {}   
-    axe_n = meta['axes'] if 'axes' in meta else ['axe' + str(i) for i in range(dim)]
-    axe_v = meta['axevars'] if 'axevars' in meta else [
-        list(range(period[i])) for i in range(dim)]
+    add = add if add else {}   
+    axe_n = add['dims'] if 'dims' in add else ['dim_' + str(i) for i in range(dim)]
+    axe_v = [add['coords'][axe] for axe in axe_n if axe in add['coords']] if 'coords' in add else []
+    axe_v = [list(read_json(axe)) for axe in axe_v] if len(axe_v) == len(axe_n) else [
+                      list(range(period[i])) for i in range(dim)]
     jsn = {nam: [var, [coe]] for nam, var, coe in zip(axe_n, axe_v, coef)} | {
            'data::' + ndarray.dtype.name: ndarray.flatten().tolist()}
     if header:
@@ -98,7 +102,8 @@ def read_json_tab(js):
             nda = np.array(val, dtype=spl[1]) if len(spl)==2 else np.array(val)
     coef, shape, axes_n, axes_v = list(zip(*sorted(zip(coef, shape, axes_n, 
                                                        axes_v), reverse=True)))
-    return (nda.reshape(shape), {'axes': list(axes_n), 'axevars': list(axes_v)})
+    return (nda.reshape(shape), {'dims': list(axes_n), 
+            'coords': {axe_n: axe_v for axe_n, axe_v in zip(axes_n, axes_v)}})
 
 class NdarrayConnec(NtvConnector):
 
@@ -124,13 +129,14 @@ class NdarrayConnec(NtvConnector):
         
         dtype = None
         shape = None
-        meta  = None
+        add  = None
         if isinstance(ntv_value, dict):
-            data = ntv_value['data']
-            shape = ntv_value.get('shape')
-            dtype = ntv_value.get('type')
-            meta = {key: val for key, val in ntv_value.items()
-                    if key in ('attrs', 'axes', 'axevars', 'vars')}
+            data = NdarrayConnec.to_obj_ntv(ntv_value['data'])
+            #ntv_value['data']
+            #shape = ntv_value.get('shape')
+            #dtype = ntv_value.get('type')
+            add = {key: val for key, val in ntv_value.items()
+                    if key in ('attrs', 'dims', 'coords')}
         else:
             data = ntv_value[-1]
             if len(ntv_value) == 3:
@@ -142,7 +148,7 @@ class NdarrayConnec(NtvConnector):
                 shape = ntv_value[0]
         dtype=dtype.split('[')[0] if dtype else None
         np_data = np.array(data, dtype=dtype).reshape(shape)
-        return (np_data, meta) if meta else np_data
+        return (np_data, add) if add and not kwargs['noadd'] else np_data
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
@@ -165,16 +171,16 @@ class NdarrayConnec(NtvConnector):
         dims = add.get('dims') if add else None
         attrs = add.get('attrs') if add else None
         coords = add.get('coords') if add else None
+        if add:
+            dic = {'data': NdarrayConnec.to_json_ntv(value)[0], 
+                   'dims': dims, 'coords': coords, 'attrs': attrs}
+            return ({key: val for key, val in dic.items() if not val is None},
+                    name, 'xndarray')
+        
         data = value.flatten().tolist()
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
         extension = '['+ kwargs['extension'] +']' if kwargs.get('extension') else ''
         dtype = value.dtype.name + extension
-
-        if add:
-            dic = {'data': NdarrayConnec.to_json_ntv(data)[0], 
-                   'dims': dims, 'coords': coords, 'attrs': attrs}
-            return ({key: val for key, val in dic.items() if not val is None},
-                    name, 'xndarray')
         lis = [dtype if not kwargs.get('notype', False) else None, shape, data]
         return ([val for val in lis if not val is None], name, 'ndarray')
