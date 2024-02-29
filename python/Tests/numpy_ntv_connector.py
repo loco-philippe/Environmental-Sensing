@@ -50,6 +50,7 @@ def to_json(ndarray, **kwargs):
     - **header** : Boolean (default True) - including ndarray or xndarray type
     - **notype** : Boolean (default False) - including data type if True
     - **name** : string (default None) - name of the ndarray
+    - **typ** : string (default None) - type of the NTV object,
     - **extension** : string (default None) - type extension
     - **add** : dict (default None) - additional data :
         - **attrs** : dict (default none) - metadata
@@ -57,7 +58,7 @@ def to_json(ndarray, **kwargs):
         - **coords** : dict (default none) - dict of 'xndarray'
     '''
     option = {'encoded': False, 'header': True, 
-              'name': None, 'extension':None, 'notype': False, 
+              'name': None, 'typ': None, 'extension':None, 'notype': False, 
               'add': None} | kwargs
     if ndarray.__class__.__name__ == 'ndarray' and not kwargs.get('add'):
         jsn, nam, typ = NdarrayConnec.to_json_ntv(ndarray, **option)
@@ -159,8 +160,11 @@ class NdarrayConnec(NtvConnector):
         - **notype** : Boolean (default False) - including data type if False
         - **extension** : string (default None) - type extension
         '''    
-        ntv_type = NpUtil.ntv_type(value.dtype.name, kwargs.get('extension'))
-        js_val   = NpUtil.ntv_val(ntv_type, value.flatten().tolist())
+        typ, ext = NpUtil.split_typ(kwargs.get('typ'))
+        ext = ext if ext else kwargs.get('extension')
+        ntv_type = NpUtil.ntv_type(value.dtype.name, typ, ext)
+        js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
+        print(type(js_val[0]), value.dtype.name)
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
 
@@ -222,6 +226,38 @@ class XndarrayConnec(NtvConnector):
 
 class NpUtil:
     '''ntv-ndarray utilities.'''
+
+    DATATION_DT = {'date': 'datetime64[D]', 'year': 'datetime64[Y]',
+                'yearmonth': 'datetime64[M]', 'datetime': 'datetime64[s]',
+                'duration': 'timedelta64[s]'}
+    DT_DATATION = {val:key for key, val in DATATION_DT.items()}
+    DT_OTHER = {'bool': 'boolean'}
+
+    @staticmethod
+    def split_typ(typ):
+        '''return a tuple with typ and extension'''
+        if not isinstance(typ, str):
+            return (None, None) 
+        spl = typ.split('[', maxsplit=1)
+        return (spl[0], None) if len(spl) == 1 else (spl[0], spl[1][:-1])
+
+    @staticmethod
+    def convert(ntv_type, nda, tojson=True):
+        ''' convert ndarray with external NTVtype.
+
+        *Parameters*
+
+        - **ntv_type** : string - NTVtype deduced from the ndarray name_type and dtype,
+        - **nda** : ndarray to be converted.
+        - **tojson** : boolean (default True) - apply to json function'''
+
+        match ntv_type:
+            case dat if dat in NpUtil.DATATION_DT:
+                return nda.astype(NpUtil.DATATION_DT[dat]).astype(str)
+            #case 'bool':
+                
+            case _:
+                return nda
     
     @staticmethod
     def ntv_val(ntv_type, nda):
@@ -231,16 +267,34 @@ class NpUtil:
 
         - **ntv_type** : string - NTVtype deduced from the ndarray, name_type and dtype,
         - **nda** : ndarray to be converted.'''
-        return nda
+        
+        nda = NpUtil.convert(ntv_type, nda)
+        return nda.tolist()
+        '''if ntv_type in ['point', 'line', 'polygon', 'geometry', 'geojson']:
+            return srs.to_list()
+        if srs.dtype.name == 'object':
+            return srs.to_list()
+        return json.loads(srs.to_json(orient='records',
+                                      date_format='iso', default_handler=str))
+
+        return nda'''
     
     @staticmethod
-    def ntv_type(dtype, extension):
-        ''' return NTVtype from name_type and dtype of a Series .
+    def ntv_type(dtype, typ, ext):
+        ''' return NTVtype from dtype, additional type and extension.
 
         *Parameters*
 
-        - **dtype** : string - dtype of the Series.
-        - **extension** : string (default None) - type extension
+        - **dtype** : string - dtype of the ndarray
+        - **typ** : string - additional type
+        - **ext** : string - type extension
         '''        
-        extension = '['+ extension +']' if extension else ''
-        return dtype + extension
+        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_OTHER
+        ext = '['+ ext +']' if ext else ''
+        if typ:
+            return typ + ext
+        match dtype:
+            case dat if dat in DT_NTVTYPE:
+                return DT_NTVTYPE[dat] + ext
+            case _:
+                return dtype + ext
