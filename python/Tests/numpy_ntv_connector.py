@@ -160,9 +160,13 @@ class NdarrayConnec(NtvConnector):
         - **notype** : Boolean (default False) - including data type if False
         - **extension** : string (default None) - type extension
         '''    
+        if len(value) == 0:
+            return ([[]], name, 'ndarray')
         typ, ext = NpUtil.split_typ(kwargs.get('typ'))
         ext = ext if ext else kwargs.get('extension')
-        ntv_type = NpUtil.ntv_type(value.dtype.name, typ, ext)
+        dtype = value.dtype.name
+        dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
+        ntv_type = NpUtil.ntv_type(dtype, typ, ext)
         js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
         print(type(js_val[0]), value.dtype.name)
         shape = list(value.shape)
@@ -171,6 +175,21 @@ class NdarrayConnec(NtvConnector):
         lis = [ntv_type if not kwargs.get('notype', False) else None, shape, js_val]
         return ([val for val in lis if not val is None], name, 'ndarray')
 
+    @staticmethod
+    def to_jsonv(value):
+        ''' convert a ndarray into json-value.'''    
+        if len(value) == 0:
+            return [[]]
+        dtype = value.dtype.name
+        dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
+        ntv_type = NpUtil.ntv_type(dtype, None, None)
+        js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
+        print(type(js_val[0]), value.dtype.name)
+        shape = list(value.shape)
+        shape = shape if len(shape) > 1 else None 
+        lis = [ntv_type, shape, js_val]
+        return [val for val in lis if not val is None]
+    
 class XndarrayConnec(NtvConnector):
 
     '''NTV connector for xndarray.
@@ -228,10 +247,19 @@ class NpUtil:
     '''ntv-ndarray utilities.'''
 
     DATATION_DT = {'date': 'datetime64[D]', 'year': 'datetime64[Y]',
-                'yearmonth': 'datetime64[M]', 'datetime': 'datetime64[s]',
-                'duration': 'timedelta64[s]'}
+                'yearmonth': 'datetime64[M]', 
+                'datetime': 'datetime64[s]', 'datetime[ms]': 'datetime64[ms]',
+                'datetime[us]': 'datetime64[us]', 'datetime[ns]': 'datetime64[ns]', 
+                'datetime[ps]': 'datetime64[ps]', 'datetime[fs]': 'datetime64[fs]',
+                'timedelta': 'timedelta64[s]', 'timedelta[ms]': 'timedelta64[ms]',
+                'timedelta[us]': 'timedelta64[us]', 'timedelta[ns]': 'timedelta64[ns]', 
+                'timedelta[ps]': 'timedelta64[ps]', 'timedelta[fs]': 'timedelta64[fs]'}
+
     DT_DATATION = {val:key for key, val in DATATION_DT.items()}
-    DT_OTHER = {'bool': 'boolean'}
+    DT_OTHER = {'bool': 'boolean', 'tuple': 'array', 'list': 'array',
+                'dict': 'object', 'NoneType': 'null', 'Decimal': 'decimal64',
+                'ndarray': 'ndarray'}
+    DT_LOCATION = {'Point': 'point', 'LinearRing': 'line', 'Polygon': 'polygon'}
 
     @staticmethod
     def split_typ(typ):
@@ -254,8 +282,14 @@ class NpUtil:
         match ntv_type:
             case dat if dat in NpUtil.DATATION_DT:
                 return nda.astype(NpUtil.DATATION_DT[dat]).astype(str)
-            #case 'bool':
-                
+            case 'bytes':
+                return nda.astype('bytes').astype(str)                
+            case 'time':
+                return nda.astype(str)    
+            case 'decimal64':
+                return nda.astype(float)  
+            case 'geojson':
+                return np.frompyfunc(ShapelyConnec.to_geojson, 1, 1)(nda)
             case _:
                 return nda
     
@@ -267,7 +301,10 @@ class NpUtil:
 
         - **ntv_type** : string - NTVtype deduced from the ndarray, name_type and dtype,
         - **nda** : ndarray to be converted.'''
-        
+        if ntv_type == 'ndarray':
+            return [NdarrayConnec.to_jsonv(nd) for nd in nda] 
+        if ntv_type in ['point', 'line', 'polygon', 'geometry']:
+            return pd.Series(nda).apply(ShapelyConnec.to_coord).to_list()
         nda = NpUtil.convert(ntv_type, nda)
         return nda.tolist()
         '''if ntv_type in ['point', 'line', 'polygon', 'geometry', 'geojson']:
@@ -289,12 +326,16 @@ class NpUtil:
         - **typ** : string - additional type
         - **ext** : string - type extension
         '''        
-        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_OTHER
+        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_LOCATION | NpUtil.DT_OTHER
         ext = '['+ ext +']' if ext else ''
         if typ:
             return typ + ext
         match dtype:
             case dat if dat in DT_NTVTYPE:
                 return DT_NTVTYPE[dat] + ext
+            case string if string[:3] == 'str': 
+                return 'string' + ext
+            case byte if byte[:5] == 'bytes': 
+                return 'bytes' + ext
             case _:
                 return dtype + ext

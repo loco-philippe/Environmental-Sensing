@@ -16,13 +16,13 @@ from numpy_ntv_connector import read_json, read_json_tab, to_json, to_json_tab
 
 example =[[[1,2], 'int64'],
           [[True, False], 'bool'],
-          [['1+2j', 1], 'complex'],
+          #[['1+2j', 1], 'complex'],
           [['test1', 'test2'], 'str_'], 
-          [['2022-01-01T10:05:21'], 'datetime64'],
+          [['2022-01-01T10:05:21.0002'], 'datetime64'],
           [['2022-01-01', '2023-01-01'], 'datetime64[D]'],
           [['2022-01', '2023-01'], 'datetime64[M]'],
           [['2022', '2023'], 'datetime64[Y]'],
-          [[1,2], 'timedelta[D]'],
+          [[1,2], 'timedelta64[D]'],
           [[b'abc\x09', b'abc'], 'bytes'],
           [[time(10, 2, 3)], 'object'],
           [pd.array([[1,2], [3,4]]), 'object'],
@@ -38,4 +38,7 @@ example =[[[1,2], 'int64'],
           []]
 
 for ex in example:
-    print(to_json(np.array(ex[0], dtype=ex[1])))
+    if len(ex) == 0:
+        print(to_json(np.array([])))
+    else:
+        print(to_json(np.array(ex[0], dtype=ex[1])))
