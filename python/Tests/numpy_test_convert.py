@@ -42,3 +42,19 @@ for ex in example:
         print(to_json(np.array([])))
     else:
         print(to_json(np.array(ex[0], dtype=ex[1])))
+
+example = [['int64[kg]', [[1, 2], [3,4]]],
+           ['int', [[1, 2], [3,4]]],
+           ['json', [1, 'two']],
+           ['month', [1, 2]],
+           ['base16', ['1F23', '236A5E']],
+           ['duration', ['P3Y6M4DT12H30M5S']],
+           ['uri', ['geo:13.4125,103.86673']],
+           ['email', ['John Doe <jdoe@mac.example>']],
+           ['ipv4', ['192.168.1.1']]
+           ]
+print()
+for ex in example:
+        print(to_json(np.array(ex[1]), typ=ex[0]))
+
+                            

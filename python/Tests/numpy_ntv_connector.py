@@ -134,19 +134,16 @@ class NdarrayConnec(NtvConnector):
         - **index** : list (default None) - list of index values,
         - **alias** : boolean (default False) - if True, alias dtype else default dtype
         - **annotated** : boolean (default False) - if True, NTV names are not included.'''
-        
-        dtype = None
-        shape = None
         data = ntv_value[-1]
-        if len(ntv_value) == 3:
-            dtype = ntv_value[0]
-            shape = ntv_value[1]           
-        elif len(ntv_value) == 2 and isinstance(ntv_value[0], str):
-            dtype = ntv_value[0]
-        elif len(ntv_value) == 2 and isinstance(ntv_value[0], list):
-            shape = ntv_value[0]
-        dtype=dtype.split('[')[0] if dtype else None
-        return np.array(data, dtype=dtype).reshape(shape)
+        match ntv_value[:-1]:
+            case [dtype, shape]:
+                return NdarrayConnec.to_array(data, dtype, shape)
+            case [dtype] if isinstance(dtype, str):
+                return NdarrayConnec.to_array(data, dtype, None)
+            case [shape] if isinstance(shape, list):
+                return NdarrayConnec.to_array(data, None, shape)
+            case _:
+                return NdarrayConnec.to_array(data, None, None)
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
@@ -162,18 +159,16 @@ class NdarrayConnec(NtvConnector):
         '''    
         if len(value) == 0:
             return ([[]], name, 'ndarray')
-        typ, ext = NpUtil.split_typ(kwargs.get('typ'))
+        typ, ext = NpUtil.split_typ(typ)
         ext = ext if ext else kwargs.get('extension')
         dtype = value.dtype.name
         dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
         ntv_type = NpUtil.ntv_type(dtype, typ, ext)
         js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
-        print(type(js_val[0]), value.dtype.name)
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
 
         lis = [ntv_type if not kwargs.get('notype', False) else None, shape, js_val]
-        #return ([val for val in lis if not val is None], name, 'ndarray')
         return ([val for val in lis if not val is None], name, 'ndarray')
 
     @staticmethod
@@ -185,13 +180,16 @@ class NdarrayConnec(NtvConnector):
         dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
         ntv_type = NpUtil.ntv_type(dtype, None, None)
         js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
-        print(type(js_val[0]), value.dtype.name)
-        js_val = NtvList(js_val, '', ntv_type).to_obj()
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
         lis = [ntv_type, shape, js_val]        
         return [val for val in lis if not val is None]
-    
+
+    @staticmethod
+    def to_array(data, dtype=None, shape=None):
+        
+        return np.array(data, dtype=NpUtil.split_typ(dtype)[0]).reshape(shape)
+ 
 class XndarrayConnec(NtvConnector):
 
     '''NTV connector for xndarray.
@@ -264,6 +262,12 @@ class NpUtil:
                 'ndarray': 'ndarray'}
     DT_LOCATION = {'Point': 'point', 'LinearRing': 'line', 'Polygon': 'polygon'}
 
+    @staticmethod 
+    def add_ext(typ, ext):
+        '''return extended typ'''
+        ext = '['+ ext +']' if ext else ''
+        return '' if not typ else typ + ext
+    
     @staticmethod
     def split_typ(typ):
         '''return a tuple with typ and extension'''
@@ -327,15 +331,19 @@ class NpUtil:
         - **ext** : string - type extension
         '''        
         DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_LOCATION | NpUtil.DT_OTHER | NpUtil.DT_CONNECTOR
-        ext = '['+ ext +']' if ext else ''
         if typ:
-            return typ + ext
+            return NpUtil.add_ext(typ, ext)
         match dtype:
             case dat if dat in DT_NTVTYPE:
-                return DT_NTVTYPE[dat] + ext
+                return NpUtil.add_ext(DT_NTVTYPE[dat], ext)
             case string if string[:3] == 'str': 
-                return 'string' + ext
+                return NpUtil.add_ext('string', ext)
             case byte if byte[:5] == 'bytes': 
-                return 'bytes' + ext
+                return NpUtil.add_ext('bytes', ext)
             case _:
-                return dtype + ext
+                return NpUtil.add_ext(dtype, ext)
+
+    @staticmethod
+    def dtype(ntv_type):
+        ''' return (dtype, extension) from ntv_type'''
+        return NpUtil.DATATION_DT.get(ntv_type)
