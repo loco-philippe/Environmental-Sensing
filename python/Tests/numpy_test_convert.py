@@ -32,9 +32,9 @@ example =[[[1,2], 'int64'],
           [[np.array([1, 2], dtype='int64'), np.array(['test1'], dtype='str_')], 'object'],
           [[Point([1,2]), Point([3,4])], 'object'],
           [[LinearRing([[0, 0], [0, 1], [1, 1]])], 'object'],
-          [[pd.Series([1,2,3])], 'object'],
-          [[[pd.DataFrame({'::date': ['1964-01-01', '1985-02-05'], 
-                           'names::string': ['john', 'eric']})]], 'object' ],
+          [pd.array([pd.Series([1,2,3])]), 'object'],
+          [pd.array([pd.DataFrame({'::date': ['1964-01-01', '1985-02-05'], 
+                           'names::string': ['john', 'eric']})]), 'object' ],
           []]
 
 for ex in example:

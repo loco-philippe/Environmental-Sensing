@@ -173,6 +173,7 @@ class NdarrayConnec(NtvConnector):
         shape = shape if len(shape) > 1 else None 
 
         lis = [ntv_type if not kwargs.get('notype', False) else None, shape, js_val]
+        #return ([val for val in lis if not val is None], name, 'ndarray')
         return ([val for val in lis if not val is None], name, 'ndarray')
 
     @staticmethod
@@ -185,9 +186,10 @@ class NdarrayConnec(NtvConnector):
         ntv_type = NpUtil.ntv_type(dtype, None, None)
         js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
         print(type(js_val[0]), value.dtype.name)
+        js_val = NtvList(js_val, '', ntv_type).to_obj()
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
-        lis = [ntv_type, shape, js_val]
+        lis = [ntv_type, shape, js_val]        
         return [val for val in lis if not val is None]
     
 class XndarrayConnec(NtvConnector):
@@ -254,8 +256,9 @@ class NpUtil:
                 'timedelta': 'timedelta64[s]', 'timedelta[ms]': 'timedelta64[ms]',
                 'timedelta[us]': 'timedelta64[us]', 'timedelta[ns]': 'timedelta64[ns]', 
                 'timedelta[ps]': 'timedelta64[ps]', 'timedelta[fs]': 'timedelta64[fs]'}
-
     DT_DATATION = {val:key for key, val in DATATION_DT.items()}
+    CONNECTOR_DT = {'field': 'Series', 'tab': 'DataFrame'}
+    DT_CONNECTOR = {val:key for key, val in CONNECTOR_DT.items()}
     DT_OTHER = {'bool': 'boolean', 'tuple': 'array', 'list': 'array',
                 'dict': 'object', 'NoneType': 'null', 'Decimal': 'decimal64',
                 'ndarray': 'ndarray'}
@@ -277,8 +280,8 @@ class NpUtil:
 
         - **ntv_type** : string - NTVtype deduced from the ndarray name_type and dtype,
         - **nda** : ndarray to be converted.
-        - **tojson** : boolean (default True) - apply to json function'''
-
+        - **tojson** : boolean (default True) - apply to json function
+        '''
         match ntv_type:
             case dat if dat in NpUtil.DATATION_DT:
                 return nda.astype(NpUtil.DATATION_DT[dat]).astype(str)
@@ -300,21 +303,18 @@ class NpUtil:
         *Parameters*
 
         - **ntv_type** : string - NTVtype deduced from the ndarray, name_type and dtype,
-        - **nda** : ndarray to be converted.'''
-        if ntv_type == 'ndarray':
-            return [NdarrayConnec.to_jsonv(nd) for nd in nda] 
-        if ntv_type in ['point', 'line', 'polygon', 'geometry']:
-            return pd.Series(nda).apply(ShapelyConnec.to_coord).to_list()
-        nda = NpUtil.convert(ntv_type, nda)
-        return nda.tolist()
-        '''if ntv_type in ['point', 'line', 'polygon', 'geometry', 'geojson']:
-            return srs.to_list()
-        if srs.dtype.name == 'object':
-            return srs.to_list()
-        return json.loads(srs.to_json(orient='records',
-                                      date_format='iso', default_handler=str))
-
-        return nda'''
+        - **nda** : ndarray to be converted.
+        '''
+        match ntv_type:
+            case 'ndarray':
+                return [NdarrayConnec.to_jsonv(nd) for nd in nda] 
+            case connec if connec in NpUtil.CONNECTOR_DT:
+                return [NtvConnector.cast(nd, None, connec)[0] for nd in nda] 
+            case 'point' | 'line' | 'polygon' | 'geometry':
+                return pd.Series(nda).apply(ShapelyConnec.to_coord).to_list()
+            case _:
+                nda = NpUtil.convert(ntv_type, nda)
+                return nda.tolist()        
     
     @staticmethod
     def ntv_type(dtype, typ, ext):
@@ -326,7 +326,7 @@ class NpUtil:
         - **typ** : string - additional type
         - **ext** : string - type extension
         '''        
-        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_LOCATION | NpUtil.DT_OTHER
+        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_LOCATION | NpUtil.DT_OTHER | NpUtil.DT_CONNECTOR
         ext = '['+ ext +']' if ext else ''
         if typ:
             return typ + ext
