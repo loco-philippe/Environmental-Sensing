@@ -41,7 +41,7 @@ for ex in example:
     if len(ex) == 0:
         print(to_json(np.array([])))
     else:
-        print(to_json(np.array(ex[0], dtype=ex[1])))
+        print(to_json(np.array(ex[0], dtype=ex[1]), format='complete'))
 
 example = [['int64[kg]', [[1, 2], [3,4]]],
            ['int', [[1, 2], [3,4]]],

@@ -18,7 +18,7 @@ from json_ntv.ntv import Ntv, NtvConnector, NtvList, NtvSingle
 from json_ntv.ntv_util import NtvUtil
 from json_ntv.ntv_connector import ShapelyConnec
 from tab_dataset.cfield import Cfield
-
+from data_array import Dfull, Dcomplete
 
 def read_json(jsn, **kwargs):
     ''' convert JSON text or JSON Value to Numpy ndarray.
@@ -57,7 +57,7 @@ def to_json(ndarray, **kwargs):
         - **dims** : array (default none) - name of axis
         - **coords** : dict (default none) - dict of 'xndarray'
     '''
-    option = {'encoded': False, 'header': True, 
+    option = {'encoded': False, 'format': 'full', 'header': True, 
               'name': None, 'typ': None, 'extension':None, 'notype': False, 
               'add': None} | kwargs
     if ndarray.__class__.__name__ == 'ndarray' and not kwargs.get('add'):
@@ -164,7 +164,9 @@ class NdarrayConnec(NtvConnector):
         dtype = value.dtype.name
         dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
         ntv_type = NpUtil.ntv_type(dtype, typ, ext)
-        js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
+        
+        form = kwargs['format']
+        js_val   = NpUtil.ntv_val(ntv_type, value.flatten(), form)
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
 
@@ -179,7 +181,8 @@ class NdarrayConnec(NtvConnector):
         dtype = value.dtype.name
         dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
         ntv_type = NpUtil.ntv_type(dtype, None, None)
-        js_val   = NpUtil.ntv_val(ntv_type, value.flatten())
+        
+        js_val   = NpUtil.ntv_val(ntv_type, value.flatten(), 'full')
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
         lis = [ntv_type, shape, js_val]        
@@ -253,7 +256,10 @@ class NpUtil:
                 'datetime[ps]': 'datetime64[ps]', 'datetime[fs]': 'datetime64[fs]',
                 'timedelta': 'timedelta64[s]', 'timedelta[ms]': 'timedelta64[ms]',
                 'timedelta[us]': 'timedelta64[us]', 'timedelta[ns]': 'timedelta64[ns]', 
-                'timedelta[ps]': 'timedelta64[ps]', 'timedelta[fs]': 'timedelta64[fs]'}
+                'timedelta[ps]': 'timedelta64[ps]', 'timedelta[fs]': 'timedelta64[fs]',
+                'timedelta[D]': 'timedelta64[D]', 'timedelta[Y]': 'timedelta64[Y]',
+                'timedelta[M]': 'timedelta64[M]'}
+
     DT_DATATION = {val:key for key, val in DATATION_DT.items()}
     CONNECTOR_DT = {'field': 'Series', 'tab': 'DataFrame'}
     DT_CONNECTOR = {val:key for key, val in CONNECTOR_DT.items()}
@@ -261,7 +267,8 @@ class NpUtil:
                 'dict': 'object', 'NoneType': 'null', 'Decimal': 'decimal64',
                 'ndarray': 'ndarray'}
     DT_LOCATION = {'Point': 'point', 'LinearRing': 'line', 'Polygon': 'polygon'}
-
+    FORMAT_CLS = {'full': Dfull, 'complete': Dcomplete}
+    
     @staticmethod 
     def add_ext(typ, ext):
         '''return extended typ'''
@@ -301,24 +308,35 @@ class NpUtil:
                 return nda
     
     @staticmethod
-    def ntv_val(ntv_type, nda):
+    def ntv_val(ntv_type, nda, form):
         ''' convert a simple ndarray into NTV json-value.
 
         *Parameters*
 
         - **ntv_type** : string - NTVtype deduced from the ndarray, name_type and dtype,
         - **nda** : ndarray to be converted.
+        - **form** : format of data ('full', 'complete', 'sparse', 'primary').
         '''
+        Format = NpUtil.FORMAT_CLS[form]
+        darray = Format(nda)
+        ref = darray.ref
+        coding = darray.coding
+        
         match ntv_type:
             case 'ndarray':
                 return [NdarrayConnec.to_jsonv(nd) for nd in nda] 
+                #data = [NdarrayConnec.to_jsonv(nd) for nd in darray.data] 
             case connec if connec in NpUtil.CONNECTOR_DT:
-                return [NtvConnector.cast(nd, None, connec)[0] for nd in nda] 
+                #return [NtvConnector.cast(nd, None, connec)[0] for nd in nda] 
+                data = [NtvConnector.cast(nd, None, connec)[0] for nd in darray.data] 
             case 'point' | 'line' | 'polygon' | 'geometry':
-                return pd.Series(nda).apply(ShapelyConnec.to_coord).to_list()
+                #return pd.Series(nda).apply(ShapelyConnec.to_coord).to_list()
+                data = pd.Series(darray.data).apply(ShapelyConnec.to_coord).to_list()
             case _:
-                nda = NpUtil.convert(ntv_type, nda)
-                return nda.tolist()        
+                data = NpUtil.convert(ntv_type, darray.data).tolist()
+                #nda = NpUtil.convert(ntv_type, nda)
+                #return nda.tolist()        
+        return Format(data, ref=ref, coding=coding).to_list()
     
     @staticmethod
     def ntv_type(dtype, typ, ext):
