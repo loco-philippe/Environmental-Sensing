@@ -7,6 +7,7 @@ Created on Sun Mar  3 11:14:40 2024
 
 import numpy as np
 import pandas as pd
+from json_ntv import Ntv
 from abc import ABC, abstractmethod
 from copy import copy
 
@@ -18,6 +19,7 @@ class Darray(ABC):
             self.ref = data.ref
             self.coding = data.coding
             return
+        data = data if isinstance(data, list) else [data]
         self.data = np.array(data).reshape(-1)
         self.ref = ref
         self.coding = np.array(coding).reshape(-1)
@@ -56,6 +58,7 @@ class Darray(ABC):
     
     @staticmethod 
     def read_list(val):
+        val = val if isinstance(val, list) else [val]
         if len(val)==1:
             return Dfull(val)
         if len(val)==2:
@@ -100,7 +103,12 @@ class Dcomplete(Darray):
             '''data = pd.Series(data).astype('category')
             coding = np.array(data.cat.codes)
             data = np.array(data.cat.categories)'''
-            data, coding = np.unique(data, return_inverse=True)
+            try:
+                data, coding = np.unique(data, return_inverse=True)
+            except:
+                dat, idx, coding = np.unique(np.frompyfunc(Ntv.from_obj, 1, 1)(data),
+                                         return_index=True, return_inverse=True)
+                data = data[idx]
         super().__init__(data, None, coding)
     
     def to_list(self):

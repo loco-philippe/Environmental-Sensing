@@ -18,7 +18,7 @@ from json_ntv.ntv import Ntv, NtvConnector, NtvList, NtvSingle
 from json_ntv.ntv_util import NtvUtil
 from json_ntv.ntv_connector import ShapelyConnec
 from tab_dataset.cfield import Cfield
-from data_array import Dfull, Dcomplete
+from data_array import Dfull, Dcomplete, Darray
 
 def read_json(jsn, **kwargs):
     ''' convert JSON text or JSON Value to Numpy ndarray.
@@ -136,10 +136,10 @@ class NdarrayConnec(NtvConnector):
         - **annotated** : boolean (default False) - if True, NTV names are not included.'''
         data = ntv_value[-1]
         match ntv_value[:-1]:
-            case [dtype, shape]:
-                return NdarrayConnec.to_array(data, dtype, shape)
-            case [dtype] if isinstance(dtype, str):
-                return NdarrayConnec.to_array(data, dtype, None)
+            case [ntv_type, shape]:
+                return NdarrayConnec.to_array(data, ntv_type, shape)
+            case [ntv_type] if isinstance(ntv_type, str):
+                return NdarrayConnec.to_array(data, ntv_type, None)
             case [shape] if isinstance(shape, list):
                 return NdarrayConnec.to_array(data, None, shape)
             case _:
@@ -157,20 +157,21 @@ class NdarrayConnec(NtvConnector):
         - **notype** : Boolean (default False) - including data type if False
         - **extension** : string (default None) - type extension
         '''    
+        option = {'notype': False, 'extension': None, 'format': 'full'} | kwargs
         if len(value) == 0:
             return ([[]], name, 'ndarray')
         typ, ext = NpUtil.split_typ(typ)
-        ext = ext if ext else kwargs.get('extension')
+        ext = ext if ext else option['extension']
         dtype = value.dtype.name
         dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
         ntv_type = NpUtil.ntv_type(dtype, typ, ext)
         
-        form = kwargs['format']
+        form = option['format']
         js_val   = NpUtil.ntv_val(ntv_type, value.flatten(), form)
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
 
-        lis = [ntv_type if not kwargs.get('notype', False) else None, shape, js_val]
+        lis = [ntv_type if not option['notype'] else None, shape, js_val]
         return ([val for val in lis if not val is None], name, 'ndarray')
 
     @staticmethod
@@ -189,9 +190,12 @@ class NdarrayConnec(NtvConnector):
         return [val for val in lis if not val is None]
 
     @staticmethod
-    def to_array(data, dtype=None, shape=None):
-        
-        return np.array(data, dtype=NpUtil.split_typ(dtype)[0]).reshape(shape)
+    def to_array(data, ntv_type=None, shape=None):
+        darray = Darray.read_list(data)
+        darray.data = NpUtil.convert(ntv_type, data, tojson=False)
+        #darray.data = np.array(darray.data, dtype=NpUtil.split_typ(dtype)[0])
+        return darray.values.reshape(shape)
+        #return np.array(data, dtype=NpUtil.split_typ(dtype)[0]).reshape(shape)
  
 class XndarrayConnec(NtvConnector):
 
@@ -293,20 +297,26 @@ class NpUtil:
         - **nda** : ndarray to be converted.
         - **tojson** : boolean (default True) - apply to json function
         '''
-        match ntv_type:
-            case dat if dat in NpUtil.DATATION_DT:
-                return nda.astype(NpUtil.DATATION_DT[dat]).astype(str)
-            case 'bytes':
-                return nda.astype('bytes').astype(str)                
-            case 'time':
-                return nda.astype(str)    
-            case 'decimal64':
-                return nda.astype(float)  
-            case 'geojson':
-                return np.frompyfunc(ShapelyConnec.to_geojson, 1, 1)(nda)
-            case _:
-                return nda
-    
+        if to_json:
+            match ntv_type:
+                case dat if dat in NpUtil.DATATION_DT:
+                    return nda.astype(NpUtil.DATATION_DT[dat]).astype(str)
+                case 'bytes':
+                    return nda.astype('bytes').astype(str)                
+                case 'time':
+                    return nda.astype(str)    
+                case 'decimal64':
+                    return nda.astype(float)  
+                case 'geojson':
+                    return np.frompyfunc(ShapelyConnec.to_geojson, 1, 1)(nda)
+                case _:
+                    return nda
+        else:
+            match ntv_type:
+                case _:
+                    c_data = nda.data
+            return np.array(c_data, dtype=NpUtil.split_typ(ntv_type)[0])
+        
     @staticmethod
     def ntv_val(ntv_type, nda, form):
         ''' convert a simple ndarray into NTV json-value.
@@ -324,18 +334,15 @@ class NpUtil:
         
         match ntv_type:
             case 'ndarray':
-                return [NdarrayConnec.to_jsonv(nd) for nd in nda] 
+                data = np.frompyfunc(NdarrayConnec.to_jsonv, 1, 1)(darray.data) 
                 #data = [NdarrayConnec.to_jsonv(nd) for nd in darray.data] 
             case connec if connec in NpUtil.CONNECTOR_DT:
-                #return [NtvConnector.cast(nd, None, connec)[0] for nd in nda] 
                 data = [NtvConnector.cast(nd, None, connec)[0] for nd in darray.data] 
             case 'point' | 'line' | 'polygon' | 'geometry':
-                #return pd.Series(nda).apply(ShapelyConnec.to_coord).to_list()
-                data = pd.Series(darray.data).apply(ShapelyConnec.to_coord).to_list()
+                #data = pd.Series(darray.data).apply(ShapelyConnec.to_coord).to_list()
+                data = np.frompyfunc(ShapelyConnec.to_coord, 1, 1)(darray.data)
             case _:
                 data = NpUtil.convert(ntv_type, darray.data).tolist()
-                #nda = NpUtil.convert(ntv_type, nda)
-                #return nda.tolist()        
         return Format(data, ref=ref, coding=coding).to_list()
     
     @staticmethod
