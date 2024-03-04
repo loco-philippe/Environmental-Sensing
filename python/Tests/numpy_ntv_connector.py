@@ -134,7 +134,7 @@ class NdarrayConnec(NtvConnector):
         - **index** : list (default None) - list of index values,
         - **alias** : boolean (default False) - if True, alias dtype else default dtype
         - **annotated** : boolean (default False) - if True, NTV names are not included.'''
-        data = ntv_value[-1]
+        data = [ntv_value[-1]]
         match ntv_value[:-1]:
             case [ntv_type, shape]:
                 return NdarrayConnec.to_array(data, ntv_type, shape)
@@ -190,9 +190,9 @@ class NdarrayConnec(NtvConnector):
         return [val for val in lis if not val is None]
 
     @staticmethod
-    def to_array(data, ntv_type=None, shape=None):
-        darray = Darray.read_list(data)
-        darray.data = NpUtil.convert(ntv_type, data, tojson=False)
+    def to_array(darray_js, ntv_type=None, shape=None):
+        darray = Darray.read_list(darray_js)
+        darray.data = NpUtil.convert(ntv_type, darray_js, tojson=False)
         #darray.data = np.array(darray.data, dtype=NpUtil.split_typ(dtype)[0])
         return darray.values.reshape(shape)
         #return np.array(data, dtype=NpUtil.split_typ(dtype)[0]).reshape(shape)

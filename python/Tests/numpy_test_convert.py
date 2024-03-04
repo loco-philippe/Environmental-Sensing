@@ -43,6 +43,7 @@ for ex in example:
     else:
         for format in ['full', 'complete']:
             print(to_json(np.array(ex[0], dtype=ex[1]), format=format))
+            print(read_json(to_json(np.array(ex[0], dtype=ex[1]), format=format)))
 
 example = [['int64[kg]', [[1, 2], [3,4]]],
            ['int', [[1, 2], [3,4]]],
