@@ -20,9 +20,12 @@ class Darray(ABC):
             self.coding = data.coding
             return
         data = data if isinstance(data, list) else [data]
-        self.data = np.array(data).reshape(-1)
+        if len(data) > 0 and isinstance(data[0], list):
+            self.data = np.fromiter(data, dtype='object')
+        else:
+            self.data = np.array(data).reshape(-1)
         self.ref = ref
-        self.coding = np.array(coding).reshape(-1)
+        self.coding = np.array(coding)
         return
     
     def __repr__(self):
@@ -59,10 +62,25 @@ class Darray(ABC):
     @staticmethod 
     def read_list(val):
         val = val if isinstance(val, list) else [val]
-        if len(val)==1:
+        if not val or not isinstance(val[0], list):
             return Dfull(val)
-        if len(val)==2:
-            return Dcomplete(val[0], val[1])
+        match val:
+            case [data, ref, coding] if (isinstance(ref, (int, str)) and 
+                                         isinstance(coding, list) and
+                                         isinstance(coding[0], int) and 
+                                         max(coding) < len(data)):
+                return None
+            case [data, ref] if (isinstance(data, list) and 
+                                 isinstance(ref, (int, str))):
+                return None
+            case [data, coef] if isinstance(coef, list) and len(coef) == 1:
+                return None
+            case [data, coding] if (isinstance(coding, list) and
+                                    isinstance(coding[0], int) and
+                                    max(coding) < len(data)):
+                return Dcomplete(data, None, coding)
+            case _:
+                return Dfull(val)
     
     
     @abstractmethod

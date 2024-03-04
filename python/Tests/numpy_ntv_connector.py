@@ -134,7 +134,7 @@ class NdarrayConnec(NtvConnector):
         - **index** : list (default None) - list of index values,
         - **alias** : boolean (default False) - if True, alias dtype else default dtype
         - **annotated** : boolean (default False) - if True, NTV names are not included.'''
-        data = [ntv_value[-1]]
+        data = ntv_value[-1]
         match ntv_value[:-1]:
             case [ntv_type, shape]:
                 return NdarrayConnec.to_array(data, ntv_type, shape)
@@ -192,7 +192,7 @@ class NdarrayConnec(NtvConnector):
     @staticmethod
     def to_array(darray_js, ntv_type=None, shape=None):
         darray = Darray.read_list(darray_js)
-        darray.data = NpUtil.convert(ntv_type, darray_js, tojson=False)
+        darray.data = NpUtil.convert(ntv_type, darray.data, tojson=False)
         #darray.data = np.array(darray.data, dtype=NpUtil.split_typ(dtype)[0])
         return darray.values.reshape(shape)
         #return np.array(data, dtype=NpUtil.split_typ(dtype)[0]).reshape(shape)
@@ -327,11 +327,12 @@ class NpUtil:
         - **nda** : ndarray to be converted.
         - **form** : format of data ('full', 'complete', 'sparse', 'primary').
         '''
+        if form == 'complete' and len(nda) < 2:
+            raise NdarrayError("complete format is not available with ndarray length < 2")
         Format = NpUtil.FORMAT_CLS[form]
         darray = Format(nda)
         ref = darray.ref
         coding = darray.coding
-        
         match ntv_type:
             case 'ndarray':
                 data = np.frompyfunc(NdarrayConnec.to_jsonv, 1, 1)(darray.data) 
@@ -372,3 +373,6 @@ class NpUtil:
     def dtype(ntv_type):
         ''' return (dtype, extension) from ntv_type'''
         return NpUtil.DATATION_DT.get(ntv_type)
+
+class NdarrayError(Exception):
+    '''Multidimensional exception'''
