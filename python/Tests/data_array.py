@@ -51,9 +51,10 @@ class Darray(ABC):
     def __getitem__(self, ind):
         ''' return value item'''
         if isinstance(ind, tuple):
-            return [copy(self.values[i]) for i in ind]
-        # return self.values[ind]
-        return copy(self.values[ind])       
+            return [self.values[i] for i in ind]
+            #return [copy(self.values[i]) for i in ind]
+        return self.values[ind]
+        #return copy(self.values[ind])       
 
     def __copy__(self):
         ''' Copy all the data '''
@@ -118,9 +119,6 @@ class Dcomplete(Darray):
     ''' Representation of a one dimensional Array with full representation'''
     def __init__(self, data, ref=None, coding=None):
         if coding is None:
-            '''data = pd.Series(data).astype('category')
-            coding = np.array(data.cat.codes)
-            data = np.array(data.cat.categories)'''
             try:
                 data, coding = np.unique(data, return_inverse=True)
             except:
@@ -135,8 +133,6 @@ class Dcomplete(Darray):
     @property 
     def values(self):
         return self.data[self.coding]
-        '''categ = pd.CategoricalDtype(categories=pd.Series(self.data))
-        return np.array(pd.Categorical.from_codes(codes=self.coding, dtype=categ))'''
     
     @property
     def len_val(self):

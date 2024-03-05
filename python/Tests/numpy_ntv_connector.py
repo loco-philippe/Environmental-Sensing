@@ -20,6 +20,7 @@ from json_ntv.ntv_connector import ShapelyConnec
 from tab_dataset.cfield import Cfield
 from data_array import Dfull, Dcomplete, Darray
 
+
 def read_json(jsn, **kwargs):
     ''' convert JSON text or JSON Value to Numpy ndarray.
 
@@ -32,13 +33,20 @@ def read_json(jsn, **kwargs):
     if isinstance(jso, dict) and len(jso) == 1:
         if 'xndarray' in list(jso)[0]:
             arr = XndarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
+            if option['header']:
+                return {list(jso)[0]: arr}
+            return arr
         else:
             arr = NdarrayConnec.to_obj_ntv(list(jso.values())[0], **option)
-        if option['header']:
-            return {list(jso)[0]: arr}
-        return arr 
+            if option['header']:
+                return {arr[0] + ':' + list(jso)[0]: arr[1]}
+            return arr 
     if isinstance(jso, list):
-        return NdarrayConnec.to_obj_ntv(jso, **option)
+        option = {'noadd': False, 'header': False} | kwargs
+        arr =  NdarrayConnec.to_obj_ntv(jso, **option)
+        if option['header']:
+            return {arr[0]: arr[1]}
+        return arr
     return None
 
 
@@ -137,17 +145,20 @@ class NdarrayConnec(NtvConnector):
         data = ntv_value[-1]
         match ntv_value[:-1]:
             case [ntv_type, shape]:
-                return NdarrayConnec.to_array(data, ntv_type, shape)
+                param = (data, ntv_type, shape)
             case [ntv_type] if isinstance(ntv_type, str):
-                return NdarrayConnec.to_array(data, ntv_type, None)
+                param = (data, ntv_type, None)
             case [shape] if isinstance(shape, list):
-                return NdarrayConnec.to_array(data, None, shape)
+                param = (data, None, shape)
             case _:
-                return NdarrayConnec.to_array(data, None, None)
+                param = (data, None, None)
+        if kwargs.get('header', False):
+            return (ntv_type, NdarrayConnec.to_array(*param))
+        return NdarrayConnec.to_array(*param)
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
-        ''' convert a 1D ndarray (value, name, type) into NTV json (json-value, name, type).
+        ''' convert a ndarray (value, name, type) into NTV json (json-value, name, type).
 
         *Parameters*
 
@@ -202,9 +213,7 @@ class NdarrayConnec(NtvConnector):
     def to_array(darray_js, ntv_type=None, shape=None):
         darray = Darray.read_list(darray_js)
         darray.data = NpUtil.convert(ntv_type, darray.data, tojson=False)
-        #darray.data = np.array(darray.data, dtype=NpUtil.split_typ(dtype)[0])
         return darray.values.reshape(shape)
-        #return np.array(data, dtype=NpUtil.split_typ(dtype)[0]).reshape(shape)
  
 class XndarrayConnec(NtvConnector):
 
@@ -288,8 +297,15 @@ class NpUtil:
     LOCATION_DT = {'point': 'Point', 'line': 'LinearRing', 'polygon': 'Polygon'}
     DT_LOCATION = {val:key for key, val in LOCATION_DT.items()}
     
+    DT_NUMBER = {'json': 'object', 'number': None, 'month': 'int', 'day': 'int',
+                 'wday': 'int', 'yday': 'int', 'week': 'hour', 'minute': 'int',
+                 'second': 'int'}
+    DT_STRING = {'base16': 'str', 'base32': 'str', 'base64': 'str', 
+                 'period': 'str', 'duration': 'str', 'jpointer': 'str',
+                 'uri': 'str', 'uriref': 'str', 'iri': 'str', 'iriref': 'str',
+                 'email': 'str', 'regex': 'str', 'hostname': 'str', 'ipv4': 'str',
+                 'ipv6': 'str', 'file': 'str', 'geojson': 'str',}
     FORMAT_CLS = {'full': Dfull, 'complete': Dcomplete}
-    #DTNUMPY =  list(DT_DATATION) + 'bool'
     
     @staticmethod 
     def add_ext(typ, ext):
@@ -331,7 +347,8 @@ class NpUtil:
                     return nda
         else:
             DTYPE = (NpUtil.DT_DATATION | NpUtil.DT_LOCATION | 
-                     NpUtil.DT_CONNECTOR | NpUtil.DT_OTHER | NpUtil.DT_PYTHON)
+                     NpUtil.DT_CONNECTOR | NpUtil.DT_OTHER | NpUtil.DT_PYTHON |
+                     NpUtil.DT_NUMBER | NpUtil.DT_STRING)
             match ntv_type:
                 case dat if dat in NpUtil.DATATION_DT:
                     return nda.astype(NpUtil.DATATION_DT[dat])
@@ -346,16 +363,14 @@ class NpUtil:
                 case python if python in NpUtil.PYTHON_DT:
                     return nda.astype('object')
                 case connec if connec in NpUtil.CONNECTOR_DT:
-                    return [NtvConnector.uncast(nd, None, connec)[0] for nd in nda] 
+                    return np.fromiter([NtvConnector.uncast(nd, None, connec)[0]
+                                        for nd in nda], dtype='object')
                 case 'point' | 'line' | 'polygon' | 'geometry':
                     return np.frompyfunc(ShapelyConnec.to_geometry, 1, 1)(nda)
                 case _:
-                    dtype = DTYPE.get(ntv_type, ntv_type)
+                    type_base = NpUtil.split_typ(ntv_type)[0]
+                    dtype = DTYPE.get(ntv_type, DTYPE.get(type_base, type_base))
                     return nda.astype(dtype)
-                    #return nda.astype(NpUtil.split_typ(ntv_type)[0])
-
-            #return np.array(c_data, dtype=NpUtil.split_typ(ntv_type)[0])
-            #return c_data.astype(NpUtil.split_typ(ntv_type)[0])
         
     @staticmethod
     def ntv_val(ntv_type, nda, form):
@@ -380,7 +395,6 @@ class NpUtil:
             case connec if connec in NpUtil.CONNECTOR_DT:
                 data = [NtvConnector.cast(nd, None, connec)[0] for nd in darray.data] 
             case 'point' | 'line' | 'polygon' | 'geometry':
-                #data = pd.Series(darray.data).apply(ShapelyConnec.to_coord).to_list()
                 data = np.frompyfunc(ShapelyConnec.to_coord, 1, 1)(darray.data)
             case _:
                 data = NpUtil.convert(ntv_type, darray.data).tolist()
@@ -396,7 +410,8 @@ class NpUtil:
         - **typ** : string - additional type
         - **ext** : string - type extension
         '''        
-        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_LOCATION | NpUtil.DT_OTHER | NpUtil.DT_CONNECTOR | NpUtil.DT_PYTHON
+        DT_NTVTYPE = (NpUtil.DT_DATATION | NpUtil.DT_LOCATION | 
+                      NpUtil.DT_OTHER | NpUtil.DT_CONNECTOR | NpUtil.DT_PYTHON)
         if typ:
             return NpUtil.add_ext(typ, ext)
         match dtype:
