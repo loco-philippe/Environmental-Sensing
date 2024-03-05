@@ -13,7 +13,7 @@ import pandas as pd
 from shapely.geometry import Point, LinearRing
 import ntv_pandas as npd
 from numpy_ntv_connector import read_json, read_json_tab, to_json, to_json_tab
-from data_array import Darray
+from data_array import Darray, Dfull, Dcomplete
 
 example =[
     [1, 2],
@@ -24,6 +24,17 @@ example =[
 
 for ex in example:
     da = Darray.read_list(ex)
+    print(type(da), len(da))
+    print(da.data, da.ref, da.coding)
+    print(da.values)
+
+example =[
+    np.array([np.array([1, 2], dtype='int64'), 
+              np.array(['test1', 'test2'], dtype='str_')], dtype='object')
+]
+
+for ex in example:
+    da = Dfull(ex)
     print(type(da), len(da))
     print(da.data, da.ref, da.coding)
     print(da.values)

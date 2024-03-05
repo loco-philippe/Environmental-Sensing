@@ -147,7 +147,7 @@ class NdarrayConnec(NtvConnector):
 
     @staticmethod
     def to_json_ntv(value, name=None, typ=None, **kwargs):
-        ''' convert a ndarray (value, name, type) into NTV json (json-value, name, type).
+        ''' convert a 1D ndarray (value, name, type) into NTV json (json-value, name, type).
 
         *Parameters*
 
@@ -166,26 +166,35 @@ class NdarrayConnec(NtvConnector):
         dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
         ntv_type = NpUtil.ntv_type(dtype, typ, ext)
         
-        form = option['format']
-        js_val   = NpUtil.ntv_val(ntv_type, value.flatten(), form)
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
 
+        form = option['format']    
+        if shape:
+            js_val   = NpUtil.ntv_val(ntv_type, value.flatten(), form)
+        else:
+            js_val   = NpUtil.ntv_val(ntv_type, value, form)
+            
         lis = [ntv_type if not option['notype'] else None, shape, js_val]
         return ([val for val in lis if not val is None], name, 'ndarray')
 
     @staticmethod
     def to_jsonv(value):
-        ''' convert a ndarray into json-value.'''    
+        ''' convert a 1D ndarray into json-value.'''    
         if len(value) == 0:
             return [[]]
         dtype = value.dtype.name
         dtype = value[0].__class__.__name__ if dtype == 'object' else dtype
         ntv_type = NpUtil.ntv_type(dtype, None, None)
-        
-        js_val   = NpUtil.ntv_val(ntv_type, value.flatten(), 'full')
+
         shape = list(value.shape)
         shape = shape if len(shape) > 1 else None 
+        
+        if shape:
+            js_val   = NpUtil.ntv_val(ntv_type, value.flatten(), 'full')
+        else:
+            js_val   = NpUtil.ntv_val(ntv_type, value, 'full')
+
         lis = [ntv_type, shape, js_val]        
         return [val for val in lis if not val is None]
 
@@ -366,8 +375,8 @@ class NpUtil:
         coding = darray.coding
         match ntv_type:
             case 'ndarray':
-                data = np.frompyfunc(NdarrayConnec.to_jsonv, 1, 1)(darray.data) 
-                #data = [NdarrayConnec.to_jsonv(nd) for nd in darray.data] 
+                #data = np.frompyfunc(NdarrayConnec.to_jsonv, 1, 1)(darray.data) 
+                data = [NdarrayConnec.to_jsonv(nd) for nd in darray.data] 
             case connec if connec in NpUtil.CONNECTOR_DT:
                 data = [NtvConnector.cast(nd, None, connec)[0] for nd in darray.data] 
             case 'point' | 'line' | 'polygon' | 'geometry':
