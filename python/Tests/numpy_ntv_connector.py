@@ -12,7 +12,7 @@ import configparser
 from pathlib import Path
 import pandas as pd
 import numpy as np
-
+from decimal import Decimal
 
 from json_ntv.ntv import Ntv, NtvConnector, NtvList, NtvSingle
 from json_ntv.ntv_util import NtvUtil
@@ -268,12 +268,12 @@ class NpUtil:
     CONNECTOR_DT = {'field': 'Series', 'tab': 'DataFrame'}    
     DT_CONNECTOR = {val:key for key, val in CONNECTOR_DT.items()}
     
-    PYTHON_DT = {'array': 'tuple', 'array': 'list',
+    PYTHON_DT = {'array': 'list',
                 'object': 'dict', 'null': 'NoneType', 'decimal64': 'Decimal',
                 'ndarray': 'ndarray'}
     DT_PYTHON = {val:key for key, val in PYTHON_DT.items()}
 
-    OTHER_DT = {'boolean': 'bool'} | PYTHON_DT
+    OTHER_DT = {'boolean': 'bool', 'string': 'str'}
     DT_OTHER = {val:key for key, val in OTHER_DT.items()}
     
     LOCATION_DT = {'point': 'Point', 'line': 'LinearRing', 'polygon': 'Polygon'}
@@ -322,12 +322,24 @@ class NpUtil:
                     return nda
         else:
             DTYPE = (NpUtil.DT_DATATION | NpUtil.DT_LOCATION | 
-                     NpUtil.DT_CONNECTOR | NpUtil.DT_OTHER)
+                     NpUtil.DT_CONNECTOR | NpUtil.DT_OTHER | NpUtil.DT_PYTHON)
             match ntv_type:
                 case dat if dat in NpUtil.DATATION_DT:
                     return nda.astype(NpUtil.DATATION_DT[dat])
-                case 'boolean':
-                    return nda.astype('bool')                    
+                case std if std in NpUtil.OTHER_DT:
+                    return nda.astype(NpUtil.OTHER_DT[std])                    
+                case 'time':
+                    return np.frompyfunc(datetime.time.fromisoformat, 1, 1)(nda)                   
+                case 'decimal64':
+                    return np.frompyfunc(Decimal, 1, 1)(nda)   
+                case 'ndarray':
+                    return np.frompyfunc(NdarrayConnec.to_obj_ntv, 1, 1)(nda) 
+                case python if python in NpUtil.PYTHON_DT:
+                    return nda.astype('object')
+                case connec if connec in NpUtil.CONNECTOR_DT:
+                    return [NtvConnector.uncast(nd, None, connec)[0] for nd in nda] 
+                case 'point' | 'line' | 'polygon' | 'geometry':
+                    return np.frompyfunc(ShapelyConnec.to_geometry, 1, 1)(nda)
                 case _:
                     dtype = DTYPE.get(ntv_type, ntv_type)
                     return nda.astype(dtype)
@@ -375,7 +387,7 @@ class NpUtil:
         - **typ** : string - additional type
         - **ext** : string - type extension
         '''        
-        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_LOCATION | NpUtil.DT_OTHER | NpUtil.DT_CONNECTOR
+        DT_NTVTYPE = NpUtil.DT_DATATION | NpUtil.DT_LOCATION | NpUtil.DT_OTHER | NpUtil.DT_CONNECTOR | NpUtil.DT_PYTHON
         if typ:
             return NpUtil.add_ext(typ, ext)
         match dtype:
