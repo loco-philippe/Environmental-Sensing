@@ -263,15 +263,24 @@ class NpUtil:
                 'timedelta[ps]': 'timedelta64[ps]', 'timedelta[fs]': 'timedelta64[fs]',
                 'timedelta[D]': 'timedelta64[D]', 'timedelta[Y]': 'timedelta64[Y]',
                 'timedelta[M]': 'timedelta64[M]'}
-
     DT_DATATION = {val:key for key, val in DATATION_DT.items()}
-    CONNECTOR_DT = {'field': 'Series', 'tab': 'DataFrame'}
+    
+    CONNECTOR_DT = {'field': 'Series', 'tab': 'DataFrame'}    
     DT_CONNECTOR = {val:key for key, val in CONNECTOR_DT.items()}
-    DT_OTHER = {'bool': 'boolean', 'tuple': 'array', 'list': 'array',
-                'dict': 'object', 'NoneType': 'null', 'Decimal': 'decimal64',
+    
+    PYTHON_DT = {'array': 'tuple', 'array': 'list',
+                'object': 'dict', 'null': 'NoneType', 'decimal64': 'Decimal',
                 'ndarray': 'ndarray'}
-    DT_LOCATION = {'Point': 'point', 'LinearRing': 'line', 'Polygon': 'polygon'}
+    DT_PYTHON = {val:key for key, val in PYTHON_DT.items()}
+
+    OTHER_DT = {'boolean': 'bool'} | PYTHON_DT
+    DT_OTHER = {val:key for key, val in OTHER_DT.items()}
+    
+    LOCATION_DT = {'point': 'Point', 'line': 'LinearRing', 'polygon': 'Polygon'}
+    DT_LOCATION = {val:key for key, val in LOCATION_DT.items()}
+    
     FORMAT_CLS = {'full': Dfull, 'complete': Dcomplete}
+    #DTNUMPY =  list(DT_DATATION) + 'bool'
     
     @staticmethod 
     def add_ext(typ, ext):
@@ -297,7 +306,7 @@ class NpUtil:
         - **nda** : ndarray to be converted.
         - **tojson** : boolean (default True) - apply to json function
         '''
-        if to_json:
+        if tojson:
             match ntv_type:
                 case dat if dat in NpUtil.DATATION_DT:
                     return nda.astype(NpUtil.DATATION_DT[dat]).astype(str)
@@ -312,10 +321,20 @@ class NpUtil:
                 case _:
                     return nda
         else:
+            DTYPE = (NpUtil.DT_DATATION | NpUtil.DT_LOCATION | 
+                     NpUtil.DT_CONNECTOR | NpUtil.DT_OTHER)
             match ntv_type:
+                case dat if dat in NpUtil.DATATION_DT:
+                    return nda.astype(NpUtil.DATATION_DT[dat])
+                case 'boolean':
+                    return nda.astype('bool')                    
                 case _:
-                    c_data = nda.data
-            return np.array(c_data, dtype=NpUtil.split_typ(ntv_type)[0])
+                    dtype = DTYPE.get(ntv_type, ntv_type)
+                    return nda.astype(dtype)
+                    #return nda.astype(NpUtil.split_typ(ntv_type)[0])
+
+            #return np.array(c_data, dtype=NpUtil.split_typ(ntv_type)[0])
+            #return c_data.astype(NpUtil.split_typ(ntv_type)[0])
         
     @staticmethod
     def ntv_val(ntv_type, nda, form):

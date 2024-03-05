@@ -18,7 +18,7 @@ read_json({':ndarray': ['int64', [1, 2]]})
 
 example =[[[1,2], 'int64'],
           [[True, False], 'bool'],
-          #[['1+2j', 1], 'complex'],
+          [['1+2j', 1], 'complex'],
           [['test1', 'test2'], 'str_'], 
           [['2022-01-01T10:05:21.0002', '2023-01-01T10:05:21.0002'], 'datetime64'],
           [['2022-01-01', '2023-01-01'], 'datetime64[D]'],
@@ -47,8 +47,10 @@ for ex in example:
     else:
         #for format in ['complete']:
         for format in ['full', 'complete']:
-            print(to_json(np.array(ex[0], dtype=ex[1]), format=format))
-            print(read_json(to_json(np.array(ex[0], dtype=ex[1]), format=format)))
+            js = to_json(np.array(ex[0], dtype=ex[1]), format=format)
+            print(js)
+            ex_rt = read_json(js, header=False)
+            print(np.array_equal(ex_rt, ex),  ex_rt)
 
 example = [['int64[kg]', [[1, 2], [3,4]]],
            ['int', [[1, 2], [3,4]]],
