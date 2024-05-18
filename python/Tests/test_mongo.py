@@ -115,5 +115,20 @@ class Test_jeu_data_py(unittest.TestCase):
         self.assertTrue(ob_tests[42].loc(result[0][1], row=True) == [2])
         self.assertTrue(result[0].idxlen == [2, 2, 2, 2, 2, 1, 1, 1])
 
+class Test_ntv_py(unittest.TestCase):
+
+    def test_insert(self):
+
+        client = clientMongo()
+        collec = client['NTV']['test']
+        
+        ntv = Ntv.obj({'ntv': 'essai1', 'test': {'date': datetime.datetime(
+            2010, 2, 10), 'coord:point': [42.1, 3.2]}})
+        collec.insert_one(ntv.to_obj(format='cbor'))
+        js = collec.find_one({'ntv': 'essai1'})
+        collec.delete_one({'_id': js['_id']})
+        js.pop('_id')
+        self.assertEqual(Ntv.obj(js), ntv)
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
