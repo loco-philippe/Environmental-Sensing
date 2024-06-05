@@ -16,6 +16,7 @@ Project1/
 .vs/
 .ipynb_checkpoints/
 *checkpoints.ipynb
+*checkpoint.ipynb
 *~
 .pylint.d/
 .cache
