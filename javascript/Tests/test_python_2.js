@@ -16,7 +16,7 @@ async function run() {
     let result = await srch.execute({modecodec: 'dict'});
     console.log(result.data);
     // for (const date of result.data.datation.value) {console.log(date);} // n'a de sens que lorsque modecodec = 'dict', sinon provoque une erreur
-    
+
     let data_array = [];
     for (const date of result.data.datation.value) {
       let count;

@@ -29,6 +29,7 @@ Documentation is available in other pages :
 - The [examples]
 (https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples/Observation)
 """
+
 import datetime
 import json
 from copy import copy
@@ -41,7 +42,7 @@ from observation.field_interface import FieldEncoder, CborDecoder
 from observation.esconstante import ES
 from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
 from observation.esvalue_base import ESValue, ESValueEncoder
-#from observation.dataset_analysis import Analysis
+# from observation.dataset_analysis import Analysis
 
 
 class Observation(Dataset):
@@ -158,19 +159,19 @@ class Observation(Dataset):
     - `python.observation.dataset.Dataset.voxel`
     """
 
-# %% constructor
+    # %% constructor
     def __init__(self, listidx=None, name=None, param=None, reindex=True):
-        '''Observation constructor
+        """Observation constructor
 
         *Parameters*
 
         - **listidx**  : object (default None) - list of Field data or Dataset or Observation
         - **name**     : string (default None) - Obs name
-        - **param**    : dict (default None) - Dict with parameter data or user's data'''
+        - **param**    : dict (default None) - Dict with parameter data or user's data"""
 
         if isinstance(listidx, Observation):
             self.lindex = [copy(idx) for idx in listidx.lindex]
-            if not listidx.param is None:
+            if listidx.param is not None:
                 self.param = dict(listidx.param.items())
             else:
                 self.param = param
@@ -195,7 +196,7 @@ class Observation(Dataset):
 
     @classmethod
     def dic(cls, idxdic=None, typevalue=ES.def_clsName, name=None, param=None):
-        '''
+        """
         Observation constructor (external dictionnary).
 
         *Parameters*
@@ -205,14 +206,22 @@ class Observation(Dataset):
         - **typevalue** : str (default ES.def_clsName) - default value class (None or NamedValue)
         - **var** :  int (default None) - row of the variable
         - **name**     : string (default None) - Observation name
-        - **param**    : dict (default None) - Dict with parameter data or user's data'''
+        - **param**    : dict (default None) - Dict with parameter data or user's data"""
         listidx = Dataset.dic(idxdic, typevalue=typevalue)
         return cls(listidx=listidx, name=name, param=param)
 
     @classmethod
-    def std(cls, result=None, datation=None, location=None, property=None,
-            name=None, param=None, typevalue=ES.def_clsName):
-        '''
+    def std(
+        cls,
+        result=None,
+        datation=None,
+        location=None,
+        property=None,
+        name=None,
+        param=None,
+        typevalue=ES.def_clsName,
+    ):
+        """
         Generate an Observation Object with standard indexes
 
         *Parameters*
@@ -222,17 +231,16 @@ class Observation(Dataset):
         - **property** : compatible Field (default None) - index for PropertyValue
         - **result  ** : compatible Field (default None) - index for Variable(NamedValue)
         - **name**     : string (default None) - Observation name
-        - **param**    : dict (default None) - Dict with parameter data or user's data'''
+        - **param**    : dict (default None) - Dict with parameter data or user's data"""
         idxdic = {}
         length = 0
         std_val = (result, datation, location, property)
-        es_val = (ES.res_classES, ES.dat_classES,
-                  ES.loc_classES, ES.prp_classES)
+        es_val = (ES.res_classES, ES.dat_classES, ES.loc_classES, ES.prp_classES)
         for std, esv in zip(std_val, es_val):
             value = []
-            if not std is None and isinstance(std, list):
+            if std is not None and isinstance(std, list):
                 value = std
-            elif not std is None and not isinstance(std, list):
+            elif std is not None and not isinstance(std, list):
                 value = [std]
             length = max(length, len(value))
             idxdic[esv] = value
@@ -243,14 +251,14 @@ class Observation(Dataset):
 
     @classmethod
     def from_obj(cls, bs=None, reindex=True, context=True):
-        '''
+        """
         Generate an Observation Object from a bytes, string or dic value
 
         *Parameters*
 
         - **bs** : bytes, string or dict data to convert
         - **reindex** : boolean (default True) - if True, default codec for each Field
-        - **context** : boolean (default True) - if False, only codec and keys are included'''
+        - **context** : boolean (default True) - if False, only codec and keys are included"""
         if not bs:
             bs = {}
         if isinstance(bs, bytes):
@@ -266,50 +274,53 @@ class Observation(Dataset):
         if ES.param in dic:
             param = dic[ES.param]
         if param and not isinstance(param, dict):
-            raise ObsError('param is not a dict')
+            raise ObsError("param is not a dict")
 
         name = None
         if ES.name in dic:
             name = dic[ES.name]
         if name and not isinstance(name, str):
-            raise ObsError('name is not a str')
+            raise ObsError("name is not a str")
 
         data = None
         if ES.data in dic:
             data = dic[ES.data]
         if data and not isinstance(data, (list, dict)):
-            raise ObsError('data is not a list and not a dict')
+            raise ObsError("data is not a list and not a dict")
 
-        return cls(listidx=Dataset.obj(data, reindex=reindex, context=context),
-                   name=name, param=param)
+        return cls(
+            listidx=Dataset.obj(data, reindex=reindex, context=context),
+            name=name,
+            param=param,
+        )
 
-# %% special
+    # %% special
     def __copy__(self):
-        ''' Copy all the data '''
+        """Copy all the data"""
         return Observation(self)
 
     def __str__(self):
-        '''return string format'''
-        stro = ''
+        """return string format"""
+        stro = ""
         if self.name:
-            stro = ES.name + ': ' + self.name + '\n'
+            stro = ES.name + ": " + self.name + "\n"
         stri = Dataset.__str__(self)
-        if not stri == '':
-            stro += ES.data + ':\n' + stri
+        if not stri == "":
+            stro += ES.data + ":\n" + stri
         if self.param:
-            stro += ES.param + ':\n    ' + json.dumps(self.param) + '\n'
+            stro += ES.param + ":\n    " + json.dumps(self.param) + "\n"
         return stro
 
     def __hash__(self):
-        '''return sum of all hash(Field)'''
+        """return sum of all hash(Field)"""
         return hash(json.dumps(self.param)) + hash(self.name) + Dataset.__hash__(self)
 
-# %% properties
+    # %% properties
     @property
     def bounds(self):
-        '''
+        """
         **list of `observation.esvalue` (@property)** : `observation.esvalue`
-        bounding box for each axis.'''
+        bounding box for each axis."""
         bound = [None, None, None]
         if self.setDatation:
             bound[0] = ESValue.boundingBox(self.setDatation).bounds
@@ -321,8 +332,8 @@ class Observation(Dataset):
 
     @property
     def __geo_interface__(self):
-        '''**dict (@property)** : return the union of Location geometry (see shapely)'''
-        codecgeo = self.nindex('location').codec
+        """**dict (@property)** : return the union of Location geometry (see shapely)"""
+        codecgeo = self.nindex("location").codec
         if len(codecgeo) == 0:
             return ""
         if len(codecgeo) == 1:
@@ -334,60 +345,65 @@ class Observation(Dataset):
 
     @property
     def id(self):
-        '''**integer (@property)** : hash value (unique)'''
+        """**integer (@property)** : hash value (unique)"""
         return hash(self)
 
     @property
     def jsonFeature(self):
-        '''**string (@property)** : "FeatureCollection" with Location geometry'''
+        """**string (@property)** : "FeatureCollection" with Location geometry"""
         if self.setLocation:
             geo = self.__geo_interface__
-            if geo['type'][:5] == 'Multi':
-                typ = geo['type'][5:]
-                lis = [{"type":  typ, "coordinates": geo['coordinates'][i]}
-                       for i in range(len(geo['coordinates']))]
-            elif geo['type'] in ['Point', 'Polygon']:
+            if geo["type"][:5] == "Multi":
+                typ = geo["type"][5:]
+                lis = [
+                    {"type": typ, "coordinates": geo["coordinates"][i]}
+                    for i in range(len(geo["coordinates"]))
+                ]
+            elif geo["type"] in ["Point", "Polygon"]:
                 lis = [geo]
-            elif geo['type'] == 'GeometryCollection':
-                lis = geo['geometries']
-            fea = [{"type": "Feature", "id": i, "geometry": lis[i]}
-                   for i in range(len(lis))]
-            return json.dumps({"type": "FeatureCollection", "features": fea},
-                              cls=ESValueEncoder)
-        return ''
+            elif geo["type"] == "GeometryCollection":
+                lis = geo["geometries"]
+            fea = [
+                {"type": "Feature", "id": i, "geometry": lis[i]}
+                for i in range(len(lis))
+            ]
+            return json.dumps(
+                {"type": "FeatureCollection", "features": fea}, cls=ESValueEncoder
+            )
+        return ""
 
     @property
     def setDatation(self):
-        '''**list (@property)** : list of codec values in the datation index'''
+        """**list (@property)** : list of codec values in the datation index"""
         if self.nindex(ES.dat_classES):
             return self.nindex(ES.dat_classES).codec
         return None
 
     @property
     def setLocation(self):
-        '''**list (@property)** : list of codec values in the location index'''
+        """**list (@property)** : list of codec values in the location index"""
         if self.nindex(ES.loc_classES):
             return self.nindex(ES.loc_classES).codec
         return None
 
     @property
     def setProperty(self):
-        '''**list (@property)** : list of codec values in the property index'''
+        """**list (@property)** : list of codec values in the property index"""
         if self.nindex(ES.prp_classES):
             return self.nindex(ES.prp_classES).codec
         return None
 
     @property
     def setResult(self):
-        '''
-        **list (@property)** : list of codec values in the result index'''
+        """
+        **list (@property)** : list of codec values in the result index"""
         if self.nindex(ES.res_classES):
             return self.nindex(ES.res_classES).codec
         return None
 
-# %% methods
-    def appendObs(self, obs, unique=False, fillvalue='-'):
-        '''
+    # %% methods
+    def appendObs(self, obs, unique=False, fillvalue="-"):
+        """
         Add an `Observation` as a new Result `observation.esvalue` with bounding
         box for the Index `observation.esvalue`
 
@@ -398,58 +414,52 @@ class Observation(Dataset):
 
         *Returns*
 
-        - **int** : last index in the `Observation`'''
+        - **int** : last index in the `Observation`"""
         lname = self.lname
         record = [fillvalue] * len(lname)
         if ES.dat_classES in lname:
-            record[lname.index(ES.dat_classES)] = DatationValue.Box(
-                obs.bounds[0])
+            record[lname.index(ES.dat_classES)] = DatationValue.Box(obs.bounds[0])
         if ES.loc_classES in lname:
-            record[lname.index(ES.loc_classES)] = LocationValue.Box(
-                obs.bounds[1])
+            record[lname.index(ES.loc_classES)] = LocationValue.Box(obs.bounds[1])
         if ES.prp_classES in lname:
-            record[lname.index(ES.prp_classES)] = PropertyValue.Box(
-                obs.bounds[2])
+            record[lname.index(ES.prp_classES)] = PropertyValue.Box(obs.bounds[2])
         if ES.res_classES in lname:
             record[lname.index(ES.res_classES)] = ExternValue(obs)
         return self.append(record, unique=unique)
 
     def choropleth(self, name="choropleth", line=True):
-        '''
+        """
         Display `Observation` on a folium.Map (only with dimension=1)
 
         - **name** : String, optionnal (default 'choropleth') - Name of the choropleth
         - **line** : Boolean, optionnal (default True) - Line between recods if True
 
-        *Returns* : None'''
+        *Returns* : None"""
         primary = self.primary
         if self.dimension == 1:
-            mapf = folium.Map(
-                location=self.setLocation[0].coorInv, zoom_start=6)
+            mapf = folium.Map(location=self.setLocation[0].coorInv, zoom_start=6)
             folium.Choropleth(
                 geo_data=self.jsonFeature,
                 name=self.name,
-                data=self.to_xarray(
-                    numeric=True, coord=True).to_dataframe(name='obs'),
+                data=self.to_xarray(numeric=True, coord=True).to_dataframe(name="obs"),
                 key_on="feature.id",
-                columns=[self.idxname[primary[0]] + '_row', 'obs'],
+                columns=[self.idxname[primary[0]] + "_row", "obs"],
                 fill_color="OrRd",
                 fill_opacity=0.7,
                 line_opacity=0.4,
                 line_weight=2,
-                legend_name=name
+                legend_name=name,
             ).add_to(mapf)
             if line:
                 folium.PolyLine(
-                    util.funclist(self.nindex('location'),
-                                  LocationValue.vPointInv)
+                    util.funclist(self.nindex("location"), LocationValue.vPointInv)
                 ).add_to(mapf)
             folium.LayerControl().add_to(mapf)
             return mapf
         return None
 
     def to_obj(self, **kwargs):
-        '''Return a formatted object (json string, cbor bytes or json dict).
+        """Return a formatted object (json string, cbor bytes or json dict).
 
         *Parameters (kwargs)*
 
@@ -459,7 +469,7 @@ class Observation(Dataset):
         - **codif** : dict (default ES.codeb). Numerical value for string in CBOR encoder
         - **modecodec** : string (default 'optimize') - if 'full', each index is with a full codec
         if 'default' each index has keys, if 'optimize' keys are optimized,
-        if 'dict' dict format is used, if 'nokeys' keys are absent, if 'ndjson' 
+        if 'dict' dict format is used, if 'nokeys' keys are absent, if 'ndjson'
         a list of ndjson elements is created
         - **name** : boolean (default False) - if False, default index name are not included
         - **fullvar** : boolean (default True) - if True and modecodec='optimize,
@@ -470,19 +480,27 @@ class Observation(Dataset):
         - **json_info**      : Boolean - include all infos
         - **json_info_detail**: Boolean - include the other infos
 
-        *Returns* : string, bytes or dict'''
-        option = {'modecodec': 'optimize', 'encoded': False,
-                  'encode_format': 'json', 'codif': ES.codeb, 'name': False,
-                  'json_param': False, 'json_info': False, 'json_info_detail': False,
-                  'geojson': False, 'fullvar': True} | kwargs
-        if option['modecodec'] == 'ndjson':
+        *Returns* : string, bytes or dict"""
+        option = {
+            "modecodec": "optimize",
+            "encoded": False,
+            "encode_format": "json",
+            "codif": ES.codeb,
+            "name": False,
+            "json_param": False,
+            "json_info": False,
+            "json_info_detail": False,
+            "geojson": False,
+            "fullvar": True,
+        } | kwargs
+        if option["modecodec"] == "ndjson":
             lisobs = {ES.id: self.id}
             if self.param:
                 lisobs[ES.param] = self.param
             if self.name:
                 lisobs[ES.name] = self.name
-            return [lisobs] + Dataset.to_obj(self, modecodec='ndjson', id=self.id)
-        option2 = option | {'encoded': False, 'encode_format': 'json'}
+            return [lisobs] + Dataset.to_obj(self, modecodec="ndjson", id=self.id)
+        option2 = option | {"encoded": False, "encode_format": "json"}
         dic = {ES.type: ES.obs_classES}
 
         if self.name:
@@ -493,27 +511,40 @@ class Observation(Dataset):
         if option["json_param"] and self.param:
             dic[ES.obs_param] = self.param
         dic |= self._info(**option)
-        if option['codif'] and option['encode_format'] != 'cbor':
+        if option["codif"] and option["encode_format"] != "cbor":
             js2 = {}
             for key, val in dic.items():
-                if key in option['codif']:
-                    js2[option['codif'][key]] = val
+                if key in option["codif"]:
+                    js2[option["codif"][key]] = val
                 else:
                     js2[key] = val
         else:
             js2 = dic
 
-        if option['encoded'] and option['encode_format'] == 'json':
+        if option["encoded"] and option["encode_format"] == "json":
             return json.dumps(js2, cls=FieldEncoder)
-        if option['encoded'] and option['encode_format'] == 'cbor':
-            return cbor2.dumps(js2, datetime_as_timestamp=True,
-                               timezone=datetime.timezone.utc, canonical=True)
+        if option["encoded"] and option["encode_format"] == "cbor":
+            return cbor2.dumps(
+                js2,
+                datetime_as_timestamp=True,
+                timezone=datetime.timezone.utc,
+                canonical=True,
+            )
         return dic
 
-    def to_xarray(self, info=False, idxname=None, varname=None, fillvalue='?',
-                  fillextern=True, lisfunc=None, numeric=False, npdtype=None,
-                  **kwargs):
-        '''
+    def to_xarray(
+        self,
+        info=False,
+        idxname=None,
+        varname=None,
+        fillvalue="?",
+        fillextern=True,
+        lisfunc=None,
+        numeric=False,
+        npdtype=None,
+        **kwargs,
+    ):
+        """
         Complete the Observation and generate a Xarray DataArray with the dimension define by idx.
 
         *Parameters*
@@ -530,15 +561,26 @@ class Observation(Dataset):
         - **npdtype** : string (default None) - numpy dtype for the DataArray ('object' if None)
         - **kwargs** : parameter for lisfunc
 
-        *Returns* : DataArray '''
-        return Dataset.to_xarray(self, info=info, idxname=idxname, varname=varname,
-                               fillvalue=fillvalue, fillextern=fillextern,
-                               lisfunc=lisfunc, name=self.name, numeric=numeric,
-                               npdtype=npdtype, attrs=self.param, **kwargs)
-# %% internal
+        *Returns* : DataArray"""
+        return Dataset.to_xarray(
+            self,
+            info=info,
+            idxname=idxname,
+            varname=varname,
+            fillvalue=fillvalue,
+            fillextern=fillextern,
+            lisfunc=lisfunc,
+            name=self.name,
+            numeric=numeric,
+            npdtype=npdtype,
+            attrs=self.param,
+            **kwargs,
+        )
+
+    # %% internal
 
     def _info(self, **kwargs):
-        ''' Create json dict with info datas
+        """Create json dict with info datas
 
         *Parameters*
 
@@ -546,11 +588,11 @@ class Observation(Dataset):
         about Observation and Field
         - **json_info_detail** : boolean (default False) - if True, add complemantary
         information about Field
-        '''
+        """
         option = {"json_info": False, "json_info_detail": False} | kwargs
         dcobs = {}
         dcindex = {}
-        if not option['json_info']:
+        if not option["json_info"]:
             return dcobs
         dcobs[ES.name] = self.name
         dcobs[ES.id] = self.id
@@ -558,7 +600,7 @@ class Observation(Dataset):
         dcobs[ES.lenindex] = self.lenindex
         dcobs[ES.complete] = self.complete
         dcobs[ES.dimension] = self.dimension
-        if option['json_info_detail']:
+        if option["json_info_detail"]:
             infos = self.indexinfos()
         for ind, idx in enumerate(self.lidx):
             dcidx = {}
@@ -566,24 +608,26 @@ class Observation(Dataset):
             dcidx[ES.typevalue] = idx.typevalue
             dcidx[ES.lencodec] = len(idx.codec)
             dcidx[ES.box] = Observation._info_box(idx, **option)
-            if option['json_info_detail']:
+            if option["json_info_detail"]:
                 dcidx |= infos[ind]
             dcindex[idx.name] = dcidx
         return {ES.information: {ES.observation: dcobs, ES.index: dcindex}}
 
     @staticmethod
     def _info_box(idx, **option):
-        ''' return box informations's'''
+        """return box informations's"""
         if idx.typevalue == ES.dat_clsName:
             return DatationValue.boundingBox(idx.codec)
         if idx.typevalue == ES.loc_clsName and not option["geojson"]:
             return LocationValue.boundingBox(idx.codec)
         if idx.typevalue == ES.loc_clsName and option["geojson"]:
-            return LocationValue.Box(LocationValue.boundingBox(idx.codec)).__geo_interface__
+            return LocationValue.Box(
+                LocationValue.boundingBox(idx.codec)
+            ).__geo_interface__
         if idx.typevalue == ES.prp_clsName:
             return PropertyValue.boundingBox(idx.codec)
         return None
 
 
 class ObsError(Exception):
-    '''Observation exception'''
+    """Observation exception"""

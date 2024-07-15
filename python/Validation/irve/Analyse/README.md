@@ -3,7 +3,7 @@
 ## 1 - Introduction
 
 Le [jeu de données IRVE](https://doc.transport.data.gouv.fr/producteurs/infrastructures-de-recharge-de-vehicules-electriques-irve) est un jeu de données complexe avec un processus de production et de consolidation des données spécifique.
-Il fait l'objet également de [questions](https://www.data.gouv.fr/fr/datasets/5448d3e0c751df01f85d0572/#/discussions) concernant l'intégrité des données.    
+Il fait l'objet également de [questions](https://www.data.gouv.fr/fr/datasets/5448d3e0c751df01f85d0572/#/discussions) concernant l'intégrité des données.
 
 L'étude présentée ici a pour objectif de faciliter la réutilisation des données grace d'une part à une meilleure compréhension de la structure des données et d'autre part à une amélioration du niveau de qualité des données.
 
@@ -28,17 +28,17 @@ erDiagram
     AMENAGEUR {
         string nom_amenageur
         string siren_amenageur
-        string contact_amenageur 
+        string contact_amenageur
     }
     OPERATEUR ||..|{ STATION : "exploite pour le compte de l enseigne"
     OPERATEUR {
         string contact_operateur PK "M"
-        string nom_operateur 
-        string telephone_operateur 
+        string nom_operateur
+        string telephone_operateur
     }
     ENSEIGNE ||..|{ STATION : "heberge"
     ENSEIGNE {
-        string nom_enseigne PK "M" 
+        string nom_enseigne PK "M"
     }
     STATION {
         string  id_station_itinerance PK "M"
@@ -51,13 +51,13 @@ erDiagram
         string  id_station_local
         enum    raccordement
         string  num_pdl
-        date    date_mise_en_service 
+        date    date_mise_en_service
     }
     LOCALISATION ||--|{ STATION : "localise"
     LOCALISATION {
        array   coordonneesXY PK "M"
        string  adresse_station "M"
-       string  code_insee_commune 
+       string  code_insee_commune
     }
     STATION ||--|{ POINT_DE_CHARGE : regroupe
     POINT_DE_CHARGE {
@@ -79,7 +79,7 @@ erDiagram
         boolean paiement_cb
         string  tarification
         string  observations
-        boolean cable_t2_attache 
+        boolean cable_t2_attache
     }
 ```
 
@@ -131,7 +131,7 @@ Les fichiers sont disponibles sur [ce lien](https://github.com/loco-philippe/Env
 
 - fichier d'origine : 'consolidation-etalab-schema-irve-statique-v-2.2.0-aaaammjj.csv'
 - fichier d'origine avec deux champs booléens supplémentaires 'lignes_a_corriger' et 'doublons_a_supprimer' : 'IRVE_itinerance_completaaaa-mm-jj.csv'
-- fichier des lignes à corriger avec un champ (booléen) par contrôle (soit 12 champs nommés 'champ1 - champ2'). Par exemple, le champ 'nom_station - id_station_itinerance' lorsqu'il est à FALSE indique les lignes pour lesquelles on a plusieurs 'nom_station' pour un même 'id_station_itinerance'. Ce fichier est nommé : 'IRVE_itinerance_residuelaaaa-mm-jj.csv'. Il est également disponible pour chacun des cinq opérateurs présentant le plus de lignes à corriger sous la forme 'IRVE_itinerance_residuel_operateur_aaaa-mm-jj.csv'    
+- fichier des lignes à corriger avec un champ (booléen) par contrôle (soit 12 champs nommés 'champ1 - champ2'). Par exemple, le champ 'nom_station - id_station_itinerance' lorsqu'il est à FALSE indique les lignes pour lesquelles on a plusieurs 'nom_station' pour un même 'id_station_itinerance'. Ce fichier est nommé : 'IRVE_itinerance_residuelaaaa-mm-jj.csv'. Il est également disponible pour chacun des cinq opérateurs présentant le plus de lignes à corriger sous la forme 'IRVE_itinerance_residuel_operateur_aaaa-mm-jj.csv'
 - fichier des données validées : 'IRVE_itinerance_valideaaaa-mm-jj.csv'
 - fichier des doublons à supprimer : 'IRVE_itinerance_doublonsaaaa-mm-jj.csv'
 

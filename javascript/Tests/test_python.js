@@ -5,7 +5,7 @@ import pythonBridge from 'python-bridge';
 const uri = "mongodb+srv://ESobsUser:observation@esobs.gwpay.mongodb.net/?retryWrites=true&w=majority";
 const client = new MongoClient(uri);
 const python = pythonBridge();
- 
+
 python.ex`from observation import Observation`;
 python.ex`from observation.essearch import ESSearch`;
 //const obs = await python`Observation().json()`

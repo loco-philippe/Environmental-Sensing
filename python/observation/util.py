@@ -10,15 +10,13 @@ from itertools import product
 import datetime
 import re
 import numpy as np
-import math
 
-from observation.timeslot import TimeInterval
-from observation.esconstante import ES, _classval
+from observation.esconstante import ES
 from observation.esvalue_base import ESValue
 
 
 def identity(*args, **kwargs):
-    '''return the same value as args or kwargs'''
+    """return the same value as args or kwargs"""
     if len(args) > 0:
         return args[0]
     if len(kwargs) > 0:
@@ -27,13 +25,14 @@ def identity(*args, **kwargs):
 
 
 class util:
-    ''' common functions for Field and Dataset class'''
-    c1 = re.compile('\d+\.?\d*[,\-_ ;:]')
-    c2 = re.compile('[,\-_ ;:]\d+\.?\d*')
+    """common functions for Field and Dataset class"""
+
+    c1 = re.compile("\d+\.?\d*[,\-_ ;:]")
+    c2 = re.compile("[,\-_ ;:]\d+\.?\d*")
 
     @staticmethod
     def canonorder(lenidx):
-        '''return a list of crossed keys from a list of number of values'''
+        """return a list of crossed keys from a list of number of values"""
         listrange = [range(lidx) for lidx in lenidx]
         return util.transpose(util.list(list(product(*listrange))))
 
@@ -133,10 +132,18 @@ class util:
 
     @staticmethod
     def couplinginfos(l1, l2):
-        '''return a dict with the coupling info between two list'''
+        """return a dict with the coupling info between two list"""
         if not l1 or not l2:
-            return {'dist': 0, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': 0, 'distmax': 0, 'diff': 0, 'typecoupl': 'null'}
+            return {
+                "dist": 0,
+                "rateder": 0,
+                "disttomin": 0,
+                "disttomax": 0,
+                "distmin": 0,
+                "distmax": 0,
+                "diff": 0,
+                "typecoupl": "null",
+            }
         ls = len(util.tocodec(l1))
         lo = len(util.tocodec(l2))
         x0 = max(ls, lo)
@@ -144,34 +151,48 @@ class util:
         diff = abs(ls - lo)
         if min(ls, lo) == 1:
             if ls == 1:
-                typec = 'derived'
+                typec = "derived"
             else:
-                typec = 'derive'
-            return {'dist': x0, 'rateder': 0, 'disttomin': 0, 'disttomax': 0,
-                    'distmin': x0, 'distmax': x1, 'diff': diff, 'typecoupl': typec}
-        #x = len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
+                typec = "derive"
+            return {
+                "dist": x0,
+                "rateder": 0,
+                "disttomin": 0,
+                "disttomax": 0,
+                "distmin": x0,
+                "distmax": x1,
+                "diff": diff,
+                "typecoupl": typec,
+            }
+        # x = len(util.tocodec([tuple((v1, v2)) for v1, v2 in zip(l1, l2)]))
         x = util.dist(l1, l2)
-        dic = {'dist': x, 'rateder': (x - x0) / (x1 - x0),
-               'disttomin': x - x0,  'disttomax': x1 - x,
-               'distmin': x0, 'distmax': x1, 'diff': diff}
-        if dic['rateder'] == 0 and dic['diff'] == 0:
-            dic['typecoupl'] = 'coupled'
-        elif dic['rateder'] == 0 and ls < lo:
-            dic['typecoupl'] = 'derived'
-        elif dic['rateder'] == 0 and ls > lo:
-            dic['typecoupl'] = 'derive'
-        elif dic['rateder'] == 1:
-            dic['typecoupl'] = 'crossed'
+        dic = {
+            "dist": x,
+            "rateder": (x - x0) / (x1 - x0),
+            "disttomin": x - x0,
+            "disttomax": x1 - x,
+            "distmin": x0,
+            "distmax": x1,
+            "diff": diff,
+        }
+        if dic["rateder"] == 0 and dic["diff"] == 0:
+            dic["typecoupl"] = "coupled"
+        elif dic["rateder"] == 0 and ls < lo:
+            dic["typecoupl"] = "derived"
+        elif dic["rateder"] == 0 and ls > lo:
+            dic["typecoupl"] = "derive"
+        elif dic["rateder"] == 1:
+            dic["typecoupl"] = "crossed"
         elif ls < lo:
-            dic['typecoupl'] = 'linked'
+            dic["typecoupl"] = "linked"
         else:
-            dic['typecoupl'] = 'link'
+            dic["typecoupl"] = "link"
         return dic
 
     @staticmethod
     def dist(k1, k2, distr=False):
-        '''return default coupling codec between two keys list and optionaly if 
-        the relationship is distributed'''
+        """return default coupling codec between two keys list and optionaly if
+        the relationship is distributed"""
         if not k1 or not k2:
             return 0
         k1k2 = [tuple((v1, v2)) for v1, v2 in zip(k1, k2)]
@@ -183,35 +204,39 @@ class util:
             distrib = max(Counter(k1k2).values()) == len(k1) // dist
         return [dist, distrib]
 
-    @staticmethod 
+    @staticmethod
     def encode_coef(lis):
-        '''Generate a repetition coefficient for periodic list'''
+        """Generate a repetition coefficient for periodic list"""
         if len(lis) < 2:
             return 0
         coef = 1
         while coef != len(lis):
-            if lis[coef-1] != lis[coef]:
+            if lis[coef - 1] != lis[coef]:
                 break
             coef += 1
-        if (not len(lis) % (coef * (max(lis) + 1)) and 
-            lis == util.keysfromcoef(coef, max(lis) + 1, len(lis))):
+        if not len(lis) % (coef * (max(lis) + 1)) and lis == util.keysfromcoef(
+            coef, max(lis) + 1, len(lis)
+        ):
             return coef
         return 0
 
     @staticmethod
     def filter(func, lis, res, *args, **kwargs):
-        '''apply "func" to each value of "lis" and tests if equals "res".
-        Return the list of index with True result.'''
+        """apply "func" to each value of "lis" and tests if equals "res".
+        Return the list of index with True result."""
         lisf = util.funclist(lis, func, *args, **kwargs)
         return [i for i in range(len(lis)) if lisf[i] == res]
 
     @staticmethod
     def funclist(value, func, *args, **kwargs):
-        '''return the function func applied to the object value with parameters args and kwargs'''
+        """return the function func applied to the object value with parameters args and kwargs"""
         if func in (None, []):
             return value
         lis = []
-        if not (isinstance(value, list) or value.__class__.__name__ in ['Field', 'Dataset', 'Observation']):
+        if not (
+            isinstance(value, list)
+            or value.__class__.__name__ in ["Field", "Dataset", "Observation"]
+        ):
             listval = [value]
         else:
             listval = value
@@ -235,20 +260,21 @@ class util:
 
     @staticmethod
     def hash(listval):
-        ''' return sum of hash values in the list'''
+        """return sum of hash values in the list"""
         # return sum([hash(i) for i in listval])
         return hash(tuple(listval))
 
     @staticmethod
     def idxfull(setidx):
-        '''return additional keys for each index in the setidx list to have crossed setidx'''
+        """return additional keys for each index in the setidx list to have crossed setidx"""
         setcodec = [set(idx.keys) for idx in setidx]
         lenfull = util.mul([len(codec) for codec in setcodec])
         if lenfull <= len(setidx[0]):
             return []
         complet = Counter(list(product(*setcodec)))
         complet.subtract(
-            Counter(util.tuple(util.transpose([idx.keys for idx in setidx]))))
+            Counter(util.tuple(util.transpose([idx.keys for idx in setidx])))
+        )
         keysadd = util.transpose(util.list(list(complet.elements())))
         if not keysadd:
             return []
@@ -256,32 +282,34 @@ class util:
 
     @staticmethod
     def isEqual(value, tovalue=None, **kwargs):
-        ''' return True if value and tovalue are equal'''
-        return value.__class__.__name__ == tovalue.__class__.__name__ and \
-            value == tovalue
+        """return True if value and tovalue are equal"""
+        return (
+            value.__class__.__name__ == tovalue.__class__.__name__ and value == tovalue
+        )
 
     @staticmethod
     def isNotEqual(value, tovalue=None, **kwargs):
-        ''' return True if value and tovalue are not equal'''
-        return value.__class__.__name__ != tovalue.__class__.__name__ or \
-            value != tovalue
+        """return True if value and tovalue are not equal"""
+        return (
+            value.__class__.__name__ != tovalue.__class__.__name__ or value != tovalue
+        )
 
     @staticmethod
     def isNotNull(value, nullvalue=None, **kwargs):
-        '''return boolean. True if value' is not a NullValue'''
+        """return boolean. True if value' is not a NullValue"""
         if value.__class__.__name__ in ES.valname:
             return value != value.__class__(nullvalue)
-        return not value is None
+        return value is not None
 
-    @staticmethod 
+    @staticmethod
     def is_setcrossed(list_keys):
         return max(Counter(zip(*[keys for keys in list_keys])).values()) == 1
-    
+
     @staticmethod
     def idxlink(ref, l2):
-        ''' return a dict for each different tuple (ref value, l2 value)'''
+        """return a dict for each different tuple (ref value, l2 value)"""
         return dict(set(zip(ref, l2)))
-        #lis = set(util.tuple(util.transpose([ref, l2])))
+        # lis = set(util.tuple(util.transpose([ref, l2])))
         # if not len(lis) == len(set(ref)):
         #    return {}
         # return dict(lis)
@@ -289,46 +317,52 @@ class util:
     @staticmethod
     def json(val, **option):
         datecast = True
-        if 'datetime' in option:
-            datecast = option['datetime']
+        if "datetime" in option:
+            datecast = option["datetime"]
         val = ESValue.uncastsimple(val, datecast)
-        if isinstance(val, (str, int, float, bool, list, dict, type(None), bytes, datetime.datetime)):
+        if isinstance(
+            val,
+            (str, int, float, bool, list, dict, type(None), bytes, datetime.datetime),
+        ):
             return val
-        if option['simpleval']:
+        if option["simpleval"]:
             return val.json(**option)
         if val.__class__.__name__ in ES.ESclassName:  # ESValue
-            if not option['typevalue']:
+            if not option["typevalue"]:
                 return val.json(**option)
             else:
                 return {ES.valname[val.__class__.__name__]: val.json(**option)}
-        if val.__class__.__name__ == 'Dataset':
+        if val.__class__.__name__ == "Dataset":
             return {ES.ili_valName: val.json(**option)}
-        if val.__class__.__name__ == 'Field':
+        if val.__class__.__name__ == "Field":
             return {ES.iin_valName: val.json(**option)}
-        if val.__class__.__name__ == 'Observation':
+        if val.__class__.__name__ == "Observation":
             return {ES.obs_valName: val.to_obj(**option)}
 
-    @staticmethod 
+    @staticmethod
     def keysfromcoef(coef, period, leng=None):
-        ''' return a list of keys with periodic structure'''
+        """return a list of keys with periodic structure"""
         if not leng:
             leng = coef * period
-        return None if not (coef and period) else [(ind % (coef * period)) // coef 
-                                                   for ind in range(leng)]
+        return (
+            None
+            if not (coef and period)
+            else [(ind % (coef * period)) // coef for ind in range(leng)]
+        )
 
     @staticmethod
     def list(tuplelists):
-        '''transform a list of tuples in a list of lists'''
+        """transform a list of tuples in a list of lists"""
         return list(map(list, tuplelists))
 
     @staticmethod
     def listed(idx):
-        '''transform a tuple of tuple in a list of list'''
+        """transform a tuple of tuple in a list of list"""
         return [val if not isinstance(val, tuple) else util.listed(val) for val in idx]
 
     @staticmethod
     def mul(values):
-        '''return the product of values in a list or tuple (math.prod)'''
+        """return the product of values in a list or tuple (math.prod)"""
         mul = 1
         for val in values:
             mul *= val
@@ -336,82 +370,82 @@ class util:
 
     @staticmethod
     def pparent(row, infos):
-        '''return field 'pparent' '''
+        """return field 'pparent'"""
         if row < 0:
             return row
         field = infos[row]
         # if field['pparent'] != 0:
-        if field['pparent'] != -2:
-            return field['pparent']
-        if field['cat'] == 'primary':
-            field['pparent'] = field['num']
-        elif field['cat'] == 'unique':
-            field['pparent'] = -1
+        if field["pparent"] != -2:
+            return field["pparent"]
+        if field["cat"] == "primary":
+            field["pparent"] = field["num"]
+        elif field["cat"] == "unique":
+            field["pparent"] = -1
         else:
-            field['pparent'] = util.pparent(field['parent'], infos)
-        return field['pparent']
+            field["pparent"] = util.pparent(field["parent"], infos)
+        return field["pparent"]
 
     @staticmethod
     def pparent2(row, infos):
-        '''return field 'pparent' '''
+        """return field 'pparent'"""
         if row < 0:
             return row
         field = infos[row]
         # if field['pparent'] != 0:
-        if field['pparent'] != -2:
-            return field['pparent']
-        if field['cat'] == 'primary':
-            field['pparent'] = field['num']
-        elif field['cat'] == 'unique':
-            field['pparent'] = -1
+        if field["pparent"] != -2:
+            return field["pparent"]
+        if field["cat"] == "primary":
+            field["pparent"] = field["num"]
+        elif field["cat"] == "unique":
+            field["pparent"] = -1
         else:
-            field['pparent'] = util.pparent2(field['parent'], infos)
-        return field['pparent']
+            field["pparent"] = util.pparent2(field["parent"], infos)
+        return field["pparent"]
 
     @staticmethod
     def reindex(oldkeys, oldcodec, newcodec):
-        '''new keys with new order of codec'''
+        """new keys with new order of codec"""
         dic = {newcodec[i]: i for i in range(len(newcodec))}
         return [dic[oldcodec[key]] for key in oldkeys]
 
     @staticmethod
     def reorder(values, sort=None):
-        '''return a new values list following the order define by sort'''
+        """return a new values list following the order define by sort"""
         if not sort:
             return values
         return [values[ind] for ind in sort]
 
     @staticmethod
     def resetidx(values):
-        '''return codec and keys from a list of values'''
+        """return codec and keys from a list of values"""
         codec = util.tocodec(values)
         return (codec, util.tokeys(values, codec))
 
     @staticmethod
     def str(listvalues):
-        '''return a list with values in the str format'''
+        """return a list with values in the str format"""
         return [str(val) for val in listvalues]
 
     @staticmethod
     def tokeys(values, codec=None):
-        ''' return a list of keys from a list of values'''
+        """return a list of keys from a list of values"""
         if not codec:
             codec = util.tocodec(values)
         dic = {codec[i]: i for i in range(len(codec))}  # !!!!long
-        keys = [dic[val] for val in values]    # hyper long
+        keys = [dic[val] for val in values]  # hyper long
         return keys
 
     @staticmethod
     def tovalues(keys, codec):
-        '''return a list of values from a list of keys and a list of codec values'''
+        """return a list of values from a list of keys and a list of codec values"""
         return [codec[key] for key in keys]
 
     @staticmethod
     def tonumpy(valuelist, func=None, **kwargs):
-        '''return a Numpy Array from a list of values converted by func'''
+        """return a Numpy Array from a list of values converted by func"""
         if func is None:
             func = identity
-        if func == 'index':
+        if func == "index":
             return np.array(list(range(len(valuelist))))
         valList = util.funclist(valuelist, func, **kwargs)
         if isinstance(valList[0], str):
@@ -426,18 +460,18 @@ class util:
 
     @staticmethod
     def tocodec(values, keys=None):
-        '''extract a list of unique values'''
+        """extract a list of unique values"""
         if not keys:
-            #return list(set(values))
+            # return list(set(values))
             return list(dict.fromkeys(values))
         ind, codec = zip(*sorted(set(zip(keys, values))))
         return list(codec)
 
     @staticmethod
     def transpose(idxlist):
-        '''exchange row/column in a list of list'''
+        """exchange row/column in a list of list"""
         if not isinstance(idxlist, list):
-            raise utilError('index not transposable')
+            raise utilError("index not transposable")
         if not idxlist:
             return []
         size = min([len(ix) for ix in idxlist])
@@ -445,14 +479,18 @@ class util:
 
     @staticmethod
     def tuple(idx):
-        '''transform a list of list in a list of tuple'''
+        """transform a list of list in a list of tuple"""
         return [val if not isinstance(val, list) else tuple(val) for val in idx]
 
     @staticmethod
     def tupled(idx):
-        '''transform a list of list in a tuple of tuple'''
-        return tuple([val if not isinstance(val, list) else util.tupled(val) for val in idx])
+        """transform a list of list in a tuple of tuple"""
+        return tuple(
+            [val if not isinstance(val, list) else util.tupled(val) for val in idx]
+        )
+
 
 class utilError(Exception):
-    ''' util Exception'''
+    """util Exception"""
+
     # pass

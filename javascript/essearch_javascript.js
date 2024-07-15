@@ -56,7 +56,7 @@ const dico_alias_mongo = {
     "overlaps":"overlaps", "$overlaps":"overlaps",
     "contains":"contains", "$contains":"contains",
     "$geoNear":"$geoNear", "$geonear":"$geoNear", "geonear":"$geoNear", "geoNear":"$geoNear",
-    
+
     "in":"$in", "$in":"$in"
   }
 };
@@ -86,7 +86,7 @@ export class ESSearch {
 
   addCondition({name, operand, operator, path, or_position = this.parameters.length - 1, others = {}}) {
     let condition;
-    
+
     if ((!path || path === '') && (operand && operand !== '') && (!name && name === '')) {return;}
 
     if (!path || path === '') {
@@ -199,7 +199,7 @@ export class ESSearch {
         if (typeof operand === 'string') {
           new Date(operand); // date devrait être créée en prenant la formatstring en paramètre ici.
         }
-        
+
         if (Object.values(this._set).includes(path)) {
           Object.assign(this._set[path], {"$dateFromString" : {"dateString" : "$" + path, "format": cond.formatstring, "onError": "$" + path}});
         } else {
@@ -244,7 +244,7 @@ export class ESSearch {
 
     let cond_0 = {};
     cond_0[operator] = operand;
-    
+
     if (cond.inverted) {
       if (Object.values(this._match[or_pos]).includes(path)) {
         if (Object.values(this._match[or_pos][path]).includes("$nor")) {
@@ -275,7 +275,7 @@ export class ESSearch {
     this._set = {};
     this._geonear = {};
     this._project = {_id: 0};
-        
+
     for (let i = 0; i < this.parameters.length; i++) {
       this._match.concat([{}]);
       for (const cond of this.parameters[i]) {

@@ -4,7 +4,6 @@ Created on Sat Oct  8 22:48:13 2022
 
 @author: philippe@loco-labs.io
 """
-#import observation
+# import observation
 
-name = 'observation'
-
+name = "observation"

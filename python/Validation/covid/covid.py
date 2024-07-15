@@ -14,87 +14,103 @@ Points identifiés :
 api : https://www.data.gouv.fr/fr/datasets/donnees-hospitalieres-relatives-a-lepidemie-de-covid-19/
 
 """
+
 import os
-os.chdir('C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES')
-from ilist import Ilist, identity
-from observation import Observation
+
+os.chdir(
+    "C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES"
+)
+from ilist import Ilist
 from time import time
 import csv
-from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue, ESValue
-from test_observation import _envoi_mongo_python
-import datetime
+from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue
 import pandas as pd
 
-chemin = 'C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/validation/covid/'
+chemin = "C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/validation/covid/"
 
-file = chemin + 'covid-hospit-2022-04-05-19h00.csv'
+file = chemin + "covid-hospit-2022-04-05-19h00.csv"
 t0 = time()
-typef = 'ES'
-cmax=20000
-ESval=False
+typef = "ES"
+cmax = 20000
+ESval = False
 
-#%% test pandas
-t=time()
-dt = {"dep":"string","sexe":"int","hosp":"int","rea":"int","rad":"int","dc":"int"}
-df = pd.read_csv(file, sep=';', dtype=dt)
-tf=time()
-print('pandas : ', tf-t)
+# %% test pandas
+t = time()
+dt = {
+    "dep": "string",
+    "sexe": "int",
+    "hosp": "int",
+    "rea": "int",
+    "rad": "int",
+    "dc": "int",
+}
+df = pd.read_csv(file, sep=";", dtype=dt)
+tf = time()
+print("pandas : ", tf - t)
 
 
-#%% analyse fichier CSV
-print('départ : ', t0)
-with open(file, newline='') as f:
-    reader = csv.reader(f, delimiter=';')
+# %% analyse fichier CSV
+print("départ : ", t0)
+with open(file, newline="") as f:
+    reader = csv.reader(f, delimiter=";")
     names = next(reader)
-    prp = [PropertyValue.Simple(nam, name='') for nam in names]
-    iprp = [3,4,8,9]
+    prp = [PropertyValue.Simple(nam, name="") for nam in names]
+    iprp = [3, 4, 8, 9]
     data = [[], [], [], []]
     res = []
-    c=0
-    if ESval :
+    c = 0
+    if ESval:
         for row in reader:
-            c +=1
-            loc = LocationValue('dpt' + str(row[0]))
+            c += 1
+            loc = LocationValue("dpt" + str(row[0]))
             dat = DatationValue(row[2])
             for i in iprp:
                 data[0].append(dat)
                 data[1].append(loc)
                 data[2].append(row[1])
                 data[3].append(prp[i])
-                res.append(ResultValue(Ilist._cast(row[i], 'int')))
-            if c == cmax : break
-    else :
+                res.append(ResultValue(Ilist._cast(row[i], "int")))
+            if c == cmax:
+                break
+    else:
         for row in reader:
-            c +=1
-            dat = Ilist._cast(row[2], 'datetime')
+            c += 1
+            dat = Ilist._cast(row[2], "datetime")
             loc = row[0]
             for i in iprp:
                 data[0].append(dat)
                 data[1].append(loc)
                 data[2].append(row[1])
                 data[3].append(i)
-                res.append(Ilist._cast(row[i], 'int'))
-            if c == cmax : break
+                res.append(Ilist._cast(row[i], "int"))
+            if c == cmax:
+                break
 t1 = time()
-print('délai data: ', t1 - t0) # 1s pour c= 2000, 10s pour 20 000, 93s (1,5 mn) pour 230 000 (soit 1 142 000 lignes)
-print('nombre de lignes : ', len(res))
+print(
+    "délai data: ", t1 - t0
+)  # 1s pour c= 2000, 10s pour 20 000, 93s (1,5 mn) pour 230 000 (soit 1 142 000 lignes)
+print("nombre de lignes : ", len(res))
 
-#%% création Ilist
-il = Ilist.ext(res, data, 'result', ['datation', 'location', 'sexe', 'property'], fast=True)
+# %% création Ilist
+il = Ilist.ext(
+    res, data, "result", ["datation", "location", "sexe", "property"], fast=True
+)
 t2 = time()
-print('délai il: ', t2 - t1) # 4s pour c= 2000, 37s pour 20 000, 360s (6 mn) pour 230 000 (soit 1 142 000 lignes)
+print(
+    "délai il: ", t2 - t1
+)  # 4s pour c= 2000, 37s pour 20 000, 360s (6 mn) pour 230 000 (soit 1 142 000 lignes)
 # total : 1 mn pour 100 000 enregistrements Ilist
 
-#%% stockage Ilist
-#print(il.to_obj(encoded=False,  bjson_bson=True, fast=True))
-il.to_file(chemin + 'il_numeric_bson_bidon.il', bjson_bson=True, fast=True)
-il.to_file(chemin + 'il_numeric_json_bidon.il', bjson_bson=False, fast=True)
-ilf=il.full()
-ilf.to_file(chemin + 'ilf_numeric_bson_bidon.il', bjson_bson=True, fast=True)
-ilf.to_file(chemin + 'ilf_numeric_json_bidon.il', bjson_bson=False, fast=True)
+# %% stockage Ilist
+# print(il.to_obj(encoded=False,  bjson_bson=True, fast=True))
+il.to_file(chemin + "il_numeric_bson_bidon.il", bjson_bson=True, fast=True)
+il.to_file(chemin + "il_numeric_json_bidon.il", bjson_bson=False, fast=True)
+ilf = il.full()
+ilf.to_file(chemin + "ilf_numeric_bson_bidon.il", bjson_bson=True, fast=True)
+ilf.to_file(chemin + "ilf_numeric_json_bidon.il", bjson_bson=False, fast=True)
 t2b = time()
-print('délai file: ', t2b - t2)
-'''
+print("délai file: ", t2b - t2)
+"""
 if ESval: setidxf = [[idx for idx in il.setidx[0] if idx.vSimple().year == 2020], il.setidx[1], il.setidx[2], il.setidx[3]]
 else: setidxf = [[idx for idx in il.setidx[0] if idx.year == 2020], il.setidx[1], il.setidx[2], il.setidx[3]]
 il2020 = il.setfilter(setidxf, inplace=False, index=False, fast=True)
@@ -185,7 +201,7 @@ t15 = time()
 print('ob xarray 2020 : ', t15 - t14)
 
 if ESval:
-    ob2020f=ob2020.filter(location={'isName' : 'dpt7.'}, 
+    ob2020f=ob2020.filter(location={'isName' : 'dpt7.'},
                           datation={'within':DatationValue([datetime.datetime(2020,3,19),
                                                             datetime.datetime(2020,3,22)])})
     ob2020f.plot()
@@ -198,4 +214,4 @@ res = [t11-t0, t1-t0, t2-t1, t4-t2, t5-t4, t6-t5, t7-t6, t8-t7, t9-t8, t10-t9,
 print(res)
 
 print('délai total(mn) : ', (time() - t0)/60,  time() - t0)
-'''
+"""

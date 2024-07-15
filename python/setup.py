@@ -25,10 +25,19 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3"],
+        "Programming Language :: Python :: 3",
+    ],
     keywords="observation, tabular data, development, environmental data",
-    packages=find_packages(include=['observation', 'observation.*']),
+    packages=find_packages(include=["observation", "observation.*"]),
     python_requires=">=3.7, <4",
-    install_requires=['numpy', 'shapely', 'cbor2', 'xarray', 'pandas', 'folium',
-                      'bson', 'xarray']
+    install_requires=[
+        "numpy",
+        "shapely",
+        "cbor2",
+        "xarray",
+        "pandas",
+        "folium",
+        "bson",
+        "xarray",
+    ],
 )

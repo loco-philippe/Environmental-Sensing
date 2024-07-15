@@ -84,19 +84,19 @@ Modules contain the following classes:
 
 - Datasets :
 
-    - `python.observation.datasets.Sdataset`, 
-    - `python.observation.datasets.Ndataset`, 
+    - `python.observation.datasets.Sdataset`,
+    - `python.observation.datasets.Ndataset`,
 
 - Dataset (abstract classes):
 
-    - `python.observation.dataset` , 
-    - `python.observation.dataset_structure`, 
+    - `python.observation.dataset` ,
+    - `python.observation.dataset_structure`,
     - `python.observation.dataset_interface`
     - `python.observation.dataset_analysis`
 
 - Field :
 
-    - `python.observation.field`, `python.observation.ntvfieldructure`, 
+    - `python.observation.field`, `python.observation.ntvfieldructure`,
     `python.observation.field_interface`
 
 - TimeSlot :
@@ -107,18 +107,22 @@ Modules contain the following classes:
 
     - `python.observation.esconstante`.
 """
+
 from observation.esobservation import Observation
-#from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
-#from observation.esvalue_base import ESValue
+
+# from observation.esvalue import NamedValue, DatationValue, LocationValue, PropertyValue, ExternValue
+# from observation.esvalue_base import ESValue
 from observation.dataset import Dataset, Ndataset, Sdataset
 from observation.dataset_interface import DatasetInterface
 from observation.dataset_structure import DatasetStructure
-#from observation.dataset_analysis import DatasetAnalysis
+
+# from observation.dataset_analysis import DatasetAnalysis
 from observation.field import Field, Nfield, Sfield
 from observation.field_interface import CborDecoder, FieldEncoder, FieldInterface
-#from observation.essearch import ESSearch
+
+# from observation.essearch import ESSearch
 from observation.esconstante import ES, Es, _classval
 from observation.util import util
-#from observation.timeslot import TimeSlot
-#from observation.dataset_analysis import Analysis
-#print('package :', __package__)
+# from observation.timeslot import TimeSlot
+# from observation.dataset_analysis import Analysis
+# print('package :', __package__)

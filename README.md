@@ -37,7 +37,7 @@ The Environmental Sensing project aims to:
 - propose an alternative solution to the obsolete CSV format
 - improve the quality of tabular data by better taking into account relationships between fields
 - improve accessibility to data from sensors
-  
+
 ## Examples of achievements
 
 ### sensors

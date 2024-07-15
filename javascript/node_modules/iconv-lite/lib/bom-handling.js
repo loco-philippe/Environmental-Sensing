@@ -49,4 +49,3 @@ StripBOMWrapper.prototype.write = function(buf) {
 StripBOMWrapper.prototype.end = function() {
     return this.decoder.end();
 }
-

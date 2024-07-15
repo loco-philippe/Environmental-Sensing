@@ -7,42 +7,104 @@ Created on Sat Jan 29 22:44:05 2022
 The `observation.test_analysis` module contains the unit tests (class unittest) for the
 `Analysis` methods.
 """
+
 import unittest
 from pprint import pprint
 from observation import Dataset
 
-#l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
-#il = Dataset.obj(l)
-defv = 'default value'
-i1 = 'i1'
+# l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]
+# il = Dataset.obj(l)
+defv = "default value"
+i1 = "i1"
 
 
 class Test_Analysis(unittest.TestCase):
-
     def test_modele_mixte(self):
-        ilm = Dataset.ntv({'plants': ['fruit', 'fruit', 'fruit', 'fruit',
-                                     'vegetable', 'vegetable', 'vegetable', 'vegetable'],
-                         'quantity': ['1 kg', '10 kg', '1 kg', '10 kg',
-                                       '1 kg', '10 kg', '1 kg', '10 kg'],
-                         'product': ['apple', 'apple', 'orange', 'orange',
-                                      'peppers', 'peppers', 'banana', 'banana'],
-                         'price': [1, 10, 2, 20, 1.5, 15, 1, 1.5],
-                         'group': ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
-                                    'veget', 'veget', 'veget', 'veget'],
-                         'id': [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008]})
-        pprint(ilm.indexinfos(
-            keys=['num', 'name', 'lencodec', 'parent', 'typecoupl']), width=100)
+        ilm = Dataset.ntv(
+            {
+                "plants": [
+                    "fruit",
+                    "fruit",
+                    "fruit",
+                    "fruit",
+                    "vegetable",
+                    "vegetable",
+                    "vegetable",
+                    "vegetable",
+                ],
+                "quantity": [
+                    "1 kg",
+                    "10 kg",
+                    "1 kg",
+                    "10 kg",
+                    "1 kg",
+                    "10 kg",
+                    "1 kg",
+                    "10 kg",
+                ],
+                "product": [
+                    "apple",
+                    "apple",
+                    "orange",
+                    "orange",
+                    "peppers",
+                    "peppers",
+                    "banana",
+                    "banana",
+                ],
+                "price": [1, 10, 2, 20, 1.5, 15, 1, 1.5],
+                "group": [
+                    "fruit 1",
+                    "fruit 10",
+                    "fruit 1",
+                    "fruit 10",
+                    "veget",
+                    "veget",
+                    "veget",
+                    "veget",
+                ],
+                "id": [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008],
+            }
+        )
+        pprint(
+            ilm.indexinfos(keys=["num", "name", "lencodec", "parent", "typecoupl"]),
+            width=100,
+        )
         # not full
-        ilm_nf = Dataset.ntv({'plants': ['fruit', 'fruit', 'fruit', 'fruit',
-                                        'vegetable', 'vegetable', 'vegetable'],
-                            'quantity': ['1 kg', '10 kg', '1 kg', '10 kg',
-                                          '1 kg', '10 kg', '1 kg'],
-                            'product': ['apple', 'apple', 'orange', 'orange',
-                                         'peppers', 'peppers', 'banana'],
-                            'price': [1, 10, 2, 20, 1.5, 15, 1],
-                            'group': ['fruit 1', 'fruit 10', 'fruit 1', 'fruit 10',
-                                       'veget', 'veget', 'veget'],
-                            'id': [1001, 1002, 1003, 1004, 1005, 1006, 1007]})
+        ilm_nf = Dataset.ntv(
+            {
+                "plants": [
+                    "fruit",
+                    "fruit",
+                    "fruit",
+                    "fruit",
+                    "vegetable",
+                    "vegetable",
+                    "vegetable",
+                ],
+                "quantity": ["1 kg", "10 kg", "1 kg", "10 kg", "1 kg", "10 kg", "1 kg"],
+                "product": [
+                    "apple",
+                    "apple",
+                    "orange",
+                    "orange",
+                    "peppers",
+                    "peppers",
+                    "banana",
+                ],
+                "price": [1, 10, 2, 20, 1.5, 15, 1],
+                "group": [
+                    "fruit 1",
+                    "fruit 10",
+                    "fruit 1",
+                    "fruit 10",
+                    "veget",
+                    "veget",
+                    "veget",
+                ],
+                "id": [1001, 1002, 1003, 1004, 1005, 1006, 1007],
+            }
+        )
 
 
 """        self.assertTrue(Dataset().to_obj() == [])
@@ -54,7 +116,7 @@ class Test_Analysis(unittest.TestCase):
         self.assertTrue(Dataset.from_obj(
             ['er', 'er', 'er']).to_obj() == [['er'], ['er'], ['er']])
         self.assertTrue(Dataset.ext([1, 2, 3]).to_obj() == [[1], [2], [3]])
-        self.assertTrue(Dataset.ext(['er', 'er', 'er']).to_obj() == 
+        self.assertTrue(Dataset.ext(['er', 'er', 'er']).to_obj() ==
                         [['er'], ['er'], ['er']])
 
     def test_creation_simple(self):
@@ -95,7 +157,7 @@ class Test_Analysis(unittest.TestCase):
         il2 = Dataset.ext([["a", "b", "c", "d", "e", "f"],
                          [10, 10, 20, 20, 30, 30],
                          [100, 100, 200, 200, 300, 300],
-                         [True, False, True, False, True, False]], 
+                         [True, False, True, False, True, False]],
                         ['namvalue', 'datationvalue', 'locationvalue', 'propertyvalue'],
                         var=0)
         self.assertTrue(il1 == il2)
@@ -105,17 +167,17 @@ class Test_Analysis(unittest.TestCase):
         il1 = Dataset.obj([['ext', ['er', 'rt', 'er', 'ry'], -1], [0, 2, 0, 2],
                          [30, 12, 12, 15], [2, 0, 2, 0], [2, 2, 0, 0],
                          ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
-        il2 = Dataset.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]], 
-                         [[0, 2], [0,1,0,1]], [[30, 12, 15], [0,1,1,2]], 
+        il2 = Dataset.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]],
+                         [[0, 2], [0,1,0,1]], [[30, 12, 15], [0,1,1,2]],
                          [[2, 0], 1], [2, 2, 0, 0],
-                         ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])        
-        il3 = Dataset.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]], 
+                         ['info', 'info', 'info', 'info'], [12, 12, 15, 30]])
+        il3 = Dataset.obj([['ext', ['er', 'rt', 'ry'], [-1, [0,1,0,2]]],
                          [[0, 2], [0,1,0,1]],
                          [[30, 12, 15], [0,1,1,2]],
-                         [[2, 0], [0,1,0,1]], 
+                         [[2, 0], [0,1,0,1]],
                          [[2, 0], [0,0,1,1]],
-                         [['info'], [0,0,0,0]], 
-                         [[12, 15, 30], [0,0,1,2]]])   
+                         [['info'], [0,0,0,0]],
+                         [[12, 15, 30], [0,0,1,2]]])
         self.assertTrue(il1 == il2 == il3)
 
     def test_creation_dic_ext(self):
@@ -131,12 +193,12 @@ class Test_Analysis(unittest.TestCase):
         self.assertTrue(iidx == iidx1 == iidx4)
         self.assertTrue(Dataset.dic({}) == Dataset.dic() == Dataset() ==
                         Dataset.ext([]) == Dataset.ext())
-        try: 
+        try:
             il1 = Dataset.ext([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
                                [[11, 12, 13, 14, 15, 16], -1]])
             res1 = True
         except: res1 = False
-        try: 
+        try:
             il2 = Dataset.obj([[1, 2, 3], [[4, 5, 6], 0], [7, 8],
                          [[11, 12, 13, 14, 15, 16], -1]])
             res2 = True
@@ -185,7 +247,7 @@ class Test_Analysis(unittest.TestCase):
                        ['locationvalue', [100, 100, 200, 200, 300, 300]],
                        ['propertyvalue', [True, False, True, False, True, False]]])
         self.assertTrue(iidx == iidx1 == iidx2 == iidx4)
-        try: 
+        try:
             ilx = Dataset.ext(
                 [20, ['a', 'b', 'b', 'c', 'c', 'a'], [1, 1, 2, 2, 3, 3]])
             res=True
@@ -404,7 +466,7 @@ class Test_Analysis(unittest.TestCase):
         for ts in test:
             opt = {'encoded': ts[0], 'format': ts[1], 'modecodec': ts[2]}
             self.assertEqual(Dataset.from_obj(ilm.to_obj(**opt)), ilm)#'''
-    
+
     def test_to_obj_variable(self):
         il = Dataset.ext([[0, 1, 2, 3, 4, 5],
                          ['j', 'j', 'f', 'f', 'a', 'a'],
@@ -575,7 +637,7 @@ class Test_Analysis(unittest.TestCase):
         il.setfilter([True, False, True, False])
         il.applyfilter(reverse=True)
         self.assertEqual(il.lindex[1].val,   [2, 2])
-        il1 = Dataset.ext([['er', 'rt', 'er', 'ry', 'ry', 'er'], 
+        il1 = Dataset.ext([['er', 'rt', 'er', 'ry', 'ry', 'er'],
                           [0, 2, 0, 2, 0, 2], [30, 12, 20, 15, 30, 12]])
         ilft1 = il1.setfilter([True, True, True, True, True, True]).applyfilter(inplace=False)
         ilfr1 = il1.setfilter([True, True, True, True, True, True]).applyfilter(reverse=True, inplace=False)
@@ -589,7 +651,7 @@ class Test_Analysis(unittest.TestCase):
         il = Dataset.ext(f,l).setfilter([[2], [12, 20, 30]], inplace=False, index=False)
         self.assertEqual( il.setidx, [[2], [12]])
         #ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref=[0,0,2], order=[2,0])
-        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, 
+        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'},
                          order=['property', 'datation', 'location'])
         ob.majList(ES.dat_classES, ['name1', 'autre name', 'encore autre name3'], name=True)
         self.assertEqual(ob.ntvdataset._idxfilter('isName', 'setidx', 0, 'name[1-9]'), [0,2])
@@ -601,7 +663,7 @@ class Test_Analysis(unittest.TestCase):
         self.assertEqual(Dataset._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}), ESValue.getName), 'date1')
         self.assertTrue(Dataset._funclist(DatationValue({"date1": "2021-02-04T12:05:00"}),
                                          ESValue.equals, DatationValue("2021-02-04T12:05:00")))
-        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'}, 
+        ob = Observation(dict((dat3, loc3, prop2, _res(6))), idxref={'location':'datation'},
                          order=['property', 'datation', 'location'])
         self.assertEqual(Dataset._filter(ESValue.getName, ob.setDatation, 'date1'), [0])        '''
 
@@ -676,7 +738,7 @@ class Test_Analysis(unittest.TestCase):
             option = {'encoded': ts[0], 'format': ts[1]}
             #il2 = Dataset.from_obj(il.to_obj(**option))
             # self.assertEqual(il, il2)   #!!!
-    
+
     '''for forma in ['json', 'cbor']:
         #for forma in ['json', 'cbor']:
             for encoded in [False, True]:
@@ -705,5 +767,5 @@ class Test_Analysis(unittest.TestCase):
             self.assertEqual(ilf, il.from_file('testf.tst'))'''
 """
 
-'''if __name__ == '__main__':
-    unittest.main(verbosity=2)'''
+"""if __name__ == '__main__':
+    unittest.main(verbosity=2)"""

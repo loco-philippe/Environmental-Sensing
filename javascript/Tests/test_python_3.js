@@ -61,24 +61,24 @@ Pour l'instant, les utilisateurs se débrouillent.
 ===== Étape 1 : Aide à la recherche =====
 - Entrée des information de connexion à la base de données MongoDB.
 - Éxécuter la requête vide pour connaître les noms des colonnes.
-- Bouton pour exécuter une autre requête vide qui compte le nombre de valeurs dans la base. (potentiellement en regardant les 
+- Bouton pour exécuter une autre requête vide qui compte le nombre de valeurs dans la base. (potentiellement en regardant les
   informations)
 Boutons pour l'exécution d'une requête avec ESSearch :
-  - Liste déroulante des noms de colonnes, obtenus lors de l'étape 1, contenant également une option « chemin exact » pour 
+  - Liste déroulante des noms de colonnes, obtenus lors de l'étape 1, contenant également une option « chemin exact » pour
     autoriser l'entrée d'un chemin à la main ;
   - Liste déroulante des comparateurs autorisés ;
   - Champ pour entrer la valeur de l'opérande (essayer d'aider pour les dates et les géométries) ;
-  - Bouton '+' pour ajouter un champ supplémentaire. Lorsque appuyé, ajoute une liste déroulante des champs autorisés. Lorsque 
-    clic, ajout d'un champ de texte pour définir la valeur et d'un nouveau bouton + pour ajouter un autre champ supplémentaire 
-    (voir pour ne pas laisser ajouter plusieurs fois le même champ ? en soi, ne pose pas de problème puisque ça génère juste un 
+  - Bouton '+' pour ajouter un champ supplémentaire. Lorsque appuyé, ajoute une liste déroulante des champs autorisés. Lorsque
+    clic, ajout d'un champ de texte pour définir la valeur et d'un nouveau bouton + pour ajouter un autre champ supplémentaire
+    (voir pour ne pas laisser ajouter plusieurs fois le même champ ? en soi, ne pose pas de problème puisque ça génère juste un
     dictionnaire)
 
 Boutons pour paramétrer les graphiques à afficher
 
-Bouton pour l'export des données de sorties avec sélection des colonnes conservées. (qui pourrait aussi se faire avec un 
+Bouton pour l'export des données de sorties avec sélection des colonnes conservées. (qui pourrait aussi se faire avec un
 $project dans la requête, mais pas le cas actuellement.
 
--> voir pour une utilisation de $project automatisée, pas nécessaire de tout sortir à chaque fois si on ne trace qu'une courbe 
+-> voir pour une utilisation de $project automatisée, pas nécessaire de tout sortir à chaque fois si on ne trace qu'une courbe
 avec deux des colonnes.
 
 Bouton d'export des données, avec liste déroulante pour les formats si plusieurs formats.
@@ -93,19 +93,19 @@ Bouton d'export des données, avec liste déroulante pour les formats si plusieu
   ex: valeur de chaque propriété est une courbe fonction de la date, issue d'un tri des données par villes.
 
 - positionnement de valeurs sur une carte -> probablement plus lisible avec des échelles de couleur.
-  -> à voir si les positions str sont simple à positionner... On part du principe que c'est du GeoJson (même si ce sera 
+  -> à voir si les positions str sont simple à positionner... On part du principe que c'est du GeoJson (même si ce sera
   rarement le cas ?) de toute façon, ce genre de conversions n'est pas l'objet de ce module.
 
 ===== Possibilité d'export =====
-Proposer l'export des données au format csv (et aux éventuels autres formats) 
+Proposer l'export des données au format csv (et aux éventuels autres formats)
 se fait en appliquant single = True et fillvalue = '' (à vérifier) puis en appliquant to_csv.
 
 ===== Suite =====
 Adaptation de l'intégralité du code en javascript et retrait de la partie appelant python.
 
 
-Problème à régler des maintenant : la méthode actuelle ne permet pas une communication avec le serveur, mais potentiellement 
-réglable en englobant tout dans l'appel du module http (ou après ? puisque le serveur reste actif tant que l'on ne fait pas 
+Problème à régler des maintenant : la méthode actuelle ne permet pas une communication avec le serveur, mais potentiellement
+réglable en englobant tout dans l'appel du module http (ou après ? puisque le serveur reste actif tant que l'on ne fait pas
 CTRL+C dans l'invite de commandes, c'est potentiellement possible)
 -> à voir si on y arrive.
 */

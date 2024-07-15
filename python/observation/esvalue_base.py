@@ -33,32 +33,32 @@ and the parent class :
 - `ESValue`
 
 Documentation is available in other pages :
-    
-- The concepts of 'ES value' are describe in 
+
+- The concepts of 'ES value' are describe in
 [this page](https://github.com/loco-philippe/Environmental-Sensing/wiki/ESValue).
-- The non-regression tests are at 
+- The non-regression tests are at
 [this page](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Tests/test_esvalue.py)
-- Examples are 
+- Examples are
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/python/Examples)
-- The Json Standard for ESValue is define 
+- The Json Standard for ESValue is define
 [here](https://github.com/loco-philippe/Environmental-Sensing/tree/main/documentation/ESJSON-Standard.pdf)
 
 
 
 """
+
 import json
-import re
 import datetime
-from json import JSONDecodeError
-import cbor2
-from copy import copy
 
-from observation.esconstante import ES, _classval
-from observation.timeslot import TimeInterval
 
-ListESValue = ['LocationValue', 'DatationValue',
-               'PropertyValue', 'NamedValue', 'ExternValue']
-ListESValueSlot = ListESValue + ['TimeSlot']
+ListESValue = [
+    "LocationValue",
+    "DatationValue",
+    "PropertyValue",
+    "NamedValue",
+    "ExternValue",
+]
+ListESValueSlot = ListESValue + ["TimeSlot"]
 
 
 class ESValueEncoder(json.JSONEncoder):
@@ -67,7 +67,7 @@ class ESValueEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
-        option = {'encoded': False, 'encode_format': 'json'}
+        option = {"encoded": False, "encode_format": "json"}
         try:
             return o.json(**option)
         except:
@@ -119,7 +119,8 @@ class ESValue:
     - `ESValue.vName`
     - `ESValue.vSimple`
     """
-# %% constructor
+
+    # %% constructor
     """@staticmethod
     # def from_obj(bs, classname=ES.nam_clsName):
     def from_obj(bs, classname=None, simple=True):
@@ -583,7 +584,9 @@ class ESValue:
         return (classname, name, val)
     """
 
+
 class ESValueError(Exception):
     # %% ES except
-    ''' ESValue Exception'''
+    """ESValue Exception"""
+
     pass

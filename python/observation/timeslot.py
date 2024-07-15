@@ -20,7 +20,7 @@ i.e. a duration of 8 hours centered around 3 p.m. with bounds at 9 a.m. and 7:30
 The main principles are as follows :
 
 <img src="./timeslot_data_structure.png" width="800">
-    
+
 ## Data structure
 
 A `TimeSlot` is a list of `TimeInterval`.
@@ -28,7 +28,7 @@ A `TimeSlot` is a list of `TimeInterval`.
 A `TimeInterval` is defined by two `datetime` objects (start and end)
 
 Multiple properties are associated with the data :
-    
+
 - duration : sum of the lenght of each TimeInterval
 - centroïd : instant assicited to the middle of the duration
 - bounds : minimum, maximum and middle
@@ -39,12 +39,13 @@ Multiple properties are associated with the data :
 Two `TimeSlot` can be compared with five statuses (equals, contains, within, disjoint, intersects).
 
 Multiple operations between two objects can be performed :
-    
+
 - union between two `TimeSlot`
 - intersection between two `TimeSlot`
 - complementing a `TimeSlot` in an interval
 
 """
+
 import datetime
 import json
 import numpy
@@ -64,12 +65,12 @@ class TimeSlotEncoder(json.JSONEncoder):
 
 
 class TimeSlot:
-    '''        
+    """
     *Attributes (for @property see methods)* :
 
     - **slot** : list of `TimeInterval`
 
-    The methods defined in this class are : 
+    The methods defined in this class are :
 
     *dynamic value property (getters)*
 
@@ -88,18 +89,18 @@ class TimeSlot:
     - `TimeSlot.link`
     - `TimeSlot.timetuple`
     - `TimeSlot.union`
-    '''
+    """
 
     def __init__(self, val=None):
-        '''
+        """
         TimeSlot constructor.
 
         *Parameters*
 
-        - **val** : date, interval, list of interval (default None) - with several formats 
+        - **val** : date, interval, list of interval (default None) - with several formats
         (tuple, list, string, datetime, TimeSlot, TimeInterval, numpy datetime64, pandas timestamp)
 
-        *Returns* : None'''
+        *Returns* : None"""
         slot = []
         if isinstance(val, str):
             try:
@@ -112,8 +113,12 @@ class TimeSlot:
             self.slot = slot
             return
         val = TimeSlot._listed(val)
-        #if isinstance(val, tuple): val = list(val)
-        if isinstance(val, list) and len(val) == 2 and not isinstance(val[0], TimeInterval):
+        # if isinstance(val, tuple): val = list(val)
+        if (
+            isinstance(val, list)
+            and len(val) == 2
+            and not isinstance(val[0], TimeInterval)
+        ):
             try:
                 slot.append(TimeInterval(val))
             except:
@@ -136,50 +141,55 @@ class TimeSlot:
         self.slot = TimeSlot._reduced(slot)
 
     def __add__(self, other):
-        ''' Add other's values to self's values in a new TimeSlot'''
+        """Add other's values to self's values in a new TimeSlot"""
         return TimeSlot(TimeSlot._reduced(self.slot + other.slot))
 
     def __iadd__(self, other):
-        ''' Add other's values to self's values'''
+        """Add other's values to self's values"""
         self.slot = self._reduced(self.slot + other.slot)
 
     def __contains__(self, item):
-        ''' item of extval'''
+        """item of extval"""
         return item in self.slot
 
     def __getitem__(self, index):
-        ''' return interval item'''
+        """return interval item"""
         return self.slot[index]
 
     def __setitem__(self, index, interv):
-        ''' modify interval item'''
+        """modify interval item"""
         if index < 0 or index >= len(self):
             raise TimeSlotError("out of bounds")
         self.slot[index] = TimeInterval(interv)
         self.slot = TimeSlot._reduced(self.slot)
 
     def __len__(self):
-        '''return the number of intervals included'''
+        """return the number of intervals included"""
         return len(self.slot)
 
     # def __repr__(self):
     def __str__(self):
-        ''' return the type of slot and the json representation'''
-        return self.stype + '\n' + self.json(encoded=True, encode_format='json')
+        """return the type of slot and the json representation"""
+        return self.stype + "\n" + self.json(encoded=True, encode_format="json")
 
     def __repr__(self):
         # return self.__class__.__name__ + f'({self.slot})'
-        return self.__class__.__name__ + '(' + self.json(encoded=True, encode_format='json') + ')'
+        return (
+            self.__class__.__name__
+            + "("
+            + self.json(encoded=True, encode_format="json")
+            + ")"
+        )
 
     def __eq__(self, other):
-        '''equal if the slots are equals'''
+        """equal if the slots are equals"""
         try:
             return self.slot == other.slot
         except:
             return False
 
     def __lt__(self, other):
-        '''compare the earliest dates'''
+        """compare the earliest dates"""
         return self.slot[0] < other.slot[0]
 
     def __hash__(self):
@@ -188,17 +198,20 @@ class TimeSlot:
 
     @property
     def Bounds(self):
-        '''return an interval TimeSlot with the bounds of the TimeSlot object'''
+        """return an interval TimeSlot with the bounds of the TimeSlot object"""
         return TimeSlot(self.bounds)
 
     @property
     def bounds(self):
-        '''return a tuple with the start and end dates with isoformat string'''
-        return (TimeSlot.form(self.slot[0].start), TimeSlot.form(self.slot[len(self) - 1].end))
+        """return a tuple with the start and end dates with isoformat string"""
+        return (
+            TimeSlot.form(self.slot[0].start),
+            TimeSlot.form(self.slot[len(self) - 1].end),
+        )
 
     @classmethod
     def cast(cls, value):
-        '''
+        """
         tranform a value (unique or list) in a list of `TimeSlot`
 
         *Parameters*
@@ -208,7 +221,7 @@ class TimeSlot:
         *Returns*
 
         - **list** : list of `TimeSlot`
-        '''
+        """
         if isinstance(value, list):
             try:
                 return [cls(val) for val in value]
@@ -219,12 +232,12 @@ class TimeSlot:
 
     @property
     def Centroid(self):
-        '''return a TimeSlot with the date corresponding to the middle of the duration'''
+        """return a TimeSlot with the date corresponding to the middle of the duration"""
         return TimeSlot(self.instant)
 
     @property
     def duration(self):
-        '''cumulative duration of each interval (timedelta format)'''
+        """cumulative duration of each interval (timedelta format)"""
         duration = datetime.timedelta()
         for interv in self.slot:
             duration += interv.duration
@@ -238,7 +251,7 @@ class TimeSlot:
 
     @property
     def instant(self):
-        '''return the date corresponding to the middle of the duration (datetime format)'''
+        """return the date corresponding to the middle of the duration (datetime format)"""
         duration = self.duration / 2
         for interv in self.slot:
             if duration > interv.duration:
@@ -248,29 +261,29 @@ class TimeSlot:
 
     @property
     def middle(self):
-        '''return the date corresponding to the middle of the bounds (datetime format)'''
+        """return the date corresponding to the middle of the bounds (datetime format)"""
         return self.bounds.instant
 
     @property
     def name(self):
-        ''' class name'''
+        """class name"""
         return self.__class__.__name__
 
     @property
     def interval(self):
-        '''return a list with the start and end dates (datetime format)'''
+        """return a list with the start and end dates (datetime format)"""
         return [self.slot[0].start, self.slot[len(self) - 1].end]
 
     @property
     def stype(self):
-        '''return a string with the type of TimeSlot (instant, interval, slot)'''
+        """return a string with the type of TimeSlot (instant, interval, slot)"""
         if len(self.slot) == 1:
             return self.slot[0].stype
         else:
-            return 'slot'
+            return "slot"
 
     def json(self, **kwargs):
-        '''
+        """
         Return json/bson structure with the list of TimeInterval.
 
         *Parameters*
@@ -278,22 +291,23 @@ class TimeSlot:
         - **encoded** : defaut False - if False return dict, else return json string/bson bytes
         - **encode_format** : defaut 'json' - return json, bson or cbor format
 
-        *Returns* : string or dict'''
-        option = {'encoded': False, 'encode_format': 'json'} | kwargs
+        *Returns* : string or dict"""
+        option = {"encoded": False, "encode_format": "json"} | kwargs
         if len(self) == 1:
-            js = self.slot[0].json(
-                encoded=False, encode_format=option['encode_format'])
+            js = self.slot[0].json(encoded=False, encode_format=option["encode_format"])
         else:
-            js = [interv.json(
-                encoded=False, encode_format=option['encode_format']) for interv in self.slot]
-        if option['encoded'] and option['encode_format'] == 'json':
+            js = [
+                interv.json(encoded=False, encode_format=option["encode_format"])
+                for interv in self.slot
+            ]
+        if option["encoded"] and option["encode_format"] == "json":
             return json.dumps(js, cls=TimeSlotEncoder)
-        if option['encoded'] and option['encode_format'] == 'bson':
+        if option["encoded"] and option["encode_format"] == "bson":
             return bson.encode(js)
         return js
 
     def link(self, other):
-        '''
+        """
         Return the status (string) of the link between two TimeSlot (self and other).
         - equals     : if self and other are the same
         - disjoint   : if self's intervals and other's intervals are all disjoint
@@ -305,47 +319,47 @@ class TimeSlot:
 
         - **other** : TimeSlot to be compared
 
-        *Returns* 
+        *Returns*
 
-        - **tuple** : (string(status), boolean(full or not))'''
-        if self.stype == 'instant':
+        - **tuple** : (string(status), boolean(full or not))"""
+        if self.stype == "instant":
             point, oslot = self[0], other
-        elif other.stype == 'instant':
+        elif other.stype == "instant":
             point, oslot = other[0], self
         else:
             point = None
         if point is not None:
             contains = equals = False
             for interv in oslot:
-                contains = contains or interv.link(point) == 'contains'
-                equals = equals or interv.link(point) == 'equals'
+                contains = contains or interv.link(point) == "contains"
+                equals = equals or interv.link(point) == "equals"
             if equals and not contains:
-                return ('equals', True)
+                return ("equals", True)
             if contains and point == other[0]:
-                return ('contains', True)
+                return ("contains", True)
             if contains and point == self[0]:
-                return ('within', True)
-            return ('disjoint', True)
+                return ("within", True)
+            return ("disjoint", True)
         else:
             union = self + other
-            link = 'intersects'
+            link = "intersects"
             full = True
             if union.duration == self.duration == other.duration:
                 full = len(union) == len(self) == len(other)
-                link = 'equals'
+                link = "equals"
             elif union.duration == self.duration:
                 full = len(union) == len(self)
-                link = 'contains'
+                link = "contains"
             elif union.duration == other.duration:
                 full = len(union) == len(other)
-                link = 'within'
+                link = "within"
             elif union.duration == self.duration + other.duration:
                 full = len(union) == len(self) + len(other)
-                link = 'disjoint'
+                link = "disjoint"
             return (link, full)
 
     def timetuple(self, index=0, encoded=False):
-        '''
+        """
         Return json structure with the list of TimeInterval (timetuple filter).
 
         *Parameters*
@@ -362,7 +376,7 @@ class TimeSlot:
             - 8 : isdst (1 when daylight savings time is in effect, 0 when is not)
         - **encoded** : defaut False - if True return string, else return dict
 
-        *Returns* : string or dict'''
+        *Returns* : string or dict"""
         if len(self) == 1:
             js = self.slot[0].timetuple(index, False)
         else:
@@ -373,12 +387,12 @@ class TimeSlot:
             return js
 
     def union(self, other):
-        ''' Add other's values to self's values in a new TimeSlot (same as __add__)'''
+        """Add other's values to self's values in a new TimeSlot (same as __add__)"""
         return self.__add__(other)
 
     @staticmethod
     def _reduced(listinterv):
-        ''' return an ordered and non-overlapping list of TimeInterval from any TimeInterval list'''
+        """return an ordered and non-overlapping list of TimeInterval from any TimeInterval list"""
         if not isinstance(listinterv, list) or len(listinterv) == 0:
             return []
         union = []
@@ -387,11 +401,11 @@ class TimeSlot:
         i = j = 0
         while i < len(slot):
             for j in range(i + 1, len(slot)):
-                if interv.link(slot[j]) == 'within':
+                if interv.link(slot[j]) == "within":
                     interv = slot[j]
-                elif interv.link(slot[j]) == 'intersects':
+                elif interv.link(slot[j]) == "intersects":
                     interv = interv.union(slot[j])
-                elif interv.link(slot[j]) == 'disjoint':
+                elif interv.link(slot[j]) == "disjoint":
                     union.append(interv)
                     interv = slot[j]
                     i = j
@@ -403,20 +417,23 @@ class TimeSlot:
 
     @staticmethod
     def _listed(idx):
-        '''transform a tuple of tuple in a list of list'''
-        if not isinstance(idx, str) and hasattr(idx, '__iter__'):
-            return [val if not isinstance(val, tuple) else TimeSlot._listed(val) for val in idx]
+        """transform a tuple of tuple in a list of list"""
+        if not isinstance(idx, str) and hasattr(idx, "__iter__"):
+            return [
+                val if not isinstance(val, tuple) else TimeSlot._listed(val)
+                for val in idx
+            ]
         return idx
 
 
-class TimeInterval:    # !!! interval
-    '''        
+class TimeInterval:  # !!! interval
+    """
     *Attributes (for @property see methods)* :
 
     - **start** : datetime Object - start of `TimeInterval`
     - **end**   : datetime Object - end of `TimeInterval`
 
-    The methods defined in this class are : 
+    The methods defined in this class are :
 
     *dynamic value property (getters)*
 
@@ -433,18 +450,18 @@ class TimeInterval:    # !!! interval
     - `TimeInterval.link`
     - `TimeInterval.timetuple`
     - `TimeInterval.union`
-    '''
+    """
 
     def __init__(self, val=ES.nullDate):
-        '''
+        """
         TimeInterval constructor.
 
         *Parameters*
 
-        - **val** : date, interval (default ES.nullDate) - with several formats 
+        - **val** : date, interval (default ES.nullDate) - with several formats
         (list, string, datetime, TimeInterval, numpy datetime64, pandas timestamp)
 
-        *Returns* : None'''
+        *Returns* : None"""
         self.start = self.end = ES.nullDate
         if isinstance(val, str):
             try:
@@ -468,20 +485,25 @@ class TimeInterval:    # !!! interval
 
     # def __repr__(self):
     def __str__(self):
-        ''' return the type of interval and the json representation'''
-        return self.stype + '\n' + self.json(encoded=True, encode_format='json')
+        """return the type of interval and the json representation"""
+        return self.stype + "\n" + self.json(encoded=True, encode_format="json")
 
     def __repr__(self):
         # if self.stype == 'instant' : return self.__class__.__name__ + f'("{self.start}")'
         # return self.__class__.__name__ + f'(["{self.start}","{self.end}"])'
-        return self.__class__.__name__ + '(' + self.json(encoded=True, encode_format='json') + ')'
+        return (
+            self.__class__.__name__
+            + "("
+            + self.json(encoded=True, encode_format="json")
+            + ")"
+        )
 
     def __eq__(self, other):
-        '''equal if the 'start' and 'end' dates are equals'''
+        """equal if the 'start' and 'end' dates are equals"""
         return self.start == other.start and self.end == other.end
 
     def __lt__(self, other):
-        '''compare the earliest dates (start)'''
+        """compare the earliest dates (start)"""
         return self.start < other.start
 
     def __hash__(self):
@@ -490,34 +512,34 @@ class TimeInterval:    # !!! interval
 
     @property
     def bounds(self):
-        '''return a tuple with the start and end dates with isoformat string'''
+        """return a tuple with the start and end dates with isoformat string"""
         return (TimeSlot.form(self.start), TimeSlot.form(self.end))
 
     @property
     def Centroid(self):
-        '''return a TimeInterval with the date corresponding to the middle of the interval'''
+        """return a TimeInterval with the date corresponding to the middle of the interval"""
         return TimeInterval(self.instant)
 
     @property
     def duration(self):
-        '''duration between 'end' and 'start' date (timedelta format)'''
+        """duration between 'end' and 'start' date (timedelta format)"""
         return self.end - self.start
 
     @property
     def instant(self):
-        '''return the date corresponding to the middle of the duration (datetime format)'''
+        """return the date corresponding to the middle of the duration (datetime format)"""
         return self.start + (self.end - self.start) / 2
 
     @property
     def stype(self):
-        '''return a string with the type of TimeInterval (instant, interval)'''
+        """return a string with the type of TimeInterval (instant, interval)"""
         if self.start == self.end:
-            return 'instant'
-        return 'interval'
+            return "instant"
+        return "interval"
 
-    def json(self, encoded=False, encode_format='json'):
-        '''
-        Return json/bson structure (date if 'instant' or [start, end] if 'interval') 
+    def json(self, encoded=False, encode_format="json"):
+        """
+        Return json/bson structure (date if 'instant' or [start, end] if 'interval')
         with datetime or datetime.isoformat for dates.
 
         *Parameters*
@@ -525,26 +547,26 @@ class TimeInterval:    # !!! interval
         - **encoded** : defaut False - if True return dict, else return json string/bson bytes
         - **encode_format**   : defaut 'json' - return json, bson or cbor format
 
-        *Returns* : string or dict'''
-        if self.stype == 'instant':
+        *Returns* : string or dict"""
+        if self.stype == "instant":
             js = self.start
         else:
             js = [self.start, self.end]
-        '''if   self.stype == 'instant' : 
+        """if   self.stype == 'instant' :
             if encode_format == 'bson':  js = self.start
-            else:           
+            else:
                 js = TimeSlot.form(self.start)
-        elif self.stype == 'interval' : 
+        elif self.stype == 'interval' :
             if encode_format == 'bson':  js = [self.start, self.end]
-            else:           js = [TimeSlot.form(self.start), TimeSlot.form(self.end)]'''
-        if encoded and encode_format == 'json':
+            else:           js = [TimeSlot.form(self.start), TimeSlot.form(self.end)]"""
+        if encoded and encode_format == "json":
             return json.dumps(js, cls=TimeSlotEncoder)
-        if encoded and encode_format == 'bson':
+        if encoded and encode_format == "bson":
             return bson.encode(js)
         return js
 
     def link(self, other):
-        '''
+        """
         Return the status (string) of the link between two TimeIntervals (self and other).
         - equals     : if self and other are the same
         - disjoint   : if self's interval and other's interval are disjoint
@@ -556,19 +578,19 @@ class TimeInterval:    # !!! interval
 
         - **other** : TimeInterval to be compared
 
-        *Returns* : string'''
+        *Returns* : string"""
         if self.start == other.start and self.end == other.end:
-            return 'equals'
+            return "equals"
         if self.start <= other.start and self.end >= other.end:
-            return 'contains'
+            return "contains"
         if self.start >= other.start and self.end <= other.end:
-            return 'within'
+            return "within"
         if self.start <= other.end and self.end >= other.start:
-            return 'intersects'
-        return 'disjoint'
+            return "intersects"
+        return "disjoint"
 
     def timetuple(self, index=0, encoded=False):
-        '''
+        """
         Return json structure (timetuple filter).
 
         *Parameters*
@@ -585,12 +607,12 @@ class TimeInterval:    # !!! interval
             - 8 : isdst (1 when daylight savings time is in effect, 0 when is not)
         - **encoded** : defaut False - if True return string, else return dict
 
-        *Returns* : string or dict'''
+        *Returns* : string or dict"""
         if index not in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
             return None
-        if self.stype == 'instant':
+        if self.stype == "instant":
             js = self.start.timetuple()[index]
-        elif self.stype == 'interval':
+        elif self.stype == "interval":
             js = [self.start.timetuple()[index], self.end.timetuple()[index]]
         if encoded:
             return json.dumps(js, cls=TimeSlotEncoder)
@@ -598,15 +620,17 @@ class TimeInterval:    # !!! interval
             return js
 
     def union(self, other):
-        ''' Add other's values to self's values in a new TimeInterval 
-        if self and other are not disjoint'''
-        if self.link(other) != 'disjoint':
-            return TimeInterval([min(self.start, other.start), max(self.end, other.end)])
+        """Add other's values to self's values in a new TimeInterval
+        if self and other are not disjoint"""
+        if self.link(other) != "disjoint":
+            return TimeInterval(
+                [min(self.start, other.start), max(self.end, other.end)]
+            )
         else:
             return None
 
     def _initInterval(self, val):
-        '''initialization of start and end dates from a list'''
+        """initialization of start and end dates from a list"""
         self.start = self.end = self._initDat(val[0])
         if len(val) > 1:
             self.end = self._initDat(val[1])
@@ -616,13 +640,13 @@ class TimeInterval:    # !!! interval
             self.start, self.end = self.end, self.start
 
     def _initDat(self, val):
-        '''initialization of start and end dates from a unique value 
-        (datetime, string, numpy.datetime64, pandas Timestamp)'''
+        """initialization of start and end dates from a unique value
+        (datetime, string, numpy.datetime64, pandas Timestamp)"""
         if isinstance(val, datetime.datetime):
             res = val
-            '''if val.tzinfo is None or val.tzinfo.utcoffset(val) is None:
+            """if val.tzinfo is None or val.tzinfo.utcoffset(val) is None:
                 res = val.astimezone(datetime.timezone.utc)
-            else: res = val'''
+            else: res = val"""
         elif isinstance(val, str):
             try:
                 res = datetime.datetime.fromisoformat(val)

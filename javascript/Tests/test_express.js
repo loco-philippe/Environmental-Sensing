@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 
 app.post('/', async function (req, res) {
   /* Problème : Requête exécutée jusqu'au bout même quand il y en a d'autre après, alors que le résultat n'est plus
-  nécessaire et ne sera de toute façon pas lu. 
+  nécessaire et ne sera de toute façon pas lu.
   Peut-on vraiment y faire quelque chose ?
   */
   let client, database, collection;
