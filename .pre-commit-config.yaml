@@ -1,0 +1,29 @@
+exclude: '\\*.htm*'
+
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0  # the release, git tag, or commit you want to use
+    hooks:
+      - id: check-toml
+      - id: check-yaml
+      - id: check-json
+      - id: check-docstring-first
+      - id: check-ast
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.4.5
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+
+  #- repo: https://github.com/numpy/numpydoc
+  #  rev: v1.6.0
+  #  hooks:
+  #    - id: numpydoc-validation
