@@ -2,7 +2,7 @@ exclude: '\\*.htm*'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0  # the release, git tag, or commit you want to use
+    rev: v5.0.0  # the release, git tag, or commit you want to use
     hooks:
       - id: check-toml
       - id: check-yaml
@@ -14,7 +14,7 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.4.5
+    rev: v0.9.4
     hooks:
       # Run the linter.
       - id: ruff
