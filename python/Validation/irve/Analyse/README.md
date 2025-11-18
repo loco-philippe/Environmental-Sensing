@@ -11,7 +11,7 @@ Les travaux réalisés sont présentés dans le [document d'analyse](https://git
 
 ## 2 - Données IRVE
 
-Les données IRVE sont décrites dans le [schéma de données](https://schema.data.gouv.fr/etalab/schema-irve-statique/2.2.0/documentation.html) mis à disposition. Celui-ci décrit chacun des champs qui le compose.
+Les données IRVE sont décrites dans le [schéma de données](https://schema.data.gouv.fr/etalab/schema-irve-statique/2.3.1/documentation.html) mis à disposition. Celui-ci décrit chacun des champs qui le compose.
 Par contre, il ne décrit pas la structure globale des données qui permet de comprendre les dépendances entre chaque champs.
 
 Le modèle de données ci-dessous identifie les principales entités que décrivent les champs et les relations entre celles-ci (station en itinerance uniquement et hors historique des mises à jour):
@@ -129,7 +129,7 @@ Parmi ces 42 000 pdc, 1 600 présentent des écarts par rapport aux règles rete
 
 Les fichiers sont disponibles sur [ce lien](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Validation/irve/Analyse) et correspondent aux trois dernières consolidations (notation : jj pour jour, mm pour mois, aaaa pour année).
 
-- fichier d'origine : 'consolidation-etalab-schema-irve-statique-v-2.2.0-aaaammjj.csv'
+- fichier d'origine : 'consolidation-etalab-schema-irve-statique-v-2.3.1-aaaammjj.csv' (éventuellement zippé)
 - fichier d'origine avec deux champs booléens supplémentaires 'lignes_a_corriger' et 'doublons_a_supprimer' : 'IRVE_itinerance_completaaaa-mm-jj.csv'
 - fichier des lignes à corriger avec un champ (booléen) par contrôle (soit 12 champs nommés 'champ1 - champ2'). Par exemple, le champ 'nom_station - id_station_itinerance' lorsqu'il est à FALSE indique les lignes pour lesquelles on a plusieurs 'nom_station' pour un même 'id_station_itinerance'. Ce fichier est nommé : 'IRVE_itinerance_residuelaaaa-mm-jj.csv'. Il est également disponible pour chacun des cinq opérateurs présentant le plus de lignes à corriger sous la forme 'IRVE_itinerance_residuel_operateur_aaaa-mm-jj.csv'
 - fichier des données validées : 'IRVE_itinerance_valideaaaa-mm-jj.csv'
@@ -142,4 +142,4 @@ Les fichiers sont disponibles sur [ce lien](https://github.com/loco-philippe/Env
 
 ### code source
 
-- Jupyter Notebook : [IRVE_v3.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Validation/irve/Analyse/IRVE_v3.ipynb)
+- Jupyter Notebook : [IRVE_v4.ipynb](https://github.com/loco-philippe/Environmental-Sensing/blob/main/python/Validation/irve/Analyse/IRVE_v4.ipynb)
