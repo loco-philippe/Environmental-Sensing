@@ -73,4 +73,4 @@ Le second filtrage revient à privilégier le niveau de qualité sur la "fraiche
 ### Validation d'une méthode de dédoublonnage
 
 Les doublons génèrent des incohérences de structure (contraintes d'intégrité non respectées).
-Pour mesurer l'efficacité du dédoublonnage, on peut alors comparer le niveau d'intégrité du jeu de données dédoublonné ([voir exemple](http://nbviewer.org/github/loco-philippe/Environmental-Sensing/tree/main/python/Validation/irve/Analyse/analyse_dedoublonnage.ipynb)).
+Pour mesurer l'efficacité du dédoublonnage, on peut alors comparer le niveau d'intégrité du jeu de données dédoublonné ([voir exemple](https://github.com/loco-philippe/Environmental-Sensing/blob/test-donnees-vincent/python/Validation/irve/Analyse/analyse_dedoublonnage.ipynb)).
