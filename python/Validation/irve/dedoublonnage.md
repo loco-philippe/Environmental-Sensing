@@ -47,7 +47,7 @@ Nota : On peut aussi trouver ce cas entre deux stations d'une même origine. Par
 
 ### Processus
 
-Le processus est le suivant :
+Le processus proposé est le suivant :
 
 - étape 1 : extraction des stations
   - clef d'unicité : id_station_itinerance, date_maj, datagouv_organization_or_owner, 
@@ -73,4 +73,4 @@ Le second filtrage revient à privilégier le niveau de qualité sur la "fraiche
 ### Validation d'une méthode de dédoublonnage
 
 Les doublons génèrent des incohérences de structure (contraintes d'intégrité non respectées).
-Pour mesurer l'efficacité du dédoublonnage, on peut alors comparer le niveau d'intégrité du jeu de données dédoublonné ([voir exemple]((http://nbviewer.org/github/loco-philippe/Environmental-Sensing/tree/main/python/Validation/irve/Analyse/analyse_dedoublonnage.ipynb))).
+Pour mesurer l'efficacité du dédoublonnage, on peut alors comparer le niveau d'intégrité du jeu de données dédoublonné ([voir exemple](http://nbviewer.org/github/loco-philippe/Environmental-Sensing/tree/main/python/Validation/irve/Analyse/analyse_dedoublonnage.ipynb)).
