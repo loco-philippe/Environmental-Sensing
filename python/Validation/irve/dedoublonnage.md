@@ -73,7 +73,7 @@ Deux options sont envisageables (autres ?) :
   - pour un identifiant donné, conservation des lignes avec datagouv_organization_or_owner le plus prioritaire
   - si plusieurs lignes, application du filtrage par date.
 
-Le second filtrage revient à privilégier le niveau de qualité sur la "fraicheur".
+Le second filtrage revient à privilégier la "qualité" sur la "fraicheur".
 
 ### Processus de dédoublonnage direct
 
@@ -97,6 +97,9 @@ Le fichier résultant contient alors :
 ### Processus de dédoublonnage indirect
 
 Le processus proposé est le suivant :
+
+- étape 1 : extraction des stations issues du dédoublonnage direct
+- étape 2 : dédoublonnage des stations multi-origine
 
 ### Validation d'une méthode de dédoublonnage
 
