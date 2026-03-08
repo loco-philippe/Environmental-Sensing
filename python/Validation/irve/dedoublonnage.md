@@ -54,12 +54,12 @@ Dans Qualicharge, quatre types d'opération impactent le dédoublonnage :
 
 - le décommissionnement partiel qui se traduit par une désactivation d'un point de recharge obsolète,
   Ce cas est traité dans le dédoublonnage direct puisqu'un point de recharge décommissionné n'est pas envoyé par Qualicharge, il a donc une date de mise à jour différente et antérieure aux autres points de recharge.
-- le décommissionnement total qui se traduit par une désactivation d'une station obsolète (et de tous les point de recharge),
-  à clarifier
+- le décommissionnement total qui se traduit par une désactivation d'une station obsolète (et de tous les points de recharge),
+  (à clarifier et à compléter)
 - les changements de station qui consistent à déplacer les points de recharge d'une station vers une autre (sans changer d'identifiant des points de recharge)
-- les migration d'unité d'exploitation qui se traduisent par la création de nouveaux identifiants tout en gardant les même valeurs d'attributs
-
-( à compléter)
+  Ce cas est traité par le dédoublonnage direct avec le filtrage par date des liens entre points de recharge et stations.
+- les migrations d'unité d'exploitation qui se traduisent par la création de nouveaux identifiants tout en gardant les même valeurs d'attributs
+  Ce cas est traité en filtrant les stations ayant des unités d'exploitation différentes et des attributs distinctifs identiques (coordonnées, adresse, nom) et en appliquant les critères de dédoublonnage par date.
 
 ## Mise en oeuvre
 
