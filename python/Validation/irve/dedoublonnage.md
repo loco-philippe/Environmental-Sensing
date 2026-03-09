@@ -1,12 +1,14 @@
 # Dédoublonnage
 
-Les doublons concernent les points de recharge et les stations.
+L'arrivée de Qualicharge a conduit à une augmentation significative des doublons. Cette situation est liée au fait que le canal Qualicharge n'a pas remplacé les canaux existants.
 
 ## Identification des entités
 
+La notion de doublon concerne les points de recharge et les stations.
+
 Les entités stations et points de recharge sont identifiés par leur Id (id_pdc_itinerance et id_station_itinerance).
 
-Dans le cas du fichier consolidé IRVE, on peut intègrer des données de plusieurs origines et avec également un historique :
+Dans le cas du fichier consolidé IRVE, on peut trouver des données de plusieurs origines et avec également un historique :
 
 - date de mise à jour (date_maj) : ceci permet de distinguer deux versions d'une même entité
 - date de chargement (last_modified) : ceci permet d'identifier le dernier chargement dans les données brutes
@@ -15,7 +17,7 @@ Dans le cas du fichier consolidé IRVE, on peut intègrer des données de plusie
 Il faut également prendre en compte que :
 
 - la date de modification est un attribut rattaché à la station (cf schéma de données),
-- l'origine et la date de chargement sont également deux attribur=ts rattachés à la station de par le processus de chargement des données
+- l'origine et la date de chargement sont également deux attributs rattachés à la station de par le processus de chargement des données
 Ceci signifie qu'il ne peut y avoir de panachage des points de recharge entre origine, date de mise à jour ou date de chargement (on ne peut pas avoir une station composée de points de recharge avec des dates de mise à jour différentes ou avec des origines différentes).
 
 Une "station instanciée" est donc définie de façon unique par son identifiant, sa date de mise à jour, sa date de chargement et son origine.
@@ -100,9 +102,28 @@ Le processus proposé est le suivant :
 
 - étape 1 : extraction des stations issues du dédoublonnage direct
 - étape 2 : dédoublonnage des stations multi-origine
+  - choix des attributs de station à utiliser comme critère d'unicité entre deux origines
+  - élimination (suivant la stratégie de filtrage) des stations avec les champs 'attribut' identiques et venant de plusieurs origines
+- étape 3 : dédoublonnage des stations Qualicharge ayant migré d'unité d'exploitation
+  - identification des doublons de stations Qualicharge avec attributs identiques mais unité d'exploitation différente
+  - conservation des doublons les plus récents
+- étape 4 : Dédoublonnage des pdc
+  - pour un même id_pdc_itinerance élimination des instances de pdc suivant la stratégie de filtrage définie
 
 ### Validation d'une méthode de dédoublonnage
 
-Trois types de validation du dédoublonnage
-Les doublons génèrent des incohérences de structure (contraintes d'intégrité non respectées).
-Pour mesurer l'efficacité du dédoublonnage, on peut alors comparer le niveau d'intégrité du jeu de données dédoublonné ([voir exemple](https://github.com/loco-philippe/Environmental-Sensing/blob/test-donnees-vincent/python/Validation/irve/Analyse/analyse_dedoublonnage.ipynb)).
+Trois types de validation du dédoublonnage :
+
+- incohérence de structure :
+  Les doublons génèrent des incohérences de structure (contraintes d'intégrité non respectées).
+  Pour mesurer l'efficacité du dédoublonnage, on peut alors comparer le niveau d'intégrité du jeu de données dédoublonné ([voir exemple](https://github.com/loco-philippe/Environmental-Sensing/blob/test-donnees-vincent/python/Validation/irve/Analyse/analyse_dedoublonnage.ipynb)).
+- volume de points de recharge conservés :
+  L'élimination des doublons conduit à éliminer des points de recharge. L'élimination doit donc être minimale.
+- validation sur des donnnées de test :
+  Le dédoublonnage peut être vérifié sur des exemples représentatifs des doublons identifiés.
+
+Une méthode de dédoublonnage sera satisfaisante si :
+
+- elle réduit les incohérence de structure,
+- elle maintien un niveau élevé de points de recharge,
+- elle traite les cas de doublons constatés
