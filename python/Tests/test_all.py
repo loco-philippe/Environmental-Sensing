@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sat Jul 30 19:03:20 2022
 
@@ -6,7 +5,9 @@ Created on Sat Jul 30 19:03:20 2022
 """
 
 import unittest
+
 from observation import Es
+
 # from test_esvalue import TestObsUnitaire
 
 if __name__ == "__main__":

@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 Created on Fri Jul 29 12:48:16 2022
 
 @author: philippe@loco-labs.io
 """
 
-from collections import Counter
-from itertools import product
 import datetime
 import re
-import numpy as np
+from collections import Counter
+from itertools import product
 
+import numpy as np
 from observation.esconstante import ES
 from observation.esvalue_base import ESValue
 
@@ -27,8 +26,8 @@ def identity(*args, **kwargs):
 class util:
     """common functions for Field and Dataset class"""
 
-    c1 = re.compile("\d+\.?\d*[,\-_ ;:]")
-    c2 = re.compile("[,\-_ ;:]\d+\.?\d*")
+    c1 = re.compile(r"\d+\.?\d*[,\-_ ;:]")
+    c2 = re.compile(r"[,\-_ ;:]\d+\.?\d*")
 
     @staticmethod
     def canonorder(lenidx):
