@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Aug  1 22:05:08 2021
 
@@ -8,43 +7,43 @@ The `observation.test_esvalue` module contains the unit tests (class unittest) f
 `ESValue` functions.
 """
 
-import unittest
-import json
 import datetime
-from test_obs import (
-    lyon,
-    paris,
-    pol1,
-    pol75,
-    t1,
-    pprop_pm25,
-    t2,
-    s1,
-    t1n,
-    matin,
-    travail,
-    pt1,
-    tnull,
-    pprop_pm10,
-    prop_pm25,
-    pol2,
-    pol13,
-    aprem,
-)
+import json
+import unittest
 from itertools import product
+
 from observation import (
-    Observation,
-    NamedValue,
-    DatationValue,
-    LocationValue,
-    PropertyValue,
-    ExternValue,
-    ESValue,
-    Dataset,
     ES,
+    Dataset,
+    DatationValue,
+    ESValue,
+    ExternValue,
+    LocationValue,
+    NamedValue,
+    Observation,
+    PropertyValue,
     util,
 )
-
+from test_obs import (
+    aprem,
+    lyon,
+    matin,
+    paris,
+    pol1,
+    pol2,
+    pol13,
+    pol75,
+    pprop_pm10,
+    pprop_pm25,
+    prop_pm25,
+    pt1,
+    s1,
+    t1,
+    t1n,
+    t2,
+    tnull,
+    travail,
+)
 
 # couverture tests (True if non passed)----------------------------------------
 simple = False  # False
