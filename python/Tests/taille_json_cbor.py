@@ -1,17 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue May  3 09:31:11 2022
 
 @author: a179227
 """
 
-from datetime import datetime, timezone
-import math
 import json
+import math
+from datetime import datetime, timezone
+
 import cbor2
-from observation import Observation
 from esconstante import ES
-from test_observation import obs_1, dat1, loc1, _res, prop1
+from observation import Observation
+from test_observation import _res, dat1, loc1, obs_1, prop1
 
 
 def round_half(x):
