@@ -1,7 +1,6 @@
-from flask import Flask, request, render_template, abort
-
-from pymongo import MongoClient
 from essearch import ESSearch, empty_request
+from flask import Flask, abort, render_template, request
+from pymongo import MongoClient
 
 app = Flask(__name__)
 
