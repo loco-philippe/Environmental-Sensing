@@ -55,16 +55,16 @@ result = ESSearch(collection,
 """
 
 import datetime
-import shapely.geometry
-from pymongo.collection import Collection
-from pymongo.cursor import Cursor
-from pymongo.command_cursor import CommandCursor
-import bson
 
+import bson
+import shapely.geometry
 from observation.esobservation import Observation
 from observation.field import Field
-from observation.util import util
 from observation.timeslot import TimeSlot
+from observation.util import util
+from pymongo.collection import Collection
+from pymongo.command_cursor import CommandCursor
+from pymongo.cursor import Cursor
 
 dico_alias_mongo = {  # dictionnary of the different names accepted for each comparator and each given type. <key>:<value> -> <accepted name>:<name in MongoDB>
     # any type other than those used as keys is considered non valid
@@ -210,12 +210,12 @@ _definfeq = lambda x, y: x <= y
 _definf = lambda x, y: x < y
 _defin = lambda x, y: x in y
 
-_timinfeq = (
-    lambda x, y: x.bounds[0] <= y
+_timinfeq = lambda x, y: (
+    x.bounds[0] <= y
 )  # at least one element of the TimeSlot is lte y
 _timinf = lambda x, y: x.bounds[0] < y  # at least one element of the TimeSlot is lt y
-_timsupeq = (
-    lambda x, y: x.bounds[1] >= y
+_timsupeq = lambda x, y: (
+    x.bounds[1] >= y
 )  # at least one element of the TimeSlot is gte y
 _timsup = lambda x, y: x.bounds[1] > y  # at least one element of the TimeSlot is gt y
 _timeq = lambda x, y: x == TimeSlot(y)
@@ -1414,7 +1414,7 @@ class ESSearch:
 
         if cond is None:
             return True
-        if "inverted" in cond and cond["inverted"]:
+        if cond.get("inverted"):
             return not self._condcheck(item, cond | {"inverted": False})
         if cond["comparator"] is None and cond["operand"] is None:
             return True
