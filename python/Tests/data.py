@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Fri Oct 14 21:36:10 2022
 
@@ -6,8 +5,9 @@ Created on Fri Oct 14 21:36:10 2022
 """
 
 import datetime
-from observation import Observation as Obs
 from pprint import pprint
+
+from observation import Observation as Obs
 
 # %% fonctions
 
@@ -544,8 +544,8 @@ if __name__ == "__main__":
         )
 
     if True:
-        from test_mongo import clientMongo
         from essearch import insert_to_mongo
+        from test_mongo import clientMongo
 
         client = clientMongo()
         collec = client["test_search"]["jeu_data_py3"]

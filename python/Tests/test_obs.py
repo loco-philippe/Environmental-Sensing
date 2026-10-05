@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Aug  1 22:05:08 2021
 
@@ -8,24 +7,25 @@ The `observation.test_obs` module contains the unit tests (class unittest) for t
 Obs methods.
 """
 
-import unittest
-import json
 import copy  # , shapely
-import requests as rq
 import datetime
+import json
+import unittest
 from itertools import product
+
+import requests as rq
 
 # from datetime import datetime
 # from pymongo import MongoClient
 from observation import (
-    Observation,
-    NamedValue,
-    DatationValue,
-    LocationValue,
-    PropertyValue,
-    ESValue,
-    Dataset,
     ES,
+    Dataset,
+    DatationValue,
+    ESValue,
+    LocationValue,
+    NamedValue,
+    Observation,
+    PropertyValue,
 )
 
 # couverture tests (True if non passed)----------------------------------------
@@ -55,7 +55,7 @@ def _loc(n):
     return (ES.loc_classES, [[5 + i, 20 + i] for i in range(n)])
 
 
-with open("..\Examples\Observation\departements-version-simplifiee.geojson") as f:
+with open(r"..\Examples\Observation\departements-version-simplifiee.geojson") as f:
     dp = f.read()
 dpt = json.loads(dp)["features"]
 # https://github.com/gregoiredavid/france-geojson

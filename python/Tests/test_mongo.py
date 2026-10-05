@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Aug  1 22:05:08 2021
 
@@ -11,9 +10,10 @@ The dataset used is defined in `observation.Tests.data.py`
 
 import unittest
 from datetime import datetime
+
 import requests as rq
-from pymongo import MongoClient
 from observation.essearch import ESSearch
+from pymongo import MongoClient
 
 # Requires the PyMongo package# https://api.mongodb.com/python/current
 # pathClient = 'mongodb+srv://ESobsUser:observation@esobs.gwpay.mongodb.net/test'
