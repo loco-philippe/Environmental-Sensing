@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Aug  2 14:51:23 2021
 
@@ -47,9 +46,8 @@ Documentation is available in other pages :
 
 """
 
-import json
 import datetime
-
+import json
 
 ListESValue = [
     "LocationValue",
@@ -588,5 +586,3 @@ class ESValue:
 class ESValueError(Exception):
     # %% ES except
     """ESValue Exception"""
-
-    pass

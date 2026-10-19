@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Sep 29 22:40:54 2022
 
@@ -6,7 +5,8 @@ Created on Thu Sep 29 22:40:54 2022
 """
 
 import pathlib
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")

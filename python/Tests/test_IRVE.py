@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Oct 31 11:34:02 2023
 
@@ -6,8 +5,9 @@ Created on Tue Oct 31 11:34:02 2023
 """
 
 from time import time
-from observation import Sdataset
+
 import pandas as pd
+from observation import Sdataset
 
 itinerance_5 = pd.read_csv("test_itinerance5.csv", sep=",", low_memory=False)
 
