@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sat Jan 29 22:44:05 2022
 
@@ -10,6 +9,7 @@ The `observation.test_analysis` module contains the unit tests (class unittest) 
 
 import unittest
 from pprint import pprint
+
 from observation import Dataset
 
 # l = [['i1', 0, 2, 0, 2], ['i2', 30, 12, 20, 15]]

@@ -1,17 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue May  3 09:31:11 2022
 
 @author: a179227
 """
 
-from datetime import datetime, timezone
-import math
 import json
+import math
+from datetime import UTC, datetime
+
 import cbor2
-from observation import Observation
 from esconstante import ES
-from test_observation import obs_1, dat1, loc1, _res, prop1
+from observation import Observation
+from test_observation import _res, dat1, loc1, obs_1, prop1
 
 
 def round_half(x):
@@ -47,7 +47,7 @@ dic = {
 }
 len(json.dumps(dic))  # len : 388
 len(
-    cbor2.dumps(dic, datetime_as_timestamp=True, timezone=timezone.utc, canonical=True)
+    cbor2.dumps(dic, datetime_as_timestamp=True, timezone=UTC, canonical=True)
 )  # len : 298
 
 dic2 = {
@@ -71,7 +71,7 @@ dic2 = {
     "x": {"d": "l"},
 }
 len(
-    cbor2.dumps(dic2, datetime_as_timestamp=True, timezone=timezone.utc, canonical=True)
+    cbor2.dumps(dic2, datetime_as_timestamp=True, timezone=UTC, canonical=True)
 )  # len 132
 
 dic2bis = {
@@ -95,9 +95,7 @@ dic2bis = {
     5: {0: 1},
 }
 len(
-    cbor2.dumps(
-        dic2bis, datetime_as_timestamp=True, timezone=timezone.utc, canonical=True
-    )
+    cbor2.dumps(dic2bis, datetime_as_timestamp=True, timezone=UTC, canonical=True)
 )  # len 123
 
 # %%% court
@@ -110,7 +108,7 @@ dic = {
 }
 len(json.dumps(dic))  # len : 142
 len(
-    cbor2.dumps(dic, datetime_as_timestamp=True, timezone=timezone.utc, canonical=True)
+    cbor2.dumps(dic, datetime_as_timestamp=True, timezone=UTC, canonical=True)
 )  # len : 110
 dic3 = {  # 1
     "d": datetime(2021, 1, 4, 10),  # 8  = 2 + 6
@@ -119,7 +117,7 @@ dic3 = {  # 1
     "s": round_half(51.348),  # 5  = 2 + 3
 }
 len(
-    cbor2.dumps(dic3, datetime_as_timestamp=True, timezone=timezone.utc, canonical=True)
+    cbor2.dumps(dic3, datetime_as_timestamp=True, timezone=UTC, canonical=True)
 )  # len 37
 
 dic4 = {  # 1
@@ -129,7 +127,7 @@ dic4 = {  # 1
     3: round_half(51.348),  # 4  = 1 + 3
 }
 len(
-    cbor2.dumps(dic4, datetime_as_timestamp=True, timezone=timezone.utc, canonical=True)
+    cbor2.dumps(dic4, datetime_as_timestamp=True, timezone=UTC, canonical=True)
 )  # len 32
 
 # %%% interne
