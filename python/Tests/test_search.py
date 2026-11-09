@@ -1,9 +1,11 @@
-import unittest
-from esobservation import Observation
-from pymongo import MongoClient
-from essearch import ESSearch, insert_to_mongo
 import datetime
 import time
+import unittest
+
+from esobservation import Observation
+from essearch import ESSearch, insert_to_mongo
+from pymongo import MongoClient
+
 # from dotenv import dotenv_values
 
 # config = dotenv_values(".env")
@@ -271,8 +273,8 @@ all_obs = {
                     "location",
                     [
                         {"type": "Point", "coordinates": [i, j]}
-                        for i in range(0, 4)
-                        for j in range(0, 4)
+                        for i in range(4)
+                        for j in range(4)
                     ],
                 ],
                 [

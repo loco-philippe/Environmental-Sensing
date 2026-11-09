@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Fri Mar 11 20:50:18 2022
 
@@ -8,12 +7,11 @@ The `observation.test_slot` module contains the unit tests (class unittest) for 
 `TimeSlot` functions.
 """
 
-import unittest
 import json
-
+import unittest
+from datetime import datetime, timedelta
 
 from timeslot import TimeSlot
-from datetime import datetime, timedelta
 
 matin = [datetime(2020, 2, 4, 8), datetime(2020, 2, 4, 12)]
 midi = [datetime(2020, 2, 4, 12), datetime(2020, 2, 4, 14)]

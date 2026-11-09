@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Aug  2 14:51:23 2021
 
@@ -46,17 +45,17 @@ Documentation is available in other pages :
 
 """
 
+import datetime
 import json
+from copy import copy
+
 import geojson
 import shapely.geometry
-import datetime
 from geopy import distance
-from copy import copy
-from openlocationcode import openlocationcode
-
 from observation.esconstante import ES, _classval
-from observation.esvalue_base import ESValueEncoder, ESValue
+from observation.esvalue_base import ESValue, ESValueEncoder
 from observation.timeslot import TimeSlot
+from openlocationcode import openlocationcode
 
 
 class DatationValue(ESValue):  # !!! début ESValue
@@ -386,7 +385,7 @@ class LocationValue(ESValue):  # !!! début LocationValue
 
     def _jsonValue(self, **kwargs):
         """return geoJson coordinates"""
-        if "geojson" in kwargs and kwargs["geojson"]:
+        if kwargs.get("geojson"):
             return self.__geo_interface__
         return self.coords
 
@@ -395,9 +394,7 @@ class LocationValue(ESValue):  # !!! début LocationValue
         """transform a GeoJSON coordinates (list) into a shapely geometry"""
         if isinstance(coord, tuple):
             coor = json.dumps(list(coord), cls=ESValueEncoder)
-        elif isinstance(coord, list):
-            coor = json.dumps(coord, cls=ESValueEncoder)
-        elif isinstance(coord, dict):
+        elif isinstance(coord, list) or isinstance(coord, dict):
             coor = json.dumps(coord, cls=ESValueEncoder)
         elif isinstance(coord, str):
             coor = coord
@@ -752,5 +749,3 @@ class ExternValue(ESValue):  # !!! début ResValue
 class ESValueError(Exception):
     # %% ES except
     """ESValue Exception"""
-
-    pass

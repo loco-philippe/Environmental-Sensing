@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Aug  3 23:40:06 2021
 
@@ -33,15 +32,16 @@ Documentation is available in other pages :
 import datetime
 import json
 from copy import copy
-import folium
-import cbor2
 
+import cbor2
+import folium
 from observation.dataset import Dataset
-from observation.util import util
-from observation.field_interface import FieldEncoder, CborDecoder
 from observation.esconstante import ES
-from observation.esvalue import LocationValue, DatationValue, PropertyValue, ExternValue
+from observation.esvalue import DatationValue, ExternValue, LocationValue, PropertyValue
 from observation.esvalue_base import ESValue, ESValueEncoder
+from observation.field_interface import CborDecoder, FieldEncoder
+from observation.util import util
+
 # from observation.dataset_analysis import Analysis
 
 
@@ -527,7 +527,7 @@ class Observation(Dataset):
             return cbor2.dumps(
                 js2,
                 datetime_as_timestamp=True,
-                timezone=datetime.timezone.utc,
+                timezone=datetime.UTC,
                 canonical=True,
             )
         return dic

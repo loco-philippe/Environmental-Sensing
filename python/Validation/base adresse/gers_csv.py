@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Apr  4 10:49:19 2022
 
@@ -22,10 +21,11 @@ import os
 os.chdir(
     "C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES"
 )
-from ilist import Ilist
-from pprint import pprint
-import json
 import csv
+import json
+from pprint import pprint
+
+from ilist import Ilist
 
 chemin = "C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/validation/base adresse/"
 

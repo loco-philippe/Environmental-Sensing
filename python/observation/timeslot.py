@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Jan  2 18:30:14 2022
 
@@ -48,10 +47,10 @@ Multiple operations between two objects can be performed :
 
 import datetime
 import json
+
+import bson
 import numpy
 import pandas
-import bson
-
 from observation.esconstante import ES  # , _identity
 
 
@@ -663,7 +662,7 @@ class TimeInterval:  # !!! interval
     @staticmethod
     def _dattz(val):
         if val.tzinfo is None or val.tzinfo.utcoffset(val) is None:
-            return val.replace(tzinfo=datetime.timezone.utc)
+            return val.replace(tzinfo=datetime.UTC)
         return val
 
 
