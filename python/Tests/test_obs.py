@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Aug  1 22:05:08 2021
 
@@ -8,24 +7,25 @@ The `observation.test_obs` module contains the unit tests (class unittest) for t
 Obs methods.
 """
 
-import unittest
-import json
 import copy  # , shapely
-import requests as rq
 import datetime
+import json
+import unittest
 from itertools import product
+
+import requests as rq
 
 # from datetime import datetime
 # from pymongo import MongoClient
 from observation import (
-    Observation,
-    NamedValue,
-    DatationValue,
-    LocationValue,
-    PropertyValue,
-    ESValue,
-    Dataset,
     ES,
+    Dataset,
+    DatationValue,
+    ESValue,
+    LocationValue,
+    NamedValue,
+    Observation,
+    PropertyValue,
 )
 
 # couverture tests (True if non passed)----------------------------------------
@@ -55,7 +55,7 @@ def _loc(n):
     return (ES.loc_classES, [[5 + i, 20 + i] for i in range(n)])
 
 
-with open("..\Examples\Observation\departements-version-simplifiee.geojson") as f:
+with open(r"..\Examples\Observation\departements-version-simplifiee.geojson") as f:
     dp = f.read()
 dpt = json.loads(dp)["features"]
 # https://github.com/gregoiredavid/france-geojson
@@ -108,15 +108,15 @@ matin = [datetime.datetime(2020, 2, 4, 8), datetime.datetime(2020, 2, 4, 12)]
 midi = [datetime.datetime(2020, 2, 4, 12), datetime.datetime(2020, 2, 4, 14)]
 aprem = [datetime.datetime(2020, 2, 4, 14), datetime.datetime(2020, 2, 4, 18)]
 travail = [matin, aprem]
-pt1 = datetime.datetime(2020, 2, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
-pt2 = datetime.datetime(2020, 5, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
-pt3 = datetime.datetime(2020, 7, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
-tnull = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
+pt1 = datetime.datetime(2020, 2, 4, 12, 5, 0).astimezone(datetime.UTC)
+pt2 = datetime.datetime(2020, 5, 4, 12, 5, 0).astimezone(datetime.UTC)
+pt3 = datetime.datetime(2020, 7, 4, 12, 5, 0).astimezone(datetime.UTC)
+tnull = datetime.datetime.min.replace(tzinfo=datetime.UTC)
 snull = (tnull.isoformat(), tnull.isoformat())
-t1 = datetime.datetime(2021, 2, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
+t1 = datetime.datetime(2021, 2, 4, 12, 5, 0).astimezone(datetime.UTC)
 t1n = json.dumps({"date1": t1.isoformat()})
-t2 = datetime.datetime(2021, 7, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
-t3 = datetime.datetime(2021, 5, 4, 12, 5, 0).astimezone(datetime.timezone.utc)
+t2 = datetime.datetime(2021, 7, 4, 12, 5, 0).astimezone(datetime.UTC)
+t3 = datetime.datetime(2021, 5, 4, 12, 5, 0).astimezone(datetime.UTC)
 """r1 = ResultValue('{"er":2}')
 r2 = ResultValue(23)
 r3 = ResultValue("coucou")
