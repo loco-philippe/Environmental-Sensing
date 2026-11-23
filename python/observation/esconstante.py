@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sun Aug  1 13:35:28 2021
 
@@ -9,20 +8,19 @@ The `python.observation.esconstante` module describes the constants and default 
 
 import datetime
 import math
-from typing import Dict
 
 
 def _classval():
     from observation import (
-        LocationValue,
-        DatationValue,
-        PropertyValue,
-        NamedValue,
-        ExternValue,
-        TimeSlot,
-        Observation,
         Dataset,
+        DatationValue,
+        ExternValue,
         Field,
+        LocationValue,
+        NamedValue,
+        Observation,
+        PropertyValue,
+        TimeSlot,
     )
 
     return {
@@ -47,11 +45,11 @@ def _classval():
 
 def _classESval():
     from observation.esobservation import (
-        LocationValue,
         DatationValue,
-        PropertyValue,
-        NamedValue,
         ExternValue,
+        LocationValue,
+        NamedValue,
+        PropertyValue,
     )
 
     return {
@@ -96,7 +94,7 @@ class Es:
 
     def _initStruct(self):
         # %% option initialization (dict)
-        self.mOption: Dict = {
+        self.mOption: dict = {
             "untyped": True,  # pas de type dans le json
             "encoded": True,  # sortie bson/json ou dict
             "encode_format": "json",  # sortie bson ou json
@@ -123,7 +121,7 @@ class Es:
         """ Default options for `observation.Observation`"""
 
         # %% observation initialization (dict)
-        self.vName: Dict = {
+        self.vName: dict = {
             self.obs_classES: self.obs,
             self.dat_classES: self.dat,
             self.loc_classES: self.loc,
@@ -159,7 +157,7 @@ class Es:
         """self.esObsId: dict = { self.dat_classES : 0, self.loc_classES : 1, self.prp_classES : 2, self.res_classES : 3}
         '''ordered dict value for classES '''  """
 
-        self.mTypeAtt: Dict = {
+        self.mTypeAtt: dict = {
             self.type: self.obs_classES,
             self.information: self.nul_classES,
             self.obs_resultTime: self.obs_classES,
@@ -183,10 +181,10 @@ class Es:
         """ Assignment of attributes to Observation objects """
 
         # %% Xarray initialization (dict)
-        self.nax: Dict = {"dat": 0, "loc": 1, "prp": 2, "d": 0, "l": 1, "p": 2}
+        self.nax: dict = {"dat": 0, "loc": 1, "prp": 2, "d": 0, "l": 1, "p": 2}
         """Dictionnary for axis Number """
 
-        self.axes: Dict = {
+        self.axes: dict = {
             0: "dat",  # axes : [0,1,2], [0,21], [2, 10], [1, 20]
             1: "loc",  # [0, 1],  [0, 2], [1, 2], [120]
             2: "prp",
@@ -197,7 +195,7 @@ class Es:
         }
         """Dictionnary for Xarray axis name """
 
-        self.xattrs: Dict = {
+        self.xattrs: dict = {
             "lon": {"units": "degrees", "standard_name": "longitude"},
             "lat": {"units": "degrees", "standard_name": "latitude"},
             "loc": {"units": "lon, lat", "standard_name": "longitude - latitude"},
@@ -207,7 +205,7 @@ class Es:
         """Dictionnary for Xarray attrs informations """
 
         # %% typevalue initialization (dict)
-        self.typeName: Dict = {
+        self.typeName: dict = {
             self.obs_valName: self.obs_clsName,
             self.dat_valName: self.dat_clsName,
             self.loc_valName: self.loc_clsName,
@@ -224,19 +222,19 @@ class Es:
             self.loc_classES: self.loc_clsName,
             self.prp_classES: self.prp_clsName,
         }
-        self.valname: Dict = dict(
+        self.valname: dict = dict(
             zip(list(self.typeName.values())[:10], list(self.typeName.keys())[:10])
         )
         self.className: list = list(self.typeName.values())
 
-        self.EStypeName: Dict = {
+        self.EStypeName: dict = {
             self.dat_valName: self.dat_clsName,
             self.loc_valName: self.loc_clsName,
             self.prp_valName: self.prp_clsName,
             self.ext_valName: self.ext_clsName,
             self.nam_valName: self.nam_clsName,
         }
-        self.ESvalName: Dict = self._inv(self.EStypeName)
+        self.ESvalName: dict = self._inv(self.EStypeName)
         self.ESclassName: list = list(self.EStypeName.values())
 
         # %% reserved
@@ -305,7 +303,7 @@ class Es:
         # %% init byte
         """Byte initialization (code)"""
 
-        self.codeb: Dict = {
+        self.codeb: dict = {
             self.dat_classES: 1,
             self.loc_classES: 2,
             self.res_classES: 4,
@@ -314,18 +312,18 @@ class Es:
             self.index: 6,
             self.variable: 7,
         }
-        self.invcodeb: Dict = self._inv(self.codeb)
+        self.invcodeb: dict = self._inv(self.codeb)
         """ Code for bynary interface `observation.Observation.from_bytes` and
         `observation.Observation.to_bytes` """
-        self.codevalue: Dict = {"name": 1, "value": 2, "namemini": 3, "valuemini": 4}
-        self.invcodevalue: Dict = self._inv(self.codevalue)
+        self.codevalue: dict = {"name": 1, "value": 2, "namemini": 3, "valuemini": 4}
+        self.invcodevalue: dict = self._inv(self.codevalue)
         """ Code for bynary interface `observation.Observation.from_bytes` and
         `observation.Observation.to_bytes` """
         self.minivalue: list = [3, 4]
         self.namevalue: list = [1, 3]
 
         #  format : (code_ES, python format, lenght, dexp, bexp, unit)
-        self.prop: Dict = {
+        self.prop: dict = {
             "utf-8": (2, "", 0, 0, 0, self.nullDict),
             "sfloat": (15, "e", 2, 0, 0, self.nullDict),
             "uint16": (3, "H", 2, 0, 0, self.nullDict),
@@ -342,8 +340,8 @@ class Es:
             "Temp": (24, "e", 2, 0, 0, "°C"),
             self.nullDict: (0, "e", 2, 0, 0, self.nullDict),
         }
-        self.invProp: Dict = self._invnum(self.prop)
-        self.bytedict: Dict = {
+        self.invProp: dict = self._invnum(self.prop)
+        self.bytedict: dict = {
             self.dat_classES: ["namemini", "value"],
             self.loc_classES: ["namemini", "value"],
             self.prp_classES: ["valuemini"],
@@ -353,7 +351,7 @@ class Es:
 
         """Dictionnary for property codification (BLE - Environmental Sensing Service) """
 
-        self.sampling: Dict = {
+        self.sampling: dict = {
             self.nullDict: 0,
             "instantaneous": 1,
             "arithmetic mean": 2,
@@ -365,10 +363,10 @@ class Es:
         }
         """Dictionnary for property sampling mode (BLE - Environmental Sensing Service) """
 
-        self.invSampling: Dict = self._inv(self.sampling)
+        self.invSampling: dict = self._inv(self.sampling)
         """Dictionnary for property sampling mode (BLE - Environmental Sensing Service) """
 
-        self.application: Dict = {
+        self.application: dict = {
             self.nullDict: 0,
             "air": 1,
             "water": 2,

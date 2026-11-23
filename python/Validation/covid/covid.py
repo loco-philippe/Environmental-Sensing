@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Apr  6 11:36:22 2022
 
@@ -20,11 +19,12 @@ import os
 os.chdir(
     "C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/ES"
 )
-from ilist import Ilist
-from time import time
 import csv
-from ESValue import LocationValue, DatationValue, PropertyValue, ResultValue
+from time import time
+
 import pandas as pd
+from ESValue import DatationValue, LocationValue, PropertyValue, ResultValue
+from ilist import Ilist
 
 chemin = "C:/Users/a179227/OneDrive - Alliance/perso Wx/ES standard/python ESstandard/validation/covid/"
 
